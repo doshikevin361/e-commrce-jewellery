@@ -112,7 +112,10 @@ const Hero = () => {
       <nav className='w-full bg-[#1F3B29] text-white'>
         <div className='mx-auto flex w-full max-w-full items-center justify-between px-4 py-5 md:px-6 lg:max-w-7xl lg:px-0'>
           <div className='flex items-center gap-8'>
-            <button onClick={() => setSidebarOpen(!sidebarOpen)} className='flex w-[270px] items-center gap-2' aria-label='Categories'>
+            <button
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className='flex w-[270px] items-center gap-2 cursor-pointer'
+              aria-label='Categories'>
               <Grid2x2CheckIcon size={18} />
               Categories
             </button>
