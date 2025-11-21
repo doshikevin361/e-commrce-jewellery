@@ -69,7 +69,7 @@ export function HomeFooter() {
   ];
 
   return (
-    <footer className='bg-[#F5EEE5]'>
+    <footer className='bg-white'>
       <div className='mx-auto max-w-7xl px-6 py-12'>
         <div className='flex flex-col gap-10 lg:flex-row lg:items-start lg:justify-between'>
           <div>
@@ -92,7 +92,7 @@ export function HomeFooter() {
             </div>
           </div>
 
-          <div className='grid flex-1 grid-cols-2 gap-8 md:grid-cols-4'>
+          <div className='flex flex-row gap-20'>
             {footerData.map(section => (
               <FooterSection key={section.title} title={section.title} items={section.items} />
             ))}

@@ -3,7 +3,6 @@
 import { Diamond, ShoppingCart, User } from 'lucide-react';
 import SearchBar from './SearchBar/SearchBar';
 
-const navLinks = ['Home', 'Shop', 'Blog', 'About Us'];
 
 export function HomeHeader() {
   return (
@@ -29,16 +28,6 @@ export function HomeHeader() {
           </button>
         </div>
       </div>
-
-      <nav className='border-t border-[#E6D3C2]/70'>
-        <ul className='mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-6 px-4 py-4 text-sm font-semibold text-[#4F3A2E]'>
-          {navLinks.map(link => (
-            <li key={link} className='cursor-pointer transition hover:text-[#1F3B29]'>
-              {link}
-            </li>
-          ))}
-        </ul>
-      </nav>
     </header>
   );
 }

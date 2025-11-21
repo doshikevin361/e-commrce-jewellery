@@ -232,10 +232,10 @@ const FeaturedSlider = () => (
       <p className='text-2xl font-semibold text-[#1F3B29]'>New Products</p>
       <div className='flex items-center gap-4 text-[#1F3B29]'>
         <div className='flex gap-3'>
-          <button className='prev-btn flex h-8 w-8 items-center justify-center rounded-full border border-[#E6D3C2] bg-white shadow-sm hover:bg-[#FDFBF7]'>
+          <button className='prev-btn flex h-8 w-8 items-center cursor-pointer justify-center rounded-full border border-[#E6D3C2] bg-white shadow-sm hover:bg-[#FDFBF7]'>
             <ChevronLeft size={20} />
           </button>
-          <button className='next-btn flex h-8 w-8 items-center justify-center rounded-full border border-[#E6D3C2] bg-white shadow-sm hover:bg-[#FDFBF7]'>
+          <button className='next-btn flex h-8 w-8 items-center cursor-pointer justify-center rounded-full border border-[#E6D3C2] bg-white shadow-sm hover:bg-[#FDFBF7]'>
             <ChevronRight size={20} />
           </button>
         </div>
@@ -459,5 +459,3 @@ const Subscribe = () => (
 );
 
 export default HomePage;
-
-

@@ -4,9 +4,9 @@ import { HomePage as LuxeHomePage } from '@/components/home/home-page';
 
 export default function Home() {
   return (
-    <div className='min-h-screen bg-[#FDFBF7]'>
+    <div className='min-h-screen'>
       <HomeHeader />
-      <main className='py-6'>
+      <main className=''>
         <LuxeHomePage />
       </main>
       <HomeFooter />
