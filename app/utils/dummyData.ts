@@ -1,34 +1,62 @@
 export const categories = [
   {
+    name: 'Jewellery Sets',
+    images: [
+      'https://images.unsplash.com/photo-1603561596112-1d0c62c80203?auto=format&fit=crop&w=600&q=80',
+      'https://images.unsplash.com/photo-1611955167811-4711904bb9f1?auto=format&fit=crop&w=600&q=80',
+      'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=600&q=80',
+    ],
+  },
+  {
+    name: 'Pendants',
+    images: [
+      'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=600&q=80',
+      'https://images.unsplash.com/photo-1602173574767-37ac01994b2a?auto=format&fit=crop&w=600&q=80',
+      'https://images.unsplash.com/photo-1573408301185-9146fe634ad0?auto=format&fit=crop&w=600&q=80',
+    ],
+  },
+  {
     name: 'Rings',
-    img: 'https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=400&q=80',
-  },
-  {
-    name: 'Necklaces',
-    img: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=400&q=80',
-  },
-  {
-    name: 'Bracelets',
-    img: 'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?auto=format&fit=crop&w=400&q=80',
+    images: [
+      'https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=600&q=80',
+      'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=600&q=80',
+      'https://images.unsplash.com/photo-1603561596112-1d0c62c80203?auto=format&fit=crop&w=600&q=80',
+    ],
   },
   {
     name: 'Earrings',
-    img: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=700&q=80',
+    images: [
+      'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=600&q=80',
+      'https://images.unsplash.com/photo-1611955167811-4711904bb9f1?auto=format&fit=crop&w=600&q=80',
+      'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=600&q=80',
+    ],
   },
   {
-    name: 'Anklets',
-    img: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=700&q=80',
+    name: 'Bangles',
+    images: [
+      'https://images.unsplash.com/photo-1603561596112-1d0c62c80203?auto=format&fit=crop&w=600&q=80',
+      'https://images.unsplash.com/photo-1573408301185-9146fe634ad0?auto=format&fit=crop&w=600&q=80',
+      'https://images.unsplash.com/photo-1602173574767-37ac01994b2a?auto=format&fit=crop&w=600&q=80',
+    ],
+  },
+  {
+    name: 'Mangalsutra',
+    images: [
+      'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=600&q=80',
+      'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=600&q=80',
+      'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=600&q=80',
+    ],
   },
 ];
 
 export const images = [
-  'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=800&q=80',
-  'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=700&q=80',
-  'https://images.unsplash.com/photo-1522312346375-d1a52e2b99b3?auto=format&fit=crop&w=800&q=80',
-  'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=800&q=80',
-  'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?auto=format&fit=crop&w=800&q=80',
-  'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=700&q=80',
-  'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=700&q=80',
+  'https://images.unsplash.com/photo-1611955167811-4711904bb9f1?auto=format&fit=crop&w=800&q=80',
+  'https://images.unsplash.com/photo-1603561596112-1d0c62c80203?auto=format&fit=crop&w=700&q=80',
+  'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=800&q=80',
+  'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=800&q=80',
+  'https://images.unsplash.com/photo-1602173574767-37ac01994b2a?auto=format&fit=crop&w=800&q=80',
+  'https://images.unsplash.com/photo-1573408301185-9146fe634ad0?auto=format&fit=crop&w=700&q=80',
+  'https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=700&q=80',
 ];
 
 export const navLinks = ['Home', 'Shop', 'Collections', 'Stories', 'About', 'Contact'];
@@ -44,7 +72,7 @@ export const blogCards = [
   },
   {
     id: 2,
-    img: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=800&q=80',
+    img: 'https://images.unsplash.com/photo-1611955167811-4711904bb9f1?auto=format&fit=crop&w=800&q=80',
     category: 'Stories',
     date: 'Nov 06, 2025',
     title: 'Behind the model stories',
@@ -52,7 +80,7 @@ export const blogCards = [
   },
   {
     id: 3,
-    img: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=800&q=80',
+    img: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=800&q=80',
     category: 'Craft',
     date: 'Oct 29, 2025',
     title: 'How metals are treated at LuxeLoom',

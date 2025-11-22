@@ -131,22 +131,74 @@
   }
   html {
     scroll-behavior: smooth;
+    overflow-x: hidden;
   }
   body {
     @apply bg-background text-foreground;
+    overflow-x: hidden;
+    width: 100%;
+    position: relative;
   }
 }
 
+/* Hero Slider Image Fixes */
+.hero-swiper .swiper-slide {
+  width: 100% !important;
+}
+
+.hero-swiper img,
+.hero-swiper [fill],
+.hero-swiper [style*="position: absolute"] {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+}
+
 /* Swiper Pagination Styles */
+.hero-swiper .swiper-pagination {
+  bottom: 16px !important;
+  padding: 0 16px;
+  z-index: 30 !important;
+}
+
 .hero-swiper .swiper-pagination-bullet {
   background-color: rgba(255, 255, 255, 0.5) !important;
   opacity: 1;
-  width: 12px;
-  height: 12px;
+  width: 10px;
+  height: 10px;
+  margin: 0 4px !important;
+}
+
+@media (min-width: 640px) {
+  .hero-swiper .swiper-pagination-bullet {
+    width: 12px;
+    height: 12px;
+    margin: 0 5px !important;
+  }
 }
 
 .hero-swiper .swiper-pagination-bullet-active {
   background-color: rgba(255, 255, 255, 1) !important;
-  width: 24px;
-  border-radius: 6px;
+  width: 20px;
+  border-radius: 5px;
+}
+
+@media (min-width: 640px) {
+  .hero-swiper .swiper-pagination-bullet-active {
+    width: 24px;
+    border-radius: 6px;
+  }
+}
+
+/* Hide scrollbar for mobile navigation */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
 }
