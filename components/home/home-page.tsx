@@ -1,46 +1,16 @@
 'use client';
 
 import Image from 'next/image';
-import { ArrowRight, ChevronLeft, ChevronRight, Grid2x2CheckIcon, ShoppingCart, Star, Truck, Shield, Headphones, Award, Heart, Sparkles, Menu, X, ChevronDown } from 'lucide-react';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { ArrowRight, ChevronLeft, ChevronRight, ShoppingCart, Star, Truck, Shield, Headphones, Award, Heart, Sparkles, Diamond, Gem, Link2, CircleDot } from 'lucide-react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import 'swiper/css';
 import 'swiper/css/pagination';
 import { blogCards, categories, images, navLinks } from '@/app/utils/dummyData';
 import { Navigation, Autoplay, Pagination } from 'swiper/modules';
-import { Diamond, Gem, Link2, CircleDot } from 'lucide-react';
-import { useState, useEffect, useRef } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { useScrollAnimation } from './use-scroll-animation';
-
-const sidebarCategories = [
-  'Rings',
-  'Necklace',
-  'Earring',
-  'Bracelet',
-  'Brooch',
-  'Gold Jewellery',
-  'Cufflink',
-  'Pearls',
-  'Piercing',
-  'Platinum',
-  'Navratna',
-  'Chain',
-];
-
-const categoryIcons: Record<string, React.ReactElement> = {
-  Rings: <Diamond size={18} />,
-  Necklace: <Gem size={18} />,
-  Earring: <CircleDot size={18} />,
-  Bracelet: <Link2 size={18} />,
-  Brooch: <Sparkles size={18} />,
-  'Gold Jewellery': <Diamond size={18} />,
-  Cufflink: <Link2 size={18} />,
-  Pearls: <Gem size={18} />,
-  Piercing: <CircleDot size={18} />,
-  Platinum: <Diamond size={18} />,
-  Navratna: <Gem size={18} />,
-  Chain: <Link2 size={18} />,
-};
+import { useCategories } from '@/contexts/CategoriesContext';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 
 const featuredProducts = [
   {
@@ -167,7 +137,7 @@ export const HomePage = () => (
 
 // Menu items with submenus for jewelry e-commerce
 const menuItems = [
-  { name: 'Home', href: '#home' },
+  { name: 'Home', href: '/' },
   {
     name: 'Shop',
     href: '#shop',
@@ -178,217 +148,79 @@ const menuItems = [
     href: '#collections',
     submenu: ['New Arrivals', 'Best Sellers', 'Limited Edition', 'Vintage Collection', 'Custom Designs']
   },
-  { name: 'Stories', href: '#stories' },
-  { name: 'About', href: '#about' }
+  { name: 'Blog', href: '/blog' },
+  { name: 'About', href: '/about' }
 ];
 
+const sidebarCategories = [
+  'Rings',
+  'Necklace',
+  'Earring',
+  'Bracelet',
+  'Brooch',
+  'Gold Jewellery',
+  'Cufflink',
+  'Pearls',
+  'Piercing',
+  'Platinum',
+  'Navratna',
+  'Chain',
+];
+
+const categoryIcons: Record<string, React.ReactElement> = {
+  Rings: <Diamond size={18} />,
+  Necklace: <Gem size={18} />,
+  Earring: <CircleDot size={18} />,
+  Bracelet: <Link2 size={18} />,
+  Brooch: <Sparkles size={18} />,
+  'Gold Jewellery': <Diamond size={18} />,
+  Cufflink: <Link2 size={18} />,
+  Pearls: <Gem size={18} />,
+  Piercing: <CircleDot size={18} />,
+  Platinum: <Diamond size={18} />,
+  Navratna: <Gem size={18} />,
+  Chain: <Link2 size={18} />,
+};
+
+// Grid2x2CheckIcon component
+const Grid2x2CheckIcon = ({ size, className }: { size: number; className?: string }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox='0 0 24 24'
+    fill='none'
+    stroke='currentColor'
+    strokeWidth='2'
+    strokeLinecap='round'
+    strokeLinejoin='round'
+    className={className}>
+    <path d='M12 3v6m6-6h-6M3 12h6m-6 6h6m6 0v-6m0 6h-6' />
+    <path d='M8 8h8v8H8z' fill='currentColor' opacity='0.3' />
+    <path d='M8 16l4-4 4 4' stroke='currentColor' strokeWidth='2' />
+  </svg>
+);
+
 const Hero = () => {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [mobileCategoriesOpen, setMobileCategoriesOpen] = useState(false);
-  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
-  const [mounted, setMounted] = useState(false);
+  const { sidebarOpen, mobileCategoriesOpen, setMobileCategoriesOpen } = useCategories();
   const [isMobile, setIsMobile] = useState(false);
   const heroRef = useRef<HTMLDivElement>(null);
-  const dropdownRef = useRef<HTMLUListElement>(null);
 
   useEffect(() => {
-    setMounted(true);
     if (typeof window !== 'undefined') {
       setIsMobile(window.innerWidth < 1024);
+      const handleResize = () => {
+        setIsMobile(window.innerWidth < 1024);
+        if (window.innerWidth >= 1024) {
+          setMobileCategoriesOpen(false);
+        }
+      };
+      window.addEventListener('resize', handleResize);
+      return () => window.removeEventListener('resize', handleResize);
     }
-  }, []);
-
-  // Handle resize and close menus
-  useEffect(() => {
-    const handleResize = () => {
-      const mobile = window.innerWidth < 1024;
-      setIsMobile(mobile);
-      if (window.innerWidth >= 768) {
-        setMobileMenuOpen(false);
-      }
-      if (window.innerWidth >= 1024) {
-        setMobileCategoriesOpen(false);
-        setOpenDropdown(null);
-      }
-    };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setOpenDropdown(null);
-      }
-    };
-    if (openDropdown) {
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
-    }
-  }, [openDropdown]);
+  }, [setMobileCategoriesOpen]);
 
   return (
     <>
-      <nav className='w-full bg-[#1F3B29] text-white animate-in fade-in slide-in-from-top-4 duration-700 relative'>
-        <div className='mx-auto flex w-full max-w-full items-center justify-between px-3 sm:px-4 py-2 sm:py-2.5 md:py-3 md:px-6 lg:py-4 xl:py-5 lg:max-w-7xl lg:px-0'>
-          {/* Mobile Menu Button */}
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className='md:hidden flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-300 hover:bg-white/10 active:scale-95'
-            aria-label='Menu'>
-            {mobileMenuOpen ? (
-              <X size={20} className='text-white' />
-            ) : (
-              <Menu size={20} className='text-white' />
-            )}
-          </button>
-
-          {/* Desktop Categories Button */}
-          <div className='hidden md:flex items-center gap-2 sm:gap-3 md:gap-4 lg:gap-8 min-w-0 flex-1'>
-            <button
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              className='flex w-auto md:w-[200px] lg:w-[270px] items-center gap-1.5 md:gap-2 cursor-pointer transition-all duration-300 hover:bg-white/10 active:scale-95 px-3 md:px-4 py-2 rounded-lg font-medium flex-shrink-0 group'
-              aria-label='Categories'>
-              <Grid2x2CheckIcon size={17} className='md:w-[17px] md:h-[17px] lg:w-[18px] lg:h-[18px] flex-shrink-0 transition-transform duration-300 group-hover:rotate-90' />
-              <span className='text-xs md:text-sm whitespace-nowrap'>Categories</span>
-            </button>
-
-            <ul className='hidden lg:flex items-center gap-1 lg:gap-2 xl:gap-3 text-xs md:text-sm' ref={dropdownRef}>
-              {menuItems.map((item, index) => (
-                <li
-                  key={item.name}
-                  className='relative'
-                  onMouseEnter={() => item.submenu && setOpenDropdown(item.name)}
-                  onMouseLeave={() => item.submenu && setOpenDropdown(null)}
-                  style={{ animationDelay: `${index * 100}ms` }}>
-                  <a
-                    href={item.href}
-                    className='relative flex items-center gap-1 px-3 md:px-4 lg:px-5 py-2 rounded-lg cursor-pointer transition-all duration-300 hover:text-gray-200 hover:bg-white/10 whitespace-nowrap font-medium group'>
-                    <span className='relative z-10'>{item.name}</span>
-                    {item.submenu && (
-                      <ChevronDown
-                        size={14}
-                        className={`transition-transform duration-300 ${openDropdown === item.name ? 'rotate-180' : ''}`}
-                      />
-                    )}
-                    <span className='absolute bottom-0 left-0 right-0 h-0.5 bg-white/30 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 rounded-full' />
-                  </a>
-                  
-                  {/* Dropdown Menu */}
-                  {item.submenu && openDropdown === item.name && (
-                    <div className='absolute top-full left-0 mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-100 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200'>
-                      {item.submenu.map((subItem) => (
-                        <a
-                          key={subItem}
-                          href={`#${subItem.toLowerCase().replace(/\s+/g, '-')}`}
-                          className='block px-4 py-2.5 text-sm text-[#1F3B29] hover:bg-[#F5EEE5]/60 transition-colors duration-200 font-medium'
-                          onClick={() => setOpenDropdown(null)}>
-                          {subItem}
-                        </a>
-                      ))}
-                    </div>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Desktop Contact Button - Last */}
-          <div className='hidden lg:flex items-center ml-auto'>
-            <a
-              href='#contact'
-              className='flex items-center text-xs sm:text-sm transition-all duration-300 hover:text-gray-200 hover:bg-white/10 px-4 md:px-5 py-2 rounded-lg font-medium whitespace-nowrap border-l border-white/20 pl-4 md:pl-5'>
-              Contact Us
-            </a>
-          </div>
-
-          {/* Mobile/Tablet Categories Button */}
-          <button
-            onClick={() => {
-              if (isMobile) {
-                setMobileCategoriesOpen(true);
-              } else {
-                setSidebarOpen(!sidebarOpen);
-              }
-            }}
-            className='lg:hidden flex items-center gap-1.5 cursor-pointer transition-all duration-300 hover:bg-white/10 active:scale-95 px-3 py-2 rounded-lg font-medium flex-shrink-0 group'
-            aria-label='Categories'>
-            <Grid2x2CheckIcon size={18} className='flex-shrink-0 transition-transform duration-300 group-hover:rotate-90' />
-            <span className='text-sm whitespace-nowrap hidden sm:inline'>Categories</span>
-          </button>
-
-          {/* Mobile Contact Button */}
-          <a
-            href='#contact'
-            className='lg:hidden text-xs sm:text-sm transition-all duration-300 hover:text-gray-200 hover:bg-white/10 px-2 sm:px-3 py-1.5 rounded-lg font-medium whitespace-nowrap'>
-            Contact
-          </a>
-        </div>
-        
-        {/* Mobile/Tablet Menu Dropdown */}
-        <div
-          className={`lg:hidden overflow-hidden transition-all duration-300 ease-in-out ${
-            mobileMenuOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
-          }`}>
-          <div className='px-3 py-3 bg-[#1F3B29] border-t border-white/10'>
-            <ul className='flex flex-col gap-1'>
-              {menuItems.map((item) => (
-                <li key={item.name}>
-                  {item.submenu ? (
-                    <div>
-                      <button
-                        onClick={() => setOpenDropdown(openDropdown === item.name ? null : item.name)}
-                        className='flex items-center justify-between w-full text-left px-4 py-3 rounded-lg text-sm font-medium transition-all duration-300 hover:bg-white/10 hover:translate-x-2 active:bg-white/15'>
-                        <span>{item.name}</span>
-                        <ChevronDown
-                          size={16}
-                          className={`transition-transform duration-300 ${openDropdown === item.name ? 'rotate-180' : ''}`}
-                        />
-                      </button>
-                      {openDropdown === item.name && (
-                        <ul className='pl-4 mt-1 space-y-1'>
-                          {item.submenu.map((subItem) => (
-                            <li key={subItem}>
-                              <a
-                                href={`#${subItem.toLowerCase().replace(/\s+/g, '-')}`}
-                                onClick={() => {
-                                  setMobileMenuOpen(false);
-                                  setOpenDropdown(null);
-                                }}
-                                className='block px-4 py-2 rounded-lg text-sm font-normal transition-all duration-300 hover:bg-white/10 hover:translate-x-2 active:bg-white/15 text-white/90'>
-                                {subItem}
-                              </a>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </div>
-                  ) : (
-                    <a
-                      href={item.href}
-                      onClick={() => setMobileMenuOpen(false)}
-                      className='block w-full text-left px-4 py-3 rounded-lg text-sm font-medium transition-all duration-300 hover:bg-white/10 hover:translate-x-2 active:bg-white/15'>
-                      {item.name}
-                    </a>
-                  )}
-                </li>
-              ))}
-              {/* Contact Us - Always Last */}
-              <li className='mt-2 pt-2 border-t border-white/20'>
-                <a
-                  href='#contact'
-                  onClick={() => setMobileMenuOpen(false)}
-                  className='block w-full text-left px-4 py-3 rounded-lg text-sm font-semibold transition-all duration-300 hover:bg-white/10 hover:translate-x-2 active:bg-white/15 bg-white/5'>
-                  Contact Us
-                </a>
-              </li>
-            </ul>
-          </div>
-        </div>
-      </nav>
-
       {/* Mobile/Tablet Categories Drawer */}
       <Sheet open={mobileCategoriesOpen} onOpenChange={setMobileCategoriesOpen}>
         <SheetContent side='left' className='w-[280px] sm:w-[320px] p-0 overflow-y-auto bg-white'>
@@ -399,7 +231,7 @@ const Hero = () => {
             </SheetTitle>
           </SheetHeader>
           <ul className='p-3 sm:p-4 space-y-1 sm:space-y-2'>
-            {sidebarCategories.map((category, index) => (
+            {sidebarCategories.map((category) => (
               <li
                 key={category}
                 className='flex items-center justify-between rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3 transition-all duration-300 hover:bg-[#F5EEE5]/60 hover:translate-x-2 hover:shadow-md cursor-pointer active:scale-95'
@@ -416,9 +248,11 @@ const Hero = () => {
       </Sheet>
 
       <section
+        ref={heroRef}
         className={`mx-auto grid w-full max-w-[1280px] gap-3 sm:gap-4 md:gap-6 transition-all duration-500 ease-in-out px-3 sm:px-4 md:px-0 ${
           sidebarOpen && !isMobile ? 'lg:grid-cols-[260px_minmax(0,1fr)]' : 'lg:grid-cols-[0px_minmax(0,1fr)]'
         }`}>
+        {/* Categories Sidebar - Desktop */}
         <aside
           className={`hidden lg:block overflow-hidden rounded-xl sm:rounded-2xl border border-[#E6D3C2]/50 bg-white px-3 sm:px-5 py-4 sm:py-6 shadow-lg transition-all duration-500 ease-in-out ${
             sidebarOpen ? 'w-[260px] opacity-100 translate-x-0' : 'w-0 px-0 py-0 opacity-0 -translate-x-4'
@@ -446,7 +280,8 @@ const Hero = () => {
           )}
         </aside>
 
-        <div ref={heroRef} className='w-full'>
+        {/* Hero Slider */}
+        <div className='w-full'>
           <Swiper
             modules={[Autoplay, Pagination]}
             spaceBetween={0}
@@ -468,7 +303,7 @@ const Hero = () => {
               <SwiperSlide key={slide.id}>
                 <div className='grid w-full gap-3 sm:gap-4 md:gap-6 grid-cols-1 lg:grid-cols-[1.65fr_0.9fr]'>
                   {/* Main Card */}
-                  <div className='relative flex flex-col justify-center overflow-hidden rounded-lg sm:rounded-xl md:rounded-2xl px-4 sm:px-5 md:px-6 lg:px-8 xl:px-10 py-6 sm:py-7 md:py-8 lg:py-10 xl:py-12 text-white shadow-lg min-h-[300px] sm:min-h-[380px] md:min-h-[450px] lg:min-h-[500px] group w-full'>
+                  <div className='relative flex flex-col justify-center overflow-hidden rounded-lg sm:rounded-xl md:rounded-2xl px-4 sm:px-5 md:px-6 lg:px-8 xl:px-10 py-6 sm:py-7 md:py-8 lg:py-10 xl:py-12 text-white shadow-lg min-h-[280px] sm:min-h-[320px] md:min-h-[380px] lg:min-h-[420px] group w-full'>
                     <div className='absolute inset-0 w-full h-full z-0 bg-gray-300'>
                       {slide.main.video ? (
                         <>
@@ -526,7 +361,7 @@ const Hero = () => {
           </div>
 
                   {/* Side Card */}
-                  <div className='relative flex flex-col justify-end overflow-hidden rounded-lg sm:rounded-xl md:rounded-2xl px-4 sm:px-5 md:px-6 lg:px-8 py-4 sm:py-5 md:py-6 lg:py-8 xl:py-10 shadow-md min-h-[220px] sm:min-h-[260px] md:min-h-[300px] lg:min-h-[320px] group w-full'>
+                  <div className='relative flex flex-col justify-end overflow-hidden rounded-lg sm:rounded-xl md:rounded-2xl px-4 sm:px-5 md:px-6 lg:px-8 py-4 sm:py-5 md:py-6 lg:py-8 xl:py-10 shadow-md min-h-[200px] sm:min-h-[220px] md:min-h-[260px] lg:min-h-[280px] group w-full'>
                     <div className='absolute inset-0 w-full h-full z-0 bg-gray-300'>
             <Image
                         src={slide.side.image}

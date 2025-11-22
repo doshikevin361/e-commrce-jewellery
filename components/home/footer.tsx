@@ -26,36 +26,34 @@ export function HomeFooter() {
     {
       title: 'Quick Links',
       items: [
-        { label: 'Home', href: '#' },
-        { label: 'Shop', href: '#' },
-        { label: 'About', href: '#' },
-        { label: 'Services', href: '#' },
+        { label: 'Home', href: '/' },
+        { label: 'Shop', href: '#shop' },
+        { label: 'About', href: '/about' },
+        { label: 'Blog', href: '/blog' },
       ],
     },
     {
-      title: 'Services',
+      title: 'Customer Service',
       items: [
-        { label: 'Gold Jewelry', href: '#' },
-        { label: 'Silver Jewelry', href: '#' },
-        { label: 'Antique Jewelry', href: '#' },
+        { label: 'Contact Us', href: '/contact' },
+        { label: 'Shipping Policy', href: '/shipping-policy' },
+        { label: 'Refund & Return', href: '/refund-and-return' },
+        { label: 'Cancellation Policy', href: '/cancellation-policy' },
       ],
     },
     {
-      title: 'Community',
+      title: 'Legal',
       items: [
-        { label: 'Community Hub', href: '#' },
-        { label: 'Invite a Friend', href: '#' },
-        { label: 'News & Blog', href: '#' },
-        { label: 'Affiliates', href: '#' },
+        { label: 'Privacy Policy', href: '/privacy-policy' },
+        { label: 'Terms & Conditions', href: '/terms-and-conditions' },
       ],
     },
     {
       title: 'Support',
       items: [
-        { label: 'Help & Support', href: '#' },
-        { label: 'Contact', href: '#' },
-        { label: 'Trust & Safety', href: '#' },
-        { label: 'Community', href: '#' },
+        { label: 'Help Center', href: '/contact' },
+        { label: 'FAQs', href: '/contact' },
+        { label: 'Track Order', href: '/contact' },
       ],
     },
   ];

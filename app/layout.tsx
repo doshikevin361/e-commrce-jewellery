@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from 'next/font/google';
 import { Analytics } from '@vercel/analytics/next';
 import { ThemeProvider } from '@/components/theme-provider';
 import { SettingsProvider } from '@/components/settings/settings-provider';
+import { CategoriesProvider } from '@/contexts/CategoriesContext';
 import './globals.css';
 import 'react-toastify/dist/ReactToastify.css';
 import '@/styles/toastify.css';
@@ -44,7 +45,9 @@ export default function RootLayout({
     <html lang='en' suppressHydrationWarning className='scroll-smooth'>
       <body className={`font-sans antialiased`}>
         <ThemeProvider attribute='class' defaultTheme='light' enableSystem>
-          <SettingsProvider>{children}</SettingsProvider>
+          <SettingsProvider>
+            <CategoriesProvider>{children}</CategoriesProvider>
+          </SettingsProvider>
         </ThemeProvider>
         <ToastContainer
           position='top-center'

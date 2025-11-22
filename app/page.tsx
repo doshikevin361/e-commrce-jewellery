@@ -6,7 +6,7 @@ export default function Home() {
   return (
     <div className='min-h-screen w-full overflow-x-hidden'>
       <HomeHeader />
-      <main className='w-full overflow-x-hidden'>
+      <main className='w-full overflow-x-hidden pt-4 sm:pt-6 md:pt-8 lg:pt-10'>
         <LuxeHomePage />
       </main>
       <HomeFooter />
