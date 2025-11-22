@@ -134,8 +134,8 @@ const Hero = () => {
       </nav>
 
       <section
-        className={`mx-auto grid max-w-[1280px] gap-6 transition-all duration-500 ${
-          sidebarOpen ? 'lg:grid-cols-[260px_minmax(0,1fr)]' : 'lg:grid-cols-[0px_minmax(0,1fr)]'
+        className={`mx-auto grid max-w-[1290px] gap-6 transition-all duration-500 ${
+          sidebarOpen ? 'lg:grid-cols-[260px_minmax(0,1fr)] max-w-[1280px]' : 'max-w-[1300px] lg:grid-cols-[0px_minmax(0,1fr)]'
         }`}>
         <aside
           className={`overflow-hidden rounded-2xl border border-[#E6D3C2]/50 bg-white px-5 py-6 shadow-lg transition-all duration-500 ${
