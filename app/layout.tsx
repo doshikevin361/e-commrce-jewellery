@@ -8,6 +8,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import '@/styles/toastify.css';
 import { ToastContainer } from 'react-toastify';
 
+
 const _geist = Geist({ subsets: ['latin'] });
 const _geistMono = Geist_Mono({ subsets: ['latin'] });
 
