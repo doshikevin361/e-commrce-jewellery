@@ -30,15 +30,15 @@ const menuItems = [
   {
     name: 'Shop',
     href: '#shop',
-    submenu: ['All Jewelry', 'Rings', 'Necklaces', 'Earrings', 'Bracelets', 'Anklets', 'Brooches']
+    submenu: ['All Jewelry', 'Rings', 'Necklaces', 'Earrings', 'Bracelets', 'Anklets', 'Brooches'],
   },
   {
     name: 'Collections',
     href: '#collections',
-    submenu: ['New Arrivals', 'Best Sellers', 'Limited Edition', 'Vintage Collection', 'Custom Designs']
+    submenu: ['New Arrivals', 'Best Sellers', 'Limited Edition', 'Vintage Collection', 'Custom Designs'],
   },
   { name: 'Blog', href: '/blog' },
-  { name: 'About', href: '/about' }
+  { name: 'About', href: '/about' },
 ];
 
 export function HomeHeader() {
@@ -93,10 +93,14 @@ export function HomeHeader() {
   return (
     <header className='bg-white sticky top-0 z-50 shadow-sm'>
       {/* Top bar with logo, search, and account/cart */}
-      <div className='mx-auto mb-2 sm:mb-3 md:mb-4 flex w-full max-w-full items-center justify-between gap-2 sm:gap-3 md:gap-4 px-3 sm:px-4 md:px-6 py-2 sm:py-2.5 md:py-3 pt-3 sm:pt-4 md:pt-6 lg:pt-8 lg:max-w-7xl lg:px-0'>
-        <Link href='/' className='flex items-center gap-1 sm:gap-1.5 md:gap-2 flex-shrink-0 transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer'>
+      <div className='mx-auto mb-2 sm:mb-3 md:mb-4 flex w-full max-w-full items-center justify-between gap-2 sm:gap-3 md:gap-4 px-3 sm:px-4 md:px-6 py-2 sm:py-2.5 md:py-3 pt-3 sm:pt-4 md:pt-6 lg:pt-8 lg:max-w-[1400px] lg:px-0'>
+        <Link
+          href='/'
+          className='flex items-center gap-1 sm:gap-1.5 md:gap-2 flex-shrink-0 transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer'>
           <Diamond size={16} className='sm:w-[17px] sm:h-[17px] md:w-[18px] md:h-[18px] text-[#1F3B29]' />
-          <span className='text-sm sm:text-base md:text-lg lg:text-xl font-semibold tracking-[0.08em] sm:tracking-[0.1em] md:tracking-[0.15em] lg:tracking-[0.2em] text-[#1F3B29] whitespace-nowrap'>LuxeLoom</span>
+          <span className='text-sm sm:text-base md:text-lg lg:text-xl font-semibold tracking-[0.08em] sm:tracking-[0.1em] md:tracking-[0.15em] lg:tracking-[0.2em] text-[#1F3B29] whitespace-nowrap'>
+            LuxeLoom
+          </span>
         </Link>
 
         <div className='hidden sm:flex mx-2 sm:mx-3 md:mx-4 lg:mx-5 flex-1 max-w-xs sm:max-w-sm md:max-w-lg lg:max-w-2xl'>
@@ -104,14 +108,20 @@ export function HomeHeader() {
         </div>
 
         <div className='flex items-center gap-1.5 sm:gap-2 md:gap-4 lg:gap-6 text-xs sm:text-sm text-[#1F3B29]'>
-          <button className='flex items-center gap-0.5 sm:gap-1 font-semibold px-1 sm:px-1.5 md:px-2 transition-all duration-300 hover:scale-110 active:scale-95 whitespace-nowrap' aria-label='Account'>
+          <button
+            className='flex items-center gap-0.5 sm:gap-1 font-semibold px-1 sm:px-1.5 md:px-2 transition-all duration-300 hover:scale-110 active:scale-95 whitespace-nowrap'
+            aria-label='Account'>
             <User size={15} className='sm:w-[16px] sm:h-[16px] md:w-[18px] md:h-[18px] flex-shrink-0' />
             <span className='hidden sm:inline text-xs sm:text-sm whitespace-nowrap'>Your Account</span>
           </button>
-          <button className='flex items-center gap-1 sm:gap-1.5 font-semibold px-1 sm:px-1.5 md:px-2 transition-all duration-300 hover:scale-110 active:scale-95 relative' aria-label='Cart'>
+          <button
+            className='flex items-center gap-1 sm:gap-1.5 font-semibold px-1 sm:px-1.5 md:px-2 transition-all duration-300 hover:scale-110 active:scale-95 relative'
+            aria-label='Cart'>
             <div className='relative flex-shrink-0'>
               <ShoppingCart size={15} className='sm:w-[16px] sm:h-[16px] md:w-[18px] md:h-[18px] text-[#1F3B29]' />
-              <span className='absolute -top-1 -right-1 bg-[#C8A15B] text-white text-[9px] sm:text-[10px] font-bold rounded-full w-3.5 h-3.5 sm:w-4 sm:h-4 flex items-center justify-center shadow-sm leading-none'>0</span>
+              <span className='absolute -top-1 -right-1 bg-[#C8A15B] text-white text-[9px] sm:text-[10px] font-bold rounded-full w-3.5 h-3.5 sm:w-4 sm:h-4 flex items-center justify-center shadow-sm leading-none'>
+                0
+              </span>
             </div>
             <span className='hidden sm:inline text-xs sm:text-sm whitespace-nowrap text-[#1F3B29]'>Your Cart</span>
           </button>
@@ -124,18 +134,14 @@ export function HomeHeader() {
       </div>
 
       {/* Navigation Menu Bar - Exact style from hero section */}
-      <nav className='w-full bg-[#1F3B29] text-white animate-in fade-in slide-in-from-top-4 duration-700 relative'>
-        <div className='mx-auto flex w-full max-w-full items-center justify-between px-3 sm:px-4 py-2 sm:py-2.5 md:py-3 md:px-6 lg:py-4 xl:py-5 lg:max-w-7xl lg:px-0'>
+      <nav className='w-full bg-[#1F3B29] text-white duration-700 relative'>
+        <div className='mx-auto flex w-full max-w-full items-center justify-between px-3 sm:px-0  py-2 sm:py-2.5 md:py-3 lg:py-4  lg:max-w-[1400px] lg:px-0'>
           {/* Mobile Menu Button */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className='md:hidden flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-300 hover:bg-white/10 active:scale-95'
             aria-label='Menu'>
-            {mobileMenuOpen ? (
-              <X size={20} className='text-white' />
-            ) : (
-              <Menu size={20} className='text-white' />
-            )}
+            {mobileMenuOpen ? <X size={20} className='text-white' /> : <Menu size={20} className='text-white' />}
           </button>
 
           {/* Desktop Categories Button */}
@@ -152,7 +158,10 @@ export function HomeHeader() {
               }}
               className='flex w-auto md:w-[200px] lg:w-[270px] items-center gap-1.5 md:gap-2 cursor-pointer transition-all duration-300 hover:bg-white/10 active:scale-95 px-3 md:px-4 py-2 rounded-lg font-medium flex-shrink-0 group'
               aria-label='Categories'>
-              <Grid2x2CheckIcon size={17} className='md:w-[17px] md:h-[17px] lg:w-[18px] lg:h-[18px] flex-shrink-0 transition-transform duration-300 group-hover:rotate-90' />
+              <Grid2x2CheckIcon
+                size={17}
+                className='md:w-[17px] md:h-[17px] lg:w-[18px] lg:h-[18px] flex-shrink-0 transition-transform duration-300 group-hover:rotate-90'
+              />
               <span className='text-xs md:text-sm whitespace-nowrap'>Categories</span>
             </button>
 
@@ -166,25 +175,55 @@ export function HomeHeader() {
                   style={{ animationDelay: `${index * 100}ms` }}>
                   <a
                     href={item.href}
-                    className='relative flex items-center gap-1 px-3 md:px-4 lg:px-5 py-2 rounded-lg cursor-pointer transition-all duration-300 hover:text-gray-200 hover:bg-white/10 whitespace-nowrap font-medium group'>
+                    className='
+        relative flex items-center gap-1
+        px-3 md:px-4 lg:px-5 py-2
+        rounded-lg cursor-pointer
+        transition-all duration-300
+        whitespace-nowrap font-medium
+        group
+      '>
                     <span className='relative z-10'>{item.name}</span>
+
                     {item.submenu && (
                       <ChevronDown
                         size={14}
                         className={`transition-transform duration-300 ${openDropdown === item.name ? 'rotate-180' : ''}`}
                       />
                     )}
-                    <span className='absolute bottom-0 left-0 right-0 h-0.5 bg-white/30 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 rounded-full' />
+
+                    {/* White animated underline */}
+                    <span
+                      className='
+        pointer-events-none
+        absolute bottom-0 left-0 right-0 
+        h-[2px] bg-white 
+        scale-x-0 origin-left
+        group-hover:scale-x-100 
+        transition-transform duration-300
+      '
+                    />
                   </a>
-                  
+
                   {/* Dropdown Menu */}
                   {item.submenu && openDropdown === item.name && (
-                    <div className='absolute top-full left-0 mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-100 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200'>
-                      {item.submenu.map((subItem) => (
+                    <div
+                      className='
+        absolute top-full left-0 mt-2 w-56
+        bg-white rounded-lg shadow-xl
+        border border-gray-100 py-2 z-50
+        animate-in fade-in slide-in-from-top-2 duration-200
+      '>
+                      {item.submenu.map(subItem => (
                         <a
                           key={subItem}
                           href={`#${subItem.toLowerCase().replace(/\s+/g, '-')}`}
-                          className='block px-4 py-2.5 text-sm text-[#1F3B29] hover:bg-[#F5EEE5]/60 transition-colors duration-200 font-medium'
+                          className='
+              block px-4 py-2.5 text-sm text-[#1F3B29]
+              hover:bg-[#F5EEE5]/60
+              transition-colors duration-200
+              font-medium
+            '
                           onClick={() => setOpenDropdown(null)}>
                           {subItem}
                         </a>
@@ -200,7 +239,7 @@ export function HomeHeader() {
           <div className='hidden lg:flex items-center ml-auto'>
             <Link
               href='/contact'
-              className='flex items-center text-xs sm:text-sm transition-all duration-300 hover:text-gray-200 hover:bg-white/10 px-4 md:px-5 py-2 rounded-lg font-medium whitespace-nowrap border-l border-white/20 pl-4 md:pl-5'>
+              className='flex items-center text-xs sm:text-sm transition-all duration-300 hover:text-gray-200 px-4 md:px-5 py-2 font-medium whitespace-nowrappl-4 md:pl-5'>
               Contact Us
             </Link>
           </div>
@@ -229,7 +268,7 @@ export function HomeHeader() {
             Contact
           </Link>
         </div>
-        
+
         {/* Mobile/Tablet Menu Dropdown */}
         <div
           className={`lg:hidden overflow-hidden transition-all duration-300 ease-in-out ${
@@ -237,7 +276,7 @@ export function HomeHeader() {
           }`}>
           <div className='px-3 py-3 bg-[#1F3B29] border-t border-white/10'>
             <ul className='flex flex-col gap-1'>
-              {menuItems.map((item) => (
+              {menuItems.map(item => (
                 <li key={item.name}>
                   {item.submenu ? (
                     <div>
@@ -252,7 +291,7 @@ export function HomeHeader() {
                       </button>
                       {openDropdown === item.name && (
                         <ul className='pl-4 mt-1 space-y-1'>
-                          {item.submenu.map((subItem) => (
+                          {item.submenu.map(subItem => (
                             <li key={subItem}>
                               <a
                                 href={`#${subItem.toLowerCase().replace(/\s+/g, '-')}`}
@@ -294,4 +333,3 @@ export function HomeHeader() {
     </header>
   );
 }
-

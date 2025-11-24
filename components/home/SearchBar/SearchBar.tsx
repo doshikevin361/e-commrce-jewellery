@@ -11,7 +11,7 @@ const SearchBar = () => {
   return (
     <div className='w-full'>
       <div className='flex items-center rounded-full border border-[#E6D3C2] bg-white px-4 py-2 text-sm shadow-sm'>
-        <Search size={16} className='text-[#1F3B29]/60' />
+        {/* <Search size={16} className='text-[#1F3B29]/60' /> */}
         <input
           type='text'
           value={query}
