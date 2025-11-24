@@ -138,11 +138,11 @@ const sidebarCategories = [
   'Brooch',
   'Gold Jewellery',
   'Cufflink',
-  'Pearls',
-  'Piercing',
-  'Platinum',
-  'Navratna',
-  'Chain',
+  // 'Pearls',
+  // 'Piercing',
+  // 'Platinum',
+  // 'Navratna',
+  // 'Chain',
 ];
 
 const categoryIcons: Record<string, JSX.Element> = {
@@ -389,7 +389,7 @@ const CategoryStrip = () => {
         </p>
       </div> */}
 
-      <div className='mb-6 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-6 md:gap-6'>
+      <div className='mb-6 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-6 md:gap-6 pt-8'>
         {categoriess.map(item => (
           <a
             key={item.name}
