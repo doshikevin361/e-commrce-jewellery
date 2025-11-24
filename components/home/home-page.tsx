@@ -195,7 +195,6 @@ const testimonials = [
 
 export const HomePage = () => {
   const laterSections = [
-    // { key: 'why', node: <WhyChooseUs /> },
     { key: 'featured', node: <FeaturedSlider /> },
     { key: 'promo', node: <PromoShowcase /> },
     { key: 'trending', node: <TrendingProducts /> },
@@ -203,6 +202,7 @@ export const HomePage = () => {
     { key: 'collections', node: <Collections /> },
     { key: 'testimonials', node: <Testimonials /> },
     { key: 'updates', node: <Updates /> },
+    { key: 'why', node: <WhyChooseUs /> },
     { key: 'gallery', node: <Gallery /> },
     { key: 'subscribe', node: <Subscribe /> },
   ];
