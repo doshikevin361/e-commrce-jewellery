@@ -208,7 +208,7 @@ export const HomePage = () => {
   ];
 
   return (
-    <div className='mx-auto flex w-full flex-col gap-0 px-3 sm:px-4 md:px-6 lg:px-0'>
+    <div className='mx-auto flex w-full max-w-[1400px] flex-col gap-0 px-4 sm:px-6 md:px-8 lg:px-12'>
       <Hero />
       <CategoryStrip />
       {laterSections.map(({ key, node }) => (
@@ -283,7 +283,7 @@ const Hero = () => {
       </Sheet>
 
       <section
-        className={`mx-auto grid w-full max-w-[1400px] gap-4 ${
+        className={`mx-auto grid w-full gap-4 ${
           sidebarOpen && !isMobile ? 'lg:grid-cols-[260px_minmax(0,1fr)]' : 'lg:grid-cols-[0px_minmax(0,1fr)]'
         }`}>
         <aside
@@ -376,7 +376,7 @@ const Hero = () => {
 
 const CategoryStrip = () => {
   return (
-    <section className='mx-auto w-full max-w-[1400px] space-y-6 bg-white px-3 sm:px-4 md:px-0'>
+    <section className='w-full space-y-6 bg-white'>
       {/* <div className='mb-6 text-center'>
         <div className='mb-3 flex items-center justify-center gap-2'>
           <div className='h-px w-8 bg-[#E6D3C2]' />
@@ -450,7 +450,7 @@ const FeaturedSlider = () => {
   );
 
   return (
-    <section className='mx-auto w-full max-w-[1400px] space-y-4 bg-white px-3 sm:px-4 md:px-0'>
+    <section className='w-full space-y-4 bg-white'>
       <div className='border-b border-web pb-3'>
         <SectionHeader title='New Products' rightSlot={rightSlot} />
       </div>
@@ -475,34 +475,34 @@ const FeaturedSlider = () => {
 
 const TrendingProducts = () => {
   const rightSlot = (
-    <div className='flex items-center gap-6 text-[#1F3B29]'>
-      <div className='flex gap-3'>
+    <div className='flex items-center gap-3 sm:gap-4 md:gap-6 text-[#1F3B29]'>
+      <div className='flex gap-2 sm:gap-3'>
         <button
           type='button'
-          className='trending-prev-btn flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-web bg-white'>
-          <ChevronLeft size={18} />
+          className='trending-prev-btn flex h-7 w-7 sm:h-8 sm:w-8 cursor-pointer items-center justify-center rounded-full border border-web bg-white transition-all hover:scale-110 active:scale-95'>
+          <ChevronLeft size={16} className='sm:w-[18px] sm:h-[18px]' />
         </button>
         <button
           type='button'
-          className='trending-next-btn flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-web bg-white'>
-          <ChevronRight size={18} />
+          className='trending-next-btn flex h-7 w-7 sm:h-8 sm:w-8 cursor-pointer items-center justify-center rounded-full border border-web bg-white transition-all hover:scale-110 active:scale-95'>
+          <ChevronRight size={16} className='sm:w-[18px] sm:h-[18px]' />
         </button>
       </div>
-      <button type='button' className='cursor-pointer inline-flex items-center gap-1 text-xs font-semibold text-[#1F3B29]'>
+      <button type='button' className='cursor-pointer inline-flex items-center gap-1 text-[10px] sm:text-xs font-semibold text-[#1F3B29] whitespace-nowrap'>
         View all
-        <ChevronRight size={16} />
+        <ChevronRight size={14} className='sm:w-4 sm:h-4' />
       </button>
     </div>
   );
 
   return (
-    <section className='mx-auto max-w-[1400px] space-y-4 px-3 sm:px-0'>
+    <section className='w-full space-y-4 bg-white'>
       <div className='border-b border-web pb-3'>
         <SectionHeader title='Trending Products' rightSlot={rightSlot} />
       </div>
-      <div className='grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 pb-2'>
+      <div className='grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4 pb-2'>
         {trendingPro.map(product => (
-          <ProductCard key={product.id} product={product} />
+          <ProductCard key={product.id} product={product} className='min-w-0 w-full' />
         ))}
       </div>
     </section>
@@ -511,8 +511,8 @@ const TrendingProducts = () => {
 
 const PromoShowcase = () => {
   return (
-    <section className='w-full bg-[#F3F5F7] p-4 sm:p-6 md:p-8'>
-      <div className='grid items-center gap-6 md:grid-cols-2 max-w-[1400px] mx-auto'>
+    <section className='w-full bg-[#F3F5F7]'>
+      <div className='grid items-center gap-6 md:grid-cols-2 w-full py-8 sm:py-10 md:py-12'>
         <div className='flex gap-4'>
           <img
             src='https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1200&q=80'
@@ -546,7 +546,7 @@ const PromoShowcase = () => {
 
 const Collections = () => {
   return (
-    <section className='mx-auto w-full max-w-[1400px] px-3 sm:px-4 md:px-0'>
+    <section className='w-full'>
       <div className='border-b border-web pb-3'>
         <SectionHeader title='Dazzel in Every Moment' actionLabel='View all' />
       </div>
@@ -599,7 +599,7 @@ const Collections = () => {
 
 const Updates = () => {
   return (
-    <section className='mx-auto w-full max-w-[1400px] px-3 sm:px-4 md:px-0'>
+    <section className='w-full'>
       <div className='border-b border-web pb-3'>
         <SectionHeader title='Our News & Updates' actionLabel='View all' />
       </div>
@@ -628,7 +628,7 @@ const Updates = () => {
 
 const Gallery = () => {
   return (
-    <section className='mx-auto w-full max-w-[1400px] px-3 sm:px-4 md:px-6 lg:px-0'>
+    <section className='w-full'>
       <SectionHeader title='Gallery' align='center' description='A glimpse into our recent shoots and studio moments.' />
 
       <div className='mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4'>
@@ -644,7 +644,7 @@ const Gallery = () => {
 
 const WhyChooseUs = () => {
   return (
-    <section className='mx-auto w-full max-w-[1400px] px-3 sm:px-4 md:px-0'>
+    <section className='w-full'>
       <SectionHeader
         title='Why Choose Us'
         description='Experience the difference with our premium services and commitment to excellence.'
@@ -666,7 +666,7 @@ const WhyChooseUs = () => {
 
 const BestSellers = () => {
   return (
-    <section className='mx-auto max-w-[1400px] space-y-6 px-3 sm:px-0'>
+    <section className='w-full space-y-6'>
       <div className='border-b border-web pb-3'>
         <SectionHeader title='Best Sellers' description='Our most loved products' actionLabel='View all' />
       </div>
@@ -681,7 +681,7 @@ const BestSellers = () => {
 
 const Testimonials = () => {
   return (
-    <section className='mx-auto w-full max-w-[1400px] px-3 sm:px-4 md:px-0'>
+    <section className='w-full'>
       <SectionHeader
         title='What Our Customers Say'
         description="Don't just take our word for it — hear from our satisfied customers."
@@ -720,7 +720,7 @@ const Subscribe = () => {
       }}>
       <div className='absolute inset-0 bg-black/30' />
 
-      <div className='relative mx-auto max-w-4xl px-4 text-center text-white sm:px-6 lg:px-8'>
+      <div className='relative mx-auto max-w-4xl w-full text-center text-white'>
         <h3 className='mb-4 text-xl sm:text-2xl'>Stay Informed with Our</h3>
         <p className='mb-8 text-3xl font-light sm:text-4xl'>Latest News and Updates</p>
 

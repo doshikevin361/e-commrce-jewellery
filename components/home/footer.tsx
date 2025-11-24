@@ -68,7 +68,7 @@ export function HomeFooter() {
 
   return (
     <footer className='bg-white'>
-      <div className='mx-auto max-w-7xl px-4 sm:px-5 md:px-6 py-8 sm:py-10 md:py-12'>
+      <div className='mx-auto max-w-[1400px] px-4 sm:px-6 md:px-8 lg:px-12 py-8 sm:py-10 md:py-12'>
         <div className='flex flex-col gap-8 sm:gap-10 lg:flex-row lg:items-start lg:justify-between'>
           <div className='w-full sm:w-auto'>
             <div className='mb-4 sm:mb-5 md:mb-6 flex items-center gap-2'>
@@ -118,7 +118,7 @@ export function HomeFooter() {
       </div>
 
       <div className='bg-[#1F3B29] py-3 sm:py-4 text-white'>
-        <div className='mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 sm:gap-4 px-4 sm:px-5 md:px-6 text-xs sm:text-sm text-white/80 md:flex-row'>
+        <div className='mx-auto flex max-w-[1400px] flex-col items-center justify-between gap-3 sm:gap-4 px-4 sm:px-6 md:px-8 lg:px-12 text-xs sm:text-sm text-white/80 md:flex-row'>
           <p className='text-center md:text-left'>
             Copyright ©2024 <span className='text-white'>LuxeLoom</span>. All rights reserved.
           </p>

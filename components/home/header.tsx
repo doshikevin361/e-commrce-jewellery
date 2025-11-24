@@ -93,7 +93,7 @@ export function HomeHeader() {
   return (
     <header className='bg-white sticky top-0 z-50 shadow-sm'>
       {/* Top bar with logo, search, and account/cart */}
-      <div className='mx-auto mb-2 sm:mb-3 md:mb-4 flex w-full max-w-full items-center justify-between gap-2 sm:gap-3 md:gap-4 px-3 sm:px-4 md:px-6 py-2 sm:py-2.5 md:py-3 pt-3 sm:pt-4 md:pt-6 lg:pt-8 lg:max-w-[1400px] lg:px-0'>
+      <div className='mx-auto mb-2 sm:mb-3 md:mb-4 flex w-full max-w-[1400px] items-center justify-between gap-2 sm:gap-3 md:gap-4 px-4 sm:px-6 md:px-8 lg:px-12 py-2 sm:py-2.5 md:py-3 pt-3 sm:pt-4 md:pt-6 lg:pt-8'>
         <Link
           href='/'
           className='flex items-center gap-1 sm:gap-1.5 md:gap-2 flex-shrink-0 transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer'>
@@ -129,13 +129,13 @@ export function HomeHeader() {
       </div>
 
       {/* Mobile Search Bar */}
-      <div className='sm:hidden px-3 pb-2 sm:pb-3'>
+      <div className='sm:hidden px-4 sm:px-6 pb-2 sm:pb-3'>
         <SearchBar />
       </div>
 
       {/* Navigation Menu Bar - Exact style from hero section */}
       <nav className='w-full bg-[#1F3B29] text-white duration-700 relative'>
-        <div className='mx-auto flex w-full max-w-full items-center justify-between px-3 sm:px-0  py-2 sm:py-2.5 md:py-3 lg:py-4  lg:max-w-[1400px] lg:px-0'>
+        <div className='mx-auto flex w-full max-w-[1400px] items-center justify-between px-4 sm:px-6 md:px-8 lg:px-12 py-2 sm:py-2.5 md:py-3 lg:py-4'>
           {/* Mobile Menu Button */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -274,7 +274,7 @@ export function HomeHeader() {
           className={`lg:hidden overflow-hidden transition-all duration-300 ease-in-out ${
             mobileMenuOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
           }`}>
-          <div className='px-3 py-3 bg-[#1F3B29] border-t border-white/10'>
+          <div className='px-4 sm:px-6 py-3 bg-[#1F3B29] border-t border-white/10'>
             <ul className='flex flex-col gap-1'>
               {menuItems.map(item => (
                 <li key={item.name}>
