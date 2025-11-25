@@ -1,6 +1,6 @@
 'use client';
 
-import { Diamond, ShoppingCart, User, Menu, X, ChevronDown, Heart } from 'lucide-react';
+import { Diamond, ShoppingCart, User, Menu, X, ChevronDown, Heart, List } from 'lucide-react';
 import SearchBar from './SearchBar/SearchBar';
 import Link from 'next/link';
 import { useState, useEffect, useRef, useContext } from 'react';
@@ -167,7 +167,7 @@ export function HomeHeader() {
               }}
               className='flex w-auto md:w-[200px] lg:w-[270px] items-center gap-1.5 md:gap-2 cursor-pointer transition-all duration-300 hover:bg-white/10 active:scale-95 px-3 md:px-4 py-2 rounded-lg font-medium flex-shrink-0 group'
               aria-label='Categories'>
-              <Grid2x2CheckIcon
+              <List
                 size={17}
                 className='md:w-[17px] md:h-[17px] lg:w-[18px] lg:h-[18px] flex-shrink-0 transition-transform duration-300 group-hover:rotate-90'
               />
@@ -205,7 +205,7 @@ export function HomeHeader() {
                     <span
                       className='
         pointer-events-none
-        absolute bottom-0 left-0 right-0 
+        absolute bottom-0 left-4 right-4 
         h-[2px] bg-white 
         scale-x-0 origin-left
         group-hover:scale-x-100 
