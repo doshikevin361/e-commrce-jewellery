@@ -99,3 +99,4 @@ export const ProductCard = ({ product, className, actionLabel = 'Add to cart' }:
     </article>
   );
 };
+

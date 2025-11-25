@@ -206,19 +206,23 @@ export const HomePage = () => {
     { key: 'updates', node: <Updates /> },
     { key: 'why', node: <WhyChooseUs /> },
     { key: 'gallery', node: <Gallery /> },
-    { key: 'subscribe', node: <Subscribe /> },
   ];
 
   return (
-    <div className='mx-auto flex w-full max-w-[1400px] flex-col gap-0 px-4 sm:px-6 md:px-8 lg:px-12'>
-      <Hero />
-      <CategoryStrip />
-      {laterSections.map(({ key, node }) => (
-        <div key={key} className={SECTION_SPACING}>
-          {node}
-        </div>
-      ))}
-    </div>
+    <>
+      <div className='mx-auto flex w-full max-w-[1400px] flex-col gap-0 px-4 sm:px-6 md:px-8 lg:px-12'>
+        <Hero />
+        <CategoryStrip />
+        {laterSections.map(({ key, node }) => (
+          <div key={key} className={SECTION_SPACING}>
+            {node}
+          </div>
+        ))}
+      </div>
+      <div className='mt-12 sm:mt-16 lg:mt-20'>
+        <Subscribe />
+      </div>
+    </>
   );
 };
 
@@ -327,7 +331,7 @@ const Hero = () => {
 
         <div className='w-full'>
           <Swiper
-            onSwiper={(swiper) => {
+            onSwiper={swiper => {
               heroSwiperRef.current = swiper;
             }}
             modules={[Pagination]}
@@ -481,7 +485,9 @@ const FeaturedSlider = () => {
           <ChevronRight size={18} />
         </button>
       </div>
-      <Link href='/products' className='cursor-pointer inline-flex items-center gap-1 text-xs font-semibold text-[#1F3B29] hover:text-[#C8A15B] transition-colors'>
+      <Link
+        href='/products'
+        className='cursor-pointer inline-flex items-center gap-1 text-xs font-semibold text-[#1F3B29] hover:text-[#C8A15B] transition-colors'>
         View all
         <ChevronRight size={16} />
       </Link>
@@ -494,7 +500,7 @@ const FeaturedSlider = () => {
         <SectionHeader title='New Products' rightSlot={rightSlot} />
       </div>
       <Swiper
-        onSwiper={(swiper) => {
+        onSwiper={swiper => {
           swiperRef.current = swiper;
         }}
         modules={[]}
@@ -526,7 +532,9 @@ const TrendingProducts = () => {
           <ChevronRight size={16} className='sm:w-[18px] sm:h-[18px]' />
         </button>
       </div>
-      <Link href='/trending' className='cursor-pointer inline-flex items-center gap-1 text-[10px] sm:text-xs font-semibold text-[#1F3B29] whitespace-nowrap hover:text-[#C8A15B] transition-colors'>
+      <Link
+        href='/trending'
+        className='cursor-pointer inline-flex items-center gap-1 text-[10px] sm:text-xs font-semibold text-[#1F3B29] whitespace-nowrap hover:text-[#C8A15B] transition-colors'>
         View all
         <ChevronRight size={14} className='sm:w-4 sm:h-4' />
       </Link>
@@ -573,7 +581,9 @@ const PromoShowcase = () => {
             These adornments are worn around the neck and come in various lengths. Each piece is crafted to feel light yet luxurious.
           </p>
 
-          <Link href='/products' className='inline-block mt-6 rounded-full bg-[#1F3B29] px-6 py-2 text-sm text-white hover:bg-[#2a4d3a] transition-colors'>
+          <Link
+            href='/products'
+            className='inline-block mt-6 rounded-full bg-[#1F3B29] px-6 py-2 text-sm text-white hover:bg-[#2a4d3a] transition-colors'>
             Explore More
           </Link>
         </div>
@@ -586,7 +596,7 @@ const Collections = () => {
   return (
     <section className='w-full'>
       <div className='border-b border-web pb-3'>
-        <SectionHeader title='Dazzel in Every Moment' actionLabel='View all' onActionClick={() => window.location.href = '/products'} />
+        <SectionHeader title='Dazzel in Every Moment' actionLabel='View all' onActionClick={() => (window.location.href = '/products')} />
       </div>
 
       <div className='mt-6 grid grid-cols-1 gap-4 md:grid-cols-2'>
@@ -639,7 +649,7 @@ const Updates = () => {
   return (
     <section className='w-full'>
       <div className='border-b border-web pb-3'>
-        <SectionHeader title='Our News & Updates' actionLabel='View all' onActionClick={() => window.location.href = '/blog'} />
+        <SectionHeader title='Our News & Updates' actionLabel='View all' onActionClick={() => (window.location.href = '/blog')} />
       </div>
       <div className='grid grid-cols-1 gap-6 py-8 sm:grid-cols-2 lg:grid-cols-3'>
         {blogCards.map(card => (

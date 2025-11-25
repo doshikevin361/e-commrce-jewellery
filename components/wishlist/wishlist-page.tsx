@@ -64,14 +64,6 @@ export function WishlistPage() {
                 <Trash2 size={18} className='text-[#4F3A2E] group-hover/btn:text-red-600' />
               </button>
             </div>
-            <div className='mt-3 flex gap-2'>
-              <Link
-                href={`/products/${product.id}`}
-                className='flex-1 flex items-center justify-center gap-2 rounded-full bg-[#1F3B29] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#2a4d3a] transition-colors'>
-                <ShoppingCart size={16} />
-                Add to Cart
-              </Link>
-            </div>
           </div>
         ))}
       </div>
@@ -96,4 +88,3 @@ export function WishlistPage() {
     </div>
   );
 }
-
