@@ -4,8 +4,7 @@ import { Analytics } from '@vercel/analytics/next';
 import { ThemeProvider } from '@/components/theme-provider';
 import { SettingsProvider } from '@/components/settings/settings-provider';
 import { CategoriesProvider } from '@/contexts/CategoriesContext';
-import { HomeHeader } from '@/components/home/header';
-import { HomeFooter } from '@/components/home/footer';
+import { WebsiteLayout } from '@/components/layout/website-layout';
 import { ScrollToTop } from '@/components/scroll-to-top';
 import './globals.css';
 import 'react-toastify/dist/ReactToastify.css';
@@ -14,6 +13,7 @@ import { ToastContainer } from 'react-toastify';
 
 const _geist = Geist({ subsets: ['latin'] });
 const _geistMono = Geist_Mono({ subsets: ['latin'] });
+
 
 export const metadata: Metadata = {
   title: 'LuxeLoom - Exquisite Jewelry Collection',
@@ -50,7 +50,7 @@ export default function RootLayout({
           <SettingsProvider>
             <CategoriesProvider>
               <ScrollToTop />
-              <main className='w-full overflow-x-hidden'>{children}</main>
+              <WebsiteLayout>{children}</WebsiteLayout>
             </CategoriesProvider>
           </SettingsProvider>
         </ThemeProvider>
