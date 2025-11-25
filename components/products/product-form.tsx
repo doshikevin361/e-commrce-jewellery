@@ -29,7 +29,7 @@ interface Product {
   dimensions: string;
   shippingClass: string;
   processingTime: string;
-  product_type: 'Physical Product' | 'Digital Product' | 'External / Affiliate Product';
+  product_type: 'Gold' | 'Silver' | 'Platinum';
   free_shipping: boolean;
   allow_return: boolean;
   return_policy: string;
@@ -82,7 +82,7 @@ const INITIAL_PRODUCT: Product = {
   dimensions: '',
   shippingClass: 'Standard',
   processingTime: '1-2 days',
-  product_type: 'Physical Product',
+  product_type: 'Gold',
   free_shipping: false,
   allow_return: false,
   return_policy: '',
@@ -323,9 +323,9 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
                     required
                   >
                     <option value="">Select Product Type</option>
-                    <option value="Physical Product">Physical Product</option>
-                    <option value="Digital Product">Digital Product</option>
-                    <option value="External / Affiliate Product">External / Affiliate Product</option>
+                    <option value="Gold">Gold</option>
+                    <option value="Silver">Silver</option>
+                    <option value="Platinum">Platinum</option>
                   </select>
                 </div>
                 <div>

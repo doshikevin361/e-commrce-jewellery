@@ -79,7 +79,8 @@ const bestSellers: ProductCardData[] = [
   },
 ];
 
-const heroSlides = [
+// Default fallback banners if no banners are available from backend
+const defaultHeroSlides = [
   {
     id: 1,
     main: {
@@ -248,6 +249,49 @@ const Hero = () => {
   const { sidebarOpen, mobileCategoriesOpen, setMobileCategoriesOpen } = useCategories();
   const [isMobile, setIsMobile] = useState(false);
   const heroSwiperRef = useRef<SwiperType | null>(null);
+  const [heroSlides, setHeroSlides] = useState(defaultHeroSlides);
+  const [loadingBanners, setLoadingBanners] = useState(true);
+
+  // Fetch banners from backend
+  useEffect(() => {
+    const fetchBanners = async () => {
+      try {
+        const response = await fetch('/api/homepage/banners');
+        if (response.ok) {
+          const banners = await response.json();
+          if (Array.isArray(banners) && banners.length > 0) {
+            // Transform backend banners to match the hero slide format
+            const transformedBanners = banners.map((banner: any, index: number) => ({
+              id: banner._id || index + 1,
+              main: {
+                image: banner.image || defaultHeroSlides[0].main.image,
+                subtitle: '', // You can add a subtitle field to banner model if needed
+                title: banner.title || '',
+                description: banner.description || '',
+                buttonText: banner.buttonText || 'Shop Now',
+              },
+              side: {
+                image: banner.image || defaultHeroSlides[0].side.image, // Using same image for side, or add a second image field
+                subtitle: '',
+                title: banner.title || '',
+                description: banner.description || '',
+                buttonText: banner.buttonText || 'See more products',
+              },
+              link: banner.link || '/products',
+            }));
+            setHeroSlides(transformedBanners);
+          }
+        }
+      } catch (error) {
+        console.error('[v0] Failed to fetch homepage banners:', error);
+        // Keep using default banners on error
+      } finally {
+        setLoadingBanners(false);
+      }
+    };
+
+    fetchBanners();
+  }, []);
 
   useEffect(() => {
     // Set initial mobile state after mount to avoid hydration mismatch
@@ -335,71 +379,81 @@ const Hero = () => {
         </aside>
 
         <div className='w-full'>
-          <Swiper
-            onSwiper={swiper => {
-              heroSwiperRef.current = swiper;
-            }}
-            onBeforeDestroy={swiper => {
-              // Prevent Swiper from removing DOM nodes that React manages
-              if (heroSwiperRef.current === swiper) {
-                heroSwiperRef.current = null;
-              }
-            }}
-            modules={[Pagination]}
-            spaceBetween={0}
-            slidesPerView={1}
-            loop
-            pagination={{ clickable: true, dynamicBullets: true }}
-            className='hero-swiper !pb-10'>
-            {heroSlides.map(slide => (
-              <SwiperSlide key={slide.id}>
-                <div className='grid w-full grid-cols-1 gap-4 lg:grid-cols-[1.65fr_0.9fr]'>
-                  <div className='relative flex min-h-[320px] flex-col justify-center overflow-hidden rounded-2xl px-8 py-10 text-white'>
-                    <Image
-                      src={slide.main.image}
-                      alt={slide.main.title}
-                      fill
-                      priority={slide.id === 1}
-                      sizes='(max-width: 768px) 100vw, (max-width: 1024px) 70vw, 70vw'
-                      className='object-cover'
-                    />
-                    <div className='absolute inset-0 bg-black/40' />
-                    <div className='relative z-10 space-y-4'>
-                      <p className='text-xs uppercase tracking-[0.3em] text-white/80'>{slide.main.subtitle}</p>
-                      <h1 className='text-3xl font-bold text-white sm:text-4xl lg:text-5xl'>{slide.main.title}</h1>
-                      <p className='max-w-lg text-sm text-white/90 sm:text-base'>{slide.main.description}</p>
-                      <Link
-                        href='/products'
-                        className='inline-flex items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-semibold text-[#1F3B29] hover:bg-[#F5EEE5] transition-colors'>
-                        {slide.main.buttonText}
-                      </Link>
+          {loadingBanners ? (
+            <div className='flex items-center justify-center min-h-80 rounded-2xl bg-gray-100'>
+              <p className='text-gray-500'>Loading banners...</p>
+            </div>
+          ) : (
+            <Swiper
+              onSwiper={swiper => {
+                heroSwiperRef.current = swiper;
+              }}
+              onBeforeDestroy={swiper => {
+                // Prevent Swiper from removing DOM nodes that React manages
+                if (heroSwiperRef.current === swiper) {
+                  heroSwiperRef.current = null;
+                }
+              }}
+              modules={[Pagination]}
+              spaceBetween={0}
+              slidesPerView={1}
+              loop
+              pagination={{ clickable: true, dynamicBullets: true }}
+              className='hero-swiper pb-10!'>
+              {heroSlides.map(slide => (
+                <SwiperSlide key={slide.id}>
+                  <div className='grid w-full grid-cols-1 gap-4 lg:grid-cols-[1.65fr_0.9fr]'>
+                    <div className='relative flex min-h-80 flex-col justify-center overflow-hidden rounded-2xl px-8 py-10 text-white'>
+                      <Image
+                        src={slide.main.image}
+                        alt={slide.main.title}
+                        fill
+                        priority={slide.id === 1 || slide.id === heroSlides[0]?.id}
+                        sizes='(max-width: 768px) 100vw, (max-width: 1024px) 70vw, 70vw'
+                        className='object-cover'
+                      />
+                      <div className='absolute inset-0 bg-black/40' />
+                      <div className='relative z-10 space-y-4'>
+                        {slide.main.subtitle && (
+                          <p className='text-xs uppercase tracking-[0.3em] text-white/80'>{slide.main.subtitle}</p>
+                        )}
+                        <h1 className='text-3xl font-bold text-white sm:text-4xl lg:text-5xl'>{slide.main.title}</h1>
+                        <p className='max-w-lg text-sm text-white/90 sm:text-base'>{slide.main.description}</p>
+                        <Link
+                          href={(slide as any).link || '/products'}
+                          className='inline-flex items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-semibold text-[#1F3B29] hover:bg-[#F5EEE5] transition-colors'>
+                          {slide.main.buttonText}
+                        </Link>
+                      </div>
                     </div>
-                  </div>
 
-                  <div className='relative flex min-h-[240px] flex-col justify-end overflow-hidden rounded-2xl px-6 py-6 text-white'>
-                    <Image
-                      src={slide.side.image}
-                      alt={slide.side.title}
-                      fill
-                      sizes='(max-width: 768px) 100vw, (max-width: 1024px) 35vw, 35vw'
-                      className='object-cover'
-                    />
-                    <div className='absolute inset-0 bg-black/40' />
-                    <div className='relative z-10 space-y-2'>
-                      <p className='text-[11px] uppercase tracking-[0.3em] text-white/80'>{slide.side.subtitle}</p>
-                      <h2 className='text-2xl font-semibold text-white'>{slide.side.title}</h2>
-                      <p className='text-xs text-white/80'>{slide.side.description}</p>
-                      <Link
-                        href='/products'
-                        className='inline-flex items-center justify-center rounded-full bg-white/20 px-4 py-2 text-xs font-semibold text-white hover:bg-white/30 transition-colors'>
-                        {slide.side.buttonText}
-                      </Link>
+                    <div className='relative flex min-h-60 flex-col justify-end overflow-hidden rounded-2xl px-6 py-6 text-white'>
+                      <Image
+                        src={slide.side.image}
+                        alt={slide.side.title}
+                        fill
+                        sizes='(max-width: 768px) 100vw, (max-width: 1024px) 35vw, 35vw'
+                        className='object-cover'
+                      />
+                      <div className='absolute inset-0 bg-black/40' />
+                      <div className='relative z-10 space-y-2'>
+                        {slide.side.subtitle && (
+                          <p className='text-[11px] uppercase tracking-[0.3em] text-white/80'>{slide.side.subtitle}</p>
+                        )}
+                        <h2 className='text-2xl font-semibold text-white'>{slide.side.title}</h2>
+                        <p className='text-xs text-white/80'>{slide.side.description}</p>
+                        <Link
+                          href={(slide as any).link || '/products'}
+                          className='inline-flex items-center justify-center rounded-full bg-white/20 px-4 py-2 text-xs font-semibold text-white hover:bg-white/30 transition-colors'>
+                          {slide.side.buttonText}
+                        </Link>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </SwiperSlide>
-            ))}
-          </Swiper>
+                </SwiperSlide>
+              ))}
+            </Swiper>
+          )}
         </div>
       </section>
     </>
@@ -427,13 +481,13 @@ const CategoryStrip = () => {
             key={item.name}
             href={`/products?category=${encodeURIComponent(item.name)}`}
             className='group flex flex-col items-center gap-3 transition-transform duration-300 hover:scale-105'>
-            <div className='relative aspect-square w-full overflow-hidden rounded-full bg-gradient-to-br from-[#F5EEE5] to-white shadow-lg ring-2 ring-[#E6D3C2] transition-shadow duration-300 group-hover:shadow-xl group-hover:ring-[#C8A15B]'>
+            <div className='relative aspect-square w-full overflow-hidden rounded-full bg-linear-to-br from-[#F5EEE5] to-white shadow-lg ring-2 ring-[#E6D3C2] transition-shadow duration-300 group-hover:shadow-xl group-hover:ring-[#C8A15B]'>
               <img
                 src={item.image}
                 alt={item.name}
                 className='h-full w-full object-cover transition-transform duration-300 group-hover:scale-110'
               />
-              <div className='absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100' />
+              <div className='absolute inset-0 bg-linear-to-t from-black/20 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100' />
             </div>
             <h3 className='text-center text-sm font-semibold tracking-wide text-[#1F3B29] transition-colors duration-300 group-hover:text-[#C8A15B] sm:text-base'>
               {item.name}
@@ -463,6 +517,46 @@ const FeaturedSlider = () => {
   const swiperRef = useRef<SwiperType | null>(null);
   const prevButtonRef = useRef<HTMLButtonElement>(null);
   const nextButtonRef = useRef<HTMLButtonElement>(null);
+  const [products, setProducts] = useState<ProductCardData[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const response = await fetch('/api/homepage/products?type=new');
+        if (response.ok) {
+          const data = await response.json();
+          if (Array.isArray(data) && data.length > 0) {
+            // Transform backend products to ProductCardData format
+            const transformedProducts: ProductCardData[] = data.map((product: any) => ({
+              id: product._id,
+              title: product.name,
+              category: product.category,
+              price: `$${product.sellingPrice?.toFixed(2) || '0.00'}`,
+              originalPrice: product.regularPrice > product.sellingPrice ? `$${product.regularPrice?.toFixed(2)}` : undefined,
+              rating: 4.8, // Default rating since we don't have reviews yet
+              reviews: 0,
+              image: product.mainImage || 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=1200&q=80',
+              badge: product.featured ? 'Featured' : undefined,
+            }));
+            setProducts(transformedProducts);
+          } else {
+            // Fallback to dummy data if no products
+            setProducts(featuredProducts);
+          }
+        } else {
+          setProducts(featuredProducts);
+        }
+      } catch (error) {
+        console.error('[v0] Failed to fetch new products:', error);
+        setProducts(featuredProducts);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -513,31 +607,82 @@ const FeaturedSlider = () => {
       <div className='border-b border-web pb-3'>
         <SectionHeader title='New Products' rightSlot={rightSlot} />
       </div>
-      <Swiper
-        onSwiper={swiper => {
-          swiperRef.current = swiper;
-        }}
-        onBeforeDestroy={swiper => {
-          // Prevent Swiper from removing DOM nodes that React manages
-          if (swiperRef.current === swiper) {
-            swiperRef.current = null;
-          }
-        }}
-        modules={[]}
-        spaceBetween={20}
-        slidesPerView='auto'
-        className='pb-2'>
-        {featuredProducts.map(product => (
-          <SwiperSlide key={product.id} style={{ width: 'auto' }}>
-            <ProductCard product={product} />
-          </SwiperSlide>
-        ))}
-      </Swiper>
+      {loading ? (
+        <div className='flex items-center justify-center py-8'>
+          <p className='text-gray-500'>Loading products...</p>
+        </div>
+      ) : products.length === 0 ? (
+        <div className='flex items-center justify-center py-8'>
+          <p className='text-gray-500'>No products available</p>
+        </div>
+      ) : (
+        <Swiper
+          onSwiper={swiper => {
+            swiperRef.current = swiper;
+          }}
+          onBeforeDestroy={swiper => {
+            // Prevent Swiper from removing DOM nodes that React manages
+            if (swiperRef.current === swiper) {
+              swiperRef.current = null;
+            }
+          }}
+          modules={[]}
+          spaceBetween={20}
+          slidesPerView='auto'
+          className='pb-2'>
+          {products.map(product => (
+            <SwiperSlide key={product.id} style={{ width: 'auto' }}>
+              <ProductCard product={product} />
+            </SwiperSlide>
+          ))}
+        </Swiper>
+      )}
     </section>
   );
 };
 
 const TrendingProducts = () => {
+  const [products, setProducts] = useState<ProductCardData[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchTrendingProducts = async () => {
+      try {
+        const response = await fetch('/api/homepage/products?type=trending');
+        if (response.ok) {
+          const data = await response.json();
+          if (Array.isArray(data) && data.length > 0) {
+            // Transform backend products to ProductCardData format
+            const transformedProducts: ProductCardData[] = data.map((product: any) => ({
+              id: product._id,
+              title: product.name,
+              category: product.category,
+              price: `$${product.sellingPrice?.toFixed(2) || '0.00'}`,
+              originalPrice: product.regularPrice > product.sellingPrice ? `$${product.regularPrice?.toFixed(2)}` : undefined,
+              rating: 4.8, // Default rating since we don't have reviews yet
+              reviews: 0,
+              image: product.mainImage || 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=1200&q=80',
+              badge: 'Trending',
+            }));
+            setProducts(transformedProducts);
+          } else {
+            // Fallback to dummy data if no products
+            setProducts(trendingPro);
+          }
+        } else {
+          setProducts(trendingPro);
+        }
+      } catch (error) {
+        console.error('[v0] Failed to fetch trending products:', error);
+        setProducts(trendingPro);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTrendingProducts();
+  }, []);
+
   const rightSlot = (
     <div className='flex items-center gap-3 sm:gap-4 md:gap-6 text-[#1F3B29]'>
       <div className='flex gap-2 sm:gap-3'>
@@ -566,11 +711,21 @@ const TrendingProducts = () => {
       <div className='border-b border-web pb-3'>
         <SectionHeader title='Trending Products' rightSlot={rightSlot} />
       </div>
-      <div className='grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4 pb-2'>
-        {trendingPro.map(product => (
-          <ProductCard key={product.id} product={product} className='min-w-0 w-full' />
-        ))}
-      </div>
+      {loading ? (
+        <div className='flex items-center justify-center py-8'>
+          <p className='text-gray-500'>Loading trending products...</p>
+        </div>
+      ) : products.length === 0 ? (
+        <div className='flex items-center justify-center py-8'>
+          <p className='text-gray-500'>No trending products available</p>
+        </div>
+      ) : (
+        <div className='grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4 pb-2'>
+          {products.map(product => (
+            <ProductCard key={product.id} product={product} className='min-w-0 w-full' />
+          ))}
+        </div>
+      )}
     </section>
   );
 };

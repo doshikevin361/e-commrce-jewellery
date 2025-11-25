@@ -296,7 +296,8 @@ export function ProductList() {
     if (typeof value !== 'number') return '-';
     return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(value);
   };
-  const isJewelleryDialogProduct = viewProductData?.product_type === 'Jewellery';
+  // All products are jewellery now (Gold, Silver, Platinum)
+  const isJewelleryDialogProduct = true;
 
   const fetchProductDetails = async (id: string) => {
     try {

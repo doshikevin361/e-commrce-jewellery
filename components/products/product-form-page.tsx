@@ -16,10 +16,9 @@ import { cn, getPlainTextFromHtml } from '@/lib/utils';
 import { useSettings } from '@/components/settings/settings-provider';
 
 const PRODUCT_TYPE_OPTIONS = [
-  { label: 'Physical Product', value: 'Physical Product' },
-  { label: 'Digital Product', value: 'Digital Product' },
-  { label: 'External / Affiliate Product', value: 'External / Affiliate Product' },
-  { label: 'Jewellery', value: 'Jewellery' },
+  { label: 'Gold', value: 'Gold' },
+  { label: 'Silver', value: 'Silver' },
+  { label: 'Platinum', value: 'Platinum' },
 ] as const;
 
 const WHOLESALE_PRICE_TYPE_OPTIONS = [
@@ -92,6 +91,7 @@ interface Product {
   status: string;
   visibility: string;
   featured: boolean;
+  trending: boolean;
   allowReviews: boolean;
   returnPolicyDays: number;
   warrantyPeriod: string;
@@ -121,7 +121,7 @@ const INITIAL_PRODUCT: Product = {
   dimensions: '',
   shippingClass: 'Standard',
   processingTime: '1-2 days',
-  product_type: 'Physical Product',
+  product_type: 'Gold',
   free_shipping: false,
   allow_return: false,
   return_policy: '',
@@ -144,6 +144,7 @@ const INITIAL_PRODUCT: Product = {
   status: 'active',
   visibility: 'Public',
   featured: false,
+  trending: false,
   allowReviews: true,
   returnPolicyDays: 30,
   warrantyPeriod: '1 year',
@@ -159,18 +160,12 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
   const { toast } = useToast();
   const { settings } = useSettings();
   
-  // Filter product type options based on settings
-  const availableProductTypes = settings.productType
-    ? PRODUCT_TYPE_OPTIONS.filter(option => option.value !== 'Jewellery')
-    : [{ label: 'Jewellery', value: 'Jewellery' }];
-  
   const [formData, setFormData] = useState<Product>({
     ...INITIAL_PRODUCT,
     tags: [],
     galleryImages: [],
     variants: [],
     relatedProducts: [],
-    product_type: settings.productType ? INITIAL_PRODUCT.product_type : 'Jewellery',
   });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -418,22 +413,18 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
-    const isJewelleryProduct = formData.product_type === 'Jewellery';
 
     if (!formData.product_type?.trim()) newErrors.product_type = 'Product type is required';
     if (!formData.name?.trim()) newErrors.name = 'Product name is required';
     if (!formData.sku?.trim()) newErrors.sku = 'SKU is required';
     if (!formData.shortDescription?.trim()) newErrors.shortDescription = 'Short description is required';
     if (!getPlainTextFromHtml(formData.longDescription)) newErrors.longDescription = 'Long description is required';
-    if (!isJewelleryProduct) {
-      if (formData.regularPrice <= 0) newErrors.regularPrice = 'Regular price must be greater than 0';
-      if (formData.sellingPrice <= 0) newErrors.sellingPrice = 'Selling price must be greater than 0';
-      if (formData.sellingPrice > formData.regularPrice) newErrors.sellingPrice = 'Selling price cannot exceed regular price';
-    } else {
-      if (formData.jewelleryWeight <= 0) newErrors.jewelleryWeight = 'Weight is required for jewellery';
-      if (!formData.jewelleryPurity?.trim()) newErrors.jewelleryPurity = 'Purity is required for jewellery';
-      if (formData.jewelleryMakingCharges <= 0) newErrors.jewelleryMakingCharges = 'Making charges must be greater than 0';
-    }
+    
+    // All products are jewellery now (Gold, Silver, Platinum)
+    if (formData.jewelleryWeight <= 0) newErrors.jewelleryWeight = 'Weight is required for jewellery';
+    if (!formData.jewelleryPurity?.trim()) newErrors.jewelleryPurity = 'Purity is required for jewellery';
+    if (formData.jewelleryMakingCharges <= 0) newErrors.jewelleryMakingCharges = 'Making charges must be greater than 0';
+    
     if (formData.stock < 0) newErrors.stock = 'Stock cannot be negative';
     if (!formData.urlSlug?.trim()) newErrors.urlSlug = 'URL slug is required';
     if (!formData.metaTitle?.trim()) newErrors.metaTitle = 'Meta title is required';
@@ -675,7 +666,7 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                       <h3 className='text-xl font-semibold text-slate-900 dark:text-white'>Basic Information</h3>
 
                       <Dropdown
-                        options={settings.productType ? [{ label: 'Select Product Type', value: '' }, ...availableProductTypes] : availableProductTypes}
+                        options={[{ label: 'Select Product Type', value: '' }, ...PRODUCT_TYPE_OPTIONS]}
                         placeholder='Select product type'
                         labelMain='Product Type *'
                         value={formData.product_type}
@@ -1462,6 +1453,18 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                             id='featured'
                             checked={formData.featured}
                             onCheckedChange={checked => handleChange('featured', checked)}
+                          />
+                        </div>
+
+                        <div className='flex items-center justify-between p-4 border rounded-lg'>
+                          <div>
+                            <p className='text-sm font-medium text-slate-700 dark:text-slate-300'>Trending Product</p>
+                            <p className='text-xs text-muted-foreground'>Show this product in trending section</p>
+                          </div>
+                          <Switch
+                            id='trending'
+                            checked={formData.trending}
+                            onCheckedChange={checked => handleChange('trending', checked)}
                           />
                         </div>
 
