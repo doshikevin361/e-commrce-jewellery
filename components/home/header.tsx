@@ -1,6 +1,6 @@
 'use client';
 
-import { Diamond, ShoppingCart, User, Menu, X, ChevronDown } from 'lucide-react';
+import { Diamond, ShoppingCart, User, Menu, X, ChevronDown, Heart } from 'lucide-react';
 import SearchBar from './SearchBar/SearchBar';
 import Link from 'next/link';
 import { useState, useEffect, useRef, useContext } from 'react';
@@ -108,13 +108,22 @@ export function HomeHeader() {
         </div>
 
         <div className='flex items-center gap-1.5 sm:gap-2 md:gap-4 lg:gap-6 text-xs sm:text-sm text-[#1F3B29]'>
-          <button
+          <Link
+            href='/wishlist'
+            className='hidden sm:flex items-center gap-1 font-semibold px-1 sm:px-1.5 md:px-2 transition-all duration-300 hover:scale-110 active:scale-95 relative'
+            aria-label='Wishlist'>
+            <Heart size={15} className='sm:w-[16px] sm:h-[16px] md:w-[18px] md:h-[18px] flex-shrink-0' />
+            <span className='hidden md:inline text-xs sm:text-sm whitespace-nowrap'>Wishlist</span>
+          </Link>
+          <Link
+            href='/user-dashboard'
             className='flex items-center gap-0.5 sm:gap-1 font-semibold px-1 sm:px-1.5 md:px-2 transition-all duration-300 hover:scale-110 active:scale-95 whitespace-nowrap'
             aria-label='Account'>
             <User size={15} className='sm:w-[16px] sm:h-[16px] md:w-[18px] md:h-[18px] flex-shrink-0' />
             <span className='hidden sm:inline text-xs sm:text-sm whitespace-nowrap'>Your Account</span>
-          </button>
-          <button
+          </Link>
+          <Link
+            href='/cart'
             className='flex items-center gap-1 sm:gap-1.5 font-semibold px-1 sm:px-1.5 md:px-2 transition-all duration-300 hover:scale-110 active:scale-95 relative'
             aria-label='Cart'>
             <div className='relative flex-shrink-0'>
@@ -124,7 +133,7 @@ export function HomeHeader() {
               </span>
             </div>
             <span className='hidden sm:inline text-xs sm:text-sm whitespace-nowrap text-[#1F3B29]'>Your Cart</span>
-          </button>
+          </Link>
         </div>
       </div>
 

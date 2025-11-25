@@ -27,7 +27,9 @@ export function HomeFooter() {
       title: 'Quick Links',
       items: [
         { label: 'Home', href: '/' },
-        { label: 'Shop', href: '#shop' },
+        { label: 'Products', href: '/products' },
+        { label: 'Categories', href: '/categories' },
+        { label: 'Trending', href: '/trending' },
         { label: 'About', href: '/about' },
         { label: 'Blog', href: '/blog' },
       ],
@@ -36,9 +38,11 @@ export function HomeFooter() {
       title: 'Customer Service',
       items: [
         { label: 'Contact Us', href: '/contact' },
+        { label: 'Size Guide', href: '/size-guide' },
+        { label: 'Jewelry Care', href: '/jewelry-care' },
+        { label: 'Gift Guide', href: '/gift-guide' },
         { label: 'Shipping Policy', href: '/shipping-policy' },
         { label: 'Refund & Return', href: '/refund-and-return' },
-        { label: 'Cancellation Policy', href: '/cancellation-policy' },
       ],
     },
     {
@@ -46,6 +50,7 @@ export function HomeFooter() {
       items: [
         { label: 'Privacy Policy', href: '/privacy-policy' },
         { label: 'Terms & Conditions', href: '/terms-and-conditions' },
+        { label: 'Cancellation Policy', href: '/cancellation-policy' },
       ],
     },
     {
@@ -54,6 +59,7 @@ export function HomeFooter() {
         { label: 'Help Center', href: '/contact' },
         { label: 'FAQs', href: '/contact' },
         { label: 'Track Order', href: '/contact' },
+        { label: 'Size Guide', href: '/size-guide' },
       ],
     },
   ];

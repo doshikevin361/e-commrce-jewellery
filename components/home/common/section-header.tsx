@@ -1,4 +1,7 @@
+'use client';
+
 import { ReactNode } from 'react';
+import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -30,12 +33,20 @@ export const SectionHeader = ({
         <h2 className='text-2xl sm:text-3xl font-semibold text-[#1F3B29]'>{title}</h2>
         {description && <p className='max-w-2xl text-sm text-[#4F3A2E]'>{description}</p>}
         {actionLabel && (
-          <button
-            type='button'
-            onClick={onActionClick}
-            className='cursor-pointer inline-flex items-center gap-1 rounded-full border border-[#1F3B29] px-5 py-2 text-xs font-semibold text-[#1F3B29]'>
-            {actionLabel}
-          </button>
+          onActionClick ? (
+            <button
+              type='button'
+              onClick={onActionClick}
+              className='cursor-pointer inline-flex items-center gap-1 rounded-full border border-[#1F3B29] px-5 py-2 text-xs font-semibold text-[#1F3B29] hover:bg-[#F5EEE5] transition-colors'>
+              {actionLabel}
+            </button>
+          ) : (
+            <Link
+              href='/products'
+              className='inline-flex items-center gap-1 rounded-full border border-[#1F3B29] px-5 py-2 text-xs font-semibold text-[#1F3B29] hover:bg-[#F5EEE5] transition-colors'>
+              {actionLabel}
+            </Link>
+          )
         )}
       </div>
     );
@@ -51,13 +62,22 @@ export const SectionHeader = ({
       {rightSlot
         ? rightSlot
         : actionLabel && (
-            <button
-              type='button'
-              onClick={onActionClick}
-              className='cursor-pointer inline-flex items-center gap-1 text-xs font-semibold text-[#1F3B29]'>
-              {actionLabel}
-              <ChevronRight size={16} />
-            </button>
+            onActionClick ? (
+              <button
+                type='button'
+                onClick={onActionClick}
+                className='cursor-pointer inline-flex items-center gap-1 text-xs font-semibold text-[#1F3B29] hover:text-[#C8A15B] transition-colors'>
+                {actionLabel}
+                <ChevronRight size={16} />
+              </button>
+            ) : (
+              <Link
+                href='/products'
+                className='inline-flex items-center gap-1 text-xs font-semibold text-[#1F3B29] hover:text-[#C8A15B] transition-colors'>
+                {actionLabel}
+                <ChevronRight size={16} />
+              </Link>
+            )
           )}
     </div>
   );

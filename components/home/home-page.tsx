@@ -17,15 +17,17 @@ import {
   Star,
 } from 'lucide-react';
 import { Swiper, SwiperSlide } from 'swiper/react';
+import type { Swiper as SwiperType } from 'swiper';
 import 'swiper/css';
 import 'swiper/css/pagination';
 import { blogCards, categories, categoriess, featuredProducts, images, trendingPro } from '@/app/utils/dummyData';
 import { Navigation, Pagination } from 'swiper/modules';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useCategories } from '@/contexts/CategoriesContext';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { ProductCard, ProductCardData } from '@/components/home/common/product-card';
 import { SectionHeader } from '@/components/home/common/section-header';
+import Link from 'next/link';
 
 const SECTION_SPACING = 'mt-12 sm:mt-16 lg:mt-20';
 
@@ -240,6 +242,7 @@ const Grid2x2CheckIcon = ({ size, className }: { size: number; className?: strin
 const Hero = () => {
   const { sidebarOpen, mobileCategoriesOpen, setMobileCategoriesOpen } = useCategories();
   const [isMobile, setIsMobile] = useState(false);
+  const heroSwiperRef = useRef<SwiperType | null>(null);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -251,7 +254,18 @@ const Hero = () => {
         }
       };
       window.addEventListener('resize', handleResize);
-      return () => window.removeEventListener('resize', handleResize);
+      return () => {
+        window.removeEventListener('resize', handleResize);
+        // Cleanup Hero Swiper instance
+        if (heroSwiperRef.current) {
+          try {
+            heroSwiperRef.current.destroy(true, true);
+          } catch (e) {
+            // Ignore cleanup errors
+          }
+          heroSwiperRef.current = null;
+        }
+      };
     }
   }, [setMobileCategoriesOpen]);
 
@@ -313,6 +327,9 @@ const Hero = () => {
 
         <div className='w-full'>
           <Swiper
+            onSwiper={(swiper) => {
+              heroSwiperRef.current = swiper;
+            }}
             modules={[Pagination]}
             spaceBetween={0}
             slidesPerView={1}
@@ -336,11 +353,11 @@ const Hero = () => {
                       <p className='text-xs uppercase tracking-[0.3em] text-white/80'>{slide.main.subtitle}</p>
                       <h1 className='text-3xl font-bold text-white sm:text-4xl lg:text-5xl'>{slide.main.title}</h1>
                       <p className='max-w-lg text-sm text-white/90 sm:text-base'>{slide.main.description}</p>
-                      <button
-                        type='button'
-                        className='cursor-pointer inline-flex items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-semibold text-[#1F3B29]'>
+                      <Link
+                        href='/products'
+                        className='inline-flex items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-semibold text-[#1F3B29] hover:bg-[#F5EEE5] transition-colors'>
                         {slide.main.buttonText}
-                      </button>
+                      </Link>
                     </div>
                   </div>
 
@@ -357,11 +374,11 @@ const Hero = () => {
                       <p className='text-[11px] uppercase tracking-[0.3em] text-white/80'>{slide.side.subtitle}</p>
                       <h2 className='text-2xl font-semibold text-white'>{slide.side.title}</h2>
                       <p className='text-xs text-white/80'>{slide.side.description}</p>
-                      <button
-                        type='button'
-                        className='cursor-pointer inline-flex items-center justify-center rounded-full bg-white/20 px-4 py-2 text-xs font-semibold text-white'>
+                      <Link
+                        href='/products'
+                        className='inline-flex items-center justify-center rounded-full bg-white/20 px-4 py-2 text-xs font-semibold text-white hover:bg-white/30 transition-colors'>
                         {slide.side.buttonText}
-                      </button>
+                      </Link>
                     </div>
                   </div>
                 </div>
@@ -391,9 +408,9 @@ const CategoryStrip = () => {
 
       <div className='mb-6 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-6 md:gap-6 pt-8'>
         {categoriess.map(item => (
-          <a
+          <Link
             key={item.name}
-            href={`#${item.name.toLowerCase().replace(/\s+/g, '-')}`}
+            href={`/products?category=${encodeURIComponent(item.name)}`}
             className='group flex flex-col items-center gap-3 transition-transform duration-300 hover:scale-105'>
             <div className='relative aspect-square w-full overflow-hidden rounded-full bg-gradient-to-br from-[#F5EEE5] to-white shadow-lg ring-2 ring-[#E6D3C2] transition-shadow duration-300 group-hover:shadow-xl group-hover:ring-[#C8A15B]'>
               <img
@@ -406,7 +423,7 @@ const CategoryStrip = () => {
             <h3 className='text-center text-sm font-semibold tracking-wide text-[#1F3B29] transition-colors duration-300 group-hover:text-[#C8A15B] sm:text-base'>
               {item.name}
             </h3>
-          </a>
+          </Link>
         ))}
       </div>
 
@@ -428,24 +445,46 @@ const CategoryStrip = () => {
 };
 
 const FeaturedSlider = () => {
+  const swiperRef = useRef<SwiperType | null>(null);
+  const prevButtonRef = useRef<HTMLButtonElement>(null);
+  const nextButtonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    return () => {
+      // Cleanup Swiper instance on unmount
+      if (swiperRef.current) {
+        try {
+          swiperRef.current.destroy(true, true);
+        } catch (e) {
+          // Ignore cleanup errors
+        }
+        swiperRef.current = null;
+      }
+    };
+  }, []);
+
   const rightSlot = (
     <div className='flex items-center gap-6 text-[#1F3B29]'>
       <div className='flex gap-3'>
         <button
+          ref={prevButtonRef}
           type='button'
-          className='prev-btn flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-web bg-white'>
+          onClick={() => swiperRef.current?.slidePrev()}
+          className='flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-web bg-white hover:bg-[#F5EEE5] transition-colors'>
           <ChevronLeft size={18} />
         </button>
         <button
+          ref={nextButtonRef}
           type='button'
-          className='next-btn flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-web bg-white'>
+          onClick={() => swiperRef.current?.slideNext()}
+          className='flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-web bg-white hover:bg-[#F5EEE5] transition-colors'>
           <ChevronRight size={18} />
         </button>
       </div>
-      <button type='button' className='cursor-pointer inline-flex items-center gap-1 text-xs font-semibold text-[#1F3B29]'>
+      <Link href='/products' className='cursor-pointer inline-flex items-center gap-1 text-xs font-semibold text-[#1F3B29] hover:text-[#C8A15B] transition-colors'>
         View all
         <ChevronRight size={16} />
-      </button>
+      </Link>
     </div>
   );
 
@@ -455,11 +494,10 @@ const FeaturedSlider = () => {
         <SectionHeader title='New Products' rightSlot={rightSlot} />
       </div>
       <Swiper
-        modules={[Navigation]}
-        navigation={{
-          nextEl: '.next-btn',
-          prevEl: '.prev-btn',
+        onSwiper={(swiper) => {
+          swiperRef.current = swiper;
         }}
+        modules={[]}
         spaceBetween={20}
         slidesPerView='auto'
         className='pb-2'>
@@ -488,10 +526,10 @@ const TrendingProducts = () => {
           <ChevronRight size={16} className='sm:w-[18px] sm:h-[18px]' />
         </button>
       </div>
-      <button type='button' className='cursor-pointer inline-flex items-center gap-1 text-[10px] sm:text-xs font-semibold text-[#1F3B29] whitespace-nowrap'>
+      <Link href='/trending' className='cursor-pointer inline-flex items-center gap-1 text-[10px] sm:text-xs font-semibold text-[#1F3B29] whitespace-nowrap hover:text-[#C8A15B] transition-colors'>
         View all
         <ChevronRight size={14} className='sm:w-4 sm:h-4' />
-      </button>
+      </Link>
     </div>
   );
 
@@ -535,9 +573,9 @@ const PromoShowcase = () => {
             These adornments are worn around the neck and come in various lengths. Each piece is crafted to feel light yet luxurious.
           </p>
 
-          <button type='button' className='cursor-pointer mt-6 rounded-full bg-[#1F3B29] px-6 py-2 text-sm text-white'>
+          <Link href='/products' className='inline-block mt-6 rounded-full bg-[#1F3B29] px-6 py-2 text-sm text-white hover:bg-[#2a4d3a] transition-colors'>
             Explore More
-          </button>
+          </Link>
         </div>
       </div>
     </section>
@@ -548,7 +586,7 @@ const Collections = () => {
   return (
     <section className='w-full'>
       <div className='border-b border-web pb-3'>
-        <SectionHeader title='Dazzel in Every Moment' actionLabel='View all' />
+        <SectionHeader title='Dazzel in Every Moment' actionLabel='View all' onActionClick={() => window.location.href = '/products'} />
       </div>
 
       <div className='mt-6 grid grid-cols-1 gap-4 md:grid-cols-2'>
@@ -563,11 +601,11 @@ const Collections = () => {
             <h3 className='text-2xl font-semibold text-[#1C1F1A]'>Ancient jewelry collection</h3>
             <p className='mt-3 text-sm text-[#4F3A2E]'>Beautiful long earrings with opal and carnelian stones—lightweight and radiant.</p>
 
-            <button
-              type='button'
-              className='cursor-pointer mt-5 inline-flex w-fit items-center gap-2 rounded-full bg-[#1F3B29] px-5 py-2 text-sm text-white'>
+            <Link
+              href='/products'
+              className='inline-flex mt-5 w-fit items-center gap-2 rounded-full bg-[#1F3B29] px-5 py-2 text-sm text-white hover:bg-[#2a4d3a] transition-colors'>
               Explore more
-            </button>
+            </Link>
           </div>
         </div>
 
@@ -579,11 +617,11 @@ const Collections = () => {
               expect—this is where VRAI’s jewelry description example trumps.
             </p>
 
-            <button
-              type='button'
-              className='cursor-pointer mt-4 inline-flex items-center gap-2 rounded-full bg-[#1F3B29] px-5 py-2 text-sm text-white'>
+            <Link
+              href='/products'
+              className='inline-flex mt-4 items-center gap-2 rounded-full bg-[#1F3B29] px-5 py-2 text-sm text-white hover:bg-[#2a4d3a] transition-colors'>
               Shop now
-            </button>
+            </Link>
           </div>
 
           <img
@@ -601,7 +639,7 @@ const Updates = () => {
   return (
     <section className='w-full'>
       <div className='border-b border-web pb-3'>
-        <SectionHeader title='Our News & Updates' actionLabel='View all' />
+        <SectionHeader title='Our News & Updates' actionLabel='View all' onActionClick={() => window.location.href = '/blog'} />
       </div>
       <div className='grid grid-cols-1 gap-6 py-8 sm:grid-cols-2 lg:grid-cols-3'>
         {blogCards.map(card => (

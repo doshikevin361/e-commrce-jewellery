@@ -104,6 +104,21 @@ export default function BlogPage() {
             </button>
           </div>
 
+          {/* Categories Filter */}
+          <div className='mt-12 mb-8'>
+            <h2 className='text-2xl font-bold text-[#1F3B29] mb-6 text-center'>Browse by Category</h2>
+            <div className='flex flex-wrap justify-center gap-3'>
+              {['Design', 'Stories', 'Craft', 'Trends', 'Guide', 'Collection'].map(category => (
+                <Link
+                  key={category}
+                  href={`/blog?category=${category}`}
+                  className='px-6 py-2 rounded-full border-2 border-[#E6D3C2] text-[#1F3B29] font-semibold hover:border-[#C8A15B] hover:bg-[#F5EEE5] transition-all'>
+                  {category}
+                </Link>
+              ))}
+            </div>
+          </div>
+
           {/* Bottom Separator */}
           <div className='flex items-center justify-center gap-2 mt-12 sm:mt-16'>
             <div className='w-8 sm:w-10 h-px bg-[#E6D3C2]' />

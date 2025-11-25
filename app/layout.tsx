@@ -15,24 +15,24 @@ const _geistMono = Geist_Mono({ subsets: ['latin'] });
 
 
 export const metadata: Metadata = {
-  title: 'E-commerce Admin Dashboard',
-  description: 'Modern admin dashboard for e-commerce management',
+  title: 'LuxeLoom - Exquisite Jewelry Collection',
+  description: 'Discover our complete collection of exquisite jewelry. Handcrafted pieces for every occasion.',
   icons: {
     icon: [
       {
-        url: '',
+        url: '/icon-light-32x32.png',
         media: '(prefers-color-scheme: light)',
       },
       {
-        url: '',
+        url: '/icon-dark-32x32.png',
         media: '(prefers-color-scheme: dark)',
       },
       {
-        url: '',
+        url: '/icon.svg',
         type: 'image/svg+xml',
       },
     ],
-    apple: '',
+    apple: '/apple-icon.png',
   },
   generator: 'v0.app',
 };
