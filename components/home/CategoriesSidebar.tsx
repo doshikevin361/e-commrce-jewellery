@@ -58,17 +58,18 @@ export function CategoriesSidebar() {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setIsMobile(window.innerWidth < 1024);
-      const handleResize = () => {
-        setIsMobile(window.innerWidth < 1024);
-        if (window.innerWidth >= 1024) {
-          setMobileCategoriesOpen(false);
-        }
-      };
-      window.addEventListener('resize', handleResize);
-      return () => window.removeEventListener('resize', handleResize);
-    }
+    // Set initial mobile state after mount to avoid hydration mismatch
+    const checkMobile = () => window.innerWidth < 1024;
+    setIsMobile(checkMobile());
+    
+    const handleResize = () => {
+      setIsMobile(checkMobile());
+      if (window.innerWidth >= 1024) {
+        setMobileCategoriesOpen(false);
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, [setMobileCategoriesOpen]);
 
   // Desktop Sidebar (right side overlay)

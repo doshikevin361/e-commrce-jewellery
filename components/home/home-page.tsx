@@ -23,6 +23,7 @@ import 'swiper/css/pagination';
 import { blogCards, categories, categoriess, featuredProducts, images, trendingPro } from '@/app/utils/dummyData';
 import { Navigation, Pagination } from 'swiper/modules';
 import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { useCategories } from '@/contexts/CategoriesContext';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { ProductCard, ProductCardData } from '@/components/home/common/product-card';
@@ -249,28 +250,32 @@ const Hero = () => {
   const heroSwiperRef = useRef<SwiperType | null>(null);
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setIsMobile(window.innerWidth < 1024);
-      const handleResize = () => {
-        setIsMobile(window.innerWidth < 1024);
-        if (window.innerWidth >= 1024) {
-          setMobileCategoriesOpen(false);
-        }
-      };
-      window.addEventListener('resize', handleResize);
-      return () => {
-        window.removeEventListener('resize', handleResize);
-        // Cleanup Hero Swiper instance
-        if (heroSwiperRef.current) {
-          try {
-            heroSwiperRef.current.destroy(true, true);
-          } catch (e) {
-            // Ignore cleanup errors
+    // Set initial mobile state after mount to avoid hydration mismatch
+    const checkMobile = () => window.innerWidth < 1024;
+    setIsMobile(checkMobile());
+    
+    const handleResize = () => {
+      setIsMobile(checkMobile());
+      if (window.innerWidth >= 1024) {
+        setMobileCategoriesOpen(false);
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      // Cleanup Hero Swiper instance
+      if (heroSwiperRef.current) {
+        try {
+          // Only destroy if swiper instance still exists and is initialized
+          if (heroSwiperRef.current.initialized) {
+            heroSwiperRef.current.destroy(false, false); // Don't remove DOM, React will handle it
           }
-          heroSwiperRef.current = null;
+        } catch (e) {
+          // Ignore cleanup errors
         }
-      };
-    }
+        heroSwiperRef.current = null;
+      }
+    };
   }, [setMobileCategoriesOpen]);
 
   return (
@@ -333,6 +338,12 @@ const Hero = () => {
           <Swiper
             onSwiper={swiper => {
               heroSwiperRef.current = swiper;
+            }}
+            onBeforeDestroy={swiper => {
+              // Prevent Swiper from removing DOM nodes that React manages
+              if (heroSwiperRef.current === swiper) {
+                heroSwiperRef.current = null;
+              }
             }}
             modules={[Pagination]}
             spaceBetween={0}
@@ -458,7 +469,10 @@ const FeaturedSlider = () => {
       // Cleanup Swiper instance on unmount
       if (swiperRef.current) {
         try {
-          swiperRef.current.destroy(true, true);
+          // Only destroy if swiper instance still exists and is initialized
+          if (swiperRef.current.initialized) {
+            swiperRef.current.destroy(false, false); // Don't remove DOM, React will handle it
+          }
         } catch (e) {
           // Ignore cleanup errors
         }
@@ -502,6 +516,12 @@ const FeaturedSlider = () => {
       <Swiper
         onSwiper={swiper => {
           swiperRef.current = swiper;
+        }}
+        onBeforeDestroy={swiper => {
+          // Prevent Swiper from removing DOM nodes that React manages
+          if (swiperRef.current === swiper) {
+            swiperRef.current = null;
+          }
         }}
         modules={[]}
         spaceBetween={20}
@@ -593,10 +613,11 @@ const PromoShowcase = () => {
 };
 
 const Collections = () => {
+  const router = useRouter();
   return (
     <section className='w-full'>
       <div className='border-b border-web pb-3'>
-        <SectionHeader title='Dazzel in Every Moment' actionLabel='View all' onActionClick={() => (window.location.href = '/products')} />
+        <SectionHeader title='Dazzel in Every Moment' actionLabel='View all' onActionClick={() => router.push('/products')} />
       </div>
 
       <div className='mt-6 grid grid-cols-1 gap-4 md:grid-cols-2'>
@@ -646,10 +667,11 @@ const Collections = () => {
 };
 
 const Updates = () => {
+  const router = useRouter();
   return (
     <section className='w-full'>
       <div className='border-b border-web pb-3'>
-        <SectionHeader title='Our News & Updates' actionLabel='View all' onActionClick={() => (window.location.href = '/blog')} />
+        <SectionHeader title='Our News & Updates' actionLabel='View all' onActionClick={() => router.push('/blog')} />
       </div>
       <div className='grid grid-cols-1 gap-6 py-8 sm:grid-cols-2 lg:grid-cols-3'>
         {blogCards.map(card => (

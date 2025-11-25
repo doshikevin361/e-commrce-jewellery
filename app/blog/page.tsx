@@ -1,6 +1,5 @@
 'use client';
 
-import { PageLayout } from '@/components/layout/page-layout';
 import { CategoriesSidebar } from '@/components/home/CategoriesSidebar';
 import { Diamond, Calendar, ArrowRight, BookOpen } from 'lucide-react';
 import Image from 'next/image';
@@ -9,7 +8,7 @@ import { blogCards } from '@/app/utils/dummyData';
 
 export default function BlogPage() {
   return (
-    <PageLayout>
+    <>
       <CategoriesSidebar />
       <div className='w-full overflow-x-hidden'>
         {/* Hero Banner */}
@@ -125,7 +124,7 @@ export default function BlogPage() {
           </div>
         </section>
       </div>
-    </PageLayout>
+    </>
   );
 }
 

@@ -132,7 +132,7 @@
     @apply border-border outline-ring/50;
   }
   html {
-    scroll-behavior: smooth;
+    scroll-behavior: auto; /* Changed from smooth to prevent unwanted scrolling */
     overflow-x: hidden;
   }
   body {

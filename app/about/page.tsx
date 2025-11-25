@@ -1,17 +1,14 @@
 'use client';
 
-import { HomeHeader } from '@/components/home/header';
-import { HomeFooter } from '@/components/home/footer';
 import { CategoriesSidebar } from '@/components/home/CategoriesSidebar';
 import { Diamond, Award, Users, Heart, Sparkles } from 'lucide-react';
 import Image from 'next/image';
 
 export default function AboutPage() {
   return (
-    <div className='min-h-screen w-full overflow-x-hidden bg-white'>
-      <HomeHeader />
+    <>
       <CategoriesSidebar />
-      <main className='w-full overflow-x-hidden'>
+      <div className='w-full overflow-x-hidden'>
         {/* Hero Banner */}
         <section className='relative w-full h-[400px] sm:h-[500px] md:h-[600px] lg:h-[700px] overflow-hidden'>
           <div className='absolute inset-0 w-full h-full z-0'>
@@ -143,9 +140,8 @@ export default function AboutPage() {
             </div>
           </div>
         </section>
-      </main>
-      <HomeFooter />
-    </div>
+      </div>
+    </>
   );
 }
 

@@ -163,11 +163,11 @@ export default function UserLoginPage() {
             </div>
 
             <div className="mt-8">
-              <Link href="/login">
-                <Button variant="outline" className="w-full">
+              <Button variant="outline" className="w-full" asChild>
+                <Link href="/login">
                   Admin Login
-                </Button>
-              </Link>
+                </Link>
+              </Button>
             </div>
           </div>
         </Card>

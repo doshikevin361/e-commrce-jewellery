@@ -53,13 +53,15 @@ export function HomeHeader() {
 
   useEffect(() => {
     setMounted(true);
-    if (typeof window !== 'undefined') {
-      setIsMobile(window.innerWidth < 1024);
-    }
+    // Set initial mobile state after mount to avoid hydration mismatch
+    const checkMobile = () => window.innerWidth < 1024;
+    setIsMobile(checkMobile());
   }, []);
 
-  // Handle resize and close menus
+  // Handle resize and close menus (only after mount)
   useEffect(() => {
+    if (!mounted) return;
+    
     const handleResize = () => {
       const mobile = window.innerWidth < 1024;
       setIsMobile(mobile);
@@ -75,7 +77,7 @@ export function HomeHeader() {
     };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, [categoriesContext]);
+  }, [categoriesContext, mounted]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -182,7 +184,7 @@ export function HomeHeader() {
                   onMouseEnter={() => item.submenu && setOpenDropdown(item.name)}
                   onMouseLeave={() => item.submenu && setOpenDropdown(null)}
                   style={{ animationDelay: `${index * 100}ms` }}>
-                  <a
+                  <Link
                     href={item.href}
                     className='
         relative flex items-center gap-1
@@ -212,7 +214,7 @@ export function HomeHeader() {
         transition-transform duration-300
       '
                     />
-                  </a>
+                  </Link>
 
                   {/* Dropdown Menu */}
                   {item.submenu && openDropdown === item.name && (
@@ -224,9 +226,9 @@ export function HomeHeader() {
         animate-in fade-in slide-in-from-top-2 duration-200
       '>
                       {item.submenu.map(subItem => (
-                        <a
+                        <Link
                           key={subItem}
-                          href={`#${subItem.toLowerCase().replace(/\s+/g, '-')}`}
+                          href={`/products?category=${subItem}`}
                           className='
               block px-4 py-2.5 text-sm text-[#1F3B29]
               hover:bg-[#F5EEE5]/60
@@ -235,7 +237,7 @@ export function HomeHeader() {
             '
                           onClick={() => setOpenDropdown(null)}>
                           {subItem}
-                        </a>
+                        </Link>
                       ))}
                     </div>
                   )}
@@ -302,27 +304,27 @@ export function HomeHeader() {
                         <ul className='pl-4 mt-1 space-y-1'>
                           {item.submenu.map(subItem => (
                             <li key={subItem}>
-                              <a
-                                href={`#${subItem.toLowerCase().replace(/\s+/g, '-')}`}
+                              <Link
+                                href={`/products?category=${subItem}`}
                                 onClick={() => {
                                   setMobileMenuOpen(false);
                                   setOpenDropdown(null);
                                 }}
                                 className='block px-4 py-2 rounded-lg text-sm font-normal transition-all duration-300 hover:bg-white/10 hover:translate-x-2 active:bg-white/15 text-white/90'>
                                 {subItem}
-                              </a>
+                              </Link>
                             </li>
                           ))}
                         </ul>
                       )}
                     </div>
                   ) : (
-                    <a
+                    <Link
                       href={item.href}
                       onClick={() => setMobileMenuOpen(false)}
                       className='block w-full text-left px-4 py-3 rounded-lg text-sm font-medium transition-all duration-300 hover:bg-white/10 hover:translate-x-2 active:bg-white/15'>
                       {item.name}
-                    </a>
+                    </Link>
                   )}
                 </li>
               ))}

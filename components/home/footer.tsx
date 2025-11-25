@@ -1,6 +1,7 @@
 'use client';
 
 import { Mail, Phone, Globe, Twitter, Linkedin, Instagram, Facebook, Youtube } from 'lucide-react';
+import Link from 'next/link';
 
 const FooterSection = ({ title, items }: { title: string; items: { label: string; href: string }[] }) => (
   <div>
@@ -8,9 +9,9 @@ const FooterSection = ({ title, items }: { title: string; items: { label: string
     <ul className='space-y-2'>
       {items.map(item => (
         <li key={item.label}>
-          <a href={item.href} className='text-sm text-[#4F3A2E] transition hover:text-[#1C1F1A]'>
+          <Link href={item.href} className='text-sm text-[#4F3A2E] transition hover:text-[#1C1F1A]'>
             {item.label}
-          </a>
+          </Link>
         </li>
       ))}
     </ul>

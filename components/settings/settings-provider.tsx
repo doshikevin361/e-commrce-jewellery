@@ -14,27 +14,12 @@ type SettingsContextValue = {
 const SettingsContext = createContext<SettingsContextValue | undefined>(undefined);
 
 export function SettingsProvider({ children }: { children: React.ReactNode }) {
-  // Try to load from localStorage first to avoid showing defaults
-  const getCachedSettings = (): SiteSettings => {
-    if (typeof window === 'undefined') return defaultSiteSettings;
-    try {
-      const cached = localStorage.getItem('siteSettings');
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        // Validate that it has required fields
-        if (parsed && typeof parsed === 'object') {
-          return { ...defaultSiteSettings, ...parsed };
-        }
-      }
-    } catch (err) {
-      console.error('[settings] Failed to load cached settings:', err);
-    }
-    return defaultSiteSettings;
-  };
-
-  const [settings, setSettings] = useState<SiteSettings>(getCachedSettings);
+  // Always start with default settings to avoid hydration mismatch
+  // Load from localStorage only after mount (client-side only)
+  const [settings, setSettings] = useState<SiteSettings>(defaultSiteSettings);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
 
   const applyBrandTokens = useCallback((data: SiteSettings) => {
     if (typeof document === 'undefined') return;
@@ -60,11 +45,22 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  // Apply cached settings immediately on mount
+  // Mark as mounted and load cached settings (client-side only)
   useEffect(() => {
-    const cached = getCachedSettings();
-    if (cached !== defaultSiteSettings) {
-      applyBrandTokens(cached);
+    setMounted(true);
+    // Load from localStorage only after mount to avoid hydration mismatch
+    try {
+      const cached = localStorage.getItem('siteSettings');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (parsed && typeof parsed === 'object') {
+          const loadedSettings = { ...defaultSiteSettings, ...parsed };
+          setSettings(loadedSettings);
+          applyBrandTokens(loadedSettings);
+        }
+      }
+    } catch (err) {
+      console.error('[settings] Failed to load cached settings:', err);
     }
   }, [applyBrandTokens]);
 
