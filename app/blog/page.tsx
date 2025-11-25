@@ -1,7 +1,6 @@
 'use client';
 
-import { HomeHeader } from '@/components/home/header';
-import { HomeFooter } from '@/components/home/footer';
+import { PageLayout } from '@/components/layout/page-layout';
 import { CategoriesSidebar } from '@/components/home/CategoriesSidebar';
 import { Diamond, Calendar, ArrowRight, BookOpen } from 'lucide-react';
 import Image from 'next/image';
@@ -10,10 +9,9 @@ import { blogCards } from '@/app/utils/dummyData';
 
 export default function BlogPage() {
   return (
-    <div className='min-h-screen w-full overflow-x-hidden bg-white'>
-      <HomeHeader />
+    <PageLayout>
       <CategoriesSidebar />
-      <main className='w-full overflow-x-hidden'>
+      <div className='w-full overflow-x-hidden'>
         {/* Hero Banner */}
         <section className='relative w-full h-[350px] sm:h-[450px] md:h-[550px] lg:h-[600px] overflow-hidden'>
           <div className='absolute inset-0 w-full h-full z-0'>
@@ -126,9 +124,8 @@ export default function BlogPage() {
             <div className='w-8 sm:w-10 h-px bg-[#E6D3C2]' />
           </div>
         </section>
-      </main>
-      <HomeFooter />
-    </div>
+      </div>
+    </PageLayout>
   );
 }
 

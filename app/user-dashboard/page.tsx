@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { LogOut } from 'lucide-react';
+import { PageLayout } from '@/components/layout/page-layout';
 
 export default function UserDashboard() {
   const [userData, setUserData] = useState<any>(null);
@@ -43,7 +44,7 @@ export default function UserDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <PageLayout>
       <div className="max-w-6xl mx-auto p-6">
         <div className="flex items-center justify-between mb-8">
           <div>
@@ -91,6 +92,6 @@ export default function UserDashboard() {
           </dl>
         </Card>
       </div>
-    </div>
+    </PageLayout>
   );
 }
