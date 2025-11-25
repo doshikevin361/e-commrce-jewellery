@@ -12,7 +12,6 @@ import 'react-toastify/dist/ReactToastify.css';
 import '@/styles/toastify.css';
 import { ToastContainer } from 'react-toastify';
 
-
 const _geist = Geist({ subsets: ['latin'] });
 const _geistMono = Geist_Mono({ subsets: ['latin'] });
 
@@ -45,19 +44,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang='en' suppressHydrationWarning className='scroll-smooth'>
+    <html lang='en' suppressHydrationWarning>
       <body className={`font-sans antialiased`}>
         <ThemeProvider attribute='class' defaultTheme='light' enableSystem>
           <SettingsProvider>
             <CategoriesProvider>
               <ScrollToTop />
-              <div className='min-h-screen w-full overflow-x-hidden bg-white'>
-                <HomeHeader />
-                <main className='w-full overflow-x-hidden pt-4 sm:pt-6 md:pt-8 lg:pt-10'>
-                  {children}
-                </main>
-                <HomeFooter />
-              </div>
+              <main className='w-full overflow-x-hidden'>{children}</main>
             </CategoriesProvider>
           </SettingsProvider>
         </ThemeProvider>
