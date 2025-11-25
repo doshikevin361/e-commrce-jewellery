@@ -118,7 +118,7 @@ export function HomeHeader() {
             <span className='hidden md:inline text-xs sm:text-sm whitespace-nowrap'>Wishlist</span>
           </Link>
           <Link
-            href='/user-dashboard'
+            href='/'
             className='flex items-center gap-0.5 sm:gap-1 font-semibold px-1 sm:px-1.5 md:px-2 transition-all duration-300 hover:scale-110 active:scale-95 whitespace-nowrap'
             aria-label='Account'>
             <User size={15} className='sm:w-[16px] sm:h-[16px] md:w-[18px] md:h-[18px] flex-shrink-0' />
