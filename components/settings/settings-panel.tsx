@@ -188,7 +188,6 @@ export function SettingsPanel() {
         accentColor: formData.accentColor,
         logo: formData.logo,
         favicon: formData.favicon,
-        productType: formData.productType,
       };
       
       // Update local form state with the saved data
@@ -361,20 +360,6 @@ export function SettingsPanel() {
                   />
                 </FieldRow>
                 </div>
-
-              <FieldRow
-                label="Product Type"
-                description="Enable product type selection"
-              >
-                <div className="flex items-center h-12">
-                  <Switch
-                    checked={formData.productType}
-                    onCheckedChange={(checked) =>
-                      updateField("productType", checked)
-                    }
-                  />
-                </div>
-              </FieldRow>
             </div>
 
             <div className="flex flex-col gap-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/20 px-6 py-5 md:flex-row md:items-center md:justify-between">

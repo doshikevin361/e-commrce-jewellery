@@ -22,7 +22,9 @@ const normalizeProductPayload = (payload: any) => {
 };
 
 const validateJewelleryPayload = (payload: any) => {
-  if (!payload || payload.product_type !== 'Jewellery') {
+  // All product types are jewellery (Gold, Silver, Platinum)
+  const isJewellery = ['Gold', 'Silver', 'Platinum'].includes(payload.product_type);
+  if (!payload || !isJewellery) {
     return null;
   }
 

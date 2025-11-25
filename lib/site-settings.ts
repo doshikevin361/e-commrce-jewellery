@@ -6,7 +6,6 @@ export type SiteSettings = {
   accentColor: string;
   logo: string;
   favicon: string;
-  productType: boolean;
 };
 
 export const defaultSiteSettings: SiteSettings = {
@@ -17,5 +16,4 @@ export const defaultSiteSettings: SiteSettings = {
   accentColor: "#0f172a",
   logo: "",
   favicon: "",
-  productType: true,
 };
