@@ -15,7 +15,7 @@ const SettingsContext = createContext<SettingsContextValue | undefined>(undefine
 
 export function SettingsProvider({ children }: { children: React.ReactNode }) {
   // Always start with default settings to avoid hydration mismatch
-  // Load from localStorage only after mount (client-side only)
+  // Server and client must render the same initially
   const [settings, setSettings] = useState<SiteSettings>(defaultSiteSettings);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -23,6 +23,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
 
   const applyBrandTokens = useCallback((data: SiteSettings) => {
     if (typeof document === 'undefined') return;
+
     const root = document.documentElement;
     root.style.setProperty('--brand-primary', data.primaryColor || defaultSiteSettings.primaryColor);
     root.style.setProperty('--brand-accent', data.accentColor || defaultSiteSettings.accentColor);
@@ -31,38 +32,59 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
       document.title = data.siteTitle;
     }
 
-    // Handle favicon - remove all existing favicon links first
-    const existingFavicons = document.querySelectorAll("link[rel='icon'], link[rel='shortcut icon']");
-    existingFavicons.forEach(link => link.remove());
+    // Only manage the favicon node we own to avoid removing elements that React controls,
+    // otherwise client-side navigations can crash when React tries to clean them up.
+    try {
+      const head = document.head;
+      if (!head) return;
 
-    // Add new favicon if provided
-    if (data.favicon && data.favicon.trim()) {
-      const link = document.createElement('link');
-      link.rel = 'icon';
-      link.type = 'image/x-icon';
-      link.href = data.favicon;
-      document.head.appendChild(link);
+      const selector = "link[rel='icon'][data-site-settings-favicon='true']";
+      let managedFavicon = head.querySelector<HTMLLinkElement>(selector);
+      const favicon = data.favicon?.trim();
+
+      if (favicon) {
+        if (!managedFavicon) {
+          managedFavicon = document.createElement('link');
+          managedFavicon.rel = 'icon';
+          managedFavicon.type = 'image/png';
+          managedFavicon.setAttribute('data-site-settings-favicon', 'true');
+          head.appendChild(managedFavicon);
+        }
+        managedFavicon.href = favicon;
+      } else if (managedFavicon?.parentNode) {
+        managedFavicon.parentNode.removeChild(managedFavicon);
+      }
+    } catch (err) {
+      console.warn('Failed to update favicon:', err);
     }
   }, []);
 
-  // Mark as mounted and load cached settings (client-side only)
+  // Only access localStorage after mount to avoid hydration mismatch
   useEffect(() => {
     setMounted(true);
-    // Load from localStorage only after mount to avoid hydration mismatch
+
+    // Try to load from localStorage after mount
     try {
       const cached = localStorage.getItem('siteSettings');
       if (cached) {
         const parsed = JSON.parse(cached);
         if (parsed && typeof parsed === 'object') {
-          const loadedSettings = { ...defaultSiteSettings, ...parsed };
-          setSettings(loadedSettings);
-          applyBrandTokens(loadedSettings);
+          const normalized = { ...defaultSiteSettings, ...parsed };
+          setSettings(normalized);
+          applyBrandTokens(normalized);
         }
       }
     } catch (err) {
       console.error('[settings] Failed to load cached settings:', err);
     }
   }, [applyBrandTokens]);
+
+  // Apply brand tokens only after mount to avoid hydration issues
+  useEffect(() => {
+    if (mounted) {
+      applyBrandTokens(settings);
+    }
+  }, [mounted, settings, applyBrandTokens]);
 
   const refresh = useCallback(async () => {
     try {
@@ -75,16 +97,16 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
       const normalized: SiteSettings = { ...defaultSiteSettings, ...payload };
       setSettings(normalized);
       applyBrandTokens(normalized);
-      
+
       // Cache settings in localStorage for faster initial load
-      if (typeof window !== 'undefined') {
+      if (mounted && typeof window !== 'undefined') {
         try {
           localStorage.setItem('siteSettings', JSON.stringify(normalized));
         } catch (err) {
           console.error('[settings] Failed to cache settings:', err);
         }
       }
-      
+
       setError(null);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to load settings';
@@ -93,7 +115,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setLoading(false);
     }
-  }, [applyBrandTokens]);
+  }, [applyBrandTokens, mounted]);
 
   useEffect(() => {
     refresh();
@@ -104,20 +126,20 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
       setSettings(prev => {
         const next = { ...prev, ...partial };
         applyBrandTokens(next);
-        
-        // Update cache immediately
-        if (typeof window !== 'undefined') {
+
+        // Update cache immediately (only after mount)
+        if (mounted && typeof window !== 'undefined') {
           try {
             localStorage.setItem('siteSettings', JSON.stringify(next));
           } catch (err) {
             console.error('[settings] Failed to cache settings:', err);
           }
         }
-        
+
         return next;
       });
     },
-    [applyBrandTokens],
+    [applyBrandTokens, mounted]
   );
 
   const value = useMemo<SettingsContextValue>(
@@ -128,7 +150,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
       refresh,
       updateLocal,
     }),
-    [settings, loading, error, refresh, updateLocal],
+    [settings, loading, error, refresh, updateLocal]
   );
 
   return <SettingsContext.Provider value={value}>{children}</SettingsContext.Provider>;
@@ -141,4 +163,3 @@ export function useSettings() {
   }
   return context;
 }
-
