@@ -187,7 +187,7 @@ const INITIAL_PRODUCT: Product = {
   engraving_available: false,
   gift_wrapping: true,
   baseMaterialCost: 0,
-  livePriceEnabled: false,
+  livePriceEnabled: true, // Default ON for jewelry products
   priceLastUpdated: '',
   // Detailed pricing defaults
   metalCost: 0,
@@ -269,6 +269,23 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
     fetchTags();
     fetchBrands();
   }, [productId]);
+
+  // Auto-fetch live prices when Pricing tab is accessed
+  useEffect(() => {
+    if (activeTab === 'pricing' && formData.livePriceEnabled) {
+      console.log('[v0] Auto-fetching live prices on Pricing tab access');
+      // Always fetch fresh prices when accessing pricing tab
+      fetchLivePrices();
+    }
+  }, [activeTab, formData.livePriceEnabled]);
+
+  // Auto-calculate pricing when live prices are updated or jewelry fields change
+  useEffect(() => {
+    if (formData.livePriceEnabled && livePrices.gold > 0) {
+      console.log('[v0] Auto-calculating pricing with live rates');
+      calculateDetailedPricing();
+    }
+  }, [livePrices, formData.livePriceEnabled, formData.metalType, formData.metalPurity, formData.metalWeight, formData.makingCharges, formData.stoneCost, formData.otherCharges, formData.profitMargin]);
 
   // Fetch live metal prices
   const fetchLivePrices = async () => {
@@ -1525,7 +1542,14 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                       {/* Live Pricing Section */}
                       <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-lg">
                         <div className="flex items-center justify-between mb-4">
-                          <h4 className="text-lg font-semibold text-slate-900 dark:text-white">Live Pricing System</h4>
+                          <div>
+                            <h4 className="text-lg font-semibold text-slate-900 dark:text-white">Live Pricing System</h4>
+                            {formData.livePriceEnabled && (
+                              <p className="text-xs text-green-600 dark:text-green-400 mt-1">
+                                ✅ Auto-fetching live prices when accessing this tab
+                              </p>
+                            )}
+                          </div>
                           <label className="flex items-center">
                             <input
                               type="checkbox"
@@ -1553,9 +1577,9 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                                 </button>
                               </div>
                               <div className="grid grid-cols-3 gap-2 text-xs">
-                                <div>Gold: ₹{livePrices.gold}</div>
-                                <div>Silver: ₹{livePrices.silver}</div>
-                                <div>Platinum: ₹{livePrices.platinum}</div>
+                                <div>Gold: {priceLoading ? 'Loading...' : `₹${livePrices.gold}`}</div>
+                                <div>Silver: {priceLoading ? 'Loading...' : `₹${livePrices.silver}`}</div>
+                                <div>Platinum: {priceLoading ? 'Loading...' : `₹${livePrices.platinum}`}</div>
                               </div>
                             </div>
                             
