@@ -173,7 +173,7 @@ export default function RefundAndReturnPage() {
             </div>
           </div>
         </section>
-      </div>
+    </div>
     </>
   );
 }

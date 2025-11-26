@@ -151,7 +151,7 @@ export default function CancellationPolicyPage() {
             </div>
           </div>
         </section>
-      </div>
+    </div>
     </>
   );
 }

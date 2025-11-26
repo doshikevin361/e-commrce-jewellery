@@ -16,9 +16,11 @@ import { cn, getPlainTextFromHtml } from '@/lib/utils';
 import { useSettings } from '@/components/settings/settings-provider';
 
 const PRODUCT_TYPE_OPTIONS = [
-  { label: 'Gold', value: 'Gold' },
-  { label: 'Silver', value: 'Silver' },
-  { label: 'Platinum', value: 'Platinum' },
+  { label: 'Gold Jewelry', value: 'Gold' },
+  { label: 'Silver Jewelry', value: 'Silver' },
+  { label: 'Platinum Jewelry', value: 'Platinum' },
+  { label: 'Diamond Jewelry', value: 'Diamond' },
+  { label: 'Gemstone Jewelry', value: 'Gemstone' },
 ] as const;
 
 const WHOLESALE_PRICE_TYPE_OPTIONS = [
@@ -27,9 +29,13 @@ const WHOLESALE_PRICE_TYPE_OPTIONS = [
 ] as const;
 
 const JEWELLERY_PURITY_OPTIONS = [
-  { label: '18k', value: '18k' },
-  { label: '22k', value: '22k' },
-  { label: '24k', value: '24k' },
+  { label: '14K (58.3% Pure)', value: '14K' },
+  { label: '18K (75% Pure)', value: '18K' },
+  { label: '22K (91.6% Pure)', value: '22K' },
+  { label: '24K (99.9% Pure)', value: '24K' },
+  { label: '925 Silver (92.5% Pure)', value: '925 Silver' },
+  { label: '999 Silver (99.9% Pure)', value: '999 Silver' },
+  { label: '950 Platinum (95% Pure)', value: '950 Platinum' },
 ] as const;
 
 type ProductType = (typeof PRODUCT_TYPE_OPTIONS)[number]['value'];
@@ -59,6 +65,41 @@ interface Product {
   shippingClass: string;
   processingTime: string;
   product_type: ProductType;
+  // Jewelry specific fields
+  metalType: 'Gold' | 'Silver' | 'Platinum' | 'Rose Gold' | 'White Gold' | '';
+  metalPurity: '14K' | '18K' | '22K' | '24K' | '925 Silver' | '999 Silver' | '950 Platinum' | '';
+  metalWeight: number; // in grams
+  stoneType: 'Diamond' | 'Ruby' | 'Emerald' | 'Sapphire' | 'Pearl' | 'Amethyst' | 'Topaz' | 'None' | '';
+  stoneWeight: number; // in carats
+  stoneClarity: 'FL' | 'IF' | 'VVS1' | 'VVS2' | 'VS1' | 'VS2' | 'SI1' | 'SI2' | 'I1' | 'I2' | 'I3' | '';
+  stoneColor: 'D' | 'E' | 'F' | 'G' | 'H' | 'I' | 'J' | 'K' | 'L' | 'M' | 'N' | '';
+  stoneCut: 'Round' | 'Princess' | 'Emerald' | 'Asscher' | 'Oval' | 'Radiant' | 'Cushion' | 'Marquise' | 'Pear' | 'Heart' | '';
+  makingCharges: number; // percentage or fixed amount
+  makingChargesType: 'percentage' | 'fixed';
+  certification: string; // GIA, IGI, etc.
+  occasion: 'Wedding' | 'Engagement' | 'Anniversary' | 'Birthday' | 'Festival' | 'Daily Wear' | 'Party' | '';
+  gender: 'Men' | 'Women' | 'Unisex' | '';
+  ageGroup: 'Kids' | 'Teens' | 'Adults' | 'All Ages' | '';
+  size: string; // ring size, chain length, etc.
+  sizeUnit: 'inches' | 'cm' | 'ring_size' | '';
+  hallmarked: boolean;
+  bis_hallmark: boolean;
+  customizable: boolean;
+  engraving_available: boolean;
+  gift_wrapping: boolean;
+  // Live pricing fields
+  baseMaterialCost: number; // cost without live pricing
+  livePriceEnabled: boolean;
+  priceLastUpdated: string;
+  // Detailed pricing breakdown
+  metalCost: number; // Metal weight × Live rate × Purity
+  stoneCost: number; // Cost of stones/gems
+  makingChargeAmount: number; // Calculated making charges
+  gstAmount: number; // GST amount
+  otherCharges: number; // Any other charges (packaging, certification, etc.)
+  totalCostPrice: number; // Sum of all costs
+  profitMargin: number; // Profit margin percentage
+  profitAmount: number; // Calculated profit amount
   free_shipping: boolean;
   allow_return: boolean;
   return_policy: string;
@@ -71,11 +112,12 @@ interface Product {
   sizeChartImage: string;
   productVideo: string;
   wholesalePriceType: WholesalePriceType;
-  jewelleryWeight: number;
-  jewelleryPurity: JewelleryPurity | '';
-  jewelleryMakingCharges: number;
-  jewelleryStoneDetails: string;
-  jewelleryCertification: string;
+  // Legacy fields - removed to avoid duplicates
+  // jewelleryWeight: use metalWeight instead
+  // jewelleryPurity: use metalPurity instead  
+  // jewelleryMakingCharges: use makingCharges instead
+  // jewelleryStoneDetails: use individual stone fields instead
+  // jewelleryCertification: use certification instead
   variants: Array<{
     id: string;
     type: string;
@@ -112,7 +154,7 @@ const INITIAL_PRODUCT: Product = {
   regularPrice: 0,
   sellingPrice: 0,
   costPrice: 0,
-  taxRate: 18,
+  taxRate: 3, // GST for jewelry in India
   stock: 0,
   lowStockThreshold: 10,
   allowBackorders: false,
@@ -120,11 +162,45 @@ const INITIAL_PRODUCT: Product = {
   weight: 0,
   dimensions: '',
   shippingClass: 'Standard',
-  processingTime: '1-2 days',
+  processingTime: '3-5 days',
   product_type: 'Gold',
+  // Jewelry specific defaults
+  metalType: '',
+  metalPurity: '',
+  metalWeight: 0,
+  stoneType: '',
+  stoneWeight: 0,
+  stoneClarity: '',
+  stoneColor: '',
+  stoneCut: '',
+  makingCharges: 15, // 15% default making charges
+  makingChargesType: 'percentage',
+  certification: '',
+  occasion: '',
+  gender: '',
+  ageGroup: '',
+  size: '',
+  sizeUnit: '',
+  hallmarked: false,
+  bis_hallmark: false,
+  customizable: false,
+  engraving_available: false,
+  gift_wrapping: true,
+  baseMaterialCost: 0,
+  livePriceEnabled: false,
+  priceLastUpdated: '',
+  // Detailed pricing defaults
+  metalCost: 0,
+  stoneCost: 0,
+  makingChargeAmount: 0,
+  gstAmount: 0,
+  otherCharges: 0,
+  totalCostPrice: 0,
+  profitMargin: 20, // 20% default profit margin
+  profitAmount: 0,
   free_shipping: false,
-  allow_return: false,
-  return_policy: '',
+  allow_return: true,
+  return_policy: '30 days return policy for jewelry items',
   metaTitle: '',
   metaDescription: '',
   urlSlug: '',
@@ -134,11 +210,7 @@ const INITIAL_PRODUCT: Product = {
   sizeChartImage: '',
   productVideo: '',
   wholesalePriceType: 'Fixed',
-  jewelleryWeight: 0,
-  jewelleryPurity: '',
-  jewelleryMakingCharges: 0,
-  jewelleryStoneDetails: '',
-  jewelleryCertification: '',
+  // Legacy fields removed - using new jewelry fields instead
   variants: [],
   relatedProducts: [],
   status: 'active',
@@ -168,13 +240,19 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
     relatedProducts: [],
   });
   const [loading, setLoading] = useState(false);
+  const [livePrices, setLivePrices] = useState<{
+    gold: number;
+    silver: number;
+    platinum: number;
+  }>({ gold: 0, silver: 0, platinum: 0 });
+  const [priceLoading, setPriceLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [fetchingProduct, setFetchingProduct] = useState(!!productId);
   const [vendors, setVendors] = useState<Array<{ _id: string; storeName: string }>>([]);
   const [categories, setCategories] = useState<Array<{ _id: string; name: string }>>([]);
   const [brands, setBrands] = useState<Array<{ _id: string; name: string; status?: string }>>([]);
-  const [activeTab, setActiveTab] = useState<'basic' | 'pricing' | 'inventory' | 'images' | 'seo' | 'other'>('basic');
-  const [tabsWithErrors, setTabsWithErrors] = useState<Set<'basic' | 'pricing' | 'inventory' | 'images' | 'seo' | 'other'>>(new Set());
+  const [activeTab, setActiveTab] = useState<'basic' | 'jewelry' | 'pricing' | 'inventory' | 'images' | 'seo' | 'other'>('basic');
+  const [tabsWithErrors, setTabsWithErrors] = useState<Set<'basic' | 'jewelry' | 'pricing' | 'inventory' | 'images' | 'seo' | 'other'>>(new Set());
   const [availableTags, setAvailableTags] = useState<string[]>([]);
   const [tagSearchTerm, setTagSearchTerm] = useState('');
   const [loadingTags, setLoadingTags] = useState(false);
@@ -191,6 +269,150 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
     fetchTags();
     fetchBrands();
   }, [productId]);
+
+  // Fetch live metal prices
+  const fetchLivePrices = async () => {
+    setPriceLoading(true);
+    try {
+      const response = await fetch('/api/live-prices');
+      if (response.ok) {
+        const data = await response.json();
+        setLivePrices({
+          gold: data.gold || 6500,
+          silver: data.silver || 85,
+          platinum: data.platinum || 3200,
+        });
+      } else {
+        setLivePrices({
+          gold: 6500,
+          silver: 85,
+          platinum: 3200,
+        });
+      }
+    } catch (error) {
+      console.error('Failed to fetch live prices:', error);
+      setLivePrices({
+        gold: 6500,
+        silver: 85,
+        platinum: 3200,
+      });
+    }
+    setPriceLoading(false);
+  };
+
+  // Calculate detailed price breakdown for jewelry
+  const calculateDetailedPricing = () => {
+    // Basic validation - only calculate if we have metal info
+    if (!formData.metalType || !formData.metalWeight || formData.metalWeight <= 0) {
+      return {
+        metalCost: 0,
+        makingChargeAmount: 0,
+        stoneCost: formData.stoneCost || 0,
+        otherCharges: formData.otherCharges || 0,
+        subtotal: 0,
+        gstAmount: 0,
+        totalCostPrice: 0,
+        profitAmount: 0,
+        sellingPrice: 0,
+        mrp: 0
+      };
+    }
+    
+    // Get base metal price per gram
+    let basePricePerGram = 0;
+    switch (formData.metalType.toLowerCase()) {
+      case 'gold':
+      case 'rose gold':
+      case 'white gold':
+        basePricePerGram = formData.livePriceEnabled ? livePrices.gold : 6500;
+        // Apply purity factor
+        if (formData.metalPurity === '24K') basePricePerGram *= 1.0;
+        else if (formData.metalPurity === '22K') basePricePerGram *= 0.916;
+        else if (formData.metalPurity === '18K') basePricePerGram *= 0.75;
+        else if (formData.metalPurity === '14K') basePricePerGram *= 0.583;
+        break;
+      case 'silver':
+        basePricePerGram = formData.livePriceEnabled ? livePrices.silver : 85;
+        if (formData.metalPurity === '999 Silver') basePricePerGram *= 0.999;
+        else if (formData.metalPurity === '925 Silver') basePricePerGram *= 0.925;
+        break;
+      case 'platinum':
+        basePricePerGram = formData.livePriceEnabled ? livePrices.platinum : 3200;
+        if (formData.metalPurity === '950 Platinum') basePricePerGram *= 0.95;
+        break;
+    }
+    
+    // 1. Metal Cost = Weight × Price per gram
+    const metalCost = basePricePerGram * formData.metalWeight;
+    
+    // 2. Making Charges
+    const makingChargeAmount = formData.makingChargesType === 'percentage' 
+      ? metalCost * (formData.makingCharges / 100)
+      : formData.makingCharges;
+    
+    // 3. Stone Cost (manual input for diamonds/gemstones)
+    const stoneCost = formData.stoneCost || 0;
+    
+    // 4. Other Charges (certification, packaging, etc.)
+    const otherCharges = formData.otherCharges || 0;
+    
+    // 5. Subtotal (before GST) - This is the base cost
+    const subtotal = metalCost + makingChargeAmount + stoneCost + otherCharges;
+    
+    // 6. GST Calculation (3% for jewelry in India)
+    const gstAmount = subtotal * (formData.taxRate / 100);
+    
+    // 7. Total Cost Price (what it costs us)
+    const totalCostPrice = subtotal + gstAmount;
+    
+    // 8. Profit Calculation
+    const profitAmount = totalCostPrice * (formData.profitMargin / 100);
+    
+    // 9. Selling Price (Cost + Profit) - This is what customer pays
+    const sellingPrice = totalCostPrice + profitAmount;
+    
+    // 10. MRP (Maximum Retail Price) - Usually 10-15% higher than selling price
+    const mrp = sellingPrice * 1.12; // 12% higher than selling price
+    
+    return {
+      metalCost: Math.round(metalCost),
+      makingChargeAmount: Math.round(makingChargeAmount),
+      stoneCost: Math.round(stoneCost),
+      otherCharges: Math.round(otherCharges),
+      subtotal: Math.round(subtotal),
+      gstAmount: Math.round(gstAmount),
+      totalCostPrice: Math.round(totalCostPrice),
+      profitAmount: Math.round(profitAmount),
+      sellingPrice: Math.round(sellingPrice),
+      mrp: Math.round(mrp)
+    };
+  };
+
+  // Update prices when jewelry details change
+  useEffect(() => {
+    // Only auto-calculate if we have metal info
+    if (formData.metalType && formData.metalWeight > 0) {
+      if (formData.livePriceEnabled) {
+        fetchLivePrices();
+      }
+      
+      const pricing = calculateDetailedPricing();
+      if (pricing.sellingPrice > 0) {
+        setFormData(prev => ({
+          ...prev,
+          metalCost: pricing.metalCost,
+          makingChargeAmount: pricing.makingChargeAmount,
+          gstAmount: pricing.gstAmount,
+          totalCostPrice: pricing.totalCostPrice,
+          profitAmount: pricing.profitAmount,
+          sellingPrice: pricing.sellingPrice,
+          costPrice: pricing.totalCostPrice, // Cost price = Total cost (including GST)
+          regularPrice: pricing.mrp, // MRP = Regular price
+          priceLastUpdated: new Date().toISOString(),
+        }));
+      }
+    }
+  }, [formData.metalType, formData.metalPurity, formData.metalWeight, formData.makingCharges, formData.makingChargesType, formData.stoneCost, formData.otherCharges, formData.profitMargin, formData.taxRate, formData.livePriceEnabled]);
 
   const fetchVendors = async () => {
     try {
@@ -340,11 +562,7 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
     costPrice: 'pricing',
     taxRate: 'pricing',
     wholesalePriceType: 'pricing',
-    jewelleryWeight: 'pricing',
-    jewelleryPurity: 'pricing',
-    jewelleryMakingCharges: 'pricing',
-    jewelleryStoneDetails: 'pricing',
-    jewelleryCertification: 'pricing',
+    // Legacy fields removed - mapped to new jewelry fields
     stock: 'inventory',
     lowStockThreshold: 'inventory',
     allowBackorders: 'inventory',
@@ -414,23 +632,33 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
+    // Basic required fields - matches backend validation
     if (!formData.product_type?.trim()) newErrors.product_type = 'Product type is required';
     if (!formData.name?.trim()) newErrors.name = 'Product name is required';
     if (!formData.sku?.trim()) newErrors.sku = 'SKU is required';
     if (!formData.shortDescription?.trim()) newErrors.shortDescription = 'Short description is required';
     if (!getPlainTextFromHtml(formData.longDescription)) newErrors.longDescription = 'Long description is required';
+    if (!formData.category?.trim()) newErrors.category = 'Category is required';
     
-    // All products are jewellery now (Gold, Silver, Platinum)
-    if (formData.jewelleryWeight <= 0) newErrors.jewelleryWeight = 'Weight is required for jewellery';
-    if (!formData.jewelleryPurity?.trim()) newErrors.jewelleryPurity = 'Purity is required for jewellery';
-    if (formData.jewelleryMakingCharges <= 0) newErrors.jewelleryMakingCharges = 'Making charges must be greater than 0';
+    // Pricing validation - only if live pricing is disabled
+    if (!formData.livePriceEnabled) {
+      if (formData.regularPrice <= 0) newErrors.regularPrice = 'Regular price must be greater than 0';
+      if (formData.sellingPrice <= 0) newErrors.sellingPrice = 'Selling price must be greater than 0';
+      if (formData.costPrice <= 0) newErrors.costPrice = 'Cost price must be greater than 0';
+    }
+    
+    // Jewelry validation using new fields - matches backend validation exactly
+    if (formData.product_type && ['Gold', 'Silver', 'Platinum', 'Diamond', 'Gemstone'].includes(formData.product_type)) {
+      if (formData.metalWeight <= 0) newErrors.metalWeight = 'Metal weight (grams) is required and must be greater than 0';
+      if (!formData.metalPurity?.trim()) newErrors.metalPurity = 'Metal purity is required for jewelry products';
+      if (formData.makingCharges <= 0) newErrors.makingCharges = 'Making charges are required and must be greater than 0';
+    }
     
     if (formData.stock < 0) newErrors.stock = 'Stock cannot be negative';
     if (!formData.urlSlug?.trim()) newErrors.urlSlug = 'URL slug is required';
     if (!formData.metaTitle?.trim()) newErrors.metaTitle = 'Meta title is required';
     if (!formData.metaDescription?.trim()) newErrors.metaDescription = 'Meta description is required';
     if (!formData.mainImage?.trim()) newErrors.mainImage = 'Main image is required';
-    if (!formData.category?.trim()) newErrors.category = 'Category is required';
     if (!formData.vendor?.trim()) newErrors.vendor = 'Vendor is required';
     if (formData.allow_return && !formData.return_policy?.trim()) {
       newErrors.return_policy = 'Return policy is required when returns are enabled';
@@ -609,6 +837,7 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
 
   const tabs = [
     { id: 'basic', label: 'Basic Information', icon: Package },
+    { id: 'jewelry', label: 'Jewelry Details', icon: Settings },
     { id: 'pricing', label: 'Pricing & Tax', icon: DollarSign },
     { id: 'inventory', label: 'Inventory', icon: Archive },
     { id: 'images', label: 'Images', icon: ImageIcon },
@@ -665,14 +894,35 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                     <div className='space-y-6'>
                       <h3 className='text-xl font-semibold text-slate-900 dark:text-white'>Basic Information</h3>
 
-                      <Dropdown
-                        options={[{ label: 'Select Product Type', value: '' }, ...PRODUCT_TYPE_OPTIONS]}
-                        placeholder='Select product type'
-                        labelMain='Product Type *'
-                        value={formData.product_type}
-                        onChange={option => handleChange('product_type', option.value as ProductType)}
-                        error={isFieldInActiveTab('product_type') ? errors.product_type : undefined}
-                      />
+                        <FormField
+                          label="Product Type"
+                          required={true}
+                        >
+                          <select
+                            value={formData.product_type}
+                            onChange={(e) => {
+                              const selectedType = e.target.value as ProductType;
+                              handleChange('product_type', selectedType);
+                              // Auto-set metal type based on product type
+                              if (selectedType === 'Gold') {
+                                setFormData(prev => ({ ...prev, metalType: 'Gold' }));
+                              } else if (selectedType === 'Silver') {
+                                setFormData(prev => ({ ...prev, metalType: 'Silver' }));
+                              } else if (selectedType === 'Platinum') {
+                                setFormData(prev => ({ ...prev, metalType: 'Platinum' }));
+                              }
+                            }}
+                            className="w-full px-3 py-2 rounded-md border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                            required
+                          >
+                            <option value="">Select Product Type</option>
+                            <option value="Gold">Gold Jewelry</option>
+                            <option value="Silver">Silver Jewelry</option>
+                            <option value="Platinum">Platinum Jewelry</option>
+                            <option value="Diamond">Diamond Jewelry</option>
+                            <option value="Gemstone">Gemstone Jewelry</option>
+                          </select>
+                        </FormField>
 
                       <Dropdown
                         labelMain='Vendor *'
@@ -889,10 +1139,556 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                     </div>
                   )}
 
+                  {/* Jewelry Details Tab */}
+                  {activeTab === 'jewelry' && (
+                    <div className="space-y-6">
+                      <h3 className="text-xl font-semibold text-slate-900 dark:text-white">Jewelry Details</h3>
+                      
+                      {/* Metal Information */}
+                      <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-lg">
+                        <h4 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Metal Information</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <FormField
+                            label="Metal Variant"
+                            error={errors.metalType}
+                            required={false}
+                          >
+                            <select
+                              value={formData.metalType}
+                              onChange={(e) => setFormData(prev => ({ ...prev, metalType: e.target.value as any }))}
+                              className="w-full px-3 py-2 rounded-md border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                            >
+                              <option value="">Auto-selected from Product Type</option>
+                              {formData.product_type === 'Gold' && (
+                                <>
+                                  <option value="Gold">Yellow Gold</option>
+                                  <option value="Rose Gold">Rose Gold</option>
+                                  <option value="White Gold">White Gold</option>
+                                </>
+                              )}
+                              {formData.product_type === 'Silver' && (
+                                <option value="Silver">Silver</option>
+                              )}
+                              {formData.product_type === 'Platinum' && (
+                                <option value="Platinum">Platinum</option>
+                              )}
+                              {(formData.product_type === 'Diamond' || formData.product_type === 'Gemstone') && (
+                                <>
+                                  <option value="Gold">Yellow Gold</option>
+                                  <option value="Rose Gold">Rose Gold</option>
+                                  <option value="White Gold">White Gold</option>
+                                  <option value="Silver">Silver</option>
+                                  <option value="Platinum">Platinum</option>
+                                </>
+                              )}
+                            </select>
+                            <p className="text-xs text-slate-500 mt-1">
+                              {formData.product_type ? `Based on ${formData.product_type} jewelry selection` : 'Select Product Type first'}
+                            </p>
+                          </FormField>
+                          
+                          <FormField
+                            label="Metal Purity"
+                            error={errors.metalPurity}
+                            required={false}
+                          >
+                            <select
+                              value={formData.metalPurity}
+                              onChange={(e) => setFormData(prev => ({ ...prev, metalPurity: e.target.value as any }))}
+                              className="w-full px-3 py-2 rounded-md border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                            >
+                              <option value="">Select Purity</option>
+                              {formData.metalType === 'Gold' && (
+                                <>
+                                  <option value="24K">24K (99.9% Pure)</option>
+                                  <option value="22K">22K (91.6% Pure)</option>
+                                  <option value="18K">18K (75% Pure)</option>
+                                  <option value="14K">14K (58.3% Pure)</option>
+                                </>
+                              )}
+                              {formData.metalType === 'Silver' && (
+                                <>
+                                  <option value="999 Silver">999 Silver (99.9% Pure)</option>
+                                  <option value="925 Silver">925 Silver (92.5% Pure)</option>
+                                </>
+                              )}
+                              {formData.metalType === 'Platinum' && (
+                                <option value="950 Platinum">950 Platinum (95% Pure)</option>
+                              )}
+                            </select>
+                          </FormField>
+                          
+                          <FormField
+                            label="Metal Weight (grams)"
+                            error={errors.metalWeight}
+                            required={false}
+                          >
+                            <Input
+                              type="number"
+                              step="0.01"
+                              value={formData.metalWeight}
+                              onChange={(e) => setFormData(prev => ({ ...prev, metalWeight: parseFloat(e.target.value) || 0 }))}
+                              placeholder="0.00"
+                            />
+                          </FormField>
+                        </div>
+                      </div>
+
+                      {/* Stone Information */}
+                      <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-lg">
+                        <h4 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Stone Information</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                          <FormField
+                            label="Stone Type"
+                            error={errors.stoneType}
+                            required={false}
+                          >
+                            <select
+                              value={formData.stoneType}
+                              onChange={(e) => setFormData(prev => ({ ...prev, stoneType: e.target.value as any }))}
+                              className="w-full px-3 py-2 rounded-md border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                            >
+                              <option value="">Select Stone</option>
+                              <option value="None">No Stone</option>
+                              <option value="Diamond">Diamond</option>
+                              <option value="Ruby">Ruby</option>
+                              <option value="Emerald">Emerald</option>
+                              <option value="Sapphire">Sapphire</option>
+                              <option value="Pearl">Pearl</option>
+                              <option value="Amethyst">Amethyst</option>
+                              <option value="Topaz">Topaz</option>
+                            </select>
+                          </FormField>
+                          
+                          <FormField
+                            label="Stone Weight (carats)"
+                            error={errors.stoneWeight}
+                            required={false}
+                          >
+                            <Input
+                              type="number"
+                              step="0.01"
+                              value={formData.stoneWeight}
+                              onChange={(e) => setFormData(prev => ({ ...prev, stoneWeight: parseFloat(e.target.value) || 0 }))}
+                              placeholder="0.00"
+                            />
+                          </FormField>
+                          
+                          {formData.stoneType === 'Diamond' && (
+                            <>
+                              <FormField
+                                label="Clarity"
+                                error={errors.stoneClarity}
+                                required={false}
+                              >
+                                <select
+                                  value={formData.stoneClarity}
+                                  onChange={(e) => setFormData(prev => ({ ...prev, stoneClarity: e.target.value as any }))}
+                                  className="w-full px-3 py-2 rounded-md border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                                >
+                                  <option value="">Select Clarity</option>
+                                  <option value="FL">FL (Flawless)</option>
+                                  <option value="IF">IF (Internally Flawless)</option>
+                                  <option value="VVS1">VVS1</option>
+                                  <option value="VVS2">VVS2</option>
+                                  <option value="VS1">VS1</option>
+                                  <option value="VS2">VS2</option>
+                                  <option value="SI1">SI1</option>
+                                  <option value="SI2">SI2</option>
+                                </select>
+                              </FormField>
+                              
+                              <FormField
+                                label="Color Grade"
+                                error={errors.stoneColor}
+                                required={false}
+                              >
+                                <select
+                                  value={formData.stoneColor}
+                                  onChange={(e) => setFormData(prev => ({ ...prev, stoneColor: e.target.value as any }))}
+                                  className="w-full px-3 py-2 rounded-md border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                                >
+                                  <option value="">Select Color</option>
+                                  <option value="D">D (Colorless)</option>
+                                  <option value="E">E (Colorless)</option>
+                                  <option value="F">F (Colorless)</option>
+                                  <option value="G">G (Near Colorless)</option>
+                                  <option value="H">H (Near Colorless)</option>
+                                  <option value="I">I (Near Colorless)</option>
+                                  <option value="J">J (Near Colorless)</option>
+                                </select>
+                              </FormField>
+                            </>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Making Charges & Certification */}
+                      <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-lg">
+                        <h4 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Making Charges & Certification</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <FormField
+                            label="Making Charges"
+                            error={errors.makingCharges}
+                            required={false}
+                          >
+                            <div className="flex gap-2">
+                              <Input
+                                type="number"
+                                step="0.01"
+                                value={formData.makingCharges}
+                                onChange={(e) => setFormData(prev => ({ ...prev, makingCharges: parseFloat(e.target.value) || 0 }))}
+                                placeholder="15"
+                                className="flex-1"
+                              />
+                              <select
+                                value={formData.makingChargesType}
+                                onChange={(e) => setFormData(prev => ({ ...prev, makingChargesType: e.target.value as any }))}
+                                className="px-3 py-2 rounded-md border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                              >
+                                <option value="percentage">%</option>
+                                <option value="fixed">₹</option>
+                              </select>
+                            </div>
+                          </FormField>
+                          
+                          <FormField
+                            label="Certification"
+                            error={errors.certification}
+                            required={false}
+                          >
+                            <Input
+                              type="text"
+                              value={formData.certification}
+                              onChange={(e) => setFormData(prev => ({ ...prev, certification: e.target.value }))}
+                              placeholder="GIA, IGI, BIS, etc."
+                            />
+                          </FormField>
+                          
+                          <div className="space-y-2">
+                            <label className="flex items-center">
+                              <input
+                                type="checkbox"
+                                checked={formData.hallmarked}
+                                onChange={(e) => setFormData(prev => ({ ...prev, hallmarked: e.target.checked }))}
+                                className="mr-2"
+                              />
+                              <span className="text-sm text-slate-700 dark:text-slate-300">Hallmarked</span>
+                            </label>
+                            <label className="flex items-center">
+                              <input
+                                type="checkbox"
+                                checked={formData.bis_hallmark}
+                                onChange={(e) => setFormData(prev => ({ ...prev, bis_hallmark: e.target.checked }))}
+                                className="mr-2"
+                              />
+                              <span className="text-sm text-slate-700 dark:text-slate-300">BIS Hallmark</span>
+                            </label>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Additional Details */}
+                      <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-lg">
+                        <h4 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Product Details</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                          <FormField
+                            label="Occasion"
+                            required={false}
+                          >
+                            <select
+                              value={formData.occasion}
+                              onChange={(e) => setFormData(prev => ({ ...prev, occasion: e.target.value as any }))}
+                              className="w-full px-3 py-2 rounded-md border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                            >
+                              <option value="">Select Occasion</option>
+                              <option value="Wedding">Wedding</option>
+                              <option value="Engagement">Engagement</option>
+                              <option value="Anniversary">Anniversary</option>
+                              <option value="Birthday">Birthday</option>
+                              <option value="Festival">Festival</option>
+                              <option value="Daily Wear">Daily Wear</option>
+                              <option value="Party">Party</option>
+                            </select>
+                          </FormField>
+                          
+                          <FormField
+                            label="Gender"
+                            required={false}
+                          >
+                            <select
+                              value={formData.gender}
+                              onChange={(e) => setFormData(prev => ({ ...prev, gender: e.target.value as any }))}
+                              className="w-full px-3 py-2 rounded-md border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                            >
+                              <option value="">Select Gender</option>
+                              <option value="Men">Men</option>
+                              <option value="Women">Women</option>
+                              <option value="Unisex">Unisex</option>
+                            </select>
+                          </FormField>
+                          
+                          <FormField
+                            label="Age Group"
+                            required={false}
+                          >
+                            <select
+                              value={formData.ageGroup}
+                              onChange={(e) => setFormData(prev => ({ ...prev, ageGroup: e.target.value as any }))}
+                              className="w-full px-3 py-2 rounded-md border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                            >
+                              <option value="">Select Age Group</option>
+                              <option value="Kids">Kids</option>
+                              <option value="Teens">Teens</option>
+                              <option value="Adults">Adults</option>
+                              <option value="All Ages">All Ages</option>
+                            </select>
+                          </FormField>
+                          
+                          <FormField
+                            label="Size"
+                            required={false}
+                          >
+                            <div className="flex gap-2">
+                              <Input
+                                type="text"
+                                value={formData.size}
+                                onChange={(e) => setFormData(prev => ({ ...prev, size: e.target.value }))}
+                                placeholder="Size"
+                                className="flex-1"
+                              />
+                              <select
+                                value={formData.sizeUnit}
+                                onChange={(e) => setFormData(prev => ({ ...prev, sizeUnit: e.target.value as any }))}
+                                className="px-3 py-2 rounded-md border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                              >
+                                <option value="">Unit</option>
+                                <option value="ring_size">Ring Size</option>
+                                <option value="inches">Inches</option>
+                                <option value="cm">CM</option>
+                              </select>
+                            </div>
+                          </FormField>
+                        </div>
+                        
+                        {/* Additional Features */}
+                        <div className="mt-4">
+                          <h5 className="text-md font-medium text-slate-900 dark:text-white mb-3">Additional Features</h5>
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <label className="flex items-center">
+                              <input
+                                type="checkbox"
+                                checked={formData.customizable}
+                                onChange={(e) => setFormData(prev => ({ ...prev, customizable: e.target.checked }))}
+                                className="mr-2"
+                              />
+                              <span className="text-sm text-slate-700 dark:text-slate-300">Customizable</span>
+                            </label>
+                            <label className="flex items-center">
+                              <input
+                                type="checkbox"
+                                checked={formData.engraving_available}
+                                onChange={(e) => setFormData(prev => ({ ...prev, engraving_available: e.target.checked }))}
+                                className="mr-2"
+                              />
+                              <span className="text-sm text-slate-700 dark:text-slate-300">Engraving Available</span>
+                            </label>
+                            <label className="flex items-center">
+                              <input
+                                type="checkbox"
+                                checked={formData.gift_wrapping}
+                                onChange={(e) => setFormData(prev => ({ ...prev, gift_wrapping: e.target.checked }))}
+                                className="mr-2"
+                              />
+                              <span className="text-sm text-slate-700 dark:text-slate-300">Gift Wrapping</span>
+                            </label>
+                            <label className="flex items-center">
+                              <input
+                                type="checkbox"
+                                checked={formData.livePriceEnabled}
+                                onChange={(e) => setFormData(prev => ({ ...prev, livePriceEnabled: e.target.checked }))}
+                                className="mr-2"
+                              />
+                              <span className="text-sm text-slate-700 dark:text-slate-300">Live Pricing</span>
+                            </label>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Pricing & Tax */}
                   {activeTab === 'pricing' && (
                     <div className='space-y-6'>
                       <h3 className='text-xl font-semibold text-slate-900 dark:text-white'>Pricing & Tax</h3>
+                      
+                      {/* Live Pricing Section */}
+                      <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-lg">
+                        <div className="flex items-center justify-between mb-4">
+                          <h4 className="text-lg font-semibold text-slate-900 dark:text-white">Live Pricing System</h4>
+                          <label className="flex items-center">
+                            <input
+                              type="checkbox"
+                              checked={formData.livePriceEnabled}
+                              onChange={(e) => setFormData(prev => ({ ...prev, livePriceEnabled: e.target.checked }))}
+                              className="mr-2"
+                            />
+                            <span className="text-sm text-slate-700 dark:text-slate-300">Enable Live Pricing</span>
+                          </label>
+                        </div>
+                        
+                        {formData.livePriceEnabled && (
+                          <>
+                            {/* Live Metal Rates */}
+                            <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg mb-4">
+                              <div className="flex items-center justify-between mb-2">
+                                <span className="text-sm font-medium text-blue-900 dark:text-blue-100">Live Metal Prices (₹/gram)</span>
+                                <button
+                                  type="button"
+                                  onClick={fetchLivePrices}
+                                  disabled={priceLoading}
+                                  className="text-xs bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700 disabled:opacity-50"
+                                >
+                                  {priceLoading ? 'Updating...' : 'Refresh Prices'}
+                                </button>
+                              </div>
+                              <div className="grid grid-cols-3 gap-2 text-xs">
+                                <div>Gold: ₹{livePrices.gold}</div>
+                                <div>Silver: ₹{livePrices.silver}</div>
+                                <div>Platinum: ₹{livePrices.platinum}</div>
+                              </div>
+                            </div>
+                            
+                            {/* Price Breakdown */}
+                            {formData.metalType && formData.metalWeight > 0 && (
+                              <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
+                                <h5 className="text-md font-semibold text-green-900 dark:text-green-100 mb-3">
+                                  Jewelry Price Calculation
+                                  <span className="text-xs font-normal ml-2">
+                                    ({formData.metalType} {formData.metalPurity} - {formData.metalWeight}g)
+                                  </span>
+                                </h5>
+                                {(() => {
+                                  const pricing = calculateDetailedPricing();
+                                  return (
+                                    <div className="space-y-4">
+                                      {/* Cost Breakdown */}
+                                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
+                                        <div className="space-y-2">
+                                          <h6 className="font-medium text-green-800 dark:text-green-200">Material Costs</h6>
+                                          <div className="flex justify-between">
+                                            <span>Metal Cost:</span>
+                                            <span className="font-semibold">₹{pricing.metalCost}</span>
+                                          </div>
+                                          <div className="flex justify-between">
+                                            <span>Making Charges:</span>
+                                            <span className="font-semibold">₹{pricing.makingChargeAmount}</span>
+                                          </div>
+                                          <div className="flex justify-between">
+                                            <span>Stone Cost:</span>
+                                            <span className="font-semibold">₹{pricing.stoneCost}</span>
+                                          </div>
+                                          <div className="flex justify-between">
+                                            <span>Other Charges:</span>
+                                            <span className="font-semibold">₹{pricing.otherCharges}</span>
+                                          </div>
+                                        </div>
+                                        
+                                        <div className="space-y-2">
+                                          <h6 className="font-medium text-green-800 dark:text-green-200">Tax & Costs</h6>
+                                          <div className="flex justify-between">
+                                            <span>Subtotal:</span>
+                                            <span className="font-semibold">₹{pricing.subtotal}</span>
+                                          </div>
+                                          <div className="flex justify-between">
+                                            <span>GST ({formData.taxRate}%):</span>
+                                            <span className="font-semibold">₹{pricing.gstAmount}</span>
+                                          </div>
+                                          <div className="flex justify-between border-t pt-1">
+                                            <span className="font-medium">Total Cost Price:</span>
+                                            <span className="font-bold">₹{pricing.totalCostPrice}</span>
+                                          </div>
+                                        </div>
+                                        
+                                        <div className="space-y-2">
+                                          <h6 className="font-medium text-green-800 dark:text-green-200">Selling Prices</h6>
+                                          <div className="flex justify-between">
+                                            <span>Profit ({formData.profitMargin}%):</span>
+                                            <span className="font-semibold">₹{pricing.profitAmount}</span>
+                                          </div>
+                                          <div className="flex justify-between border-t pt-1">
+                                            <span className="font-medium">Selling Price:</span>
+                                            <span className="font-bold text-green-600">₹{pricing.sellingPrice}</span>
+                                          </div>
+                                          <div className="flex justify-between">
+                                            <span className="font-medium">MRP:</span>
+                                            <span className="font-bold text-blue-600">₹{pricing.mrp}</span>
+                                          </div>
+                                        </div>
+                                      </div>
+                                      
+                                      {/* Summary */}
+                                      <div className="bg-white dark:bg-slate-700 p-3 rounded border-l-4 border-green-500">
+                                        <div className="text-xs text-slate-600 dark:text-slate-400 mb-1">
+                                          Price Formula: Metal Cost + Making Charges + Stone Cost + Other Charges + GST + Profit
+                                        </div>
+                                        <div className="flex justify-between items-center">
+                                          <span className="text-sm font-medium">Final Customer Price:</span>
+                                          <span className="text-lg font-bold text-green-600">₹{pricing.sellingPrice}</span>
+                                        </div>
+                                        <div className="text-xs text-slate-500 mt-1">
+                                          * GST is included in the price | MRP for display purposes
+                                        </div>
+                                      </div>
+                                    </div>
+                                  );
+                                })()}
+                              </div>
+                            )}
+                          </>
+                        )}
+                      </div>
+
+                      {/* Additional Cost Fields - Only show if live pricing is enabled */}
+                      {formData.livePriceEnabled && (
+                        <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-lg">
+                          <h4 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Additional Costs</h4>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <FormField
+                              label="Stone Cost (₹)"
+                              type="number"
+                              step="0.01"
+                              value={formData.stoneCost}
+                              onChange={(e) => setFormData(prev => ({ ...prev, stoneCost: parseFloat(e.target.value) || 0 }))}
+                              placeholder="0.00"
+                              helperText="Cost of diamonds/gemstones"
+                              error={errors.stoneCost}
+                            />
+                            
+                            <FormField
+                              label="Other Charges (₹)"
+                              type="number"
+                              step="0.01"
+                              value={formData.otherCharges}
+                              onChange={(e) => setFormData(prev => ({ ...prev, otherCharges: parseFloat(e.target.value) || 0 }))}
+                              placeholder="0.00"
+                              helperText="Certification, packaging, etc."
+                              error={errors.otherCharges}
+                            />
+                            
+                            <FormField
+                              label="Profit Margin (%)"
+                              type="number"
+                              step="0.1"
+                              value={formData.profitMargin}
+                              onChange={(e) => setFormData(prev => ({ ...prev, profitMargin: parseFloat(e.target.value) || 0 }))}
+                              placeholder="20"
+                              helperText="Profit margin percentage"
+                              error={errors.profitMargin}
+                            />
+                          </div>
+                        </div>
+                      )}
                       {!isJewellery ? (
                         <>
                           <FormField
@@ -962,15 +1758,12 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                             Jewellery pricing replaces standard price fields. Provide the attributes below.
                           </p>
 
-                          <FormField
-                            label='Weight (grams)'
-                            required
-                            type='number'
-                            value={formData.jewelleryWeight}
-                            onChange={e => handleChange('jewelleryWeight', parseFloat(e.target.value) || 0)}
-                            placeholder='0.00'
-                            error={isFieldInActiveTab('jewelleryWeight') ? errors.jewelleryWeight : undefined}
-                          />
+                        {/* Weight field moved to Jewelry Details tab as Metal Weight */}
+                        <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                          <p className="text-sm text-blue-800 dark:text-blue-200">
+                            <strong>Note:</strong> Weight is now configured as "Metal Weight" in the "Jewelry Details" tab.
+                          </p>
+                        </div>
 
                           <Dropdown
                             labelMain='Purity'
@@ -981,31 +1774,14 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                             error={isFieldInActiveTab('jewelleryPurity') ? errors.jewelleryPurity : undefined}
                           />
 
-                          <FormField
-                            label='Making Charges'
-                            required
-                            type='number'
-                            value={formData.jewelleryMakingCharges}
-                            onChange={e => handleChange('jewelleryMakingCharges', parseFloat(e.target.value) || 0)}
-                            placeholder='0.00'
-                            error={isFieldInActiveTab('jewelleryMakingCharges') ? errors.jewelleryMakingCharges : undefined}
-                          />
+                          {/* Making Charges and Stone Details moved to Jewelry Details tab */}
+                          <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                            <p className="text-sm text-blue-800 dark:text-blue-200">
+                              <strong>Note:</strong> Making charges and stone details are now configured in the "Jewelry Details" tab for better organization.
+                            </p>
+                          </div>
 
-                          <FormField
-                            label='Stone Details (optional)'
-                            textarea
-                            rows={2}
-                            value={formData.jewelleryStoneDetails}
-                            onChange={e => handleChange('jewelleryStoneDetails', e.target.value)}
-                            placeholder='Describe stone quality, type, cut, etc.'
-                          />
-
-                          <FormField
-                            label='Certification (optional)'
-                            value={formData.jewelleryCertification}
-                            onChange={e => handleChange('jewelleryCertification', e.target.value)}
-                            placeholder='e.g., BIS Hallmark, GIA, IGI'
-                          />
+                          {/* Certification moved to Jewelry Details tab */}
                         </>
                       )}
                     </div>

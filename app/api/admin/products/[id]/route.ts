@@ -12,35 +12,58 @@ const normalizeProductPayload = (payload: any) => {
     ...payload,
     wholesalePriceType: payload.wholesalePriceType || 'Fixed',
     sizeChartImage: payload.sizeChartImage ?? '',
-    jewelleryWeight: typeof payload.jewelleryWeight === 'number' ? payload.jewelleryWeight : 0,
-    jewelleryPurity: payload.jewelleryPurity ?? '',
-    jewelleryMakingCharges:
-      typeof payload.jewelleryMakingCharges === 'number' ? payload.jewelleryMakingCharges : 0,
-    jewelleryStoneDetails: payload.jewelleryStoneDetails ?? '',
-    jewelleryCertification: payload.jewelleryCertification ?? '',
+    // New jewelry field names
+    metalWeight: typeof payload.metalWeight === 'number' ? payload.metalWeight : 0,
+    metalPurity: payload.metalPurity ?? '',
+    makingCharges: typeof payload.makingCharges === 'number' ? payload.makingCharges : 0,
+    certification: payload.certification ?? '',
+    // Backward compatibility for old field names
+    jewelleryWeight: typeof payload.jewelleryWeight === 'number' ? payload.jewelleryWeight : (typeof payload.metalWeight === 'number' ? payload.metalWeight : 0),
+    jewelleryPurity: payload.jewelleryPurity ?? payload.metalPurity ?? '',
+    jewelleryMakingCharges: typeof payload.jewelleryMakingCharges === 'number' ? payload.jewelleryMakingCharges : (typeof payload.makingCharges === 'number' ? payload.makingCharges : 0),
+    jewelleryCertification: payload.jewelleryCertification ?? payload.certification ?? '',
   };
 };
 
 const validateJewelleryPayload = (payload: any) => {
-  // All product types are jewellery (Gold, Silver, Platinum)
-  const isJewellery = ['Gold', 'Silver', 'Platinum'].includes(payload.product_type);
+  // All product types are jewellery (Gold, Silver, Platinum, Diamond, Gemstone)
+  const isJewellery = ['Gold', 'Silver', 'Platinum', 'Diamond', 'Gemstone'].includes(payload.product_type);
   if (!payload || !isJewellery) {
     return null;
   }
 
   const errors: string[] = [];
-  if (!(typeof payload.jewelleryWeight === 'number' && payload.jewelleryWeight > 0)) {
-    errors.push('weight (grams)');
+  
+  // Check for metal weight (use new field name first, fallback to old)
+  const metalWeight = payload.metalWeight || payload.jewelleryWeight;
+  if (!(typeof metalWeight === 'number' && metalWeight > 0)) {
+    errors.push('metal weight (grams)');
   }
-  if (!payload.jewelleryPurity) {
-    errors.push('purity');
+  
+  // Check for metal purity (use new field name first, fallback to old)
+  const metalPurity = payload.metalPurity || payload.jewelleryPurity;
+  if (!metalPurity) {
+    errors.push('metal purity');
   }
-  if (!(typeof payload.jewelleryMakingCharges === 'number' && payload.jewelleryMakingCharges > 0)) {
+  
+  // Check for making charges (use new field name first, fallback to old)
+  const makingCharges = payload.makingCharges || payload.jewelleryMakingCharges;
+  if (!(typeof makingCharges === 'number' && makingCharges > 0)) {
     errors.push('making charges');
   }
 
+  // Basic required fields
+  if (!payload.name || !payload.sku || !payload.shortDescription || !payload.category) {
+    const missingBasic = [];
+    if (!payload.name) missingBasic.push('product name');
+    if (!payload.sku) missingBasic.push('SKU');
+    if (!payload.shortDescription) missingBasic.push('short description');
+    if (!payload.category) missingBasic.push('category');
+    errors.push(...missingBasic);
+  }
+
   if (errors.length) {
-    return `Jewellery products require: ${errors.join(', ')}`;
+    return `Required fields missing: ${errors.join(', ')}`;
   }
 
   return null;

@@ -12,6 +12,7 @@ interface InputProps {
   labelClassName?: string;
   hideLabel?: boolean;
   inline?: boolean;
+  children?: React.ReactNode;
   [key: string]: any;
 }
 
@@ -27,6 +28,7 @@ export default function FormField({
   labelClassName = "",
   hideLabel = false,
   inline = false,
+  children,
   ...rest
 }: InputProps) {
   const baseInputClasses =
@@ -47,7 +49,9 @@ export default function FormField({
       )}
 
       <div className={inline ? "flex-1" : ""}>
-        {textarea ? (
+        {children ? (
+          children
+        ) : textarea ? (
           <textarea
             placeholder={placeholder}
             {...rest}
