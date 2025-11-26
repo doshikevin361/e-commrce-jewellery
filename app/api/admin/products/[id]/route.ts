@@ -138,7 +138,8 @@ export async function PUT(
     const normalizedUpdateData = isStatusOnlyUpdate ? updateData : normalizeProductPayload(updateData);
     
     if (!isStatusOnlyUpdate) {
-      const requiredFields = ['name', 'sku', 'shortDescription', 'longDescription', 'category'];
+      // Only essential fields are required for update
+      const requiredFields = ['name', 'sku', 'shortDescription', 'category'];
       const missingFields = requiredFields.filter(field => !normalizedUpdateData[field]);
       if (missingFields.length > 0) {
         console.log('[v0] Missing required fields:', missingFields);

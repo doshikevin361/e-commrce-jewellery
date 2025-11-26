@@ -51,7 +51,7 @@ const validateJewelleryPayload = (payload: any) => {
     errors.push('making charges');
   }
 
-  // Basic required fields
+  // Basic required fields - only essential ones
   if (!payload.name || !payload.sku || !payload.shortDescription || !payload.category) {
     const missingBasic = [];
     if (!payload.name) missingBasic.push('product name');
@@ -60,6 +60,9 @@ const validateJewelleryPayload = (payload: any) => {
     if (!payload.category) missingBasic.push('category');
     errors.push(...missingBasic);
   }
+  
+  // Note: longDescription, brand, vendor are handled by frontend validation
+  // but not enforced at API level for flexibility
 
   if (errors.length) {
     return `Required fields missing: ${errors.join(', ')}`;

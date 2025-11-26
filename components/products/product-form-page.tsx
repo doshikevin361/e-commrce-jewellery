@@ -390,14 +390,20 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
     fetchBrands();
   }, [productId]);
 
-  // Auto-fetch live prices when Pricing tab is accessed
-  useEffect(() => {
-    if (activeTab === 'pricing' && formData.livePriceEnabled) {
-      console.log('[v0] Auto-fetching live prices on Pricing tab access');
-      // Always fetch fresh prices when accessing pricing tab
-      fetchLivePrices();
-    }
-  }, [activeTab, formData.livePriceEnabled]);
+   // Auto-fetch live prices when Pricing tab is accessed (only if jewelry details are filled)
+   useEffect(() => {
+     if (activeTab === 'pricing' && formData.livePriceEnabled) {
+       // Check if basic jewelry details are filled
+       const hasJewelryDetails = formData.metalType && formData.metalWeight > 0 && formData.metalPurity;
+       
+       if (hasJewelryDetails) {
+         console.log('[v0] Auto-fetching live prices - jewelry details available');
+         fetchLivePrices();
+       } else {
+         console.log('[v0] Cannot fetch live prices - jewelry details incomplete');
+       }
+     }
+   }, [activeTab, formData.livePriceEnabled, formData.metalType, formData.metalWeight, formData.metalPurity]);
 
   // Auto-calculate pricing when live prices are updated or jewelry fields change
   useEffect(() => {
@@ -702,7 +708,7 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
   };
 
   // Map field names to their corresponding tabs
-  const fieldToTabMap: Record<string, 'basic' | 'pricing' | 'inventory' | 'images' | 'seo' | 'other'> = {
+  const fieldToTabMap: Record<string, 'basic' | 'jewelry' | 'pricing' | 'inventory' | 'images' | 'seo' | 'other'> = {
     product_type: 'basic',
     name: 'basic',
     sku: 'basic',
@@ -714,12 +720,43 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
     free_shipping: 'basic',
     allow_return: 'basic',
     return_policy: 'basic',
+    // Jewelry fields
+    metalType: 'jewelry',
+    metalPurity: 'jewelry',
+    metalWeight: 'jewelry',
+    stoneType: 'jewelry',
+    stoneWeight: 'jewelry',
+    stoneClarity: 'jewelry',
+    stoneColor: 'jewelry',
+    stoneCut: 'jewelry',
+    makingCharges: 'jewelry',
+    makingChargesType: 'jewelry',
+    certification: 'jewelry',
+    occasion: 'jewelry',
+    gender: 'jewelry',
+    ageGroup: 'jewelry',
+    size: 'jewelry',
+    sizeUnit: 'jewelry',
+    hallmarked: 'jewelry',
+    bis_hallmark: 'jewelry',
+    customizable: 'jewelry',
+    engraving_available: 'jewelry',
+    gift_wrapping: 'jewelry',
     regularPrice: 'pricing',
     sellingPrice: 'pricing',
     costPrice: 'pricing',
     taxRate: 'pricing',
     wholesalePriceType: 'pricing',
-    // Legacy fields removed - mapped to new jewelry fields
+    livePriceEnabled: 'pricing',
+    metalCost: 'pricing',
+    stoneCost: 'pricing',
+    makingChargeAmount: 'pricing',
+    gstAmount: 'pricing',
+    otherCharges: 'pricing',
+    totalCostPrice: 'pricing',
+    profitMargin: 'pricing',
+    profitAmount: 'pricing',
+    mrp: 'pricing',
     stock: 'inventory',
     lowStockThreshold: 'inventory',
     allowBackorders: 'inventory',
@@ -732,6 +769,15 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
     focusKeyword: 'seo',
     metaTitle: 'seo',
     metaDescription: 'seo',
+    // Other fields
+    brand: 'basic',
+    tags: 'basic',
+    warrantyPeriod: 'other',
+    returnPolicyDays: 'other',
+    processingTime: 'other',
+    dimensions: 'other',
+    weight: 'other',
+    shippingClass: 'other',
     // Other fields in 'other' tab don't have validation errors
   };
 
@@ -765,8 +811,8 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
   }, [formData.certification, useCustomCertification]);
 
   // Get which tabs have errors
-  const getTabsWithErrors = (errorFields: Record<string, string>): Set<'basic' | 'pricing' | 'inventory' | 'images' | 'seo' | 'other'> => {
-    const tabs = new Set<'basic' | 'pricing' | 'inventory' | 'images' | 'seo' | 'other'>();
+  const getTabsWithErrors = (errorFields: Record<string, string>): Set<'basic' | 'jewelry' | 'pricing' | 'inventory' | 'images' | 'seo' | 'other'> => {
+    const tabs = new Set<'basic' | 'jewelry' | 'pricing' | 'inventory' | 'images' | 'seo' | 'other'>();
     Object.keys(errorFields).forEach(field => {
       const tab = fieldToTabMap[field];
       if (tab) {
@@ -796,38 +842,111 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
-    // Basic required fields - matches backend validation
+    console.log('[v0] Validating form with data:', {
+      product_type: formData.product_type,
+      metalWeight: formData.metalWeight,
+      metalPurity: formData.metalPurity,
+      makingCharges: formData.makingCharges
+    });
+
+    // Basic Information Tab - Required Fields
     if (!formData.product_type?.trim()) newErrors.product_type = 'Product type is required';
     if (!formData.name?.trim()) newErrors.name = 'Product name is required';
     if (!formData.sku?.trim()) newErrors.sku = 'SKU is required';
     if (!formData.shortDescription?.trim()) newErrors.shortDescription = 'Short description is required';
     if (!getPlainTextFromHtml(formData.longDescription)) newErrors.longDescription = 'Long description is required';
     if (!formData.category?.trim()) newErrors.category = 'Category is required';
+    if (!formData.brand?.trim()) newErrors.brand = 'Brand is required';
+    if (!formData.vendor?.trim()) newErrors.vendor = 'Vendor is required';
 
+    // Business Settings Validation
+    if (formData.taxRate < 0 || formData.taxRate > 100) newErrors.taxRate = 'Tax rate must be between 0 and 100';
+    
     // Pricing validation - only if live pricing is disabled
     if (!formData.livePriceEnabled) {
-      if (formData.regularPrice <= 0) newErrors.regularPrice = 'Regular price must be greater than 0';
-      if (formData.sellingPrice <= 0) newErrors.sellingPrice = 'Selling price must be greater than 0';
-      if (formData.costPrice <= 0) newErrors.costPrice = 'Cost price must be greater than 0';
+      if (!formData.regularPrice || formData.regularPrice <= 0) newErrors.regularPrice = 'Regular price is required and must be greater than 0';
+      if (!formData.sellingPrice || formData.sellingPrice <= 0) newErrors.sellingPrice = 'Selling price is required and must be greater than 0';
+      if (!formData.costPrice || formData.costPrice <= 0) newErrors.costPrice = 'Cost price is required and must be greater than 0';
     }
 
-    // Jewelry validation using new fields - matches backend validation exactly
+    // Jewelry Tab Validation - Required for jewelry products
     if (formData.product_type && ['Gold', 'Silver', 'Platinum', 'Diamond', 'Gemstone'].includes(formData.product_type)) {
-      if (formData.metalWeight <= 0) newErrors.metalWeight = 'Metal weight (grams) is required and must be greater than 0';
-      if (!formData.metalPurity?.trim()) newErrors.metalPurity = 'Metal purity is required for jewelry products';
-      if (formData.makingCharges <= 0) newErrors.makingCharges = 'Making charges are required and must be greater than 0';
+      // Metal Information - Required
+      if (!formData.metalType?.trim()) {
+        newErrors.metalType = 'Metal type is required for jewelry products';
+      }
+      if (!formData.metalWeight || formData.metalWeight <= 0) {
+        newErrors.metalWeight = 'Metal weight (grams) is required and must be greater than 0';
+        console.log('[v0] Metal weight validation failed:', formData.metalWeight);
+      }
+      if (!formData.metalPurity?.trim()) {
+        newErrors.metalPurity = 'Metal purity is required for jewelry products';
+        console.log('[v0] Metal purity validation failed:', formData.metalPurity);
+      }
+      
+      // Making Charges - Required
+      if (!formData.makingCharges || formData.makingCharges <= 0) {
+        newErrors.makingCharges = 'Making charges are required and must be greater than 0';
+        console.log('[v0] Making charges validation failed:', formData.makingCharges);
+      }
+      
+      // Making charges type validation
+      if (!formData.makingChargesType) {
+        newErrors.makingChargesType = 'Making charges type (percentage/fixed) is required';
+      }
+      
+      // Stone Information - Conditional validation
+      if (formData.stoneType && formData.stoneType !== 'None') {
+        if (!formData.stoneWeight || formData.stoneWeight <= 0) {
+          newErrors.stoneWeight = 'Stone weight is required when stone type is selected';
+        }
+      }
+      
+       // Product Details - Optional for jewelry (for better categorization)
+       // These fields help with filtering and search but are not mandatory
     }
 
+    // Inventory Tab Validation
     if (formData.stock < 0) newErrors.stock = 'Stock cannot be negative';
-    if (!formData.urlSlug?.trim()) newErrors.urlSlug = 'URL slug is required';
-    if (!formData.metaTitle?.trim()) newErrors.metaTitle = 'Meta title is required';
-    if (!formData.metaDescription?.trim()) newErrors.metaDescription = 'Meta description is required';
-    if (!formData.mainImage?.trim()) newErrors.mainImage = 'Main image is required';
-    if (!formData.vendor?.trim()) newErrors.vendor = 'Vendor is required';
+    if (!formData.stock && formData.stock !== 0) newErrors.stock = 'Stock quantity is required';
+    if (formData.lowStockThreshold < 0) newErrors.lowStockThreshold = 'Low stock threshold cannot be negative';
+    
+    // Images Tab Validation
+    if (!formData.mainImage?.trim()) newErrors.mainImage = 'Main product image is required';
+    
+     // SEO Tab Validation - Only URL slug is required
+     if (!formData.urlSlug?.trim()) newErrors.urlSlug = 'URL slug is required';
+    
+    // URL Slug validation (no spaces, special characters)
+    if (formData.urlSlug && !/^[a-z0-9-]+$/.test(formData.urlSlug)) {
+      newErrors.urlSlug = 'URL slug can only contain lowercase letters, numbers, and hyphens';
+    }
+    
+    // Meta title length validation
+    if (formData.metaTitle && formData.metaTitle.length > 60) {
+      newErrors.metaTitle = 'Meta title should be 60 characters or less';
+    }
+    
+    // Meta description length validation
+    if (formData.metaDescription && formData.metaDescription.length > 160) {
+      newErrors.metaDescription = 'Meta description should be 160 characters or less';
+    }
+    
+    // Business Logic Validation
     if (formData.allow_return && !formData.return_policy?.trim()) {
       newErrors.return_policy = 'Return policy is required when returns are enabled';
     }
+    
+     // Warranty validation - Optional field for better customer service
+    
+    // Return policy days validation
+    if (formData.allow_return && (!formData.returnPolicyDays || formData.returnPolicyDays <= 0)) {
+      newErrors.returnPolicyDays = 'Return policy days must be greater than 0 when returns are enabled';
+    }
 
+    console.log('[v0] Validation errors found:', newErrors);
+    console.log('[v0] Tabs with errors:', getTabsWithErrors(newErrors));
+    
     setErrors(newErrors);
     const tabsWithErrorsSet = getTabsWithErrors(newErrors);
     setTabsWithErrors(tabsWithErrorsSet);
@@ -1123,9 +1242,10 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                         ]}
                         placeholder='Select Brand'
                         withSearch={true}
-                        labelMain='Brand'
+                        labelMain='Brand *'
                         value={formData.brand}
                         onChange={option => handleChange('brand', option.value)}
+                        error={isFieldInActiveTab('brand') ? errors.brand : undefined}
                       />
 
                       <Dropdown
@@ -1297,8 +1417,19 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
 
                   {/* Jewelry Details Tab */}
                   {activeTab === 'jewelry' && (
-                    <div className='space-y-6'>
-                      <h3 className='text-xl font-semibold text-slate-900 dark:text-white'>Jewelry Details</h3>
+                     <div className='space-y-6'>
+                       <div className='flex items-center justify-between'>
+                         <h3 className='text-xl font-semibold text-slate-900 dark:text-white'>Jewelry Details</h3>
+                         <div className='text-xs bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300 px-3 py-1 rounded-full'>
+                           Step 1: Fill jewelry details for live pricing
+                         </div>
+                       </div>
+                       
+                       <div className='p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800'>
+                         <p className='text-sm text-blue-800 dark:text-blue-200'>
+                           <strong>💡 Tip:</strong> Complete the Metal Information section below to enable automatic live pricing calculation in the "Pricing & Tax" tab.
+                         </p>
+                       </div>
 
                       {/* Metal Information */}
                       <div className='bg-slate-50 dark:bg-slate-800 p-4 rounded-lg'>
@@ -1328,6 +1459,7 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
 
                           <FormField
                             label='Metal Weight (grams)'
+                            required
                             error={isFieldInActiveTab('metalWeight') ? errors.metalWeight : undefined}
                             numericOnly
                             placeholder='Enter grams'
@@ -1479,44 +1611,44 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                       <div className='bg-slate-50 dark:bg-slate-800 p-4 rounded-lg'>
                         <h4 className='text-lg font-semibold text-slate-900 dark:text-white mb-4'>Product Details</h4>
                         <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4'>
-                          <Dropdown
-                            labelMain='Occasion'
-                            options={OCCASION_OPTIONS}
-                            placeholder='Select Occasion'
-                            value={formData.occasion}
-                            onChange={option => handleChange('occasion', option.value as Product['occasion'])}
-                          />
+                           <Dropdown
+                             labelMain='Occasion'
+                             options={OCCASION_OPTIONS}
+                             placeholder='Select Occasion'
+                             value={formData.occasion}
+                             onChange={option => handleChange('occasion', option.value as Product['occasion'])}
+                           />
 
-                          <Dropdown
-                            labelMain='Gender'
-                            options={GENDER_OPTIONS}
-                            placeholder='Select Gender'
-                            value={formData.gender}
-                            onChange={option => handleChange('gender', option.value as Product['gender'])}
-                          />
+                           <Dropdown
+                             labelMain='Gender'
+                             options={GENDER_OPTIONS}
+                             placeholder='Select Gender'
+                             value={formData.gender}
+                             onChange={option => handleChange('gender', option.value as Product['gender'])}
+                           />
 
-                          <Dropdown
-                            labelMain='Age Group'
-                            options={AGE_GROUP_OPTIONS}
-                            placeholder='Select Age Group'
-                            value={formData.ageGroup}
-                            onChange={option => handleChange('ageGroup', option.value as Product['ageGroup'])}
-                          />
+                           <Dropdown
+                             labelMain='Age Group'
+                             options={AGE_GROUP_OPTIONS}
+                             placeholder='Select Age Group'
+                             value={formData.ageGroup}
+                             onChange={option => handleChange('ageGroup', option.value as Product['ageGroup'])}
+                           />
 
                           <div className='space-y-2'>
-                            <FormField
-                              label='Size'
-                              value={formData.size}
-                              onChange={e => handleChange('size', e.target.value)}
-                              placeholder='Size'
-                            />
-                            <Dropdown
-                              labelMain='Unit'
-                              options={SIZE_UNIT_OPTIONS}
-                              placeholder='Unit'
-                              value={formData.sizeUnit}
-                              onChange={option => handleChange('sizeUnit', option.value as Product['sizeUnit'])}
-                            />
+                             <FormField
+                               label='Size'
+                               value={formData.size}
+                               onChange={e => handleChange('size', e.target.value)}
+                               placeholder='Size'
+                             />
+                             <Dropdown
+                               labelMain='Unit'
+                               options={SIZE_UNIT_OPTIONS}
+                               placeholder='Unit'
+                               value={formData.sizeUnit}
+                               onChange={option => handleChange('sizeUnit', option.value as Product['sizeUnit'])}
+                             />
                           </div>
                         </div>
 
@@ -1568,8 +1700,13 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
 
                   {/* Pricing & Tax */}
                   {activeTab === 'pricing' && (
-                    <div className='space-y-6'>
-                      <h3 className='text-xl font-semibold text-slate-900 dark:text-white'>Pricing & Tax</h3>
+                     <div className='space-y-6'>
+                       <div className='flex items-center justify-between'>
+                         <h3 className='text-xl font-semibold text-slate-900 dark:text-white'>Pricing & Tax</h3>
+                         <div className='text-xs bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 px-3 py-1 rounded-full'>
+                           Step 2: Live pricing calculation
+                         </div>
+                       </div>
 
                       {/* Live Pricing Section */}
                       <div className='bg-slate-50 dark:bg-slate-800 p-4 rounded-lg'>
@@ -1593,29 +1730,58 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                           </label>
                         </div>
 
-                        {formData.livePriceEnabled && (
-                          <>
-                            {/* Live Metal Rates */}
-                            <div className='p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg mb-4'>
-                              <div className='flex items-center justify-between mb-2'>
-                                <span className='text-sm font-medium text-blue-900 dark:text-blue-100'>Live Metal Prices (₹/gram)</span>
-                                <button
-                                  type='button'
-                                  onClick={fetchLivePrices}
-                                  disabled={priceLoading}
-                                  className='text-xs bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700 disabled:opacity-50'>
-                                  {priceLoading ? 'Updating...' : 'Refresh Prices'}
-                                </button>
-                              </div>
-                              <div className='grid grid-cols-3 gap-2 text-xs'>
-                                <div>Gold: {priceLoading ? 'Loading...' : `₹${livePrices.gold}`}</div>
-                                <div>Silver: {priceLoading ? 'Loading...' : `₹${livePrices.silver}`}</div>
-                                <div>Platinum: {priceLoading ? 'Loading...' : `₹${livePrices.platinum}`}</div>
-                              </div>
-                            </div>
+                         {formData.livePriceEnabled && (
+                           <>
+                             {/* Check if jewelry details are filled */}
+                             {!formData.metalType || !formData.metalWeight || formData.metalWeight <= 0 || !formData.metalPurity ? (
+                               <div className='p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg mb-4 border border-amber-200 dark:border-amber-800'>
+                                 <div className='flex items-start gap-3'>
+                                   <div className='flex-shrink-0 w-5 h-5 rounded-full bg-amber-500 flex items-center justify-center mt-0.5'>
+                                     <span className='text-white text-xs font-bold'>!</span>
+                                   </div>
+                                   <div>
+                                     <h4 className='text-sm font-semibold text-amber-800 dark:text-amber-200 mb-1'>
+                                       Jewelry Details Required
+                                     </h4>
+                                     <p className='text-sm text-amber-700 dark:text-amber-300 mb-2'>
+                                       Please fill the following details in the "Jewelry Details" tab first:
+                                     </p>
+                                     <ul className='text-xs text-amber-600 dark:text-amber-400 space-y-1 ml-4'>
+                                       {!formData.metalType && <li>• Metal Type (Gold/Silver/Platinum)</li>}
+                                       {!formData.metalPurity && <li>• Metal Purity (14K/18K/22K/24K etc.)</li>}
+                                       {(!formData.metalWeight || formData.metalWeight <= 0) && <li>• Metal Weight (in grams)</li>}
+                                     </ul>
+                                     <p className='text-xs text-amber-600 dark:text-amber-400 mt-2 font-medium'>
+                                       Once these details are filled, live pricing will be calculated automatically.
+                                     </p>
+                                   </div>
+                                 </div>
+                               </div>
+                             ) : (
+                               <>
+                                 {/* Live Metal Rates */}
+                                 <div className='p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg mb-4'>
+                                   <div className='flex items-center justify-between mb-2'>
+                                     <span className='text-sm font-medium text-blue-900 dark:text-blue-100'>Live Metal Prices (₹/gram)</span>
+                                     <button
+                                       type='button'
+                                       onClick={fetchLivePrices}
+                                       disabled={priceLoading}
+                                       className='text-xs bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700 disabled:opacity-50'>
+                                       {priceLoading ? 'Updating...' : 'Refresh Prices'}
+                                     </button>
+                                   </div>
+                                   <div className='grid grid-cols-3 gap-2 text-xs'>
+                                     <div>Gold: {priceLoading ? 'Loading...' : `₹${livePrices.gold}`}</div>
+                                     <div>Silver: {priceLoading ? 'Loading...' : `₹${livePrices.silver}`}</div>
+                                     <div>Platinum: {priceLoading ? 'Loading...' : `₹${livePrices.platinum}`}</div>
+                                   </div>
+                                 </div>
+                               </>
+                             )}
 
-                            {/* Price Breakdown */}
-                            {formData.metalType && formData.metalWeight > 0 && (
+                             {/* Price Breakdown - Only show if jewelry details are complete */}
+                             {formData.metalType && formData.metalWeight > 0 && formData.metalPurity && (
                               <div className='bg-green-50 dark:bg-green-900/20 p-4 rounded-lg'>
                                 <h5 className='text-md font-semibold text-green-900 dark:text-green-100 mb-3'>
                                   Jewelry Price Calculation
@@ -1704,8 +1870,8 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                         )}
                       </div>
 
-                      {/* Additional Cost Fields - Only show if live pricing is enabled */}
-                      {formData.livePriceEnabled && (
+                       {/* Additional Cost Fields - Only show if live pricing is enabled and jewelry details are filled */}
+                       {formData.livePriceEnabled && formData.metalType && formData.metalWeight > 0 && formData.metalPurity && (
                         <div className='bg-slate-50 dark:bg-slate-800 p-4 rounded-lg'>
                           <h4 className='text-lg font-semibold text-slate-900 dark:text-white mb-4'>Additional Costs</h4>
                           <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
@@ -2019,34 +2185,30 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                         </div>
                       </div>
 
-                      <FormField
-                        label='Focus Keyword'
-                        value={formData.focusKeyword}
-                        onChange={e => handleChange('focusKeyword', e.target.value)}
-                        placeholder='Main keyword to optimize for'
-                      />
+                       <FormField
+                         label='Focus Keyword'
+                         value={formData.focusKeyword}
+                         onChange={e => handleChange('focusKeyword', e.target.value)}
+                         placeholder='Main keyword to optimize for'
+                       />
 
-                      <FormField
-                        label={`Meta Title (${formData.metaTitle.length}/60)`}
-                        required
-                        value={formData.metaTitle}
-                        onChange={e => handleChange('metaTitle', e.target.value.slice(0, 60))}
-                        placeholder='SEO title'
-                        maxLength={60}
-                        error={isFieldInActiveTab('metaTitle') ? errors.metaTitle : undefined}
-                      />
+                       <FormField
+                         label={`Meta Title (${formData.metaTitle.length}/60)`}
+                         value={formData.metaTitle}
+                         onChange={e => handleChange('metaTitle', e.target.value.slice(0, 60))}
+                         placeholder='SEO title'
+                         maxLength={60}
+                       />
 
-                      <FormField
-                        label={`Meta Description (${formData.metaDescription.length}/160)`}
-                        required
-                        textarea
-                        rows={3}
-                        value={formData.metaDescription}
-                        onChange={e => handleChange('metaDescription', e.target.value.slice(0, 160))}
-                        placeholder='SEO description'
-                        maxLength={160}
-                        error={isFieldInActiveTab('metaDescription') ? errors.metaDescription : undefined}
-                      />
+                       <FormField
+                         label={`Meta Description (${formData.metaDescription.length}/160)`}
+                         textarea
+                         rows={3}
+                         value={formData.metaDescription}
+                         onChange={e => handleChange('metaDescription', e.target.value.slice(0, 160))}
+                         placeholder='SEO description'
+                         maxLength={160}
+                       />
 
                       <div className='p-4 rounded-lg bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-700'>
                         <p className='text-sm font-medium text-slate-700 dark:text-white mb-2'>Google Preview Snippet</p>
@@ -2320,12 +2482,12 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                           placeholder='30'
                         />
 
-                        <FormField
-                          label='Warranty Period'
-                          value={formData.warrantyPeriod}
-                          onChange={e => handleChange('warrantyPeriod', e.target.value)}
-                          placeholder='e.g., 1 year'
-                        />
+                         <FormField
+                           label='Warranty Period'
+                           value={formData.warrantyPeriod}
+                           onChange={e => handleChange('warrantyPeriod', e.target.value)}
+                           placeholder='e.g., 1 year'
+                         />
                       </div>
                     </div>
                   )}
