@@ -1,5 +1,5 @@
-import { HomePage as LuxeHomePage } from '@/components/home/home-page';
+import { DynamicHomePage } from '@/components/home/dynamic-home-page';
 
 export default function Home() {
-  return <LuxeHomePage />;
+  return <DynamicHomePage />;
 }

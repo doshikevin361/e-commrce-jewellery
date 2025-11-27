@@ -348,7 +348,7 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
   const router = useRouter();
   const { toast } = useToast();
   const { settings } = useSettings();
-
+  
   const [formData, setFormData] = useState<Product>({
     ...INITIAL_PRODUCT,
     tags: [],
@@ -915,7 +915,7 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
     if (!formData.mainImage?.trim()) newErrors.mainImage = 'Main product image is required';
     
      // SEO Tab Validation - Only URL slug is required
-     if (!formData.urlSlug?.trim()) newErrors.urlSlug = 'URL slug is required';
+    if (!formData.urlSlug?.trim()) newErrors.urlSlug = 'URL slug is required';
     
     // URL Slug validation (no spaces, special characters)
     if (formData.urlSlug && !/^[a-z0-9-]+$/.test(formData.urlSlug)) {
@@ -946,7 +946,7 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
 
     console.log('[v0] Validation errors found:', newErrors);
     console.log('[v0] Tabs with errors:', getTabsWithErrors(newErrors));
-    
+
     setErrors(newErrors);
     const tabsWithErrorsSet = getTabsWithErrors(newErrors);
     setTabsWithErrors(tabsWithErrorsSet);
@@ -1700,9 +1700,9 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
 
                   {/* Pricing & Tax */}
                   {activeTab === 'pricing' && (
-                     <div className='space-y-6'>
+                    <div className='space-y-6'>
                        <div className='flex items-center justify-between'>
-                         <h3 className='text-xl font-semibold text-slate-900 dark:text-white'>Pricing & Tax</h3>
+                      <h3 className='text-xl font-semibold text-slate-900 dark:text-white'>Pricing & Tax</h3>
                          <div className='text-xs bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 px-3 py-1 rounded-full'>
                            Step 2: Live pricing calculation
                          </div>
@@ -2185,30 +2185,30 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                         </div>
                       </div>
 
-                       <FormField
-                         label='Focus Keyword'
-                         value={formData.focusKeyword}
-                         onChange={e => handleChange('focusKeyword', e.target.value)}
-                         placeholder='Main keyword to optimize for'
-                       />
+                      <FormField
+                        label='Focus Keyword'
+                        value={formData.focusKeyword}
+                        onChange={e => handleChange('focusKeyword', e.target.value)}
+                        placeholder='Main keyword to optimize for'
+                      />
 
-                       <FormField
-                         label={`Meta Title (${formData.metaTitle.length}/60)`}
-                         value={formData.metaTitle}
-                         onChange={e => handleChange('metaTitle', e.target.value.slice(0, 60))}
-                         placeholder='SEO title'
-                         maxLength={60}
-                       />
+                      <FormField
+                        label={`Meta Title (${formData.metaTitle.length}/60)`}
+                        value={formData.metaTitle}
+                        onChange={e => handleChange('metaTitle', e.target.value.slice(0, 60))}
+                        placeholder='SEO title'
+                        maxLength={60}
+                      />
 
-                       <FormField
-                         label={`Meta Description (${formData.metaDescription.length}/160)`}
-                         textarea
-                         rows={3}
-                         value={formData.metaDescription}
-                         onChange={e => handleChange('metaDescription', e.target.value.slice(0, 160))}
-                         placeholder='SEO description'
-                         maxLength={160}
-                       />
+                      <FormField
+                        label={`Meta Description (${formData.metaDescription.length}/160)`}
+                        textarea
+                        rows={3}
+                        value={formData.metaDescription}
+                        onChange={e => handleChange('metaDescription', e.target.value.slice(0, 160))}
+                        placeholder='SEO description'
+                        maxLength={160}
+                      />
 
                       <div className='p-4 rounded-lg bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-700'>
                         <p className='text-sm font-medium text-slate-700 dark:text-white mb-2'>Google Preview Snippet</p>
@@ -2482,12 +2482,12 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                           placeholder='30'
                         />
 
-                         <FormField
-                           label='Warranty Period'
-                           value={formData.warrantyPeriod}
-                           onChange={e => handleChange('warrantyPeriod', e.target.value)}
-                           placeholder='e.g., 1 year'
-                         />
+                        <FormField
+                          label='Warranty Period'
+                          value={formData.warrantyPeriod}
+                          onChange={e => handleChange('warrantyPeriod', e.target.value)}
+                          placeholder='e.g., 1 year'
+                        />
                       </div>
                     </div>
                   )}

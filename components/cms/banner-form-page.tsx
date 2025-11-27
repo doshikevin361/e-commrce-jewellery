@@ -14,10 +14,12 @@ import { useToast } from '@/hooks/use-toast';
 
 interface BannerFormData {
   title: string;
+  subtitle: string;
   description: string;
   image: string;
   link: string;
   buttonText: string;
+  type: 'main' | 'side';
   displayOrder: number;
   status: 'active' | 'inactive';
 }
@@ -34,10 +36,12 @@ export function BannerFormPage({ bannerId }: BannerFormPageProps) {
 
   const [formData, setFormData] = useState<BannerFormData>({
     title: '',
+    subtitle: '',
     description: '',
     image: '',
     link: '',
     buttonText: '',
+    type: 'main',
     displayOrder: 0,
     status: 'active',
   });
@@ -125,6 +129,9 @@ export function BannerFormPage({ bannerId }: BannerFormPageProps) {
     if (!formData.title.trim()) {
       newErrors.title = 'Title is required';
     }
+    if (!formData.subtitle.trim()) {
+      newErrors.subtitle = 'Subtitle is required';
+    }
     if (!formData.image.trim()) {
       newErrors.image = 'Image is required';
     }
@@ -208,6 +215,37 @@ export function BannerFormPage({ bannerId }: BannerFormPageProps) {
                 className={errors.title ? 'border-red-500' : ''}
               />
               {errors.title && <p className='text-sm text-red-500'>{errors.title}</p>}
+            </div>
+
+            <div className='space-y-2'>
+              <Label htmlFor='subtitle'>
+                Subtitle <span className='text-red-500'>*</span>
+              </Label>
+              <Input
+                id='subtitle'
+                value={formData.subtitle}
+                onChange={e => updateField('subtitle', e.target.value)}
+                placeholder='Enter banner subtitle'
+                className={errors.subtitle ? 'border-red-500' : ''}
+              />
+              {errors.subtitle && <p className='text-sm text-red-500'>{errors.subtitle}</p>}
+            </div>
+          </div>
+
+          <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+            <div className='space-y-2'>
+              <Label htmlFor='type'>
+                Banner Type <span className='text-red-500'>*</span>
+              </Label>
+              <select
+                id='type'
+                value={formData.type}
+                onChange={e => updateField('type', e.target.value as 'main' | 'side')}
+                className='flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50'
+              >
+                <option value='main'>Main Banner (Large)</option>
+                <option value='side'>Side Banner (Small)</option>
+              </select>
             </div>
 
             <div className='space-y-2'>

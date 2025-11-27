@@ -20,7 +20,7 @@ import { Swiper, SwiperSlide } from 'swiper/react';
 import type { Swiper as SwiperType } from 'swiper';
 import 'swiper/css';
 import 'swiper/css/pagination';
-import { blogCards, categories, categoriess, featuredProducts, images, trendingPro } from '@/app/utils/dummyData';
+// Removed dummy data imports - now using dynamic API data
 import { Navigation, Pagination } from 'swiper/modules';
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';

@@ -181,7 +181,7 @@ export default function ShippingPolicyPage() {
             </div>
           </div>
         </section>
-      </div>
+    </div>
     </>
   );
 }

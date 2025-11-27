@@ -123,7 +123,7 @@ export default function BlogPage() {
             <div className='w-8 sm:w-10 h-px bg-[#E6D3C2]' />
           </div>
         </section>
-      </div>
+    </div>
     </>
   );
 }

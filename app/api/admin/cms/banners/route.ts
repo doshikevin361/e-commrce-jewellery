@@ -44,10 +44,12 @@ export async function POST(request: NextRequest) {
 
     const newBanner = {
       title: body.title || '',
+      subtitle: body.subtitle || '',
       description: body.description || '',
       image: body.image || '',
       link: body.link || '',
-      buttonText: body.buttonText || '',
+      buttonText: body.buttonText || 'Shop Now',
+      type: body.type || 'main',
       displayOrder: body.displayOrder || 0,
       status: body.status || 'active',
       createdAt: new Date(),

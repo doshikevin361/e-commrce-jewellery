@@ -5,50 +5,104 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, ShoppingCart, Heart, Star, Share2, Minus, Plus, Truck, Shield, RotateCcw } from 'lucide-react';
-import { featuredProducts, trendingPro } from '@/app/utils/dummyData';
 import { ProductCardData } from '@/components/home/common/product-card';
 import { ProductCard } from '@/components/home/common/product-card';
 
-// Combine products with unique IDs
-const allProducts: ProductCardData[] = [
-  ...featuredProducts.map(p => ({ ...p, id: `featured-${p.id}` })),
-  ...trendingPro.map(p => ({ ...p, id: `trending-${p.id}` })),
-];
+// Dynamic product interface
+interface ProductDetail {
+  _id: string;
+  name: string;
+  shortDescription: string;
+  longDescription: string;
+  category: string;
+  brand?: string;
+  mainImage: string;
+  galleryImages: string[];
+  displayPrice: number;
+  originalPrice: number;
+  hasDiscount: boolean;
+  discountPercent: number;
+  rating?: number;
+  reviewCount?: number;
+  stock: number;
+  featured: boolean;
+  trending: boolean;
+  tags: string[];
+  variants: any[];
+  relatedProducts: ProductCardData[];
+  // Jewelry specific
+  metalType?: string;
+  metalPurity?: string;
+  metalWeight?: number;
+  stoneType?: string;
+  stoneWeight?: number;
+  makingCharges?: number;
+  certification?: string;
+  occasion?: string;
+  gender?: string;
+  size?: string;
+  livePriceEnabled?: boolean;
+}
 
 export function ProductDetailPage({ productId }: { productId: string }) {
   const router = useRouter();
-  const [product, setProduct] = useState<ProductCardData | null>(null);
+  const [product, setProduct] = useState<ProductDetail | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Find product by exact ID match (supports both "1" and "featured-1" formats)
-    const foundProduct = allProducts.find(
-      p => p.id.toString() === productId || 
-           p.id.toString().endsWith(`-${productId}`) ||
-           p.id.toString() === `featured-${productId}` ||
-           p.id.toString() === `trending-${productId}`
-    );
-    setProduct(foundProduct || null);
-    setLoading(false);
+    const fetchProduct = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch(`/api/public/products/${productId}`);
+        
+        if (!response.ok) {
+          if (response.status === 404) {
+            setError('Product not found');
+          } else {
+            setError('Failed to load product');
+          }
+          return;
+        }
+
+        const productData = await response.json();
+        setProduct(productData);
+      } catch (err) {
+        console.error('Error fetching product:', err);
+        setError('Failed to load product');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (productId) {
+      fetchProduct();
+    }
   }, [productId]);
 
   if (loading) {
     return (
       <div className='mx-auto w-full max-w-[1400px] px-4 sm:px-6 md:px-8 lg:px-12 py-12 text-center'>
-        <div className='text-[#4F3A2E]'>Loading...</div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+        <div className='text-gray-600'>Loading product details...</div>
       </div>
     );
   }
 
-  if (!product) {
+  if (error || !product) {
     return (
       <div className='mx-auto w-full max-w-[1400px] px-4 sm:px-6 md:px-8 lg:px-12 py-12 text-center'>
-        <h1 className='text-2xl font-bold text-[#1F3B29] mb-4'>Product Not Found</h1>
+        <h1 className='text-2xl font-bold text-gray-900 mb-4'>
+          {error || 'Product Not Found'}
+        </h1>
+        <p className="text-gray-600 mb-6">
+          The product you're looking for doesn't exist or has been removed.
+        </p>
         <button
           onClick={() => router.push('/products')}
-          className='inline-flex items-center gap-2 rounded-full bg-[#1F3B29] px-6 py-3 text-white font-semibold'>
+          className='inline-flex items-center gap-2 rounded-full bg-blue-600 px-6 py-3 text-white font-semibold hover:bg-blue-700 transition-colors'>
           <ArrowLeft size={18} />
           Back to Products
         </button>
@@ -56,8 +110,12 @@ export function ProductDetailPage({ productId }: { productId: string }) {
     );
   }
 
-  const images = [product.image, product.image, product.image]; // Using same image for demo
-  const relatedProducts = allProducts.filter(p => p.category === product.category && p.id !== product.id).slice(0, 4);
+  // Use gallery images if available, otherwise use main image
+  const images = product.galleryImages && product.galleryImages.length > 0 
+    ? [product.mainImage, ...product.galleryImages] 
+    : [product.mainImage, product.mainImage, product.mainImage];
+  
+  const relatedProducts = product.relatedProducts || [];
 
   return (
     <div className='mx-auto w-full max-w-[1400px] px-4 sm:px-6 md:px-8 lg:px-12 py-6 sm:py-8 md:py-10'>
@@ -75,14 +133,14 @@ export function ProductDetailPage({ productId }: { productId: string }) {
           <div className='relative aspect-square w-full overflow-hidden rounded-2xl bg-[#F5EEE5] mb-4'>
             <Image
               src={images[selectedImage]}
-              alt={product.title}
+              alt={product.name}
               fill
               sizes='(max-width: 1024px) 100vw, 50vw'
               className='object-cover'
             />
-            {product.badge && (
-              <span className='absolute left-4 top-4 rounded-full bg-[#C8A15B] px-4 py-2 text-sm font-semibold text-white'>
-                {product.badge}
+            {(product.featured || product.trending) && (
+              <span className='absolute left-4 top-4 rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white'>
+                {product.featured ? 'Featured' : 'Trending'}
               </span>
             )}
           </div>
@@ -94,7 +152,7 @@ export function ProductDetailPage({ productId }: { productId: string }) {
                 className={`relative aspect-square overflow-hidden rounded-lg border-2 transition-all ${
                   selectedImage === index ? 'border-[#C8A15B]' : 'border-[#E6D3C2]'
                 }`}>
-                <Image src={img} alt={`${product.title} ${index + 1}`} fill sizes='25vw' className='object-cover' />
+                <Image src={img} alt={`${product.name} ${index + 1}`} fill sizes='25vw' className='object-cover' />
               </button>
             ))}
           </div>
@@ -102,8 +160,8 @@ export function ProductDetailPage({ productId }: { productId: string }) {
 
         {/* Product Info */}
         <div>
-          <p className='text-sm uppercase tracking-[0.3em] text-[#3F5C45] mb-2'>{product.category}</p>
-          <h1 className='text-3xl sm:text-4xl font-bold text-[#1F3B29] mb-4'>{product.title}</h1>
+          <p className='text-sm uppercase tracking-[0.3em] text-gray-600 mb-2'>{product.category}</p>
+          <h1 className='text-3xl sm:text-4xl font-bold text-gray-900 mb-4'>{product.name}</h1>
 
           <div className='flex items-center gap-4 mb-6'>
             <div className='flex items-center gap-2'>
@@ -116,30 +174,60 @@ export function ProductDetailPage({ productId }: { productId: string }) {
                   />
                 ))}
               </div>
-              <span className='text-lg font-semibold text-[#1F3B29]'>{product.rating.toFixed(1)}</span>
-              <span className='text-sm text-[#4F3A2E]'>({product.reviews} reviews)</span>
+              <span className='text-lg font-semibold text-gray-900'>{(product.rating || 4.5).toFixed(1)}</span>
+              <span className='text-sm text-gray-600'>({product.reviewCount || 0} reviews)</span>
             </div>
           </div>
 
           <div className='mb-6'>
             <div className='flex items-center gap-4 mb-2'>
-              <span className='text-3xl sm:text-4xl font-bold text-[#1F3B29]'>
-                ${product.price.startsWith('$') ? product.price.slice(1) : product.price}
+              <span className='text-3xl sm:text-4xl font-bold text-gray-900'>
+                ₹{product.displayPrice.toLocaleString()}
               </span>
-              {product.originalPrice && (
-                <span className='text-xl text-[#4F3A2E] line-through'>
-                  ${product.originalPrice.startsWith('$') ? product.originalPrice.slice(1) : product.originalPrice}
+              {product.hasDiscount && (
+                <span className='text-xl text-gray-500 line-through'>
+                  ₹{product.originalPrice.toLocaleString()}
+                </span>
+              )}
+              {product.hasDiscount && (
+                <span className='text-sm bg-green-100 text-green-800 px-2 py-1 rounded'>
+                  {product.discountPercent}% OFF
                 </span>
               )}
             </div>
           </div>
 
           <div className='mb-8'>
-            <p className='text-base text-[#4F3A2E] leading-relaxed mb-4'>
-              Experience the elegance and sophistication of this exquisite piece. Crafted with precision and attention
-              to detail, this {product.category.toLowerCase()} is perfect for any occasion. Made with premium materials
-              and designed to last a lifetime.
+            <p className='text-base text-gray-600 leading-relaxed mb-4'>
+              {product.shortDescription || `Experience the elegance and sophistication of this exquisite ${product.category.toLowerCase()}. Crafted with precision and attention to detail, perfect for any occasion.`}
             </p>
+            
+            {/* Jewelry Details */}
+            {(product.metalType || product.metalPurity || product.metalWeight) && (
+              <div className='bg-gray-50 p-4 rounded-lg mb-4'>
+                <h3 className='font-semibold text-gray-900 mb-2'>Jewelry Details</h3>
+                <div className='grid grid-cols-2 gap-2 text-sm'>
+                  {product.metalType && (
+                    <div><span className='text-gray-600'>Metal:</span> <span className='font-medium'>{product.metalType}</span></div>
+                  )}
+                  {product.metalPurity && (
+                    <div><span className='text-gray-600'>Purity:</span> <span className='font-medium'>{product.metalPurity}</span></div>
+                  )}
+                  {product.metalWeight && (
+                    <div><span className='text-gray-600'>Weight:</span> <span className='font-medium'>{product.metalWeight}g</span></div>
+                  )}
+                  {product.stoneType && (
+                    <div><span className='text-gray-600'>Stone:</span> <span className='font-medium'>{product.stoneType}</span></div>
+                  )}
+                  {product.certification && (
+                    <div><span className='text-gray-600'>Certified:</span> <span className='font-medium'>{product.certification}</span></div>
+                  )}
+                  {product.occasion && (
+                    <div><span className='text-gray-600'>Occasion:</span> <span className='font-medium'>{product.occasion}</span></div>
+                  )}
+                </div>
+              </div>
+            )}
             
             {/* Product Details */}
             <div className='grid grid-cols-2 gap-4 p-4 bg-[#F5EEE5] rounded-xl'>

@@ -1,7 +1,6 @@
 'use client';
 
 import Image from 'next/image';
-import Link from 'next/link';
 import { ShoppingCart, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -10,8 +9,8 @@ export type ProductCardData = {
   title: string;
   category: string;
   price: string;
-  rating: number;
-  reviews: number;
+  rating?: number; // Made optional to handle dynamic data
+  reviews?: number; // Made optional to handle dynamic data
   image: string;
   badge?: string;
   originalPrice?: string;
@@ -26,10 +25,11 @@ type ProductCardProps = {
   product: ProductCardData;
   className?: string;
   actionLabel?: string;
+  onClick?: () => void;
 };
 
-export const ProductCard = ({ product, className, actionLabel = 'Add to cart' }: ProductCardProps) => {
-  const rating = product.rating.toFixed(1);
+export const ProductCard = ({ product, className, actionLabel = 'Add to cart', onClick }: ProductCardProps) => {
+  const rating = (product.rating || 4.5).toFixed(1);
   const isListView = className?.includes('flex-row');
 
   return (
@@ -39,7 +39,10 @@ export const ProductCard = ({ product, className, actionLabel = 'Add to cart' }:
         isListView ? 'flex-row gap-4 sm:gap-6' : 'flex-col',
         className
       )}>
-      <Link href={`/products/${product.id}`} className={cn('block', isListView ? 'flex-shrink-0 w-32 sm:w-40' : 'w-full')}>
+      <div 
+        onClick={onClick}
+        className={cn('block cursor-pointer', isListView ? 'flex-shrink-0 w-32 sm:w-40' : 'w-full')}
+      >
         <div className={cn(
           'relative overflow-hidden rounded-xl bg-[#F5EEE5] cursor-pointer',
           isListView ? 'h-32 sm:h-40 w-full' : 'h-40 sm:h-48 w-full'
@@ -57,35 +60,38 @@ export const ProductCard = ({ product, className, actionLabel = 'Add to cart' }:
             className='object-cover transition-transform duration-300 group-hover:scale-110' 
           />
         </div>
-      </Link>
+      </div>
       <div className={cn(
         'flex-1 flex flex-col',
         isListView ? 'justify-between' : 'mt-3 sm:mt-4 space-y-1.5 sm:space-y-2'
       )}>
         <div>
-          <Link href={`/products/${product.id}`} className='block'>
+          <div className='block'>
             <p className='text-[10px] sm:text-[11px] uppercase tracking-[0.3em] text-[#3F5C45]'>{product.category}</p>
             <h3 className='text-sm sm:text-base font-semibold text-[#1F3B29] line-clamp-2 hover:text-[#C8A15B] transition-colors cursor-pointer'>{product.title}</h3>
-          </Link>
+          </div>
           <div className='flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs text-[#4F3A2E] mt-1.5'>
             <Star className='text-[#C8A15B]' size={14} className='sm:w-4 sm:h-4' />
             <span className='font-semibold text-[#1C1F1A]'>{rating}</span>
-            <span className='text-[#1C1F1A]/60'>({product.reviews})</span>
+            <span className='text-[#1C1F1A]/60'>({product.reviews || 0})</span>
           </div>
         </div>
         <div className={cn('flex items-center', isListView ? 'justify-between mt-3' : 'gap-2 sm:gap-3')}>
           <div className='flex items-center gap-2 sm:gap-3'>
             <span className='text-base sm:text-lg font-semibold text-[#1F3B29]'>
-              {product.price.startsWith('$') ? product.price : `$${product.price}`}
+              {product.price}
             </span>
             {product.originalPrice && (
               <span className='text-xs sm:text-sm text-[#4F3A2E] line-through'>
-                {product.originalPrice.startsWith('$') ? product.originalPrice : `$${product.originalPrice}`}
+                {product.originalPrice}
               </span>
             )}
           </div>
-          <Link
-            href={`/products/${product.id}`}
+          <button
+            onClick={(e) => {
+              e.stopPropagation(); // Prevent triggering parent onClick
+              // Add to cart functionality can be added here
+            }}
             className={cn(
               'cursor-pointer inline-flex items-center justify-center gap-1.5 sm:gap-2 rounded-full border border-[#1F3B29] px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold text-[#1F3B29] transition-all hover:bg-[#1F3B29] hover:text-white',
               isListView ? 'flex-shrink-0' : 'w-full'
@@ -93,7 +99,7 @@ export const ProductCard = ({ product, className, actionLabel = 'Add to cart' }:
             <ShoppingCart size={14} className='sm:w-4 sm:h-4' />
             <span className='hidden sm:inline'>{actionLabel}</span>
             <span className='sm:hidden'>Add</span>
-          </Link>
+          </button>
         </div>
       </div>
     </article>

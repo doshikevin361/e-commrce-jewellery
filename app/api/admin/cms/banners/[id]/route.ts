@@ -36,10 +36,12 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
     const updateData = {
       title: body.title,
+      subtitle: body.subtitle,
       description: body.description,
       image: body.image,
       link: body.link,
       buttonText: body.buttonText,
+      type: body.type,
       displayOrder: body.displayOrder,
       status: body.status,
       updatedAt: new Date(),
