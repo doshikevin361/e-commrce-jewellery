@@ -76,7 +76,17 @@ const Dropdown: React.FC<DropdownProps> = ({
 
   return (
     <div className='w-full max-w-full'>
-      {labelMain && <label className='block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2'>{labelMain}</label>}
+      {labelMain && (
+        <label className='block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2'>
+          {labelMain.includes('*') ? (
+            <>
+              {labelMain.replace(' *', '')} <span className="text-red-500">*</span>
+            </>
+          ) : (
+            labelMain
+          )}
+        </label>
+      )}
 
       <div className='relative' ref={dropdownRef}>
         <button

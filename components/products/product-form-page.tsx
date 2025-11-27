@@ -856,7 +856,7 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
     if (!formData.shortDescription?.trim()) newErrors.shortDescription = 'Short description is required';
     if (!getPlainTextFromHtml(formData.longDescription)) newErrors.longDescription = 'Long description is required';
     if (!formData.category?.trim()) newErrors.category = 'Category is required';
-    if (!formData.brand?.trim()) newErrors.brand = 'Brand is required';
+    // Brand is optional - removed validation
     if (!formData.vendor?.trim()) newErrors.vendor = 'Vendor is required';
 
     // Business Settings Validation
@@ -1242,7 +1242,7 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                         ]}
                         placeholder='Select Brand'
                         withSearch={true}
-                        labelMain='Brand *'
+                        labelMain='Brand'
                         value={formData.brand}
                         onChange={option => handleChange('brand', option.value)}
                         error={isFieldInActiveTab('brand') ? errors.brand : undefined}
