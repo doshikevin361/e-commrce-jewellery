@@ -16,11 +16,13 @@ import {
   CircleDot,
   Star,
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import type { Swiper as SwiperType } from 'swiper';
 import 'swiper/css';
 import 'swiper/css/pagination';
-import { Navigation, Pagination } from 'swiper/modules';
+import { blogCards, categoriess, featuredProducts, images, trendingPro } from '@/app/utils/dummyData';
+import { Pagination } from 'swiper/modules';
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCategories } from '@/contexts/CategoriesContext';
@@ -28,67 +30,118 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import { ProductCard, ProductCardData } from '@/components/home/common/product-card';
 import { SectionHeader } from '@/components/home/common/section-header';
 import Link from 'next/link';
+import { getActiveHomepageFeatures } from '@/lib/constants/features';
+
+type HeroSlide = {
+  id: string | number;
+  main: {
+    image: string;
+    subtitle?: string;
+    title: string;
+    description?: string;
+    buttonText?: string;
+  };
+  side: {
+    image: string;
+    subtitle?: string;
+    title: string;
+    description?: string;
+    buttonText?: string;
+  };
+  link?: string;
+};
+
+type CategoryStripItem = {
+  name: string;
+  image: string;
+  slug?: string;
+};
+
+const FEATURE_ICON_COMPONENTS = {
+  Truck,
+  Shield,
+  Headphones,
+  Award,
+  Heart,
+  Sparkles,
+} as const;
+
+type FeatureIconName = keyof typeof FEATURE_ICON_COMPONENTS;
+
+type HomepageFeatureItem = {
+  icon: FeatureIconName;
+  title: string;
+  description: string;
+};
+
+type HomepageSectionsState = {
+  hero: HeroSlide[];
+  categories: CategoryStripItem[];
+  newProducts: ProductCardData[];
+  featuredProducts: ProductCardData[];
+  trendingProducts: ProductCardData[];
+  features: HomepageFeatureItem[];
+};
 
 const SECTION_SPACING = 'mt-12 sm:mt-16 lg:mt-20';
+const DEFAULT_CATEGORY_IMAGE = 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=800&q=80';
+const DEFAULT_PRODUCT_IMAGE = 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=1200&q=80';
 
-// Dynamic data interfaces
-interface Category {
-  _id: string;
-  name: string;
-  slug: string;
-  description?: string;
-  image?: string;
-  icon?: string;
-  featured: boolean;
-  productCount: number;
-}
+const fallbackFeatureData: HomepageFeatureItem[] = getActiveHomepageFeatures().map(feature => ({
+  icon: (FEATURE_ICON_COMPONENTS[feature.icon as FeatureIconName] ? feature.icon : 'Sparkles') as FeatureIconName,
+  title: feature.title,
+  description: feature.description,
+}));
 
-interface Product {
-  _id: string;
-  name: string;
-  shortDescription: string;
-  category: string;
-  brand?: string;
-  mainImage: string;
-  displayPrice: number;
-  originalPrice: number;
-  hasDiscount: boolean;
-  discountPercent: number;
-  rating?: number;
-  reviewCount?: number;
-  stock: number;
-  featured: boolean;
-  trending: boolean;
-  tags: string[];
-  // Jewelry specific
-  metalType?: string;
-  metalPurity?: string;
-  livePriceEnabled?: boolean;
-}
-
-interface Banner {
-  _id: string;
-  title: string;
-  subtitle: string;
-  description: string;
-  buttonText: string;
-  image: string;
-  type: 'main' | 'side';
-  status: string;
-  order: number;
-}
-
-interface Feature {
-  _id: string;
-  icon: string;
-  title: string;
-  description: string;
-  status: string;
-  order: number;
-}
+const fallbackBestSellers: ProductCardData[] = [
+  {
+    id: 11,
+    title: 'Diamond Solitaire Ring',
+    category: 'Rings',
+    price: '$299.00',
+    originalPrice: '$399.00',
+    rating: 5,
+    reviews: 245,
+    image: 'https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=600&q=80',
+    badge: 'Best Seller',
+  },
+  {
+    id: 12,
+    title: 'Pearl Drop Earrings',
+    category: 'Earrings',
+    price: '$189.00',
+    originalPrice: '$249.00',
+    rating: 4.9,
+    reviews: 189,
+    image: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=700&q=80',
+    badge: 'Top Rated',
+  },
+  {
+    id: 13,
+    title: 'Gold Chain Necklace',
+    category: 'Necklace',
+    price: '$349.00',
+    originalPrice: '$449.00',
+    rating: 4.8,
+    reviews: 312,
+    image: 'https://images.unsplash.com/photo-1522312346375-d1a52e2b99b3?auto=format&fit=crop&w=800&q=80',
+    badge: 'Popular',
+  },
+  {
+    id: 14,
+    title: 'Silver Bracelet Set',
+    category: 'Bracelet',
+    price: '$159.00',
+    originalPrice: '$199.00',
+    rating: 4.7,
+    reviews: 156,
+    image: 'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?auto=format&fit=crop&w=800&q=80',
+    badge: 'Sale',
+  },
+];
 
 // Default fallback banners if no banners are available from backend
-const defaultHeroSlides = [
+const defaultHeroSlides: HeroSlide[] = [
   {
     id: 1,
     main: {
@@ -123,638 +176,976 @@ const defaultHeroSlides = [
       buttonText: 'Shop Sale',
     },
   },
+  {
+    id: 3,
+    main: {
+      image: 'https://images.unsplash.com/photo-1602173574767-37ac01994b2a?auto=format&fit=crop&w=1200&q=80',
+      subtitle: 'Premium Quality',
+      title: 'Luxury Redefined',
+      description: 'Experience the finest craftsmanship in every piece of our exclusive collection.',
+      buttonText: 'Discover More',
+    },
+    side: {
+      image: 'https://images.unsplash.com/photo-1573408301185-9146fe634ad0?auto=format&fit=crop&w=700&q=80',
+      subtitle: 'Trending Now',
+      title: 'Best Sellers',
+      description: 'Shop our most popular designs loved by thousands',
+      buttonText: 'View Collection',
+    },
+  },
 ];
 
-// Convert Product to ProductCardData
-const convertToProductCard = (product: Product): ProductCardData => ({
-  id: parseInt(product._id.slice(-6), 16), // Convert ObjectId to number
-  title: product.name,
-  category: product.category,
-  price: `₹${product.displayPrice.toLocaleString()}`,
-  originalPrice: product.hasDiscount ? `₹${product.originalPrice.toLocaleString()}` : undefined,
-  rating: product.rating || 4.5,
-  reviews: product.reviewCount || 0,
-  image: product.mainImage || 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=600&q=80',
-  badge: product.featured ? 'Featured' : product.trending ? 'Trending' : undefined,
+const sidebarCategories = [
+  'Rings',
+  'Necklace',
+  'Earring',
+  'Bracelet',
+  'Brooch',
+  'Gold Jewellery',
+  'Cufflink',
+  // 'Pearls',
+  // 'Piercing',
+  // 'Platinum',
+  // 'Navratna',
+  // 'Chain',
+];
+
+const categoryIcons: Record<string, JSX.Element> = {
+  Rings: <Diamond size={18} />,
+  Necklace: <Gem size={18} />,
+  Earring: <CircleDot size={18} />,
+  Bracelet: <Link2 size={18} />,
+  Brooch: <Sparkles size={18} />,
+  'Gold Jewellery': <Diamond size={18} />,
+  Cufflink: <Link2 size={18} />,
+  Pearls: <Gem size={18} />,
+  Piercing: <CircleDot size={18} />,
+  Platinum: <Diamond size={18} />,
+  Navratna: <Gem size={18} />,
+  Chain: <Link2 size={18} />,
+};
+
+const testimonials = [
+  {
+    id: 1,
+    name: 'Sarah Johnson',
+    role: 'Fashion Enthusiast',
+    image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80',
+    comment: 'Absolutely stunning pieces! The quality is exceptional and the designs are timeless.',
+  },
+  {
+    id: 2,
+    name: 'Emily Chen',
+    role: 'Jewelry Collector',
+    image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=150&q=80',
+    comment: "I've purchased multiple items and each one exceeds expectations.",
+  },
+  {
+    id: 3,
+    name: 'Michael Rodriguez',
+    role: 'Gift Buyer',
+    image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80',
+    comment: 'Perfect gift for my wife! She loved it, and the packaging was beautiful.',
+  },
+];
+
+const sanitizeFeatureIcon = (icon?: string): FeatureIconName =>
+  FEATURE_ICON_COMPONENTS[icon as FeatureIconName] ? (icon as FeatureIconName) : 'Sparkles';
+
+const formatCurrency = (value?: number) => {
+  if (typeof value !== 'number' || Number.isNaN(value)) {
+    return '₹0.00';
+  }
+
+  return `₹${value.toFixed(2)}`;
+};
+
+const mapBannersToSlides = (banners?: any[]): HeroSlide[] => {
+  if (!Array.isArray(banners) || banners.length === 0) {
+    return [];
+  }
+
+  return banners.map((banner, index) => {
+    const fallbackSlide = defaultHeroSlides[index % defaultHeroSlides.length];
+
+    return {
+      id: banner?._id?.toString?.() ?? `banner-${index}`,
+      main: {
+        image: banner?.image || fallbackSlide.main.image,
+        subtitle: banner?.subtitle || fallbackSlide.main.subtitle,
+        title: banner?.title || fallbackSlide.main.title,
+        description: banner?.description || fallbackSlide.main.description,
+        buttonText: banner?.buttonText || fallbackSlide.main.buttonText,
+      },
+      side: {
+        image: banner?.image || fallbackSlide.side.image,
+        subtitle: banner?.subtitle || fallbackSlide.side.subtitle,
+        title: banner?.title || fallbackSlide.side.title,
+        description: banner?.description || fallbackSlide.side.description,
+        buttonText: banner?.buttonText || fallbackSlide.side.buttonText,
+      },
+      link: banner?.link || '/products',
+    };
+  });
+};
+
+const mapCategoriesFromApi = (incoming?: any[]): CategoryStripItem[] => {
+  if (!Array.isArray(incoming) || incoming.length === 0) {
+    return [];
+  }
+
+  return incoming.map((category, index) => ({
+    name: category?.name || `Category ${index + 1}`,
+    image: category?.image || DEFAULT_CATEGORY_IMAGE,
+    slug: category?.slug || category?.name || '',
+  }));
+};
+
+const mapProductsFromApi = (incoming?: any[], defaultBadge?: string): ProductCardData[] => {
+  if (!Array.isArray(incoming) || incoming.length === 0) {
+    return [];
+  }
+
+  return incoming.map((product, index) => {
+    const sellingPrice =
+      typeof product?.sellingPrice === 'number'
+        ? product.sellingPrice
+        : typeof product?.regularPrice === 'number'
+        ? product.regularPrice
+        : 0;
+    const regularPrice = typeof product?.regularPrice === 'number' ? product.regularPrice : sellingPrice;
+
+    const hasDiscount = regularPrice > sellingPrice && regularPrice !== 0;
+
+    return {
+      id: typeof product?._id === 'string' ? product._id : product?._id?.toString?.() ?? `product-${index}`,
+      title: product?.name || 'Untitled Product',
+      category: product?.category || 'Jewellery',
+      price: formatCurrency(sellingPrice),
+      originalPrice: hasDiscount ? formatCurrency(regularPrice) : undefined,
+      rating: typeof product?.rating === 'number' ? product.rating : 4.8,
+      reviews: typeof product?.reviewCount === 'number' ? product.reviewCount : 0,
+      image: product?.mainImage || DEFAULT_PRODUCT_IMAGE,
+      badge: product?.badge || defaultBadge,
+    };
+  });
+};
+
+const mapFeaturesFromApi = (incoming?: any[]): HomepageFeatureItem[] => {
+  if (!Array.isArray(incoming) || incoming.length === 0) {
+    return [];
+  }
+
+  return incoming.map(feature => ({
+    icon: sanitizeFeatureIcon(feature?.icon),
+    title: feature?.title || 'Premium Service',
+    description: feature?.description || 'Crafted for excellence.',
+  }));
+};
+
+const createDefaultSectionsState = (): HomepageSectionsState => ({
+  hero: [...defaultHeroSlides],
+  categories: [...categoriess],
+  newProducts: [...featuredProducts],
+  featuredProducts: [...fallbackBestSellers],
+  trendingProducts: [...trendingPro],
+  features: [...fallbackFeatureData],
 });
 
-export function DynamicHomePage() {
-  const router = useRouter();
-  const { categories: contextCategories } = useCategories();
-  
-  // State for dynamic data
-  const [banners, setBanners] = useState<Banner[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
-  const [trendingProducts, setTrendingProducts] = useState<Product[]>([]);
-  const [newProducts, setNewProducts] = useState<Product[]>([]);
-  const [features, setFeatures] = useState<Feature[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+export const HomePage = () => {
+  const [sectionsData, setSectionsData] = useState<HomepageSectionsState>(() => createDefaultSectionsState());
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Swiper refs
-  const heroSwiperRef = useRef<SwiperType | null>(null);
-  const categorySwiperRef = useRef<SwiperType | null>(null);
-  const featuredSwiperRef = useRef<SwiperType | null>(null);
-  const trendingSwiperRef = useRef<SwiperType | null>(null);
-  const newProductsSwiperRef = useRef<SwiperType | null>(null);
-
-  // Fetch dynamic data
   useEffect(() => {
-    const fetchData = async () => {
+    const controller = new AbortController();
+
+    const fetchHomepageSections = async () => {
+      setIsLoading(true);
       try {
-        setLoading(true);
-        
-        // Fetch banners
-        const bannersRes = await fetch('/api/public/banners');
-        if (bannersRes.ok) {
-          const bannersData = await bannersRes.json();
-          setBanners(bannersData.banners || []);
+        const response = await fetch('/api/public/homepage', {
+          cache: 'no-store',
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch homepage sections');
         }
 
-        // Fetch categories
-        const categoriesRes = await fetch('/api/public/categories');
-        if (categoriesRes.ok) {
-          const categoriesData = await categoriesRes.json();
-          setCategories(categoriesData.categories || []);
-        }
+        const payload = await response.json();
+        const incomingSections = Array.isArray(payload?.sections) ? payload.sections : [];
+        const nextState = createDefaultSectionsState();
 
-        // Fetch featured products
-        const featuredRes = await fetch('/api/public/products?featured=true&limit=12');
-        if (featuredRes.ok) {
-          const featuredData = await featuredRes.json();
-          setFeaturedProducts(featuredData.products || []);
-        }
+        incomingSections.forEach((section: any) => {
+          if (!section || typeof section !== 'object') {
+            return;
+          }
 
-        // Fetch trending products
-        const trendingRes = await fetch('/api/public/products?trending=true&limit=12');
-        if (trendingRes.ok) {
-          const trendingData = await trendingRes.json();
-          setTrendingProducts(trendingData.products || []);
-        }
+          const { type, data } = section;
+          if (!data || typeof data !== 'object') {
+            return;
+          }
 
-        // Fetch new products (latest)
-        const newRes = await fetch('/api/public/products?limit=12');
-        if (newRes.ok) {
-          const newData = await newRes.json();
-          setNewProducts(newData.products || []);
-        }
+          switch (type) {
+            case 'hero': {
+              const slides = mapBannersToSlides((data as any).banners);
+              if (slides.length > 0) {
+                nextState.hero = slides;
+              }
+              break;
+            }
+            case 'categories': {
+              const mappedCategories = mapCategoriesFromApi((data as any).categories);
+              if (mappedCategories.length > 0) {
+                nextState.categories = mappedCategories;
+              }
+              break;
+            }
+            case 'newProducts': {
+              const mappedProducts = mapProductsFromApi((data as any).products);
+              if (mappedProducts.length > 0) {
+                nextState.newProducts = mappedProducts;
+              }
+              break;
+            }
+            case 'featuredProducts': {
+              const mappedProducts = mapProductsFromApi((data as any).products, 'Featured');
+              if (mappedProducts.length > 0) {
+                nextState.featuredProducts = mappedProducts;
+              }
+              break;
+            }
+            case 'trendingProducts': {
+              const mappedProducts = mapProductsFromApi((data as any).products, 'Trending');
+              if (mappedProducts.length > 0) {
+                nextState.trendingProducts = mappedProducts;
+              }
+              break;
+            }
+            case 'features': {
+              const mappedFeatures = mapFeaturesFromApi((data as any).features);
+              if (mappedFeatures.length > 0) {
+                nextState.features = mappedFeatures;
+              }
+              break;
+            }
+            default:
+              break;
+          }
+        });
 
-        // Fetch features
-        const featuresRes = await fetch('/api/public/features');
-        if (featuresRes.ok) {
-          const featuresData = await featuresRes.json();
-          setFeatures(featuresData.features || []);
+        if (!controller.signal.aborted) {
+          setSectionsData(nextState);
+          setErrorMessage(null);
         }
-
-      } catch (err) {
-        console.error('Error fetching homepage data:', err);
-        setError('Failed to load homepage data');
+      } catch (error) {
+        if (controller.signal.aborted) {
+          return;
+        }
+        console.error('[v0] Failed to load homepage data:', error);
+        setSectionsData(prev => prev);
+        setErrorMessage('We could not load the latest homepage data. Showing default content.');
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) {
+          setIsLoading(false);
+        }
       }
     };
 
-    fetchData();
+    fetchHomepageSections();
+
+    return () => controller.abort();
   }, []);
-
-  // Navigation handlers
-  const handleViewAll = (type: string) => {
-    switch (type) {
-      case 'featured':
-        router.push('/products?featured=true');
-        break;
-      case 'trending':
-        router.push('/trending');
-        break;
-      case 'new':
-        router.push('/products?sort=newest');
-        break;
-      case 'categories':
-        router.push('/categories');
-        break;
-      default:
-        router.push('/products');
-    }
-  };
-
-  const handleCategoryClick = (category: Category) => {
-    router.push(`/products?category=${encodeURIComponent(category.name)}`);
-  };
-
-  const handleProductClick = (product: Product) => {
-    router.push(`/products/${product._id}`);
-  };
-
-  // Cleanup function for Swiper instances
-  useEffect(() => {
-    return () => {
-      [heroSwiperRef, categorySwiperRef, featuredSwiperRef, trendingSwiperRef, newProductsSwiperRef].forEach(ref => {
-        if (ref.current) {
-          try {
-            ref.current.destroy(false, false);
-            ref.current = null;
-          } catch (error) {
-            console.warn('Error destroying swiper:', error);
-          }
-        }
-      });
-    };
-  }, []);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading homepage...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-red-600 mb-4">{error}</p>
-          <button 
-            onClick={() => window.location.reload()} 
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-          >
-            Retry
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   return (
-    <div className="min-h-screen w-full overflow-x-hidden bg-white">
-      {/* Hero Section */}
-      <section className="relative w-full">
-        <div className="w-full">
-          <Swiper
-            modules={[Navigation, Pagination]}
-            spaceBetween={0}
-            slidesPerView={1}
-            navigation={{
-              nextEl: '.hero-button-next',
-              prevEl: '.hero-button-prev',
-            }}
-            pagination={{
-              clickable: true,
-              el: '.hero-pagination',
-            }}
-            loop={true}
-            autoplay={{
-              delay: 5000,
-              disableOnInteraction: false,
-            }}
-            onSwiper={(swiper) => {
-              heroSwiperRef.current = swiper;
-            }}
-            onBeforeDestroy={() => {
-              heroSwiperRef.current = null;
-            }}
-            className="w-full h-[400px] sm:h-[500px] lg:h-[600px]"
-          >
-{banners.length > 0 ? (
-              // Group banners by pairs (main + side)
-              (() => {
-                const slides = [];
-                for (let i = 0; i < banners.length; i += 2) {
-                  const mainBanner = banners.find(b => b.type === 'main') || banners[i];
-                  const sideBanner = banners.find(b => b.type === 'side') || banners[i + 1];
-                  
-                  slides.push(
-                    <SwiperSlide key={`slide-${i}`}>
-                      <div className="relative w-full h-full grid grid-cols-1 lg:grid-cols-3 gap-0">
-                        {/* Main Banner */}
-                        <div className="relative lg:col-span-2 h-full">
-                          <Image
-                            src={mainBanner.image}
-                            alt={mainBanner.title}
-                            fill
-                            className="object-cover"
-                            priority
-                          />
-                          <div className="absolute inset-0 bg-black/30" />
-                          <div className="absolute inset-0 flex items-center">
-                            <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                              <div className="max-w-lg text-white">
-                                <p className="text-sm sm:text-base font-medium mb-2 opacity-90">
-                                  {mainBanner.subtitle}
-                                </p>
-                                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 leading-tight">
-                                  {mainBanner.title}
-                                </h1>
-                                <p className="text-base sm:text-lg mb-6 opacity-90 leading-relaxed">
-                                  {mainBanner.description}
-                                </p>
-                                <button
-                                  onClick={() => handleViewAll('featured')}
-                                  className="bg-white text-gray-900 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors duration-200"
-                                >
-                                  {mainBanner.buttonText}
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
+    <>
+      <div className='mx-auto flex w-full max-w-[1400px] flex-col gap-0 px-4 sm:px-6 md:px-8 lg:px-12'>
+        <Hero slides={sectionsData.hero} isLoading={isLoading} />
+        <CategoryStrip categoriesData={sectionsData.categories} isLoading={isLoading} />
+        {errorMessage && (
+          <div className='mt-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700'>{errorMessage}</div>
+        )}
+        <div className={SECTION_SPACING}>
+          <FeaturedSlider products={sectionsData.newProducts} isLoading={isLoading} />
+        </div>
+        <div className={SECTION_SPACING}>
+          <PromoShowcase />
+        </div>
+        <div className={SECTION_SPACING}>
+          <BestSellers products={sectionsData.featuredProducts} isLoading={isLoading} />
+        </div>
+        <div className={SECTION_SPACING}>
+          <TrendingProducts products={sectionsData.trendingProducts} isLoading={isLoading} />
+        </div>
+        <div className={SECTION_SPACING}>
+          <Collections />
+        </div>
+        <div className={SECTION_SPACING}>
+          <Testimonials />
+        </div>
+        <div className={SECTION_SPACING}>
+          <Updates />
+        </div>
+        <div className={SECTION_SPACING}>
+          <WhyChooseUs features={sectionsData.features} isLoading={isLoading} />
+        </div>
+        <div className={SECTION_SPACING}>
+          <Gallery />
+        </div>
+      </div>
+      <div className='mt-12 sm:mt-16 lg:mt-20'>
+        <Subscribe />
+      </div>
+    </>
+  );
+};
 
-                        {/* Side Banner */}
-                        {sideBanner && (
-                          <div className="relative hidden lg:block h-full">
-                            <Image
-                              src={sideBanner.image}
-                              alt={sideBanner.title}
-                              fill
-                              className="object-cover"
-                            />
-                            <div className="absolute inset-0 bg-black/40" />
-                            <div className="absolute inset-0 flex items-center justify-center">
-                              <div className="text-center text-white p-6">
-                                <p className="text-sm font-medium mb-2 opacity-90">
-                                  {sideBanner.subtitle}
-                                </p>
-                                <h2 className="text-2xl font-bold mb-3">
-                                  {sideBanner.title}
-                                </h2>
-                                <p className="text-sm mb-4 opacity-90">
-                                  {sideBanner.description}
-                                </p>
-                                <button
-                                  onClick={() => handleViewAll('trending')}
-                                  className="bg-white text-gray-900 px-4 py-2 rounded font-medium text-sm hover:bg-gray-100 transition-colors duration-200"
-                                >
-                                  {sideBanner.buttonText}
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </SwiperSlide>
-                  );
+const Grid2x2CheckIcon = ({ size, className }: { size: number; className?: string }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox='0 0 24 24'
+    fill='none'
+    stroke='currentColor'
+    strokeWidth='2'
+    strokeLinecap='round'
+    strokeLinejoin='round'
+    className={className}>
+    <path d='M12 3v6m6-6h-6M3 12h6m-6 6h6m6 0v-6m0 6h-6' />
+    <path d='M8 8h8v8H8z' fill='currentColor' opacity='0.3' />
+    <path d='M8 16l4-4 4 4' stroke='currentColor' strokeWidth='2' />
+  </svg>
+);
+
+const Hero = ({ slides = defaultHeroSlides, isLoading = false }: { slides?: HeroSlide[]; isLoading?: boolean }) => {
+  const { sidebarOpen, mobileCategoriesOpen, setMobileCategoriesOpen } = useCategories();
+  const [isMobile, setIsMobile] = useState(false);
+  const heroSwiperRef = useRef<SwiperType | null>(null);
+  const slidesToRender = slides.length > 0 ? slides : defaultHeroSlides;
+  const showLoadingState = isLoading && slidesToRender.length === 0;
+
+  useEffect(() => {
+    // Set initial mobile state after mount to avoid hydration mismatch
+    const checkMobile = () => window.innerWidth < 1024;
+    setIsMobile(checkMobile());
+
+    const handleResize = () => {
+      setIsMobile(checkMobile());
+      if (window.innerWidth >= 1024) {
+        setMobileCategoriesOpen(false);
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      // Cleanup Hero Swiper instance
+      if (heroSwiperRef.current) {
+        try {
+          // Only destroy if swiper instance still exists and is initialized
+          if (heroSwiperRef.current.initialized) {
+            heroSwiperRef.current.destroy(false, false); // Don't remove DOM, React will handle it
+          }
+        } catch (e) {
+          // Ignore cleanup errors
+        }
+        heroSwiperRef.current = null;
+      }
+    };
+  }, [setMobileCategoriesOpen]);
+
+  return (
+    <>
+      <Sheet open={mobileCategoriesOpen} onOpenChange={setMobileCategoriesOpen}>
+        <SheetContent side='left' className='w-[300px] overflow-y-auto bg-white p-0'>
+          <SheetHeader className='sticky top-0 border-b border-web/50 bg-white px-5 py-4'>
+            <SheetTitle className='flex items-center gap-2 text-left text-lg font-semibold tracking-[0.2em] text-[#1F3B29]'>
+              <Grid2x2CheckIcon size={20} className='text-[#1F3B29]' />
+              Categories
+            </SheetTitle>
+          </SheetHeader>
+          <ul className='space-y-2 px-4 py-4'>
+            {sidebarCategories.map(category => (
+              <li
+                key={category}
+                className='flex cursor-pointer items-center justify-between rounded-xl bg-[#F7F3EE] px-4 py-3 text-sm font-semibold text-[#1C1F1A]'
+                onClick={() => setMobileCategoriesOpen(false)}>
+                <div className='flex items-center gap-3 text-[#3F5C45]'>
+                  <span>{categoryIcons[category]}</span>
+                  <span>{category}</span>
+                </div>
+                <ChevronRight size={18} className='text-[#3F5C45]' />
+              </li>
+            ))}
+          </ul>
+        </SheetContent>
+      </Sheet>
+
+      <section
+        className={`mx-auto grid w-full gap-4 ${
+          sidebarOpen && !isMobile ? 'lg:grid-cols-[260px_minmax(0,1fr)]' : 'lg:grid-cols-[0px_minmax(0,1fr)]'
+        }`}>
+        <aside
+          className={`hidden overflow-hidden rounded-2xl   bg-white px-5 py-6 lg:block ${
+            sidebarOpen ? 'w-[260px] border border-web/50' : 'w-0 px-0 py-0'
+          }`}>
+          {sidebarOpen && (
+            <>
+              <p className='mb-4 text-xs font-semibold uppercase tracking-[0.3em] text-[#1F3B29]'>Categories</p>
+              <ul className='space-y-2 text-sm font-semibold text-[#1C1F1A]'>
+                {sidebarCategories.map(category => (
+                  <li
+                    key={category}
+                    className='flex cursor-pointer items-center justify-between rounded-xl px-2 py-2 hover:bg-[#F5EEE5]'
+                    onClick={() => setMobileCategoriesOpen(false)}>
+                    <div className='flex items-center gap-2 text-[#3F5C45]'>
+                      <span>{categoryIcons[category]}</span>
+                      <span>{category}</span>
+                    </div>
+                    <ChevronRight size={14} className='text-[#3F5C45]' />
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+        </aside>
+
+        <div className='w-full'>
+          {showLoadingState ? (
+            <div className='flex items-center justify-center min-h-80 rounded-2xl bg-gray-100'>
+              <p className='text-gray-500'>Loading banners...</p>
+            </div>
+          ) : (
+            <Swiper
+              onSwiper={swiper => {
+                heroSwiperRef.current = swiper;
+              }}
+              onBeforeDestroy={swiper => {
+                // Prevent Swiper from removing DOM nodes that React manages
+                if (heroSwiperRef.current === swiper) {
+                  heroSwiperRef.current = null;
                 }
-                return slides;
-              })()
-            ) : (
-              // Fallback to default slides if no banners
-              defaultHeroSlides.map((slide) => (
+              }}
+              modules={[Pagination]}
+              spaceBetween={0}
+              slidesPerView={1}
+              loop
+              pagination={{ clickable: true, dynamicBullets: true }}
+              className='hero-swiper pb-10!'>
+              {slidesToRender.map(slide => (
                 <SwiperSlide key={slide.id}>
-                  <div className="relative w-full h-full grid grid-cols-1 lg:grid-cols-3 gap-0">
-                    {/* Main Banner */}
-                    <div className="relative lg:col-span-2 h-full">
+                  <div className='grid w-full grid-cols-1 gap-4 lg:grid-cols-[1.65fr_0.9fr]'>
+                    <div className='relative flex min-h-80 flex-col justify-center overflow-hidden rounded-2xl px-8 py-10 text-white'>
                       <Image
                         src={slide.main.image}
                         alt={slide.main.title}
                         fill
-                        className="object-cover"
-                        priority
+                        // priority={slide.id === 1 || slide.id === heroSlides[0]?.id}
+                        sizes='(max-width: 768px) 100vw, (max-width: 1024px) 70vw, 70vw'
+                        className='object-cover'
                       />
-                      <div className="absolute inset-0 bg-black/30" />
-                      <div className="absolute inset-0 flex items-center">
-                        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                          <div className="max-w-lg text-white">
-                            <p className="text-sm sm:text-base font-medium mb-2 opacity-90">
-                              {slide.main.subtitle}
-                            </p>
-                            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 leading-tight">
-                              {slide.main.title}
-                            </h1>
-                            <p className="text-base sm:text-lg mb-6 opacity-90 leading-relaxed">
-                              {slide.main.description}
-                            </p>
-                            <button
-                              onClick={() => handleViewAll('featured')}
-                              className="bg-white text-gray-900 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors duration-200"
-                            >
-                              {slide.main.buttonText}
-                            </button>
-                          </div>
-                        </div>
+                      <div className='absolute inset-0 bg-black/40' />
+                      <div className='relative z-10 space-y-4'>
+                        {slide.main.subtitle && <p className='text-xs uppercase tracking-[0.3em] text-white/80'>{slide.main.subtitle}</p>}
+                        <h1 className='text-3xl font-bold text-white sm:text-4xl lg:text-5xl'>{slide.main.title}</h1>
+                        <p className='max-w-lg text-sm text-white/90 sm:text-base'>{slide.main.description}</p>
+                        <Link
+                          href={slide.link || '/products'}
+                          className='inline-flex items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-semibold text-[#1F3B29] hover:bg-[#F5EEE5] transition-colors'>
+                          {slide.main.buttonText}
+                        </Link>
                       </div>
                     </div>
 
-                    {/* Side Banner */}
-                    <div className="relative hidden lg:block h-full">
+                    <div className='relative flex min-h-60 flex-col justify-end overflow-hidden rounded-2xl px-6 py-6 text-white'>
                       <Image
                         src={slide.side.image}
                         alt={slide.side.title}
                         fill
-                        className="object-cover"
+                        sizes='(max-width: 768px) 100vw, (max-width: 1024px) 35vw, 35vw'
+                        className='object-cover'
                       />
-                      <div className="absolute inset-0 bg-black/40" />
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="text-center text-white p-6">
-                          <p className="text-sm font-medium mb-2 opacity-90">
-                            {slide.side.subtitle}
-                          </p>
-                          <h2 className="text-2xl font-bold mb-3">
-                            {slide.side.title}
-                          </h2>
-                          <p className="text-sm mb-4 opacity-90">
-                            {slide.side.description}
-                          </p>
-                          <button
-                            onClick={() => handleViewAll('trending')}
-                            className="bg-white text-gray-900 px-4 py-2 rounded font-medium text-sm hover:bg-gray-100 transition-colors duration-200"
-                          >
-                            {slide.side.buttonText}
-                          </button>
-                        </div>
+                      <div className='absolute inset-0 bg-black/40' />
+                      <div className='relative z-10 space-y-2'>
+                        {slide.side.subtitle && (
+                          <p className='text-[11px] uppercase tracking-[0.3em] text-white/80'>{slide.side.subtitle}</p>
+                        )}
+                        <h2 className='text-2xl font-semibold text-white'>{slide.side.title}</h2>
+                        <p className='text-xs text-white/80'>{slide.side.description}</p>
+                        <Link
+                          href={slide.link || '/products'}
+                          className='inline-flex items-center justify-center rounded-full bg-white/20 px-4 py-2 text-xs font-semibold text-white hover:bg-white/30 transition-colors'>
+                          {slide.side.buttonText}
+                        </Link>
                       </div>
                     </div>
                   </div>
                 </SwiperSlide>
-              ))
-            )}
-          </Swiper>
-
-          {/* Navigation */}
-          <button className="hero-button-prev absolute left-4 top-1/2 -translate-y-1/2 z-10 bg-white/80 hover:bg-white text-gray-800 p-2 rounded-full shadow-lg transition-all duration-200">
-            <ChevronLeft className="w-5 h-5" />
-          </button>
-          <button className="hero-button-next absolute right-4 top-1/2 -translate-y-1/2 z-10 bg-white/80 hover:bg-white text-gray-800 p-2 rounded-full shadow-lg transition-all duration-200">
-            <ChevronRight className="w-5 h-5" />
-          </button>
-
-          {/* Pagination */}
-          <div className="hero-pagination absolute bottom-6 left-1/2 -translate-x-1/2 z-10" />
+              ))}
+            </Swiper>
+          )}
         </div>
       </section>
+    </>
+  );
+};
 
-      {/* Categories Section */}
-      {categories.length > 0 && (
-        <section className={`container mx-auto px-4 sm:px-6 lg:px-8 ${SECTION_SPACING}`}>
-          <SectionHeader
-            title="Shop by Categories"
-            subtitle={`Discover ${categories.length} curated collections`}
-            onViewAll={() => handleViewAll('categories')}
-          />
-          
-          <div className="mt-8">
-            <Swiper
-              modules={[Navigation]}
-              spaceBetween={16}
-              slidesPerView={2}
-              navigation={{
-                nextEl: '.categories-button-next',
-                prevEl: '.categories-button-prev',
-              }}
-              breakpoints={{
-                640: { slidesPerView: 3, spaceBetween: 20 },
-                768: { slidesPerView: 4, spaceBetween: 24 },
-                1024: { slidesPerView: 6, spaceBetween: 24 },
-              }}
-              onSwiper={(swiper) => {
-                categorySwiperRef.current = swiper;
-              }}
-              onBeforeDestroy={() => {
-                categorySwiperRef.current = null;
-              }}
-            >
-              {categories.slice(0, 12).map((category) => (
-                <SwiperSlide key={category._id}>
-                  <div
-                    onClick={() => handleCategoryClick(category)}
-                    className="group cursor-pointer text-center p-4 rounded-xl border border-gray-100 hover:border-gray-200 hover:shadow-md transition-all duration-200"
-                  >
-                    <div className="w-16 h-16 mx-auto mb-3 rounded-full bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center group-hover:from-blue-100 group-hover:to-purple-100 transition-colors duration-200">
-                      {category.image ? (
-                        <Image
-                          src={category.image}
-                          alt={category.name}
-                          width={32}
-                          height={32}
-                          className="rounded-full object-cover"
-                        />
-                      ) : (
-                        <Diamond className="w-8 h-8 text-blue-600" />
-                      )}
-                    </div>
-                    <h3 className="font-semibold text-gray-900 text-sm mb-1 group-hover:text-blue-600 transition-colors duration-200">
-                      {category.name}
-                    </h3>
-                    <p className="text-xs text-gray-500">
-                      {category.productCount} items
-                    </p>
-                  </div>
-                </SwiperSlide>
-              ))}
-            </Swiper>
+const CategoryStrip = ({ categoriesData, isLoading = false }: { categoriesData?: CategoryStripItem[]; isLoading?: boolean }) => {
+  const items = categoriesData && categoriesData.length > 0 ? categoriesData : categoriess;
+  const showSkeleton = isLoading && (!categoriesData || categoriesData.length === 0);
+  const skeletonItems = Array.from({ length: 6 });
 
-            {/* Navigation */}
-            <div className="flex justify-center mt-6 gap-2">
-              <button className="categories-button-prev bg-gray-100 hover:bg-gray-200 text-gray-600 p-2 rounded-full transition-colors duration-200">
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-              <button className="categories-button-next bg-gray-100 hover:bg-gray-200 text-gray-600 p-2 rounded-full transition-colors duration-200">
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        </section>
-      )}
+  return (
+    <section className='w-full space-y-6 bg-white'>
+      {/* <div className='mb-6 text-center'>
+        <div className='mb-3 flex items-center justify-center gap-2'>
+          <div className='h-px w-8 bg-[#E6D3C2]' />
+          <Diamond size={16} className='text-[#C8A15B]' />
+          <div className='h-px w-8 bg-[#E6D3C2]' />
+        </div>
+        <h2 className='mb-3 text-2xl font-bold tracking-tight text-[#1F3B29] sm:text-3xl md:text-4xl'>SHOP BY CATEGORY</h2>
+        <p className='mx-auto max-w-xl text-sm font-normal leading-relaxed text-[#3F5C45] sm:text-base md:text-lg'>
+          Explore our diverse selections. Find your style.
+        </p>
+      </div> */}
 
-      {/* Featured Products Section */}
-      {featuredProducts.length > 0 && (
-        <section className={`container mx-auto px-4 sm:px-6 lg:px-8 ${SECTION_SPACING}`}>
-          <SectionHeader
-            title={`Featured Products (${featuredProducts.length})`}
-            subtitle="Handpicked favorites just for you"
-            onViewAll={() => handleViewAll('featured')}
-          />
-          
-          <div className="mt-8">
-            <Swiper
-              modules={[Navigation]}
-              spaceBetween={16}
-              slidesPerView={1}
-              navigation={{
-                nextEl: '.featured-button-next',
-                prevEl: '.featured-button-prev',
-              }}
-              breakpoints={{
-                640: { slidesPerView: 2, spaceBetween: 20 },
-                768: { slidesPerView: 3, spaceBetween: 24 },
-                1024: { slidesPerView: 4, spaceBetween: 24 },
-              }}
-              onSwiper={(swiper) => {
-                featuredSwiperRef.current = swiper;
-              }}
-              onBeforeDestroy={() => {
-                featuredSwiperRef.current = null;
-              }}
-            >
-              {featuredProducts.map((product) => (
-                <SwiperSlide key={product._id}>
-                  <ProductCard
-                    product={convertToProductCard(product)}
-                    onClick={() => handleProductClick(product)}
+      <div className='mb-6 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-6 md:gap-6 pt-8'>
+        {showSkeleton
+          ? skeletonItems.map((_, index) => (
+              <div key={`category-skeleton-${index}`} className='flex flex-col items-center gap-3 rounded-full animate-pulse'>
+                <div className='aspect-square w-full rounded-full bg-[#F5EEE5]' />
+                <div className='h-3 w-16 rounded-full bg-[#F5EEE5]' />
+              </div>
+            ))
+          : items.map(item => (
+              <Link
+                key={`${item.slug || item.name}-${item.image}`}
+                href={`/products?category=${encodeURIComponent(item.slug || item.name)}`}
+                className='group flex flex-col items-center gap-3 transition-transform duration-300 hover:scale-105'>
+                <div className='relative aspect-square w-full overflow-hidden rounded-full bg-linear-to-br from-[#F5EEE5] to-white shadow-lg ring-2 ring-[#E6D3C2] transition-shadow duration-300 group-hover:shadow-xl group-hover:ring-[#C8A15B]'>
+                  <img
+                    src={item.image}
+                    alt={item.name}
+                    className='h-full w-full object-cover transition-transform duration-300 group-hover:scale-110'
                   />
-                </SwiperSlide>
-              ))}
-            </Swiper>
+                  <div className='absolute inset-0 bg-linear-to-t from-black/20 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100' />
+                </div>
+                <h3 className='text-center text-sm font-semibold tracking-wide text-[#1F3B29] transition-colors duration-300 group-hover:text-[#C8A15B] sm:text-base'>
+                  {item.name}
+                </h3>
+              </Link>
+            ))}
+      </div>
 
-            {/* Navigation */}
-            <div className="flex justify-center mt-6 gap-2">
-              <button className="featured-button-prev bg-gray-100 hover:bg-gray-200 text-gray-600 p-2 rounded-full transition-colors duration-200">
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-              <button className="featured-button-next bg-gray-100 hover:bg-gray-200 text-gray-600 p-2 rounded-full transition-colors duration-200">
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        </section>
-      )}
+      {/* <div className='text-center'>
+        <button
+          type='button'
+          className='rounded-lg border-2 border-[#1F3B29] bg-white px-8 py-3 text-xs font-bold uppercase tracking-wide text-[#1F3B29] transition-all duration-300 hover:bg-[#1F3B29] hover:text-white sm:text-sm'>
+          View All Categories
+        </button>
+      </div>
 
-      {/* Trending Products Section */}
-      {trendingProducts.length > 0 && (
-        <section className={`container mx-auto px-4 sm:px-6 lg:px-8 ${SECTION_SPACING}`}>
-          <SectionHeader
-            title={`Trending Now (${trendingProducts.length})`}
-            subtitle="What's popular this week"
-            onViewAll={() => handleViewAll('trending')}
-          />
-          
-          <div className="mt-8">
-            <Swiper
-              modules={[Navigation]}
-              spaceBetween={16}
-              slidesPerView={1}
-              navigation={{
-                nextEl: '.trending-button-next',
-                prevEl: '.trending-button-prev',
-              }}
-              breakpoints={{
-                640: { slidesPerView: 2, spaceBetween: 20 },
-                768: { slidesPerView: 3, spaceBetween: 24 },
-                1024: { slidesPerView: 4, spaceBetween: 24 },
-              }}
-              onSwiper={(swiper) => {
-                trendingSwiperRef.current = swiper;
-              }}
-              onBeforeDestroy={() => {
-                trendingSwiperRef.current = null;
-              }}
-            >
-              {trendingProducts.map((product) => (
-                <SwiperSlide key={product._id}>
-                  <ProductCard
-                    product={convertToProductCard(product)}
-                    onClick={() => handleProductClick(product)}
-                  />
-                </SwiperSlide>
-              ))}
-            </Swiper>
+      <div className='mt-6 flex items-center justify-center gap-2'>
+        <div className='h-px w-8 bg-[#E6D3C2]' />
+        <Diamond size={16} className='text-[#C8A15B]' />
+        <div className='h-px w-8 bg-[#E6D3C2]' />
+      </div> */}
+    </section>
+  );
+};
 
-            {/* Navigation */}
-            <div className="flex justify-center mt-6 gap-2">
-              <button className="trending-button-prev bg-gray-100 hover:bg-gray-200 text-gray-600 p-2 rounded-full transition-colors duration-200">
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-              <button className="trending-button-next bg-gray-100 hover:bg-gray-200 text-gray-600 p-2 rounded-full transition-colors duration-200">
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        </section>
-      )}
+const FeaturedSlider = ({ products, isLoading = false }: { products?: ProductCardData[]; isLoading?: boolean }) => {
+  const swiperRef = useRef<SwiperType | null>(null);
+  const prevButtonRef = useRef<HTMLButtonElement>(null);
+  const nextButtonRef = useRef<HTMLButtonElement>(null);
+  const resolvedProducts = products && products.length > 0 ? products : featuredProducts;
+  const showLoading = isLoading && (!products || products.length === 0);
 
-      {/* New Products Section */}
-      {newProducts.length > 0 && (
-        <section className={`container mx-auto px-4 sm:px-6 lg:px-8 ${SECTION_SPACING}`}>
-          <SectionHeader
-            title={`New Arrivals (${newProducts.length})`}
-            subtitle="Fresh additions to our collection"
-            onViewAll={() => handleViewAll('new')}
-          />
-          
-          <div className="mt-8">
-            <Swiper
-              modules={[Navigation]}
-              spaceBetween={16}
-              slidesPerView={1}
-              navigation={{
-                nextEl: '.new-button-next',
-                prevEl: '.new-button-prev',
-              }}
-              breakpoints={{
-                640: { slidesPerView: 2, spaceBetween: 20 },
-                768: { slidesPerView: 3, spaceBetween: 24 },
-                1024: { slidesPerView: 4, spaceBetween: 24 },
-              }}
-              onSwiper={(swiper) => {
-                newProductsSwiperRef.current = swiper;
-              }}
-              onBeforeDestroy={() => {
-                newProductsSwiperRef.current = null;
-              }}
-            >
-              {newProducts.map((product) => (
-                <SwiperSlide key={product._id}>
-                  <ProductCard
-                    product={convertToProductCard(product)}
-                    onClick={() => handleProductClick(product)}
-                  />
-                </SwiperSlide>
-              ))}
-            </Swiper>
+  useEffect(() => {
+    return () => {
+      // Cleanup Swiper instance on unmount
+      if (swiperRef.current) {
+        try {
+          // Only destroy if swiper instance still exists and is initialized
+          if (swiperRef.current.initialized) {
+            swiperRef.current.destroy(false, false); // Don't remove DOM, React will handle it
+          }
+        } catch (e) {
+          // Ignore cleanup errors
+        }
+        swiperRef.current = null;
+      }
+    };
+  }, []);
 
-            {/* Navigation */}
-            <div className="flex justify-center mt-6 gap-2">
-              <button className="new-button-prev bg-gray-100 hover:bg-gray-200 text-gray-600 p-2 rounded-full transition-colors duration-200">
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-              <button className="new-button-next bg-gray-100 hover:bg-gray-200 text-gray-600 p-2 rounded-full transition-colors duration-200">
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* Features Section */}
-      {features.length > 0 && (
-        <section className={`bg-gray-50 ${SECTION_SPACING}`}>
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
-            <div className="text-center mb-12">
-              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4">
-                Why Choose Us
-              </h2>
-              <p className="text-gray-600 max-w-2xl mx-auto">
-                We're committed to providing you with the best jewelry shopping experience
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-              {features.map((feature) => {
-                // Map icon names to components
-                const IconComponent = {
-                  Truck,
-                  Shield, 
-                  Headphones,
-                  Award,
-                }[feature.icon] || Award;
-
-                return (
-                  <div key={feature._id} className="text-center">
-                    <div className="w-16 h-16 mx-auto mb-4 bg-blue-100 rounded-full flex items-center justify-center">
-                      <IconComponent className="w-8 h-8 text-blue-600" />
-                    </div>
-                    <h3 className="font-semibold text-gray-900 mb-2">{feature.title}</h3>
-                    <p className="text-sm text-gray-600">{feature.description}</p>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </section>
-      )}
+  const rightSlot = (
+    <div className='flex items-center gap-6 text-[#1F3B29]'>
+      <div className='flex gap-3'>
+        <button
+          ref={prevButtonRef}
+          type='button'
+          onClick={() => swiperRef.current?.slidePrev()}
+          className='flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-web bg-white hover:bg-[#F5EEE5] transition-colors'>
+          <ChevronLeft size={18} />
+        </button>
+        <button
+          ref={nextButtonRef}
+          type='button'
+          onClick={() => swiperRef.current?.slideNext()}
+          className='flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-web bg-white hover:bg-[#F5EEE5] transition-colors'>
+          <ChevronRight size={18} />
+        </button>
+      </div>
+      <Link
+        href='/products'
+        className='cursor-pointer inline-flex items-center gap-1 text-xs font-semibold text-[#1F3B29] hover:text-[#C8A15B] transition-colors'>
+        View all
+        <ChevronRight size={16} />
+      </Link>
     </div>
   );
-}
+
+  return (
+    <section className='w-full space-y-4 bg-white'>
+      <div className='border-b border-web pb-3'>
+        <SectionHeader title='New Products' rightSlot={rightSlot} />
+      </div>
+      {showLoading ? (
+        <div className='flex items-center justify-center py-8'>
+          <p className='text-gray-500'>Loading products...</p>
+        </div>
+      ) : resolvedProducts.length === 0 ? (
+        <div className='flex items-center justify-center py-8'>
+          <p className='text-gray-500'>No products available</p>
+        </div>
+      ) : (
+        <Swiper
+          onSwiper={swiper => {
+            swiperRef.current = swiper;
+          }}
+          onBeforeDestroy={swiper => {
+            // Prevent Swiper from removing DOM nodes that React manages
+            if (swiperRef.current === swiper) {
+              swiperRef.current = null;
+            }
+          }}
+          modules={[]}
+          spaceBetween={20}
+          slidesPerView='auto'
+          className='pb-2'>
+          {resolvedProducts.map(product => (
+            <SwiperSlide key={product.id} style={{ width: 'auto' }}>
+              <ProductCard product={product} />
+            </SwiperSlide>
+          ))}
+        </Swiper>
+      )}
+    </section>
+  );
+};
+
+const TrendingProducts = ({ products, isLoading = false }: { products?: ProductCardData[]; isLoading?: boolean }) => {
+  const resolvedProducts = products && products.length > 0 ? products : trendingPro;
+  const showLoading = isLoading && (!products || products.length === 0);
+
+  const rightSlot = (
+    <div className='flex items-center gap-3 sm:gap-4 md:gap-6 text-[#1F3B29]'>
+      <div className='flex gap-2 sm:gap-3'>
+        <button
+          type='button'
+          className='trending-prev-btn flex h-7 w-7 sm:h-8 sm:w-8 cursor-pointer items-center justify-center rounded-full border border-web bg-white transition-all hover:scale-110 active:scale-95'>
+          <ChevronLeft size={16} className='sm:w-[18px] sm:h-[18px]' />
+        </button>
+        <button
+          type='button'
+          className='trending-next-btn flex h-7 w-7 sm:h-8 sm:w-8 cursor-pointer items-center justify-center rounded-full border border-web bg-white transition-all hover:scale-110 active:scale-95'>
+          <ChevronRight size={16} className='sm:w-[18px] sm:h-[18px]' />
+        </button>
+      </div>
+      <Link
+        href='/trending'
+        className='cursor-pointer inline-flex items-center gap-1 text-[10px] sm:text-xs font-semibold text-[#1F3B29] whitespace-nowrap hover:text-[#C8A15B] transition-colors'>
+        View all
+        <ChevronRight size={14} className='sm:w-4 sm:h-4' />
+      </Link>
+    </div>
+  );
+
+  return (
+    <section className='w-full space-y-4 bg-white'>
+      <div className='border-b border-web pb-3'>
+        <SectionHeader title='Trending Products' rightSlot={rightSlot} />
+      </div>
+      {showLoading ? (
+        <div className='flex items-center justify-center py-8'>
+          <p className='text-gray-500'>Loading trending products...</p>
+        </div>
+      ) : resolvedProducts.length === 0 ? (
+        <div className='flex items-center justify-center py-8'>
+          <p className='text-gray-500'>No trending products available</p>
+        </div>
+      ) : (
+        <div className='grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4 pb-2'>
+          {resolvedProducts.map(product => (
+            <ProductCard key={product.id} product={product} className='min-w-0 w-full' />
+          ))}
+        </div>
+      )}
+    </section>
+  );
+};
+
+const PromoShowcase = () => {
+  return (
+    <section className='w-full bg-[#F3F5F7]'>
+      <div className='grid items-center gap-6 md:grid-cols-2 w-full py-8 sm:py-10 md:py-12'>
+        <div className='flex gap-4'>
+          <img
+            src='https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1200&q=80'
+            alt='Model 1'
+            className='h-64 w-1/2 rounded-2xl object-cover lg:h-[420px]'
+          />
+          <img
+            src='https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1200&q=80'
+            alt='Model 2'
+            className='mt-8 h-64 w-1/2 rounded-2xl object-cover lg:h-[350px]'
+          />
+        </div>
+
+        <div>
+          <h2 className='text-xl font-semibold leading-snug text-[#1F3B29] sm:text-2xl md:text-3xl'>
+            Collection inspired <br className='hidden sm:block' /> by LuxeLoom
+          </h2>
+
+          <p className='mt-4 text-sm leading-relaxed text-[#4F3A2E] sm:text-base'>
+            These adornments are worn around the neck and come in various lengths. Each piece is crafted to feel light yet luxurious.
+          </p>
+
+          <Link
+            href='/products'
+            className='inline-block mt-6 rounded-full bg-[#1F3B29] px-6 py-2 text-sm text-white hover:bg-[#2a4d3a] transition-colors'>
+            Explore More
+          </Link>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+const Collections = () => {
+  const router = useRouter();
+  return (
+    <section className='w-full'>
+      <div className='border-b border-web pb-3'>
+        <SectionHeader title='Dazzel in Every Moment' actionLabel='View all' onActionClick={() => router.push('/products')} />
+      </div>
+
+      <div className='mt-6 grid grid-cols-1 gap-4 md:grid-cols-2'>
+        <div className='flex flex-col items-center gap-6 rounded-2xl bg-[#F3F5F7] p-6 md:flex-row'>
+          <img
+            src='https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=800&q=80'
+            className='h-64 w-full rounded-xl object-cover md:h-full md:w-1/2'
+            alt='Earrings'
+          />
+
+          <div className='flex flex-col justify-center'>
+            <h3 className='text-2xl font-semibold text-[#1C1F1A]'>Ancient jewelry collection</h3>
+            <p className='mt-3 text-sm text-[#4F3A2E]'>Beautiful long earrings with opal and carnelian stones—lightweight and radiant.</p>
+
+            <Link
+              href='/products'
+              className='inline-flex mt-5 w-fit items-center gap-2 rounded-full bg-[#1F3B29] px-5 py-2 text-sm text-white hover:bg-[#2a4d3a] transition-colors'>
+              Explore more
+            </Link>
+          </div>
+        </div>
+
+        <div className='flex flex-col gap-4 rounded-2xl bg-[#F3F5F7] p-6'>
+          <div>
+            <h3 className='text-xl font-semibold text-[#1C1F1A]'>Modern heirlooms</h3>
+            <p className='mt-3 text-sm text-[#4F3A2E]'>
+              Since many jewelry products can be ultra expensive, it becomes necessary for shoppers to know what exactly they can
+              expect—this is where VRAI’s jewelry description example trumps.
+            </p>
+
+            <Link
+              href='/products'
+              className='inline-flex mt-4 items-center gap-2 rounded-full bg-[#1F3B29] px-5 py-2 text-sm text-white hover:bg-[#2a4d3a] transition-colors'>
+              Shop now
+            </Link>
+          </div>
+
+          <img
+            src='https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=800&q=80'
+            className='h-[330px] w-full rounded-xl object-cover'
+            alt='Woman with earring'
+          />
+        </div>
+      </div>
+    </section>
+  );
+};
+
+const Updates = () => {
+  const router = useRouter();
+  return (
+    <section className='w-full'>
+      <div className='border-b border-web pb-3'>
+        <SectionHeader title='Our News & Updates' actionLabel='View all' onActionClick={() => router.push('/blog')} />
+      </div>
+      <div className='grid grid-cols-1 gap-6 py-8 sm:grid-cols-2 lg:grid-cols-3'>
+        {blogCards.map(card => (
+          <div key={card.id} className='rounded-2xl border border-web/60 bg-[#F3F5F7] p-4 shadow-sm'>
+            <div className='overflow-hidden rounded-xl'>
+              <img src={card.img} alt={card.title} className='h-56 w-full object-cover' />
+            </div>
+
+            <div className='mt-4 text-[#1C1F1A]'>
+              <p className='text-xs text-[#4F3A2E]'>
+                {card.category} &nbsp; | &nbsp; {card.date}
+              </p>
+
+              <h3 className='mt-2 text-lg font-semibold'>{card.title}</h3>
+
+              <p className='mt-2 text-sm text-[#4F3A2E]'>{card.desc}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+};
+
+const Gallery = () => {
+  return (
+    <section className='w-full'>
+      <SectionHeader title='Gallery' align='center' description='A glimpse into our recent shoots and studio moments.' />
+
+      <div className='mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4'>
+        {images.map((src, index) => (
+          <div key={`gallery-image-${index}-${src}`} className={`overflow-hidden rounded-xl shadow-sm`}>
+            <img src={src} className='h-40 w-full object-cover sm:h-56 lg:h-64' alt={`Gallery image ${index + 1}`} />
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+};
+
+const WhyChooseUs = ({ features, isLoading = false }: { features?: HomepageFeatureItem[]; isLoading?: boolean }) => {
+  const resolvedFeatures = features && features.length > 0 ? features : fallbackFeatureData;
+  const isPending = isLoading && (!features || features.length === 0);
+
+  return (
+    <section className='w-full'>
+      <SectionHeader
+        title='Why Choose Us'
+        description='Experience the difference with our premium services and commitment to excellence.'
+        align='center'
+      />
+
+      <div className='mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-6'>
+        {resolvedFeatures.map(feature => {
+          const IconComponent: LucideIcon = FEATURE_ICON_COMPONENTS[feature.icon] || Sparkles;
+          return (
+            <div
+              key={`${feature.title}-${feature.icon}`}
+              className={`flex flex-col items-center rounded-2xl border border-web/50 bg-white p-5 text-center ${
+                isPending ? 'animate-pulse' : ''
+              }`}>
+              <div className='mb-3 rounded-full bg-[#F5EEE5] p-4 text-[#1F3B29]'>
+                <IconComponent size={28} />
+              </div>
+              <h3 className='text-sm font-semibold text-[#1F3B29]'>{feature.title}</h3>
+              <p className='mt-2 text-xs text-[#4F3A2E]'>{feature.description}</p>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+};
+
+const BestSellers = ({ products, isLoading = false }: { products?: ProductCardData[]; isLoading?: boolean }) => {
+  const items = products && products.length > 0 ? products : fallbackBestSellers;
+  const showLoading = isLoading && (!products || products.length === 0);
+
+  return (
+    <section className='w-full space-y-6'>
+      <div className='border-b border-web pb-3'>
+        <SectionHeader title='Best Sellers' description='Our most loved products' actionLabel='View all' />
+      </div>
+      {showLoading ? (
+        <div className='flex items-center justify-center py-8'>
+          <p className='text-gray-500'>Loading featured products...</p>
+        </div>
+      ) : (
+        <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4'>
+          {items.map(product => (
+            <ProductCard key={product.id} product={product} />
+          ))}
+        </div>
+      )}
+    </section>
+  );
+};
+
+const Testimonials = () => {
+  return (
+    <section className='w-full'>
+      <SectionHeader
+        title='What Our Customers Say'
+        description="Don't just take our word for it — hear from our satisfied customers."
+        align='center'
+      />
+
+      <div className='mt-8 grid grid-cols-1 gap-6 md:grid-cols-3'>
+        {testimonials.map(testimonial => (
+          <div key={testimonial.id} className='rounded-2xl border border-web/50 bg-white p-6 shadow-sm'>
+            <div className='mb-4 flex items-center gap-1'>
+              {[...Array(5)].map((_, i) => (
+                <Star key={i} size={16} className='text-[#C8A15B]' />
+              ))}
+            </div>
+            <p className='mb-6 text-sm text-[#4F3A2E] italic'>&ldquo;{testimonial.comment}&rdquo;</p>
+            <div className='flex items-center gap-4'>
+              <img src={testimonial.image} alt={testimonial.name} className='h-14 w-14 rounded-full object-cover' />
+              <div>
+                <h4 className='text-sm font-semibold text-[#1F3B29]'>{testimonial.name}</h4>
+                <p className='text-xs text-[#4F3A2E]'>{testimonial.role}</p>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+};
+
+const Subscribe = () => {
+  return (
+    <section
+      className='relative bg-cover bg-center bg-no-repeat py-16 sm:py-24'
+      style={{
+        backgroundImage: "url('https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1200&q=80')",
+      }}>
+      <div className='absolute inset-0 bg-black/30' />
+
+      <div className='relative mx-auto max-w-4xl w-full text-center text-white'>
+        <h3 className='mb-4 text-xl sm:text-2xl'>Stay Informed with Our</h3>
+        <p className='mb-8 text-3xl font-light sm:text-4xl'>Latest News and Updates</p>
+
+        <div className='flex w-full flex-col items-stretch gap-2 rounded-full border border-white/50 bg-white/90 px-3 py-2 text-left sm:flex-row sm:items-center sm:px-4'>
+          <input
+            type='text'
+            placeholder='Enter Your Email'
+            className='flex-1 rounded-full bg-transparent px-2 py-2 text-sm text-[#1F3B29] placeholder:text-[#4F3A2E] focus:outline-none'
+          />
+
+          <button type='button' className='cursor-pointer rounded-full bg-[#1F3B29] px-6 py-2 text-sm font-semibold text-white'>
+            Subscribe
+          </button>
+        </div>
+      </div>
+    </section>
+  );
+};
