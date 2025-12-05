@@ -27,10 +27,10 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCategories } from '@/contexts/CategoriesContext';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { ProductCard, ProductCardData } from '@/components/home/common/product-card';
 import { SectionHeader } from '@/components/home/common/section-header';
 import Link from 'next/link';
 import { getActiveHomepageFeatures } from '@/lib/constants/features';
+import { ProductCard, ProductCardData } from './common/product-card';
 
 type HeroSlide = {
   id: string | number;

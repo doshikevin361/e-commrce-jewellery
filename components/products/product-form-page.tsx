@@ -99,6 +99,36 @@ const CERTIFICATION_OPTIONS = [
   { label: 'Other (enter manually)', value: '__custom__' },
 ] as const;
 
+const DIAMOND_CLARITY_OPTIONS = [
+  { label: 'Select Clarity', value: '' },
+  { label: 'IF (Internally Flawless)', value: 'IF' },
+  { label: 'VVS1', value: 'VVS1' },
+  { label: 'VVS2', value: 'VVS2' },
+  { label: 'VS1', value: 'VS1' },
+  { label: 'VS2', value: 'VS2' },
+  { label: 'SI1', value: 'SI1' },
+  { label: 'SI2', value: 'SI2' },
+  { label: 'I1', value: 'I1' },
+  { label: 'I2', value: 'I2' },
+] as const;
+
+const DIAMOND_CUT_OPTIONS = [
+  { label: 'Select Cut Grade', value: '' },
+  { label: 'Excellent', value: 'Excellent' },
+  { label: 'Very Good', value: 'Very Good' },
+  { label: 'Good', value: 'Good' },
+  { label: 'Fair', value: 'Fair' },
+  { label: 'Poor', value: 'Poor' },
+] as const;
+
+const DIAMOND_SHAPE_OPTIONS = [
+  { label: 'Select Shape', value: '' },
+  { label: 'Round', value: 'Round' },
+  { label: 'Princess', value: 'Princess' },
+  { label: 'Emerald', value: 'Emerald' },
+  { label: 'Oval', value: 'Oval' },
+] as const;
+
 type ProductType = (typeof PRODUCT_TYPE_OPTIONS)[number]['value'] | '';
 type WholesalePriceType = (typeof WHOLESALE_PRICE_TYPE_OPTIONS)[number]['value'];
 type JewelleryPurity = (typeof JEWELLERY_PURITY_OPTIONS)[number]['value'];
@@ -130,11 +160,17 @@ interface Product {
   metalType: 'Gold' | 'Silver' | 'Platinum' | 'Rose Gold' | 'White Gold' | '';
   metalPurity: '14K' | '18K' | '22K' | '24K' | '925 Silver' | '999 Silver' | '950 Platinum' | '';
   metalWeight: number; // in grams
+  goldRatePerGram: number; // Gold rate per gram
   stoneType: 'Diamond' | 'Ruby' | 'Emerald' | 'Sapphire' | 'Pearl' | 'Amethyst' | 'Topaz' | 'None' | '';
   stoneWeight: number; // in carats
-  stoneClarity: 'FL' | 'IF' | 'VVS1' | 'VVS2' | 'VS1' | 'VS2' | 'SI1' | 'SI2' | 'I1' | 'I2' | 'I3' | '';
+  diamondRatePerCarat: number; // Diamond rate per carat
+  stoneClarity: 'IF' | 'VVS1' | 'VVS2' | 'VS1' | 'VS2' | 'SI1' | 'SI2' | 'I1' | 'I2' | '';
   stoneColor: 'D' | 'E' | 'F' | 'G' | 'H' | 'I' | 'J' | 'K' | 'L' | 'M' | 'N' | '';
   stoneCut: 'Round' | 'Princess' | 'Emerald' | 'Asscher' | 'Oval' | 'Radiant' | 'Cushion' | 'Marquise' | 'Pear' | 'Heart' | '';
+  // Diamond specific fields
+  diamondCut: 'Excellent' | 'Very Good' | 'Good' | 'Fair' | 'Poor' | '';
+  numberOfStones: number; // Number of diamonds used
+  diamondShape: 'Round' | 'Princess' | 'Emerald' | 'Oval' | '';
   makingCharges: number; // percentage or fixed amount
   makingChargesType: 'percentage' | 'fixed';
   certification: string; // GIA, IGI, etc.
@@ -285,11 +321,16 @@ const INITIAL_PRODUCT: Product = {
   metalType: '',
   metalPurity: '',
   metalWeight: 0,
+  goldRatePerGram: 0,
   stoneType: '',
   stoneWeight: 0,
+  diamondRatePerCarat: 0,
   stoneClarity: '',
   stoneColor: '',
   stoneCut: '',
+  diamondCut: '',
+  numberOfStones: 0,
+  diamondShape: '',
   makingCharges: 15, // 15% default making charges
   makingChargesType: 'percentage',
   certification: '',
@@ -454,105 +495,95 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
   };
 
   // Calculate detailed price breakdown for jewelry
+  // Following the exact formula:
+  // 1. Gold Price = gold_weight (grams) × gold_rate_per_gram
+  // 2. Diamond Price = diamond_carat × diamond_rate_per_carat
+  // 3. Making Charges = separate input (gold + diamond setting)
+  // 4. Extra Charges = input (polishing, rhodium, etc.)
+  // 5. GST = 3% of (gold_price + diamond_price + making_charges + extra_charges)
+  // 6. Final Price = gold_price + diamond_price + making_charges + extra_charges + gst
   const calculateDetailedPricing = () => {
-    // Basic validation - only calculate if we have metal info
-    if (!formData.metalType || !formData.metalWeight || formData.metalWeight <= 0) {
-      return {
-        metalCost: 0,
-        makingChargeAmount: 0,
-        stoneCost: formData.stoneCost || 0,
-        otherCharges: formData.otherCharges || 0,
-        subtotal: 0,
-        gstAmount: 0,
-        totalCostPrice: 0,
-        profitAmount: 0,
-        sellingPrice: 0,
-        mrp: 0,
-      };
-    }
+    // 1. Gold Price = gold_weight (grams) × gold_rate_per_gram
+    const goldPrice = (formData.metalWeight || 0) * (formData.goldRatePerGram || 0);
 
-    // Get base metal price per gram
-    let basePricePerGram = 0;
-    switch (formData.metalType.toLowerCase()) {
-      case 'gold':
-      case 'rose gold':
-      case 'white gold':
-        basePricePerGram = formData.livePriceEnabled ? livePrices.gold : 6500;
+    // 2. Diamond Price = diamond_carat × diamond_rate_per_carat
+    const diamondPrice = (formData.stoneWeight || 0) * (formData.diamondRatePerCarat || 0);
+
+    // 3. Making Charges = separate input (gold + diamond setting)
+    // If makingChargesType is 'percentage', calculate based on gold price, otherwise use fixed amount
+    const makingCharges = formData.makingChargesType === 'percentage' 
+      ? (goldPrice * (formData.makingCharges || 0) / 100)
+      : (formData.makingCharges || 0);
+
+    // 4. Extra Charges = input (polishing, rhodium, etc.)
+    const extraCharges = formData.otherCharges || 0;
+
+    // 5. GST = 3% of (gold_price + diamond_price + making_charges + extra_charges)
+    const subtotal = goldPrice + diamondPrice + makingCharges + extraCharges;
+    const gstAmount = subtotal * 0.03; // Fixed 3% GST as per requirement
+
+    // 6. Final Price = gold_price + diamond_price + making_charges + extra_charges + gst
+    const finalPrice = goldPrice + diamondPrice + makingCharges + extraCharges + gstAmount;
+
+    // Additional calculations for display
+    const totalCostPrice = finalPrice;
+    const profitAmount = totalCostPrice * (formData.profitMargin / 100);
+    const sellingPrice = totalCostPrice + profitAmount;
+    const mrp = sellingPrice * 1.12; // 12% higher than selling price
+
+    return {
+      goldPrice: Math.round(goldPrice),
+      diamondPrice: Math.round(diamondPrice),
+      makingChargeAmount: Math.round(makingCharges),
+      extraCharges: Math.round(extraCharges),
+      subtotal: Math.round(subtotal),
+      gstAmount: Math.round(gstAmount),
+      finalPrice: Math.round(finalPrice),
+      totalCostPrice: Math.round(totalCostPrice),
+      profitAmount: Math.round(profitAmount),
+      sellingPrice: Math.round(sellingPrice),
+      mrp: Math.round(mrp),
+      // Legacy fields for backward compatibility
+      metalCost: Math.round(goldPrice),
+      stoneCost: Math.round(diamondPrice),
+      otherCharges: Math.round(extraCharges),
+    };
+  };
+
+  // Auto-populate gold rate from live prices when available and not manually set
+  useEffect(() => {
+    if (formData.livePriceEnabled && formData.metalType && livePrices.gold > 0) {
+      // Only auto-populate if gold rate is not set or is 0
+      if (!formData.goldRatePerGram || formData.goldRatePerGram === 0) {
+        let basePricePerGram = livePrices.gold;
         // Apply purity factor
         if (formData.metalPurity === '24K') basePricePerGram *= 1.0;
         else if (formData.metalPurity === '22K') basePricePerGram *= 0.916;
         else if (formData.metalPurity === '18K') basePricePerGram *= 0.75;
         else if (formData.metalPurity === '14K') basePricePerGram *= 0.583;
-        break;
-      case 'silver':
-        basePricePerGram = formData.livePriceEnabled ? livePrices.silver : 85;
-        if (formData.metalPurity === '999 Silver') basePricePerGram *= 0.999;
-        else if (formData.metalPurity === '925 Silver') basePricePerGram *= 0.925;
-        break;
-      case 'platinum':
-        basePricePerGram = formData.livePriceEnabled ? livePrices.platinum : 3200;
-        if (formData.metalPurity === '950 Platinum') basePricePerGram *= 0.95;
-        break;
+        
+        setFormData(prev => ({
+          ...prev,
+          goldRatePerGram: Math.round(basePricePerGram),
+        }));
+      }
     }
-
-    // 1. Metal Cost = Weight × Price per gram
-    const metalCost = basePricePerGram * formData.metalWeight;
-
-    // 2. Making Charges
-    const makingChargeAmount =
-      formData.makingChargesType === 'percentage' ? metalCost * (formData.makingCharges / 100) : formData.makingCharges;
-
-    // 3. Stone Cost (manual input for diamonds/gemstones)
-    const stoneCost = formData.stoneCost || 0;
-
-    // 4. Other Charges (certification, packaging, etc.)
-    const otherCharges = formData.otherCharges || 0;
-
-    // 5. Subtotal (before GST) - This is the base cost
-    const subtotal = metalCost + makingChargeAmount + stoneCost + otherCharges;
-
-    // 6. GST Calculation (3% for jewelry in India)
-    const gstAmount = subtotal * (formData.taxRate / 100);
-
-    // 7. Total Cost Price (what it costs us)
-    const totalCostPrice = subtotal + gstAmount;
-
-    // 8. Profit Calculation
-    const profitAmount = totalCostPrice * (formData.profitMargin / 100);
-
-    // 9. Selling Price (Cost + Profit) - This is what customer pays
-    const sellingPrice = totalCostPrice + profitAmount;
-
-    // 10. MRP (Maximum Retail Price) - Usually 10-15% higher than selling price
-    const mrp = sellingPrice * 1.12; // 12% higher than selling price
-
-    return {
-      metalCost: Math.round(metalCost),
-      makingChargeAmount: Math.round(makingChargeAmount),
-      stoneCost: Math.round(stoneCost),
-      otherCharges: Math.round(otherCharges),
-      subtotal: Math.round(subtotal),
-      gstAmount: Math.round(gstAmount),
-      totalCostPrice: Math.round(totalCostPrice),
-      profitAmount: Math.round(profitAmount),
-      sellingPrice: Math.round(sellingPrice),
-      mrp: Math.round(mrp),
-    };
-  };
+  }, [formData.livePriceEnabled, formData.metalType, formData.metalPurity, livePrices.gold]);
 
   // Update prices when jewelry details change
   useEffect(() => {
-    // Only auto-calculate if we have metal info
-    if (formData.metalType && formData.metalWeight > 0) {
+    // Only auto-calculate if we have required info
+    if (formData.metalWeight > 0 && formData.goldRatePerGram > 0) {
       if (formData.livePriceEnabled) {
         fetchLivePrices();
       }
 
       const pricing = calculateDetailedPricing();
-      if (pricing.sellingPrice > 0) {
+      if (pricing.finalPrice > 0) {
         setFormData(prev => ({
           ...prev,
-          metalCost: pricing.metalCost,
+          metalCost: pricing.goldPrice,
+          stoneCost: pricing.diamondPrice,
           makingChargeAmount: pricing.makingChargeAmount,
           gstAmount: pricing.gstAmount,
           totalCostPrice: pricing.totalCostPrice,
@@ -565,15 +596,14 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
       }
     }
   }, [
-    formData.metalType,
-    formData.metalPurity,
     formData.metalWeight,
+    formData.goldRatePerGram,
+    formData.stoneWeight,
+    formData.diamondRatePerCarat,
     formData.makingCharges,
     formData.makingChargesType,
-    formData.stoneCost,
     formData.otherCharges,
     formData.profitMargin,
-    formData.taxRate,
     formData.livePriceEnabled,
   ]);
 
@@ -729,6 +759,9 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
     stoneClarity: 'jewelry',
     stoneColor: 'jewelry',
     stoneCut: 'jewelry',
+    diamondCut: 'jewelry',
+    numberOfStones: 'jewelry',
+    diamondShape: 'jewelry',
     makingCharges: 'jewelry',
     makingChargesType: 'jewelry',
     certification: 'jewelry',
@@ -883,6 +916,9 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
         newErrors.metalPurity = 'Metal purity is required for jewelry products';
         console.log('[v0] Metal purity validation failed:', formData.metalPurity);
       }
+      if (!formData.goldRatePerGram || formData.goldRatePerGram <= 0) {
+        newErrors.goldRatePerGram = 'Gold rate per gram is required and must be greater than 0';
+      }
       
       // Making Charges - Required
       if (!formData.makingCharges || formData.makingCharges <= 0) {
@@ -899,6 +935,9 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
       if (formData.stoneType && formData.stoneType !== 'None') {
         if (!formData.stoneWeight || formData.stoneWeight <= 0) {
           newErrors.stoneWeight = 'Stone weight is required when stone type is selected';
+        }
+        if (formData.stoneType === 'Diamond' && (!formData.diamondRatePerCarat || formData.diamondRatePerCarat <= 0)) {
+          newErrors.diamondRatePerCarat = 'Diamond rate per carat is required when diamond is selected';
         }
       }
       
@@ -1468,6 +1507,19 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                             helperText='Digits only, no leading zeros'
                           />
                         </div>
+                        <div className='grid grid-cols-2 gap-6'>
+                          <FormField
+                            label='Gold Rate per Gram (₹)'
+                            required
+                            type='number'
+                            step='0.01'
+                            placeholder='Enter rate per gram'
+                            value={formData.goldRatePerGram}
+                            onChange={e => handleChange('goldRatePerGram', parseFloat(e.target.value) || 0)}
+                            helperText='Gold rate per gram in ₹'
+                            error={isFieldInActiveTab('goldRatePerGram') ? errors.goldRatePerGram : undefined}
+                          />
+                        </div>
                       </div>
 
                       {/* Stone Information */}
@@ -1493,43 +1545,62 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                             onChange={e => handleChange('stoneWeight', e.target.value ? Number(e.target.value) : 0)}
                           />
 
-                          {formData.stoneType === 'Diamond' && (
+                          {(formData.product_type === 'Diamond' || formData.stoneType === 'Diamond') && (
                             <>
-                              <FormField label='Clarity' error={errors.stoneClarity} required={false}>
-                                <select
-                                  value={formData.stoneClarity}
-                                  onChange={e => setFormData(prev => ({ ...prev, stoneClarity: e.target.value as any }))}
-                                  className='w-full px-3 py-2 rounded-md border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white'>
-                                  <option value=''>Select Clarity</option>
-                                  <option value='FL'>FL (Flawless)</option>
-                                  <option value='IF'>IF (Internally Flawless)</option>
-                                  <option value='VVS1'>VVS1</option>
-                                  <option value='VVS2'>VVS2</option>
-                                  <option value='VS1'>VS1</option>
-                                  <option value='VS2'>VS2</option>
-                                  <option value='SI1'>SI1</option>
-                                  <option value='SI2'>SI2</option>
-                                </select>
-                              </FormField>
+                              <Dropdown
+                                labelMain='Diamond Clarity'
+                                options={DIAMOND_CLARITY_OPTIONS}
+                                placeholder='Select Clarity'
+                                value={formData.stoneClarity}
+                                onChange={option => handleChange('stoneClarity', option.value as Product['stoneClarity'])}
+                                error={isFieldInActiveTab('stoneClarity') ? errors.stoneClarity : undefined}
+                              />
 
-                              <FormField label='Color Grade' error={errors.stoneColor} required={false}>
-                                <select
-                                  value={formData.stoneColor}
-                                  onChange={e => setFormData(prev => ({ ...prev, stoneColor: e.target.value as any }))}
-                                  className='w-full px-3 py-2 rounded-md border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white'>
-                                  <option value=''>Select Color</option>
-                                  <option value='D'>D (Colorless)</option>
-                                  <option value='E'>E (Colorless)</option>
-                                  <option value='F'>F (Colorless)</option>
-                                  <option value='G'>G (Near Colorless)</option>
-                                  <option value='H'>H (Near Colorless)</option>
-                                  <option value='I'>I (Near Colorless)</option>
-                                  <option value='J'>J (Near Colorless)</option>
-                                </select>
-                              </FormField>
+                              <Dropdown
+                                labelMain='Diamond Cut'
+                                options={DIAMOND_CUT_OPTIONS}
+                                placeholder='Select Cut Grade'
+                                value={formData.diamondCut}
+                                onChange={option => handleChange('diamondCut', option.value as Product['diamondCut'])}
+                                error={isFieldInActiveTab('diamondCut') ? errors.diamondCut : undefined}
+                              />
+
+                              <FormField
+                                label='Number of Stones Used'
+                                type='number'
+                                min='1'
+                                value={formData.numberOfStones}
+                                onChange={e => handleChange('numberOfStones', parseInt(e.target.value) || 0)}
+                                placeholder='Enter number of diamonds'
+                                error={errors.numberOfStones}
+                                helperText='Total count of diamonds used in this product'
+                              />
+
+                              <Dropdown
+                                labelMain='Diamond Shape'
+                                options={DIAMOND_SHAPE_OPTIONS}
+                                placeholder='Select Shape'
+                                value={formData.diamondShape}
+                                onChange={option => handleChange('diamondShape', option.value as Product['diamondShape'])}
+                                error={isFieldInActiveTab('diamondShape') ? errors.diamondShape : undefined}
+                              />
                             </>
                           )}
                         </div>
+                        {formData.stoneWeight > 0 && (
+                          <div className='grid grid-cols-1 md:grid-cols-2 gap-4 mt-4'>
+                            <FormField
+                              label='Diamond Rate per Carat (₹)'
+                              type='number'
+                              step='0.01'
+                              placeholder='Enter rate per carat'
+                              value={formData.diamondRatePerCarat}
+                              onChange={e => handleChange('diamondRatePerCarat', parseFloat(e.target.value) || 0)}
+                              helperText='Diamond rate per carat in ₹'
+                              error={isFieldInActiveTab('diamondRatePerCarat') ? errors.diamondRatePerCarat : undefined}
+                            />
+                          </div>
+                        )}
                       </div>
 
                       {/* Making Charges & Certification */}
@@ -1798,20 +1869,20 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                                         <div className='space-y-2'>
                                           <h6 className='font-medium text-green-800 dark:text-green-200'>Material Costs</h6>
                                           <div className='flex justify-between'>
-                                            <span>Metal Cost:</span>
-                                            <span className='font-semibold'>₹{pricing.metalCost}</span>
+                                            <span>Gold Price:</span>
+                                            <span className='font-semibold'>₹{pricing.goldPrice}</span>
+                                          </div>
+                                          <div className='flex justify-between'>
+                                            <span>Diamond Price:</span>
+                                            <span className='font-semibold'>₹{pricing.diamondPrice}</span>
                                           </div>
                                           <div className='flex justify-between'>
                                             <span>Making Charges:</span>
                                             <span className='font-semibold'>₹{pricing.makingChargeAmount}</span>
                                           </div>
                                           <div className='flex justify-between'>
-                                            <span>Stone Cost:</span>
-                                            <span className='font-semibold'>₹{pricing.stoneCost}</span>
-                                          </div>
-                                          <div className='flex justify-between'>
-                                            <span>Other Charges:</span>
-                                            <span className='font-semibold'>₹{pricing.otherCharges}</span>
+                                            <span>Extra Charges:</span>
+                                            <span className='font-semibold'>₹{pricing.extraCharges}</span>
                                           </div>
                                         </div>
 
@@ -1822,7 +1893,7 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                                             <span className='font-semibold'>₹{pricing.subtotal}</span>
                                           </div>
                                           <div className='flex justify-between'>
-                                            <span>GST ({formData.taxRate}%):</span>
+                                            <span>GST (3%):</span>
                                             <span className='font-semibold'>₹{pricing.gstAmount}</span>
                                           </div>
                                           <div className='flex justify-between border-t pt-1'>
@@ -1849,16 +1920,20 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                                       </div>
 
                                       {/* Summary */}
-                                      <div className='bg-white dark:bg-slate-700 p-3 rounded border-l-4 border-green-500'>
+                                        <div className='bg-white dark:bg-slate-700 p-3 rounded border-l-4 border-green-500'>
                                         <div className='text-xs text-slate-600 dark:text-slate-400 mb-1'>
-                                          Price Formula: Metal Cost + Making Charges + Stone Cost + Other Charges + GST + Profit
+                                          Price Formula: Gold Price + Diamond Price + Making Charges + Extra Charges + GST (3%) + Profit
                                         </div>
                                         <div className='flex justify-between items-center'>
-                                          <span className='text-sm font-medium'>Final Customer Price:</span>
-                                          <span className='text-lg font-bold text-green-600'>₹{pricing.sellingPrice}</span>
+                                          <span className='text-sm font-medium'>Final Price:</span>
+                                          <span className='text-lg font-bold text-green-600'>₹{pricing.finalPrice}</span>
+                                        </div>
+                                        <div className='flex justify-between items-center mt-2'>
+                                          <span className='text-sm font-medium'>Final Customer Price (with profit):</span>
+                                          <span className='text-lg font-bold text-blue-600'>₹{pricing.sellingPrice}</span>
                                         </div>
                                         <div className='text-xs text-slate-500 mt-1'>
-                                          * GST is included in the price | MRP for display purposes
+                                          * GST (3%) is included in the price | MRP for display purposes
                                         </div>
                                       </div>
                                     </div>
@@ -1876,24 +1951,13 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                           <h4 className='text-lg font-semibold text-slate-900 dark:text-white mb-4'>Additional Costs</h4>
                           <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
                             <FormField
-                              label='Stone Cost (₹)'
-                              type='number'
-                              step='0.01'
-                              value={formData.stoneCost}
-                              onChange={e => setFormData(prev => ({ ...prev, stoneCost: parseFloat(e.target.value) || 0 }))}
-                              placeholder='0.00'
-                              helperText='Cost of diamonds/gemstones'
-                              error={errors.stoneCost}
-                            />
-
-                            <FormField
-                              label='Other Charges (₹)'
+                              label='Extra Charges (₹)'
                               type='number'
                               step='0.01'
                               value={formData.otherCharges}
                               onChange={e => setFormData(prev => ({ ...prev, otherCharges: parseFloat(e.target.value) || 0 }))}
                               placeholder='0.00'
-                              helperText='Certification, packaging, etc.'
+                              helperText='Polishing, rhodium, etc.'
                               error={errors.otherCharges}
                             />
 

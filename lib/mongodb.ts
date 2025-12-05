@@ -4,8 +4,8 @@ let cachedClient: MongoClient | null = null;
 let cachedDb: Db | null = null;
 
 const clientPromise = (async () => {
-  const uri = process.env.MONGODB_URI || 'mongodb+srv://doshikevin361_db_user:VMoKMVw6aWkwTm0Z@cluster0.f1rriwd.mongodb.net/admin_panel';
-  
+  const uri = process.env.MONGODB_URI || 'mongodb+srv://kevin:kevin@cluster0.3eo8tjf.mongodb.net';
+
   if (!uri) {
     throw new Error('MONGODB_URI environment variable is not defined. Please add it to .env.local');
   }
@@ -14,7 +14,7 @@ const clientPromise = (async () => {
     maxPoolSize: 10,
     minPoolSize: 2,
   });
-  
+
   await client.connect();
   return client;
 })();
