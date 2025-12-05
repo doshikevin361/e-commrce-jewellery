@@ -30,17 +30,71 @@ interface ProductDetail {
   tags: string[];
   variants: any[];
   relatedProducts: ProductCardData[];
-  // Jewelry specific
+  // Material selection
+  hasGold?: boolean;
+  hasSilver?: boolean;
+  hasDiamond?: boolean;
+  // Gold specific
+  goldWeight?: number;
+  goldPurity?: string;
+  goldRatePerGram?: number;
+  // Silver specific
+  silverWeight?: number;
+  silverPurity?: string;
+  silverRatePerGram?: number;
+  // Diamond specific
+  diamondCarat?: number;
+  diamondRatePerCarat?: number;
+  numberOfStones?: number;
+  diamondCut?: string;
+  diamondShape?: string;
+  stoneClarity?: string;
+  stoneColor?: string;
+  // Jewelry specifications
+  jewelryType?: string;
+  jewelrySubType?: string;
+  chainType?: string;
+  chainLength?: number;
+  ringSetting?: string;
+  ringSize?: string;
+  ringSizeSystem?: string;
+  ringWidth?: number;
+  ringStyle?: string;
+  earringType?: string;
+  earringBackType?: string;
+  braceletType?: string;
+  braceletLength?: number;
+  braceletWidth?: number;
+  designStyle?: string;
+  finishType?: string;
+  pattern?: string;
+  stoneSetting?: string;
+  stoneArrangement?: string;
+  // Legacy fields
   metalType?: string;
   metalPurity?: string;
   metalWeight?: number;
   stoneType?: string;
   stoneWeight?: number;
   makingCharges?: number;
+  makingChargesType?: string;
   certification?: string;
+  certificationNumber?: string;
   occasion?: string;
   gender?: string;
+  ageGroup?: string;
   size?: string;
+  sizeUnit?: string;
+  totalWeight?: number;
+  hallmarked?: boolean;
+  bis_hallmark?: boolean;
+  hallmarkNumber?: string;
+  customizable?: boolean;
+  engraving_available?: boolean;
+  engravingOptions?: string;
+  resizing_available?: boolean;
+  gift_wrapping?: boolean;
+  warrantyPeriod?: string;
   livePriceEnabled?: boolean;
 }
 
@@ -202,28 +256,298 @@ export function ProductDetailPage({ productId }: { productId: string }) {
               {product.shortDescription || `Experience the elegance and sophistication of this exquisite ${product.category.toLowerCase()}. Crafted with precision and attention to detail, perfect for any occasion.`}
             </p>
             
-            {/* Jewelry Details */}
-            {(product.metalType || product.metalPurity || product.metalWeight) && (
-              <div className='bg-gray-50 p-4 rounded-lg mb-4'>
-                <h3 className='font-semibold text-gray-900 mb-2'>Jewelry Details</h3>
-                <div className='grid grid-cols-2 gap-2 text-sm'>
-                  {product.metalType && (
-                    <div><span className='text-gray-600'>Metal:</span> <span className='font-medium'>{product.metalType}</span></div>
+            {/* Comprehensive Jewelry Details */}
+            {(product.hasGold || product.hasSilver || product.hasDiamond || product.jewelryType) && (
+              <div className='bg-gray-50 p-6 rounded-lg mb-4 space-y-4'>
+                <h3 className='text-lg font-semibold text-gray-900 mb-4'>Jewelry Specifications</h3>
+                
+                {/* Jewelry Type */}
+                {(product.jewelryType || product.jewelrySubType) && (
+                  <div className='grid grid-cols-2 gap-4 pb-4 border-b border-gray-200'>
+                    {product.jewelryType && (
+                      <div>
+                        <span className='text-sm text-gray-600'>Jewelry Type:</span>
+                        <p className='font-medium text-gray-900'>{product.jewelryType}</p>
+                      </div>
+                    )}
+                    {product.jewelrySubType && (
+                      <div>
+                        <span className='text-sm text-gray-600'>Sub-Type:</span>
+                        <p className='font-medium text-gray-900'>{product.jewelrySubType}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Material Details */}
+                <div className='grid grid-cols-2 gap-4 pb-4 border-b border-gray-200'>
+                  {product.hasGold && (
+                    <>
+                      {product.goldWeight && (
+                        <div>
+                          <span className='text-sm text-gray-600'>Gold Weight:</span>
+                          <p className='font-medium text-gray-900'>{product.goldWeight}g</p>
+                        </div>
+                      )}
+                      {product.goldPurity && (
+                        <div>
+                          <span className='text-sm text-gray-600'>Gold Purity:</span>
+                          <p className='font-medium text-gray-900'>{product.goldPurity}</p>
+                        </div>
+                      )}
+                    </>
                   )}
-                  {product.metalPurity && (
-                    <div><span className='text-gray-600'>Purity:</span> <span className='font-medium'>{product.metalPurity}</span></div>
+                  {product.hasSilver && (
+                    <>
+                      {product.silverWeight && (
+                        <div>
+                          <span className='text-sm text-gray-600'>Silver Weight:</span>
+                          <p className='font-medium text-gray-900'>{product.silverWeight}g</p>
+                        </div>
+                      )}
+                      {product.silverPurity && (
+                        <div>
+                          <span className='text-sm text-gray-600'>Silver Purity:</span>
+                          <p className='font-medium text-gray-900'>{product.silverPurity}</p>
+                        </div>
+                      )}
+                    </>
                   )}
-                  {product.metalWeight && (
-                    <div><span className='text-gray-600'>Weight:</span> <span className='font-medium'>{product.metalWeight}g</span></div>
+                  {product.hasDiamond && (
+                    <>
+                      {product.diamondCarat && (
+                        <div>
+                          <span className='text-sm text-gray-600'>Diamond Carat:</span>
+                          <p className='font-medium text-gray-900'>{product.diamondCarat}ct</p>
+                        </div>
+                      )}
+                      {product.numberOfStones && (
+                        <div>
+                          <span className='text-sm text-gray-600'>Number of Stones:</span>
+                          <p className='font-medium text-gray-900'>{product.numberOfStones}</p>
+                        </div>
+                      )}
+                      {product.diamondCut && (
+                        <div>
+                          <span className='text-sm text-gray-600'>Diamond Cut:</span>
+                          <p className='font-medium text-gray-900'>{product.diamondCut}</p>
+                        </div>
+                      )}
+                      {product.diamondShape && (
+                        <div>
+                          <span className='text-sm text-gray-600'>Diamond Shape:</span>
+                          <p className='font-medium text-gray-900'>{product.diamondShape}</p>
+                        </div>
+                      )}
+                      {product.stoneClarity && (
+                        <div>
+                          <span className='text-sm text-gray-600'>Clarity:</span>
+                          <p className='font-medium text-gray-900'>{product.stoneClarity}</p>
+                        </div>
+                      )}
+                      {product.stoneColor && (
+                        <div>
+                          <span className='text-sm text-gray-600'>Color:</span>
+                          <p className='font-medium text-gray-900'>{product.stoneColor}</p>
+                        </div>
+                      )}
+                    </>
                   )}
-                  {product.stoneType && (
-                    <div><span className='text-gray-600'>Stone:</span> <span className='font-medium'>{product.stoneType}</span></div>
+                  {product.totalWeight && (
+                    <div>
+                      <span className='text-sm text-gray-600'>Total Weight:</span>
+                      <p className='font-medium text-gray-900'>{product.totalWeight}g</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Ring Specific */}
+                {product.jewelryType === 'Ring' && (
+                  <div className='grid grid-cols-2 gap-4 pb-4 border-b border-gray-200'>
+                    {product.ringSetting && (
+                      <div>
+                        <span className='text-sm text-gray-600'>Setting:</span>
+                        <p className='font-medium text-gray-900'>{product.ringSetting}</p>
+                      </div>
+                    )}
+                    {product.ringSize && (
+                      <div>
+                        <span className='text-sm text-gray-600'>Ring Size:</span>
+                        <p className='font-medium text-gray-900'>{product.ringSize} {product.ringSizeSystem && `(${product.ringSizeSystem})`}</p>
+                      </div>
+                    )}
+                    {product.ringWidth && (
+                      <div>
+                        <span className='text-sm text-gray-600'>Band Width:</span>
+                        <p className='font-medium text-gray-900'>{product.ringWidth}mm</p>
+                      </div>
+                    )}
+                    {product.ringStyle && (
+                      <div>
+                        <span className='text-sm text-gray-600'>Style:</span>
+                        <p className='font-medium text-gray-900'>{product.ringStyle}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Chain/Necklace Specific */}
+                {(product.jewelryType === 'Necklace' || product.jewelryType === 'Chain') && (
+                  <div className='grid grid-cols-2 gap-4 pb-4 border-b border-gray-200'>
+                    {product.chainType && (
+                      <div>
+                        <span className='text-sm text-gray-600'>Chain Type:</span>
+                        <p className='font-medium text-gray-900'>{product.chainType}</p>
+                      </div>
+                    )}
+                    {product.chainLength && (
+                      <div>
+                        <span className='text-sm text-gray-600'>Length:</span>
+                        <p className='font-medium text-gray-900'>{product.chainLength} {product.chainLengthUnit || 'inches'}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Earring Specific */}
+                {product.jewelryType === 'Earrings' && (
+                  <div className='grid grid-cols-2 gap-4 pb-4 border-b border-gray-200'>
+                    {product.earringType && (
+                      <div>
+                        <span className='text-sm text-gray-600'>Earring Type:</span>
+                        <p className='font-medium text-gray-900'>{product.earringType}</p>
+                      </div>
+                    )}
+                    {product.earringBackType && (
+                      <div>
+                        <span className='text-sm text-gray-600'>Back Type:</span>
+                        <p className='font-medium text-gray-900'>{product.earringBackType}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Bracelet Specific */}
+                {product.jewelryType === 'Bracelet' && (
+                  <div className='grid grid-cols-2 gap-4 pb-4 border-b border-gray-200'>
+                    {product.braceletType && (
+                      <div>
+                        <span className='text-sm text-gray-600'>Bracelet Type:</span>
+                        <p className='font-medium text-gray-900'>{product.braceletType}</p>
+                      </div>
+                    )}
+                    {product.braceletLength && (
+                      <div>
+                        <span className='text-sm text-gray-600'>Length:</span>
+                        <p className='font-medium text-gray-900'>{product.braceletLength} {product.braceletLengthUnit || 'inches'}</p>
+                      </div>
+                    )}
+                    {product.braceletWidth && (
+                      <div>
+                        <span className='text-sm text-gray-600'>Width:</span>
+                        <p className='font-medium text-gray-900'>{product.braceletWidth}mm</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Design & Style */}
+                {(product.designStyle || product.finishType || product.pattern) && (
+                  <div className='grid grid-cols-2 gap-4 pb-4 border-b border-gray-200'>
+                    {product.designStyle && (
+                      <div>
+                        <span className='text-sm text-gray-600'>Design Style:</span>
+                        <p className='font-medium text-gray-900'>{product.designStyle}</p>
+                      </div>
+                    )}
+                    {product.finishType && (
+                      <div>
+                        <span className='text-sm text-gray-600'>Finish:</span>
+                        <p className='font-medium text-gray-900'>{product.finishType}</p>
+                      </div>
+                    )}
+                    {product.pattern && (
+                      <div>
+                        <span className='text-sm text-gray-600'>Pattern:</span>
+                        <p className='font-medium text-gray-900'>{product.pattern}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Stone Setting */}
+                {product.hasDiamond && (product.stoneSetting || product.stoneArrangement) && (
+                  <div className='grid grid-cols-2 gap-4 pb-4 border-b border-gray-200'>
+                    {product.stoneSetting && (
+                      <div>
+                        <span className='text-sm text-gray-600'>Stone Setting:</span>
+                        <p className='font-medium text-gray-900'>{product.stoneSetting}</p>
+                      </div>
+                    )}
+                    {product.stoneArrangement && (
+                      <div>
+                        <span className='text-sm text-gray-600'>Arrangement:</span>
+                        <p className='font-medium text-gray-900'>{product.stoneArrangement}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Other Details */}
+                <div className='grid grid-cols-2 gap-4'>
+                  {product.occasion && (
+                    <div>
+                      <span className='text-sm text-gray-600'>Occasion:</span>
+                      <p className='font-medium text-gray-900'>{product.occasion}</p>
+                    </div>
+                  )}
+                  {product.gender && (
+                    <div>
+                      <span className='text-sm text-gray-600'>Gender:</span>
+                      <p className='font-medium text-gray-900'>{product.gender}</p>
+                    </div>
                   )}
                   {product.certification && (
-                    <div><span className='text-gray-600'>Certified:</span> <span className='font-medium'>{product.certification}</span></div>
+                    <div>
+                      <span className='text-sm text-gray-600'>Certification:</span>
+                      <p className='font-medium text-gray-900'>{product.certification} {product.certificationNumber && `(${product.certificationNumber})`}</p>
+                    </div>
                   )}
-                  {product.occasion && (
-                    <div><span className='text-gray-600'>Occasion:</span> <span className='font-medium'>{product.occasion}</span></div>
+                  {product.hallmarked && (
+                    <div>
+                      <span className='text-sm text-gray-600'>Hallmarked:</span>
+                      <p className='font-medium text-gray-900'>Yes {product.hallmarkNumber && `(${product.hallmarkNumber})`}</p>
+                    </div>
+                  )}
+                  {product.bis_hallmark && (
+                    <div>
+                      <span className='text-sm text-gray-600'>BIS Hallmark:</span>
+                      <p className='font-medium text-gray-900'>Yes</p>
+                    </div>
+                  )}
+                  {product.customizable && (
+                    <div>
+                      <span className='text-sm text-gray-600'>Customizable:</span>
+                      <p className='font-medium text-gray-900'>Yes</p>
+                    </div>
+                  )}
+                  {product.engraving_available && (
+                    <div>
+                      <span className='text-sm text-gray-600'>Engraving:</span>
+                      <p className='font-medium text-gray-900'>Available {product.engravingOptions && `(${product.engravingOptions})`}</p>
+                    </div>
+                  )}
+                  {product.resizing_available && (
+                    <div>
+                      <span className='text-sm text-gray-600'>Resizing:</span>
+                      <p className='font-medium text-gray-900'>Available</p>
+                    </div>
+                  )}
+                  {product.warrantyPeriod && (
+                    <div>
+                      <span className='text-sm text-gray-600'>Warranty:</span>
+                      <p className='font-medium text-gray-900'>{product.warrantyPeriod}</p>
+                    </div>
                   )}
                 </div>
               </div>
@@ -338,16 +662,10 @@ export function ProductDetailPage({ productId }: { productId: string }) {
 
       <div className='mb-12'>
         <h3 className='text-xl font-bold text-[#1F3B29] mb-4'>Description</h3>
-        <div className='text-[#4F3A2E] space-y-3'>
-          <p>
-            This stunning {product.category.toLowerCase()} features exquisite craftsmanship and premium materials. 
-            Perfect for special occasions or everyday elegance, this piece is designed to be treasured for generations.
-          </p>
-          <p>
-            Each piece is carefully inspected to ensure the highest quality standards. We stand behind our craftsmanship 
-            with a comprehensive warranty and excellent customer service.
-          </p>
-        </div>
+        <div 
+          className='text-[#4F3A2E] space-y-3 prose prose-sm max-w-none'
+          dangerouslySetInnerHTML={{ __html: product.longDescription || `<p>This stunning ${product.category.toLowerCase()} features exquisite craftsmanship and premium materials. Perfect for special occasions or everyday elegance, this piece is designed to be treasured for generations.</p><p>Each piece is carefully inspected to ensure the highest quality standards. We stand behind our craftsmanship with a comprehensive warranty and excellent customer service.</p>` }}
+        />
       </div>
 
       {/* Reviews Section */}

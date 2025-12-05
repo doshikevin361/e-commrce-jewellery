@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { ShoppingCart, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -29,8 +30,18 @@ type ProductCardProps = {
 };
 
 export const ProductCard = ({ product, className, actionLabel = 'Add to cart', onClick }: ProductCardProps) => {
+  const router = useRouter();
   const rating = (product.rating || 4.5).toFixed(1);
   const isListView = className?.includes('flex-row');
+
+  const handleProductClick = () => {
+    if (onClick) {
+      onClick();
+    } else {
+      // Navigate to product detail page using product ID
+      router.push(`/products/${product.id}`);
+    }
+  };
 
   return (
     <article
@@ -39,7 +50,7 @@ export const ProductCard = ({ product, className, actionLabel = 'Add to cart', o
         isListView ? 'flex-row gap-4 sm:gap-6' : 'flex-col',
         className
       )}>
-      <div onClick={onClick} className={cn('block cursor-pointer', isListView ? 'flex-shrink-0 w-32 sm:w-40' : 'w-full')}>
+      <div onClick={handleProductClick} className={cn('block cursor-pointer', isListView ? 'flex-shrink-0 w-32 sm:w-40' : 'w-full')}>
         <div
           className={cn(
             'relative overflow-hidden rounded-xl bg-[#F5EEE5] cursor-pointer',
@@ -63,7 +74,7 @@ export const ProductCard = ({ product, className, actionLabel = 'Add to cart', o
         <div>
           <div className='block'>
             <p className='text-[10px] sm:text-[11px] uppercase tracking-[0.3em] text-[#3F5C45]'>{product.category}</p>
-            <h3 className='text-sm sm:text-base font-semibold text-[#1F3B29] line-clamp-2 hover:text-[#C8A15B] transition-colors cursor-pointer'>
+            <h3 onClick={handleProductClick} className='text-sm sm:text-base font-semibold text-[#1F3B29] line-clamp-2 hover:text-[#C8A15B] transition-colors cursor-pointer'>
               {product.title}
             </h3>
           </div>

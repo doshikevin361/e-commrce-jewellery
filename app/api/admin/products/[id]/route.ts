@@ -12,16 +12,33 @@ const normalizeProductPayload = (payload: any) => {
     ...payload,
     wholesalePriceType: payload.wholesalePriceType || 'Fixed',
     sizeChartImage: payload.sizeChartImage ?? '',
-    // New jewelry field names
-    metalWeight: typeof payload.metalWeight === 'number' ? payload.metalWeight : 0,
-    metalPurity: payload.metalPurity ?? '',
+    // Material selection flags
+    hasGold: payload.hasGold === true,
+    hasSilver: payload.hasSilver === true,
+    hasDiamond: payload.hasDiamond === true,
+    // Gold fields
+    goldWeight: typeof payload.goldWeight === 'number' ? payload.goldWeight : 0,
+    goldPurity: payload.goldPurity ?? '',
+    goldRatePerGram: typeof payload.goldRatePerGram === 'number' ? payload.goldRatePerGram : 0,
+    // Silver fields
+    silverWeight: typeof payload.silverWeight === 'number' ? payload.silverWeight : 0,
+    silverPurity: payload.silverPurity ?? '',
+    silverRatePerGram: typeof payload.silverRatePerGram === 'number' ? payload.silverRatePerGram : 0,
+    // Diamond fields
+    diamondCarat: typeof payload.diamondCarat === 'number' ? payload.diamondCarat : 0,
+    diamondRatePerCarat: typeof payload.diamondRatePerCarat === 'number' ? payload.diamondRatePerCarat : 0,
+    numberOfStones: typeof payload.numberOfStones === 'number' ? payload.numberOfStones : 0,
+    // Making charges
     makingCharges: typeof payload.makingCharges === 'number' ? payload.makingCharges : 0,
     certification: payload.certification ?? '',
     // Backward compatibility for old field names
+    metalWeight: typeof payload.metalWeight === 'number' ? payload.metalWeight : (payload.hasGold ? payload.goldWeight : (payload.hasSilver ? payload.silverWeight : 0)),
+    metalPurity: payload.metalPurity ?? (payload.hasGold ? payload.goldPurity : (payload.hasSilver ? payload.silverPurity : '')),
     jewelleryWeight: typeof payload.jewelleryWeight === 'number' ? payload.jewelleryWeight : (typeof payload.metalWeight === 'number' ? payload.metalWeight : 0),
     jewelleryPurity: payload.jewelleryPurity ?? payload.metalPurity ?? '',
     jewelleryMakingCharges: typeof payload.jewelleryMakingCharges === 'number' ? payload.jewelleryMakingCharges : (typeof payload.makingCharges === 'number' ? payload.makingCharges : 0),
     jewelleryCertification: payload.jewelleryCertification ?? payload.certification ?? '',
+    stoneWeight: typeof payload.stoneWeight === 'number' ? payload.stoneWeight : (payload.hasDiamond ? payload.diamondCarat : 0),
   };
 };
 
@@ -34,16 +51,52 @@ const validateJewelleryPayload = (payload: any) => {
 
   const errors: string[] = [];
   
-  // Check for metal weight (use new field name first, fallback to old)
-  const metalWeight = payload.metalWeight || payload.jewelleryWeight;
-  if (!(typeof metalWeight === 'number' && metalWeight > 0)) {
-    errors.push('metal weight (grams)');
+  // Check if at least one material is selected
+  const hasGold = payload.hasGold === true;
+  const hasSilver = payload.hasSilver === true;
+  const hasDiamond = payload.hasDiamond === true;
+  
+  if (!hasGold && !hasSilver && !hasDiamond) {
+    errors.push('at least one material (Gold, Silver, or Diamond) must be selected');
   }
   
-  // Check for metal purity (use new field name first, fallback to old)
-  const metalPurity = payload.metalPurity || payload.jewelleryPurity;
-  if (!metalPurity) {
-    errors.push('metal purity');
+  // Validate Gold fields if Gold is selected
+  if (hasGold) {
+    if (!(typeof payload.goldWeight === 'number' && payload.goldWeight > 0)) {
+      errors.push('gold weight (grams)');
+    }
+    if (!payload.goldPurity) {
+      errors.push('gold purity');
+    }
+    if (!(typeof payload.goldRatePerGram === 'number' && payload.goldRatePerGram > 0)) {
+      errors.push('gold rate per gram');
+    }
+  }
+  
+  // Validate Silver fields if Silver is selected
+  if (hasSilver) {
+    if (!(typeof payload.silverWeight === 'number' && payload.silverWeight > 0)) {
+      errors.push('silver weight (grams)');
+    }
+    if (!payload.silverPurity) {
+      errors.push('silver purity');
+    }
+    if (!(typeof payload.silverRatePerGram === 'number' && payload.silverRatePerGram > 0)) {
+      errors.push('silver rate per gram');
+    }
+  }
+  
+  // Validate Diamond fields if Diamond is selected
+  if (hasDiamond) {
+    if (!(typeof payload.diamondCarat === 'number' && payload.diamondCarat > 0)) {
+      errors.push('diamond carat');
+    }
+    if (!(typeof payload.numberOfStones === 'number' && payload.numberOfStones > 0)) {
+      errors.push('number of stones');
+    }
+    if (!(typeof payload.diamondRatePerCarat === 'number' && payload.diamondRatePerCarat > 0)) {
+      errors.push('diamond rate per carat');
+    }
   }
   
   // Check for making charges (use new field name first, fallback to old)

@@ -862,7 +862,7 @@ const TrendingProducts = ({ products, isLoading = false }: { products?: ProductC
         </button>
       </div>
       <Link
-        href='/trending'
+        href='/products?trending=true'
         className='cursor-pointer inline-flex items-center gap-1 text-[10px] sm:text-xs font-semibold text-[#1F3B29] whitespace-nowrap hover:text-[#C8A15B] transition-colors'>
         View all
         <ChevronRight size={14} className='sm:w-4 sm:h-4' />
@@ -1072,7 +1072,12 @@ const BestSellers = ({ products, isLoading = false }: { products?: ProductCardDa
   return (
     <section className='w-full space-y-6'>
       <div className='border-b border-web pb-3'>
-        <SectionHeader title='Best Sellers' description='Our most loved products' actionLabel='View all' />
+        <SectionHeader 
+          title='Best Sellers' 
+          description='Our most loved products' 
+          actionLabel='View all' 
+          onActionClick={() => router.push('/products?featured=true')}
+        />
       </div>
       {showLoading ? (
         <div className='flex items-center justify-center py-8'>
