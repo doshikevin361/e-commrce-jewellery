@@ -110,6 +110,20 @@ type HomepageSectionsState = {
   dazzle: DazzleCard[];
   gallery: GalleryItem[];
   news: NewsItem[];
+  newArrivals: {
+    banner: {
+      title: string;
+      subtitle: string;
+      description: string;
+      backgroundImage: string;
+    } | null;
+    cards: {
+      _id: string;
+      title: string;
+      image: string;
+      type: 'card' | 'banner';
+    }[];
+  };
 };
 
 const SECTION_SPACING = 'mt-12 sm:mt-16 lg:mt-20';
@@ -383,6 +397,10 @@ const createDefaultSectionsState = (): HomepageSectionsState => ({
   dazzle: [],
   gallery: [],
   news: [],
+  newArrivals: {
+    banner: null,
+    cards: [],
+  },
 });
 
 export const HomePage = () => {
@@ -501,6 +519,27 @@ export const HomePage = () => {
               }
               break;
             }
+            case 'newArrivals': {
+              const bannerData = (data as any).banner;
+              const cardsData = (data as any).cards;
+              if (bannerData && typeof bannerData === 'object') {
+                nextState.newArrivals.banner = {
+                  title: bannerData.title || 'New Arrivals',
+                  subtitle: bannerData.subtitle || '💎 500+ New Items',
+                  description: bannerData.description || '',
+                  backgroundImage: bannerData.backgroundImage || '',
+                };
+              }
+              if (Array.isArray(cardsData) && cardsData.length > 0) {
+                nextState.newArrivals.cards = cardsData.map((card: any) => ({
+                  _id: card._id || '',
+                  title: card.title || '',
+                  image: card.image || '',
+                  type: card.type || 'card',
+                }));
+              }
+              break;
+            }
             default:
               break;
           }
@@ -540,8 +579,8 @@ export const HomePage = () => {
         <div className={SECTION_SPACING}>
           <FeaturedSlider products={sectionsData.newProducts} isLoading={isLoading} />
         </div>
-        <div className={SECTION_SPACING}>
-          <PromoShowcase />
+        <div className='mt-12 sm:mt-16 lg:mt-20'>
+          <NewArrivalsSection banner={sectionsData.newArrivals.banner} cards={sectionsData.newArrivals.cards} isLoading={isLoading} />
         </div>
         <div className={SECTION_SPACING}>
           <BestSellers products={sectionsData.featuredProducts} isLoading={isLoading} />
@@ -1034,7 +1073,7 @@ const PromoShowcase = () => {
 
 const CollectionsSection = ({ dazzleData, isLoading = false }: { dazzleData: DazzleCard[]; isLoading?: boolean }) => {
   const router = useRouter();
-  
+
   if (isLoading && dazzleData.length === 0) {
     return (
       <section className='w-full'>
@@ -1045,26 +1084,30 @@ const CollectionsSection = ({ dazzleData, isLoading = false }: { dazzleData: Daz
     );
   }
 
-  const cardsToShow = dazzleData.length > 0 ? dazzleData : [
-    {
-      _id: 'fallback-1',
-      title: 'Modern heirlooms',
-      subtitle: 'Ancient jewelry collection',
-      description: 'Beautiful long earrings with opal and carnelian stones—lightweight and radiant.',
-      buttonText: 'Explore more',
-      buttonLink: '/products',
-      image: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=800&q=80',
-    },
-    {
-      _id: 'fallback-2',
-      title: 'Modern heirlooms',
-      subtitle: 'Premium Collection',
-      description: 'Since many jewelry products can be ultra expensive, it becomes necessary for shoppers to know what exactly they can expect.',
-      buttonText: 'Shop now',
-      buttonLink: '/products',
-      image: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=800&q=80',
-    },
-  ];
+  const cardsToShow =
+    dazzleData.length > 0
+      ? dazzleData
+      : [
+          {
+            _id: 'fallback-1',
+            title: 'Modern heirlooms',
+            subtitle: 'Ancient jewelry collection',
+            description: 'Beautiful long earrings with opal and carnelian stones—lightweight and radiant.',
+            buttonText: 'Explore more',
+            buttonLink: '/products',
+            image: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=800&q=80',
+          },
+          {
+            _id: 'fallback-2',
+            title: 'Modern heirlooms',
+            subtitle: 'Premium Collection',
+            description:
+              'Since many jewelry products can be ultra expensive, it becomes necessary for shoppers to know what exactly they can expect.',
+            buttonText: 'Shop now',
+            buttonLink: '/products',
+            image: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=800&q=80',
+          },
+        ];
 
   return (
     <section className='w-full'>
@@ -1115,11 +1158,7 @@ const CollectionsSection = ({ dazzleData, isLoading = false }: { dazzleData: Daz
               </div>
 
               {card.image && (
-                <img
-                  src={card.image}
-                  className='h-[330px] w-full rounded-xl object-cover'
-                  alt={card.title || 'Collection image'}
-                />
+                <img src={card.image} className='h-[330px] w-full rounded-xl object-cover' alt={card.title || 'Collection image'} />
               )}
             </div>
           );
@@ -1350,6 +1389,102 @@ const Subscribe = () => {
           </button>
         </div>
       </div>
+    </section>
+  );
+};
+
+const NewArrivalsSection = ({
+  banner,
+  cards,
+  isLoading = false,
+}: {
+  banner: {
+    title: string;
+    subtitle: string;
+    description: string;
+    backgroundImage: string;
+  } | null;
+  cards: {
+    _id: string;
+    title: string;
+    image: string;
+    type: 'card' | 'banner';
+  }[];
+  isLoading?: boolean;
+}) => {
+  if (isLoading && !banner && cards.length === 0) {
+    return (
+      <section className='relative w-full'>
+        <div className='flex items-center justify-center py-8'>
+          <p className='text-gray-500'>Loading...</p>
+        </div>
+      </section>
+    );
+  }
+
+  const bannerData = banner || {
+    title: 'New Arrivals',
+    subtitle: '💎 500+ New Items',
+    description: 'New Arrivals Dropping Daily, Monday through Friday.\nExplore the Latest Launches Now!',
+    backgroundImage: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=1920&q=80',
+  };
+
+  // Filter cards to show only 'card' type items
+  const cardsToShow = cards.filter(card => card.type === 'card' || !card.type);
+
+  const fallbackCards = [
+    {
+      _id: 'fallback-1',
+      title: 'Silver Idols',
+      image: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=600&q=80',
+      type: 'card' as const,
+    },
+    {
+      _id: 'fallback-2',
+      title: 'Floral Bloom',
+      image: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=600&q=80',
+      type: 'card' as const,
+    },
+  ];
+
+  const displayCards = cardsToShow.length > 0 ? cardsToShow : fallbackCards;
+
+  return (
+    <section className='relative w-full'>
+      {/* Background Banner */}
+      <div className='relative h-[380px] md:h-[420px] w-full'>
+        <Image src={bannerData.backgroundImage} alt='New Arrivals Banner' fill className='object-cover' />
+
+        <div className='absolute inset-0 bg-black/20'></div>
+
+        <div className='absolute inset-0 flex flex-col justify-center px-6 md:px-20 text-white'>
+          <h2 className='text-4xl md:text-5xl font-semibold'>{bannerData.title}</h2>
+
+          {bannerData.subtitle && (
+            <div className='mt-3 bg-white/30 text-white px-4 py-1 rounded-full w-fit backdrop-blur-md text-sm'>{bannerData.subtitle}</div>
+          )}
+
+          {bannerData.description && (
+            <p className='mt-4 text-lg md:text-xl max-w-[600px] leading-relaxed whitespace-pre-line'>{bannerData.description}</p>
+          )}
+        </div>
+      </div>
+
+      {/* White Floating Cards */}
+      {displayCards.length > 0 && (
+        <div className='max-w-[1300px] mx-auto px-4 md:px-10 -mt-20 md:-mt-24 relative z-10'>
+          <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+            {displayCards.map(card => (
+              <div key={card._id} className='bg-white rounded-xl overflow-hidden shadow-lg'>
+                <div className='relative h-[300px] md:h-[350px]'>
+                  <Image src={card.image} alt={card.title} fill className='object-cover' />
+                </div>
+                <p className='px-6 py-4 text-lg font-medium'>{card.title}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </section>
   );
 };

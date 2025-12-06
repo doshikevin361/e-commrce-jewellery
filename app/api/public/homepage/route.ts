@@ -183,15 +183,28 @@ export async function GET() {
       })
       .toArray();
 
-    const [rawBanners, rawCategories, rawFeatured, rawTrending, rawNew, rawDazzle, rawGallery, rawNews] = await Promise.all([
+    const newArrivalsBannerPromise = db
+      .collection('homepage_new_arrivals_banner')
+      .findOne({});
+
+    const newArrivalsCardsPromise = db
+      .collection('homepage_new_arrivals_cards')
+      .find({})
+      .sort({ displayOrder: 1, createdAt: -1 })
+      .limit(10)
+      .toArray();
+
+    const [rawBanners, rawCategories, rawFeatured, rawTrending, rawNew, rawDazzle, rawGallery, rawNews, rawNewArrivalsBanner, rawNewArrivalsCards] = await Promise.all([
       safeQuery(bannersPromise, 'homepage banners', [] as any[]),
       safeQuery(categoriesPromise, 'homepage categories', [] as any[]),
       safeQuery(featuredProductsPromise, 'featured products', [] as any[]),
       safeQuery(trendingProductsPromise, 'trending products', [] as any[]),
       safeQuery(newProductsPromise, 'new products', [] as any[]),
-      safeQuery(dazzlePromise, 'dazzle section', null),
+      safeQuery(dazzlePromise, 'dazzle section', [] as any[]),
       safeQuery(galleryPromise, 'gallery items', [] as any[]),
       safeQuery(newsPromise, 'news items', [] as any[]),
+      safeQuery(newArrivalsBannerPromise, 'new arrivals banner', null),
+      safeQuery(newArrivalsCardsPromise, 'new arrivals cards', [] as any[]),
     ]);
 
     const serializeDazzleCard = (card: any, index: number) => ({
@@ -216,6 +229,23 @@ export async function GET() {
       image: item?.featuredImage || '',
       publishDate: item?.publishedAt ? new Date(item.publishedAt).toISOString() : item?.createdAt ? new Date(item.createdAt).toISOString() : new Date().toISOString(),
       slug: item?.slug || '',
+    });
+
+    const serializeNewArrivalsBanner = (banner: any) => {
+      if (!banner) return null;
+      return {
+        title: banner.title || 'New Arrivals',
+        subtitle: banner.subtitle || banner.badgeText || '💎 500+ New Items',
+        description: banner.description || '',
+        backgroundImage: banner.backgroundImage || '',
+      };
+    };
+
+    const serializeNewArrivalsCard = (card: any, index: number) => ({
+      _id: card?._id?.toString() ?? `new-arrivals-card-${index}`,
+      title: card?.title || '',
+      image: card?.image || '',
+      type: card?.type || 'card',
     });
 
     const sections = [
@@ -282,8 +312,16 @@ export async function GET() {
         },
       },
       {
-        type: 'features',
+        type: 'newArrivals',
         order: 9,
+        data: {
+          banner: serializeNewArrivalsBanner(rawNewArrivalsBanner),
+          cards: Array.isArray(rawNewArrivalsCards) ? rawNewArrivalsCards.map(serializeNewArrivalsCard) : [],
+        },
+      },
+      {
+        type: 'features',
+        order: 10,
         data: {
           features: getActiveHomepageFeatures(),
         },

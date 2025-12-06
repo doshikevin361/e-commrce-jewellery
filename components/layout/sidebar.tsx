@@ -254,6 +254,14 @@ export function Sidebar() {
       href: '/admin/cms/dazzle',
     },
     {
+      label: 'New Arrivals',
+      href: '/admin/cms/new-arrivals',
+    },
+    {
+      label: 'New Arrivals Cards',
+      href: '/admin/cms/new-arrivals/cards',
+    },
+    {
       label: 'Gallery',
       href: '/admin/cms/gallery',
     },
