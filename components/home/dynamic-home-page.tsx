@@ -31,6 +31,7 @@ import { SectionHeader } from '@/components/home/common/section-header';
 import Link from 'next/link';
 import { getActiveHomepageFeatures } from '@/lib/constants/features';
 import { ProductCard, ProductCardData } from './common/product-card';
+import { CategoriesDropdown } from './CategoriesDropdown';
 
 type HeroSlide = {
   id: string | number;
@@ -459,7 +460,7 @@ export const HomePage = () => {
 
   return (
     <>
-      <div className='mx-auto flex w-full max-w-[1400px] flex-col gap-0 px-4 sm:px-6 md:px-8 lg:px-12'>
+      <div className='mx-auto flex w-full max-w-[1440px] flex-col gap-0 px-4 sm:px-6 md:px-8 lg:px-12'>
         <Hero slides={sectionsData.hero} isLoading={isLoading} />
         <CategoryStrip categoriesData={sectionsData.categories} isLoading={isLoading} />
         {errorMessage && (
@@ -484,14 +485,15 @@ export const HomePage = () => {
           <Testimonials />
         </div>
         <div className={SECTION_SPACING}>
-          <Updates />
-        </div>
-        <div className={SECTION_SPACING}>
           <WhyChooseUs features={sectionsData.features} isLoading={isLoading} />
         </div>
         <div className={SECTION_SPACING}>
           <Gallery />
         </div>
+      </div>
+      {/* Updates section - Full width */}
+      <div className={SECTION_SPACING}>
+        <Updates />
       </div>
       <div className='mt-12 sm:mt-16 lg:mt-20'>
         <Subscribe />
@@ -523,6 +525,7 @@ const Hero = ({ slides = defaultHeroSlides, isLoading = false }: { slides?: Hero
   const heroSwiperRef = useRef<SwiperType | null>(null);
   const slidesToRender = slides.length > 0 ? slides : defaultHeroSlides;
   const showLoadingState = isLoading && slidesToRender.length === 0;
+  const sidebarRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     // Set initial mobile state after mount to avoid hydration mismatch
@@ -553,6 +556,8 @@ const Hero = ({ slides = defaultHeroSlides, isLoading = false }: { slides?: Hero
     };
   }, [setMobileCategoriesOpen]);
 
+  const { categories, isLoadingCategories } = useCategories();
+
   return (
     <>
       <Sheet open={mobileCategoriesOpen} onOpenChange={setMobileCategoriesOpen}>
@@ -564,47 +569,63 @@ const Hero = ({ slides = defaultHeroSlides, isLoading = false }: { slides?: Hero
             </SheetTitle>
           </SheetHeader>
           <ul className='space-y-2 px-4 py-4'>
-            {sidebarCategories.map(category => (
-              <li
-                key={category}
-                className='flex cursor-pointer items-center justify-between rounded-xl bg-[#F7F3EE] px-4 py-3 text-sm font-semibold text-[#1C1F1A]'
-                onClick={() => setMobileCategoriesOpen(false)}>
-                <div className='flex items-center gap-3 text-[#3F5C45]'>
-                  <span>{categoryIcons[category]}</span>
-                  <span>{category}</span>
-                </div>
-                <ChevronRight size={18} className='text-[#3F5C45]' />
-              </li>
-            ))}
+            {isLoadingCategories ? (
+              <li className='px-4 py-3 text-sm text-gray-500'>Loading categories...</li>
+            ) : categories.length === 0 ? (
+              <li className='px-4 py-3 text-sm text-gray-500'>No categories available</li>
+            ) : (
+              categories.map(category => (
+                <li
+                  key={category._id}
+                  className='flex cursor-pointer items-center justify-between rounded-xl bg-[#F7F3EE] px-4 py-3 text-sm font-semibold text-[#1C1F1A]'
+                  onClick={() => setMobileCategoriesOpen(false)}>
+                  <Link
+                    href={`/products?category=${encodeURIComponent(category.slug || category.name)}`}
+                    className='flex items-center gap-3 text-[#3F5C45] flex-1'>
+                    <span>{categoryIcons[category.name] || <Diamond size={18} />}</span>
+                    <span>{category.name}</span>
+                  </Link>
+                  <ChevronRight size={18} className='text-[#3F5C45]' />
+                </li>
+              ))
+            )}
           </ul>
         </SheetContent>
       </Sheet>
 
       <section
-        className={`mx-auto grid w-full gap-4 ${
+        className={`grid w-full gap-4 ${
           sidebarOpen && !isMobile ? 'lg:grid-cols-[260px_minmax(0,1fr)]' : 'lg:grid-cols-[0px_minmax(0,1fr)]'
         }`}>
         <aside
-          className={`hidden overflow-hidden rounded-2xl   bg-white px-5 py-6 lg:block ${
-            sidebarOpen ? 'w-[260px] border border-web/50' : 'w-0 px-0 py-0'
+          ref={sidebarRef}
+          className={`hidden overflow-hidden rounded-2xl bg-white px-5 py-6 lg:block relative transition-all duration-300 ease-in-out ${
+            sidebarOpen ? 'w-[260px] border border-web/50 opacity-100' : 'w-0 px-0 py-0 opacity-0'
           }`}>
           {sidebarOpen && (
             <>
               <p className='mb-4 text-xs font-semibold uppercase tracking-[0.3em] text-[#1F3B29]'>Categories</p>
-              <ul className='space-y-2 text-sm font-semibold text-[#1C1F1A]'>
-                {sidebarCategories.map(category => (
-                  <li
-                    key={category}
-                    className='flex cursor-pointer items-center justify-between rounded-xl px-2 py-2 hover:bg-[#F5EEE5]'
-                    onClick={() => setMobileCategoriesOpen(false)}>
-                    <div className='flex items-center gap-2 text-[#3F5C45]'>
-                      <span>{categoryIcons[category]}</span>
-                      <span>{category}</span>
-                    </div>
-                    <ChevronRight size={14} className='text-[#3F5C45]' />
-                  </li>
-                ))}
-              </ul>
+              {isLoadingCategories ? (
+                <div className='px-2 py-4 text-sm text-gray-500'>Loading categories...</div>
+              ) : categories.length === 0 ? (
+                <div className='px-2 py-4 text-sm text-gray-500'>No categories available</div>
+              ) : (
+                <ul className='space-y-2 text-sm font-semibold text-[#1C1F1A]'>
+                  {categories.map(category => (
+                    <li
+                      key={category._id}
+                      className='flex cursor-pointer items-center justify-between rounded-xl px-2 py-2 hover:bg-[#F5EEE5] transition-colors'>
+                      <Link
+                        href={`/products?category=${encodeURIComponent(category.slug || category.name)}`}
+                        className='flex items-center gap-2 text-[#3F5C45] flex-1'>
+                        <span>{categoryIcons[category.name] || <Diamond size={14} />}</span>
+                        <span>{category.name}</span>
+                      </Link>
+                      <ChevronRight size={14} className='text-[#3F5C45]' />
+                    </li>
+                  ))}
+                </ul>
+              )}
             </>
           )}
         </aside>
@@ -897,7 +918,7 @@ const TrendingProducts = ({ products, isLoading = false }: { products?: ProductC
 const PromoShowcase = () => {
   return (
     <section className='w-full bg-[#F3F5F7]'>
-      <div className='grid items-center gap-6 md:grid-cols-2 w-full py-8 sm:py-10 md:py-12'>
+      <div className='mx-auto grid items-center gap-6 md:grid-cols-2 w-full max-w-[1440px] px-4 sm:px-6 md:px-8 lg:px-12 py-8 sm:py-10 md:py-12'>
         <div className='flex gap-4'>
           <img
             src='https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1200&q=80'
@@ -988,7 +1009,7 @@ const Collections = () => {
 const Updates = () => {
   const router = useRouter();
   return (
-    <section className='w-full'>
+    <section className='max-w-[1440px] mx-auto px-4 sm:px-6 md:px-8 lg:px-12 w-full space-y-4'>
       <div className='border-b border-web pb-3'>
         <SectionHeader title='Our News & Updates' actionLabel='View all' onActionClick={() => router.push('/blog')} />
       </div>
@@ -1072,10 +1093,10 @@ const BestSellers = ({ products, isLoading = false }: { products?: ProductCardDa
   return (
     <section className='w-full space-y-6'>
       <div className='border-b border-web pb-3'>
-        <SectionHeader 
-          title='Best Sellers' 
-          description='Our most loved products' 
-          actionLabel='View all' 
+        <SectionHeader
+          title='Best Sellers'
+          description='Our most loved products'
+          actionLabel='View all'
           onActionClick={() => router.push('/products?featured=true')}
         />
       </div>

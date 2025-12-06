@@ -60,6 +60,7 @@
     "cmdk": "latest",
     "date-fns": "4.1.0",
     "embla-carousel-react": "latest",
+    "framer-motion": "^12.23.25",
     "gcp-metadata": "latest",
     "input-otp": "latest",
     "jsonwebtoken": "latest",
