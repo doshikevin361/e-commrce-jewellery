@@ -250,6 +250,18 @@ export function Sidebar() {
       href: '/admin/cms/banners',
     },
     {
+      label: 'Dazzle Section',
+      href: '/admin/cms/dazzle',
+    },
+    {
+      label: 'Gallery',
+      href: '/admin/cms/gallery',
+    },
+    {
+      label: 'Blog',
+      href: '/admin/cms/blog',
+    },
+    {
       label: 'Privacy Policy',
       href: '/admin/cms/privacy-policy',
     },
@@ -268,10 +280,6 @@ export function Sidebar() {
     {
       label: 'Shipping Policy',
       href: '/admin/cms/shipping',
-    },
-    {
-      label: 'Blog',
-      href: '/admin/cms/blog',
     },
     {
       label: 'SEO Settings',

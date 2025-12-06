@@ -41,6 +41,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       image: body.image,
       link: body.link,
       buttonText: body.buttonText,
+      backgroundColor: body.backgroundColor,
       type: body.type,
       displayOrder: body.displayOrder,
       status: body.status,

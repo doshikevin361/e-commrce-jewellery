@@ -50,6 +50,7 @@ type HeroSlide = {
     buttonText?: string;
   };
   link?: string;
+  backgroundColor?: string;
 };
 
 type CategoryStripItem = {
@@ -75,6 +76,30 @@ type HomepageFeatureItem = {
   description: string;
 };
 
+type DazzleCard = {
+  _id: string;
+  title: string;
+  subtitle: string;
+  description: string;
+  buttonText: string;
+  buttonLink: string;
+  image: string;
+};
+
+type GalleryItem = {
+  _id: string;
+  image: string;
+};
+
+type NewsItem = {
+  _id: string;
+  title: string;
+  excerpt: string;
+  image: string;
+  publishDate: string;
+  slug: string;
+};
+
 type HomepageSectionsState = {
   hero: HeroSlide[];
   categories: CategoryStripItem[];
@@ -82,6 +107,9 @@ type HomepageSectionsState = {
   featuredProducts: ProductCardData[];
   trendingProducts: ProductCardData[];
   features: HomepageFeatureItem[];
+  dazzle: DazzleCard[];
+  gallery: GalleryItem[];
+  news: NewsItem[];
 };
 
 const SECTION_SPACING = 'mt-12 sm:mt-16 lg:mt-20';
@@ -267,25 +295,26 @@ const mapBannersToSlides = (banners?: any[]): HeroSlide[] => {
   }
 
   return banners.map((banner, index) => {
-    const fallbackSlide = defaultHeroSlides[index % defaultHeroSlides.length];
+    const fallbackSlide = [];
 
     return {
       id: banner?._id?.toString?.() ?? `banner-${index}`,
       main: {
-        image: banner?.image || fallbackSlide.main.image,
-        subtitle: banner?.subtitle || fallbackSlide.main.subtitle,
-        title: banner?.title || fallbackSlide.main.title,
-        description: banner?.description || fallbackSlide.main.description,
-        buttonText: banner?.buttonText || fallbackSlide.main.buttonText,
+        image: banner?.image || '',
+        subtitle: banner?.subtitle || '',
+        title: banner?.title || '',
+        description: banner?.description || '',
+        buttonText: banner?.buttonText || '',
       },
       side: {
-        image: banner?.image || fallbackSlide.side.image,
-        subtitle: banner?.subtitle || fallbackSlide.side.subtitle,
-        title: banner?.title || fallbackSlide.side.title,
-        description: banner?.description || fallbackSlide.side.description,
-        buttonText: banner?.buttonText || fallbackSlide.side.buttonText,
+        image: banner?.image || '',
+        subtitle: banner?.subtitle || '',
+        title: banner?.title || '',
+        description: banner?.description || '',
+        buttonText: banner?.buttonText || '',
       },
       link: banner?.link || '/products',
+      backgroundColor: banner?.backgroundColor || '#000000',
     };
   });
 };
@@ -351,6 +380,9 @@ const createDefaultSectionsState = (): HomepageSectionsState => ({
   featuredProducts: [...fallbackBestSellers],
   trendingProducts: [...trendingPro],
   features: [...fallbackFeatureData],
+  dazzle: [],
+  gallery: [],
+  news: [],
 });
 
 export const HomePage = () => {
@@ -430,6 +462,45 @@ export const HomePage = () => {
               }
               break;
             }
+            case 'dazzle': {
+              const dazzleCards = (data as any).cards;
+              if (Array.isArray(dazzleCards) && dazzleCards.length > 0) {
+                nextState.dazzle = dazzleCards.map((card: any) => ({
+                  _id: card._id || '',
+                  title: card.title || '',
+                  subtitle: card.subtitle || '',
+                  description: card.description || '',
+                  buttonText: card.buttonText || 'Explore More',
+                  buttonLink: card.buttonLink || '/products',
+                  image: card.image || '',
+                }));
+              }
+              break;
+            }
+            case 'gallery': {
+              const galleryItems = (data as any).items;
+              if (Array.isArray(galleryItems) && galleryItems.length > 0) {
+                nextState.gallery = galleryItems.map((item: any) => ({
+                  _id: item._id || '',
+                  image: item.image || '',
+                }));
+              }
+              break;
+            }
+            case 'news': {
+              const newsItems = (data as any).items;
+              if (Array.isArray(newsItems) && newsItems.length > 0) {
+                nextState.news = newsItems.map((item: any) => ({
+                  _id: item._id || '',
+                  title: item.title || '',
+                  excerpt: item.excerpt || '',
+                  image: item.image || '',
+                  publishDate: item.publishDate || new Date().toISOString(),
+                  slug: item.slug || '',
+                }));
+              }
+              break;
+            }
             default:
               break;
           }
@@ -479,7 +550,7 @@ export const HomePage = () => {
           <TrendingProducts products={sectionsData.trendingProducts} isLoading={isLoading} />
         </div>
         <div className={SECTION_SPACING}>
-          <Collections />
+          <CollectionsSection dazzleData={sectionsData.dazzle} isLoading={isLoading} />
         </div>
         <div className={SECTION_SPACING}>
           <Testimonials />
@@ -488,12 +559,12 @@ export const HomePage = () => {
           <WhyChooseUs features={sectionsData.features} isLoading={isLoading} />
         </div>
         <div className={SECTION_SPACING}>
-          <Gallery />
+          <GallerySection galleryItems={sectionsData.gallery} isLoading={isLoading} />
         </div>
       </div>
       {/* Updates section - Full width */}
       <div className={SECTION_SPACING}>
-        <Updates />
+        <UpdatesSection newsItems={sectionsData.news} isLoading={isLoading} />
       </div>
       <div className='mt-12 sm:mt-16 lg:mt-20'>
         <Subscribe />
@@ -660,11 +731,15 @@ const Hero = ({ slides = defaultHeroSlides, isLoading = false }: { slides?: Hero
                         src={slide.main.image}
                         alt={slide.main.title}
                         fill
-                        // priority={slide.id === 1 || slide.id === heroSlides[0]?.id}
                         sizes='(max-width: 768px) 100vw, (max-width: 1024px) 70vw, 70vw'
                         className='object-cover'
                       />
-                      <div className='absolute inset-0 bg-black/40' />
+                      <div
+                        className='absolute inset-0'
+                        style={{
+                          backgroundColor: slide.backgroundColor ? `${slide.backgroundColor}80` : 'rgba(0, 0, 0, 0.4)',
+                        }}
+                      />
                       <div className='relative z-10 space-y-4'>
                         {slide.main.subtitle && <p className='text-xs uppercase tracking-[0.3em] text-white/80'>{slide.main.subtitle}</p>}
                         <h1 className='text-3xl font-bold text-white sm:text-4xl lg:text-5xl'>{slide.main.title}</h1>
@@ -685,7 +760,12 @@ const Hero = ({ slides = defaultHeroSlides, isLoading = false }: { slides?: Hero
                         sizes='(max-width: 768px) 100vw, (max-width: 1024px) 35vw, 35vw'
                         className='object-cover'
                       />
-                      <div className='absolute inset-0 bg-black/40' />
+                      <div
+                        className='absolute inset-0'
+                        style={{
+                          backgroundColor: slide.backgroundColor ? `${slide.backgroundColor}80` : 'rgba(0, 0, 0, 0.4)',
+                        }}
+                      />
                       <div className='relative z-10 space-y-2'>
                         {slide.side.subtitle && (
                           <p className='text-[11px] uppercase tracking-[0.3em] text-white/80'>{slide.side.subtitle}</p>
@@ -952,99 +1032,197 @@ const PromoShowcase = () => {
   );
 };
 
-const Collections = () => {
+const CollectionsSection = ({ dazzleData, isLoading = false }: { dazzleData: DazzleCard[]; isLoading?: boolean }) => {
   const router = useRouter();
+  
+  if (isLoading && dazzleData.length === 0) {
+    return (
+      <section className='w-full'>
+        <div className='flex items-center justify-center py-8'>
+          <p className='text-gray-500'>Loading section...</p>
+        </div>
+      </section>
+    );
+  }
+
+  const cardsToShow = dazzleData.length > 0 ? dazzleData : [
+    {
+      _id: 'fallback-1',
+      title: 'Modern heirlooms',
+      subtitle: 'Ancient jewelry collection',
+      description: 'Beautiful long earrings with opal and carnelian stones—lightweight and radiant.',
+      buttonText: 'Explore more',
+      buttonLink: '/products',
+      image: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=800&q=80',
+    },
+    {
+      _id: 'fallback-2',
+      title: 'Modern heirlooms',
+      subtitle: 'Premium Collection',
+      description: 'Since many jewelry products can be ultra expensive, it becomes necessary for shoppers to know what exactly they can expect.',
+      buttonText: 'Shop now',
+      buttonLink: '/products',
+      image: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=800&q=80',
+    },
+  ];
+
   return (
     <section className='w-full'>
       <div className='border-b border-web pb-3'>
-        <SectionHeader title='Dazzel in Every Moment' actionLabel='View all' onActionClick={() => router.push('/products')} />
+        <SectionHeader title='Dazzle in Every Moment' actionLabel='View all' onActionClick={() => router.push('/products')} />
       </div>
 
       <div className='mt-6 grid grid-cols-1 gap-4 md:grid-cols-2'>
-        <div className='flex flex-col items-center gap-6 rounded-2xl bg-[#F3F5F7] p-6 md:flex-row'>
-          <img
-            src='https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=800&q=80'
-            className='h-64 w-full rounded-xl object-cover md:h-full md:w-1/2'
-            alt='Earrings'
-          />
+        {cardsToShow.map((card, index) => {
+          // First card: image on left, content on right
+          if (index === 0) {
+            return (
+              <div key={card._id} className='flex flex-col items-center gap-6 rounded-2xl bg-[#F3F5F7] p-6 md:flex-row'>
+                {card.image && (
+                  <img
+                    src={card.image}
+                    className='h-64 w-full rounded-xl object-cover md:h-full md:w-1/2'
+                    alt={card.subtitle || card.title || 'Collection image'}
+                  />
+                )}
 
-          <div className='flex flex-col justify-center'>
-            <h3 className='text-2xl font-semibold text-[#1C1F1A]'>Ancient jewelry collection</h3>
-            <p className='mt-3 text-sm text-[#4F3A2E]'>Beautiful long earrings with opal and carnelian stones—lightweight and radiant.</p>
+                <div className='flex flex-col justify-center'>
+                  {card.subtitle && <h3 className='text-2xl font-semibold text-[#1C1F1A]'>{card.subtitle}</h3>}
+                  {card.description && <p className='mt-3 text-sm text-[#4F3A2E]'>{card.description}</p>}
 
-            <Link
-              href='/products'
-              className='inline-flex mt-5 w-fit items-center gap-2 rounded-full bg-[#1F3B29] px-5 py-2 text-sm text-white hover:bg-[#2a4d3a] transition-colors'>
-              Explore more
-            </Link>
-          </div>
-        </div>
+                  <Link
+                    href={card.buttonLink || '/products'}
+                    className='inline-flex mt-5 w-fit items-center gap-2 rounded-full bg-[#1F3B29] px-5 py-2 text-sm text-white hover:bg-[#2a4d3a] transition-colors'>
+                    {card.buttonText || 'Explore more'}
+                  </Link>
+                </div>
+              </div>
+            );
+          }
 
-        <div className='flex flex-col gap-4 rounded-2xl bg-[#F3F5F7] p-6'>
-          <div>
-            <h3 className='text-xl font-semibold text-[#1C1F1A]'>Modern heirlooms</h3>
-            <p className='mt-3 text-sm text-[#4F3A2E]'>
-              Since many jewelry products can be ultra expensive, it becomes necessary for shoppers to know what exactly they can
-              expect—this is where VRAI’s jewelry description example trumps.
-            </p>
+          // Other cards: content on top, image on bottom
+          return (
+            <div key={card._id} className='flex flex-col gap-4 rounded-2xl bg-[#F3F5F7] p-6'>
+              <div>
+                {card.title && <h3 className='text-xl font-semibold text-[#1C1F1A]'>{card.title}</h3>}
+                {card.description && <p className='mt-3 text-sm text-[#4F3A2E]'>{card.description}</p>}
 
-            <Link
-              href='/products'
-              className='inline-flex mt-4 items-center gap-2 rounded-full bg-[#1F3B29] px-5 py-2 text-sm text-white hover:bg-[#2a4d3a] transition-colors'>
-              Shop now
-            </Link>
-          </div>
+                <Link
+                  href={card.buttonLink || '/products'}
+                  className='inline-flex mt-4 items-center gap-2 rounded-full bg-[#1F3B29] px-5 py-2 text-sm text-white hover:bg-[#2a4d3a] transition-colors'>
+                  {card.buttonText || 'Shop now'}
+                </Link>
+              </div>
 
-          <img
-            src='https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=800&q=80'
-            className='h-[330px] w-full rounded-xl object-cover'
-            alt='Woman with earring'
-          />
-        </div>
+              {card.image && (
+                <img
+                  src={card.image}
+                  className='h-[330px] w-full rounded-xl object-cover'
+                  alt={card.title || 'Collection image'}
+                />
+              )}
+            </div>
+          );
+        })}
       </div>
     </section>
   );
 };
 
-const Updates = () => {
+const UpdatesSection = ({ newsItems, isLoading = false }: { newsItems: NewsItem[]; isLoading?: boolean }) => {
   const router = useRouter();
+
+  if (isLoading && newsItems.length === 0) {
+    return (
+      <section className='max-w-[1440px] mx-auto px-4 sm:px-6 md:px-8 lg:px-12 w-full space-y-4'>
+        <div className='flex items-center justify-center py-8'>
+          <p className='text-gray-500'>Loading news...</p>
+        </div>
+      </section>
+    );
+  }
+
+  const itemsToShow =
+    newsItems.length > 0
+      ? newsItems
+      : blogCards.map((card, index) => ({
+          _id: `fallback-${index}`,
+          title: card.title,
+          excerpt: card.desc,
+          image: card.img,
+          publishDate: card.date,
+          slug: '',
+        }));
+
+  const formatDate = (dateString: string) => {
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+    } catch {
+      return dateString;
+    }
+  };
+
   return (
     <section className='max-w-[1440px] mx-auto px-4 sm:px-6 md:px-8 lg:px-12 w-full space-y-4'>
       <div className='border-b border-web pb-3'>
         <SectionHeader title='Our News & Updates' actionLabel='View all' onActionClick={() => router.push('/blog')} />
       </div>
       <div className='grid grid-cols-1 gap-6 py-8 sm:grid-cols-2 lg:grid-cols-3'>
-        {blogCards.map(card => (
-          <div key={card.id} className='rounded-2xl border border-web/60 bg-[#F3F5F7] p-4 shadow-sm'>
+        {itemsToShow.map(item => (
+          <Link
+            key={item._id}
+            href={item.slug ? `/blog/${item.slug}` : '/blog'}
+            className='rounded-2xl border border-web/60 bg-[#F3F5F7] p-4 shadow-sm hover:shadow-md transition-shadow'>
             <div className='overflow-hidden rounded-xl'>
-              <img src={card.img} alt={card.title} className='h-56 w-full object-cover' />
+              <img
+                src={item.image || 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=800&q=80'}
+                alt={item.title}
+                className='h-56 w-full object-cover'
+              />
             </div>
 
             <div className='mt-4 text-[#1C1F1A]'>
-              <p className='text-xs text-[#4F3A2E]'>
-                {card.category} &nbsp; | &nbsp; {card.date}
-              </p>
+              <p className='text-xs text-[#4F3A2E]'>News &nbsp; | &nbsp; {formatDate(item.publishDate)}</p>
 
-              <h3 className='mt-2 text-lg font-semibold'>{card.title}</h3>
+              <h3 className='mt-2 text-lg font-semibold'>{item.title}</h3>
 
-              <p className='mt-2 text-sm text-[#4F3A2E]'>{card.desc}</p>
+              <p className='mt-2 text-sm text-[#4F3A2E]'>{item.excerpt}</p>
             </div>
-          </div>
+          </Link>
         ))}
       </div>
     </section>
   );
 };
 
-const Gallery = () => {
+const GallerySection = ({ galleryItems, isLoading = false }: { galleryItems: GalleryItem[]; isLoading?: boolean }) => {
+  if (isLoading && galleryItems.length === 0) {
+    return (
+      <section className='w-full'>
+        <div className='flex items-center justify-center py-8'>
+          <p className='text-gray-500'>Loading gallery...</p>
+        </div>
+      </section>
+    );
+  }
+
+  const itemsToShow =
+    galleryItems.length > 0
+      ? galleryItems
+      : images.map((src, index) => ({
+          _id: `fallback-${index}`,
+          image: src,
+        }));
+
   return (
     <section className='w-full'>
       <SectionHeader title='Gallery' align='center' description='A glimpse into our recent shoots and studio moments.' />
 
       <div className='mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4'>
-        {images.map((src, index) => (
-          <div key={`gallery-image-${index}-${src}`} className={`overflow-hidden rounded-xl shadow-sm`}>
-            <img src={src} className='h-40 w-full object-cover sm:h-56 lg:h-64' alt={`Gallery image ${index + 1}`} />
+        {itemsToShow.map(item => (
+          <div key={`gallery-image-${item._id}`} className='overflow-hidden rounded-xl shadow-sm hover:shadow-md transition-shadow'>
+            <img src={item.image} className='h-40 w-full object-cover sm:h-56 lg:h-64' alt='Gallery image' />
           </div>
         ))}
       </div>
