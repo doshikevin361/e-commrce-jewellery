@@ -570,7 +570,7 @@ export const HomePage = () => {
 
   return (
     <>
-      <div className='flex-col gap-0 '>
+      <div className='flex-col gap-0 pt-4 sm:pt-6 md:pt-8 lg:pt-10'>
         <div className={'mx-auto max-w-[1440px] w-full px-4 sm:px-6 md:px-8 lg:px-12'}>
           <Hero slides={sectionsData.hero} isLoading={isLoading} />
         </div>

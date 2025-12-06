@@ -155,7 +155,7 @@ export function HomeHeader() {
 
       {/* Navigation Menu Bar - Exact style from hero section */}
       <nav className='w-full bg-[#1F3B29] text-white duration-700 relative'>
-        <div className='mx-auto flex w-full max-w-[1440px] items-center justify-between px-4 sm:px-6 md:px-8 lg:px-12 py-2 sm:py-2.5 md:py-3 lg:py-4'>
+        <div className='mx-auto flex w-full max-w-[1440px] items-center justify-between px-4 sm:px-6 md:px-8  py-2 sm:py-2.5 md:py-3 lg:py-4'>
           {/* Mobile Menu Button */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
