@@ -7,6 +7,7 @@ import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
 import { X, Filter, Gem, ChevronDown, ChevronUp } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
 // Interfaces
@@ -102,6 +103,7 @@ export function JewelleryPage() {
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
   const [selectedAttributes, setSelectedAttributes] = useState<Record<string, string[]>>({});
   const [showInStockOnly, setShowInStockOnly] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(12);
 
@@ -164,37 +166,89 @@ export function JewelleryPage() {
     const minPrice = searchParams.get('minPrice');
     const maxPrice = searchParams.get('maxPrice');
     const inStock = searchParams.get('inStock');
+    const search = searchParams.get('search');
 
-    if (category) {
-      setSelectedCategories(category.split(','));
+    // Only update if params exist to avoid clearing filters unnecessarily
+    if (category !== null) {
+      setSelectedCategories(category ? category.split(',').filter(Boolean) : []);
     }
-    if (brand) {
-      setSelectedBrands(brand.split(','));
+    if (brand !== null) {
+      setSelectedBrands(brand ? brand.split(',').filter(Boolean) : []);
     }
     if (minPrice && maxPrice) {
       setPriceRange([parseInt(minPrice), parseInt(maxPrice)]);
     }
     if (inStock === 'true') {
       setShowInStockOnly(true);
+    } else if (inStock === 'false' || (inStock === null && showInStockOnly)) {
+      // Only reset if explicitly set to false
     }
 
-    // Parse attribute filters
+    // Parse attribute filters - check all URL params for attribute matches
     const attrFilters: Record<string, string[]> = {};
+    
+    // Check known attribute names first
     attributes.forEach(attr => {
-      const value = searchParams.get(attr.name.toLowerCase().replace(/\s+/g, '_'));
+      const paramName = attr.name.toLowerCase().replace(/\s+/g, '_');
+      const value = searchParams.get(paramName);
       if (value) {
-        attrFilters[attr.name] = value.split(',');
+        attrFilters[attr.name] = value.split(',').filter(Boolean);
       }
     });
+
+    // Also check for any other URL params that might be attributes (for dynamic attribute support)
+    searchParams.forEach((value, key) => {
+      if (!['category', 'brand', 'minPrice', 'maxPrice', 'inStock', 'search'].includes(key)) {
+        // This might be an attribute
+        const matchingAttr = attributes.find(
+          attr => attr.name.toLowerCase().replace(/\s+/g, '_') === key
+        );
+        if (matchingAttr) {
+          if (!attrFilters[matchingAttr.name]) {
+            attrFilters[matchingAttr.name] = [];
+          }
+          attrFilters[matchingAttr.name] = value.split(',').filter(Boolean);
+        } else {
+          // Try to match by common attribute patterns
+          const normalizedKey = key.toLowerCase();
+          if (normalizedKey.includes('metal') || normalizedKey.includes('purity') || 
+              normalizedKey.includes('stone') || normalizedKey.includes('type') ||
+              normalizedKey.includes('gender') || normalizedKey.includes('occasion')) {
+            // Create a temporary attribute filter
+            const attrName = key.split('_').map(word => 
+              word.charAt(0).toUpperCase() + word.slice(1)
+            ).join(' ');
+            attrFilters[attrName] = value.split(',').filter(Boolean);
+          }
+        }
+      }
+    });
+
     if (Object.keys(attrFilters).length > 0) {
       setSelectedAttributes(attrFilters);
+    } else if (attributes.length > 0) {
+      // Only reset if we have attributes loaded and no filters in URL
+      const hasAnyParam = searchParams.has('category') || searchParams.has('brand') || 
+                          searchParams.has('minPrice') || searchParams.has('maxPrice') ||
+                          searchParams.has('inStock') || searchParams.has('search');
+      if (!hasAnyParam) {
+        setSelectedAttributes({});
+      }
     }
-  }, [searchParams, attributes]);
+
+    // Handle search query
+    if (search !== null) {
+      setSearchQuery(search || '');
+    }
+  }, [searchParams, attributes.length]);
 
   // Update URL params when filters change
   useEffect(() => {
     const params = new URLSearchParams();
 
+    if (searchQuery.trim()) {
+      params.set('search', searchQuery.trim());
+    }
     if (selectedCategories.length > 0) {
       params.set('category', selectedCategories.join(','));
     }
@@ -218,11 +272,26 @@ export function JewelleryPage() {
 
     const newUrl = params.toString() ? `/jewellery?${params.toString()}` : '/jewellery';
     router.replace(newUrl, { scroll: false });
-  }, [selectedCategories, selectedBrands, priceRange, showInStockOnly, selectedAttributes, router]);
+  }, [selectedCategories, selectedBrands, priceRange, showInStockOnly, selectedAttributes, searchQuery, router]);
 
   // Filter and sort products
   const filteredAndSortedProducts = useMemo(() => {
     let filtered = products.filter(product => {
+      // Search query filter
+      if (searchQuery.trim()) {
+        const queryLower = searchQuery.toLowerCase();
+        const matchesSearch = 
+          product.name.toLowerCase().includes(queryLower) ||
+          product.shortDescription?.toLowerCase().includes(queryLower) ||
+          product.category?.toLowerCase().includes(queryLower) ||
+          product.brand?.toLowerCase().includes(queryLower) ||
+          product.tags?.some((tag: string) => tag.toLowerCase().includes(queryLower)) ||
+          product.metalType?.toLowerCase().includes(queryLower) ||
+          product.metalPurity?.toLowerCase().includes(queryLower) ||
+          product.stoneType?.toLowerCase().includes(queryLower);
+        if (!matchesSearch) return false;
+      }
+
       // Price range filter
       if (product.displayPrice < priceRange[0] || product.displayPrice > priceRange[1]) return false;
 
@@ -301,7 +370,7 @@ export function JewelleryPage() {
     }
 
     return filtered;
-  }, [products, priceRange, selectedCategories, selectedBrands, selectedAttributes, showInStockOnly, sortBy]);
+  }, [products, priceRange, selectedCategories, selectedBrands, selectedAttributes, showInStockOnly, sortBy, searchQuery]);
 
   // Calculate price range from products
   const priceBounds = useMemo(() => {
@@ -321,6 +390,7 @@ export function JewelleryPage() {
     setSelectedBrands([]);
     setSelectedAttributes({});
     setShowInStockOnly(false);
+    setSearchQuery('');
     setCurrentPage(1);
   };
 
@@ -434,6 +504,81 @@ export function JewelleryPage() {
             </Button>
           </div>
         </div>
+
+        {/* Active Filters */}
+        {(selectedCategories.length > 0 || selectedBrands.length > 0 || Object.keys(selectedAttributes).length > 0 || searchQuery.trim() || showInStockOnly || priceRange[0] > priceBounds[0] || priceRange[1] < priceBounds[1]) && (
+          <div className='mb-6 flex flex-wrap items-center gap-2'>
+            <span className='text-sm font-medium text-[#1F3B29]'>Active filters:</span>
+            {searchQuery.trim() && (
+              <Badge variant='outline' className='bg-[#F5EEE5] border-[#E6D3C2] text-[#1F3B29]'>
+                Search: {searchQuery}
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className='ml-2 hover:text-red-600'
+                >
+                  <X className='w-3 h-3' />
+                </button>
+              </Badge>
+            )}
+            {selectedCategories.map(category => (
+              <Badge key={category} variant='outline' className='bg-[#F5EEE5] border-[#E6D3C2] text-[#1F3B29]'>
+                {category}
+                <button
+                  onClick={() => setSelectedCategories(selectedCategories.filter(c => c !== category))}
+                  className='ml-2 hover:text-red-600'
+                >
+                  <X className='w-3 h-3' />
+                </button>
+              </Badge>
+            ))}
+            {selectedBrands.map(brand => (
+              <Badge key={brand} variant='outline' className='bg-[#F5EEE5] border-[#E6D3C2] text-[#1F3B29]'>
+                {brand}
+                <button
+                  onClick={() => setSelectedBrands(selectedBrands.filter(b => b !== brand))}
+                  className='ml-2 hover:text-red-600'
+                >
+                  <X className='w-3 h-3' />
+                </button>
+              </Badge>
+            ))}
+            {Object.entries(selectedAttributes).map(([attrName, values]) =>
+              values.map(value => (
+                <Badge key={`${attrName}-${value}`} variant='outline' className='bg-[#F5EEE5] border-[#E6D3C2] text-[#1F3B29]'>
+                  {attrName}: {value}
+                  <button
+                    onClick={() => handleAttributeChange(attrName, value, false)}
+                    className='ml-2 hover:text-red-600'
+                  >
+                    <X className='w-3 h-3' />
+                  </button>
+                </Badge>
+              ))
+            )}
+            {showInStockOnly && (
+              <Badge variant='outline' className='bg-[#F5EEE5] border-[#E6D3C2] text-[#1F3B29]'>
+                In Stock Only
+                <button
+                  onClick={() => setShowInStockOnly(false)}
+                  className='ml-2 hover:text-red-600'
+                >
+                  <X className='w-3 h-3' />
+                </button>
+              </Badge>
+            )}
+            {(priceRange[0] > priceBounds[0] || priceRange[1] < priceBounds[1]) && (
+              <Badge variant='outline' className='bg-[#F5EEE5] border-[#E6D3C2] text-[#1F3B29]'>
+                Price: ₹{priceRange[0].toLocaleString()} - ₹{priceRange[1].toLocaleString()}
+                <button
+                  onClick={() => setPriceRange(priceBounds)}
+                  className='ml-2 hover:text-red-600'
+                >
+                  <X className='w-3 h-3' />
+                </button>
+              </Badge>
+            )}
+          </div>
+        )}
 
         <div className='flex gap-6 lg:gap-8'>
           {/* Filters Sidebar */}
