@@ -4,90 +4,81 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
 import { ArrowLeft } from 'lucide-react';
 import { MainImageUpload } from '@/components/media/main-image-upload';
 import { useToast } from '@/hooks/use-toast';
 import FormField from '@/components/formField/formField';
-import Dropdown from '@/components/customDropdown/customDropdown';
-import { Label } from '@radix-ui/react-dropdown-menu';
 
-interface BannerFormData {
+interface DazzleFormData {
   title: string;
   subtitle: string;
   description: string;
-  image: string;
-  link: string;
   buttonText: string;
-  backgroundColor: string;
-  type: 'main' | 'side';
+  buttonLink: string;
+  image: string;
   displayOrder: number;
-  status: 'active' | 'inactive';
 }
 
-interface BannerFormPageProps {
-  bannerId?: string;
+interface DazzleFormPageProps {
+  cardId?: string;
 }
 
-export function BannerFormPage({ bannerId }: BannerFormPageProps) {
+export function BannerFormPage({ cardId }: DazzleFormPageProps) {
   const router = useRouter();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [fetching, setFetching] = useState(true);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const [formData, setFormData] = useState<BannerFormData>({
+  const [formData, setFormData] = useState<DazzleFormData>({
     title: '',
     subtitle: '',
     description: '',
+    buttonText: 'Explore More',
+    buttonLink: '/products',
     image: '',
-    link: '',
-    buttonText: '',
-    backgroundColor: '#000000',
-    type: 'main',
     displayOrder: 0,
-    status: 'active',
   });
 
   useEffect(() => {
-    if (bannerId) {
-      fetchBanner();
+    if (cardId) {
+      fetchCard();
+    } else {
+      setFetching(false);
     }
-  }, [bannerId]);
+  }, [cardId]);
 
-  const fetchBanner = async () => {
+  const fetchCard = async () => {
     try {
-      setLoading(true);
-      const response = await fetch(`/api/admin/cms/banners/${bannerId}`);
+      setFetching(true);
+      const response = await fetch(`/api/admin/cms/dazzle/${cardId}`);
       if (response.ok) {
         const data = await response.json();
         setFormData({
           title: data.title || '',
           subtitle: data.subtitle || '',
           description: data.description || '',
+          buttonText: data.buttonText || 'Explore More',
+          buttonLink: data.buttonLink || '/products',
           image: data.image || '',
-          link: data.link || '',
-          buttonText: data.buttonText || '',
-          backgroundColor: data.backgroundColor || '#000000',
           displayOrder: data.displayOrder || 0,
-          status: data.status || 'active',
-          type: data.type || 'main',
         });
       } else {
         toast({
           title: 'Error',
-          description: 'Failed to load banner',
+          description: 'Failed to load card',
           variant: 'destructive',
         });
       }
     } catch (error) {
-      console.error('[v0] Failed to fetch banner:', error);
+      console.error('[v0] Failed to fetch dazzle card:', error);
       toast({
         title: 'Error',
-        description: 'Failed to load banner',
+        description: 'Failed to load card',
         variant: 'destructive',
       });
     } finally {
-      setLoading(false);
+      setFetching(false);
     }
   };
 
@@ -115,7 +106,7 @@ export function BannerFormPage({ bannerId }: BannerFormPageProps) {
     }
   };
 
-  const updateField = (field: keyof BannerFormData, value: any) => {
+  const updateField = (field: keyof DazzleFormData, value: any) => {
     setFormData(prev => ({
       ...prev,
       [field]: value,
@@ -157,8 +148,8 @@ export function BannerFormPage({ bannerId }: BannerFormPageProps) {
 
     setLoading(true);
     try {
-      const url = bannerId ? `/api/admin/cms/banners/${bannerId}` : '/api/admin/cms/banners';
-      const method = bannerId ? 'PUT' : 'POST';
+      const url = cardId ? `/api/admin/cms/dazzle/${cardId}` : '/api/admin/cms/dazzle';
+      const method = cardId ? 'PUT' : 'POST';
 
       const response = await fetch(url, {
         method,
@@ -169,15 +160,15 @@ export function BannerFormPage({ bannerId }: BannerFormPageProps) {
       if (response.ok) {
         toast({
           title: 'Success',
-          description: `Banner ${bannerId ? 'updated' : 'created'} successfully`,
+          description: `Dazzle card ${cardId ? 'updated' : 'created'} successfully`,
           variant: 'success',
         });
-        router.push('/admin/cms/banners');
+        router.push('/admin/cms/dazzle');
       } else {
         const error = await response.json();
         toast({
           title: 'Error',
-          description: error.error || `Failed to ${bannerId ? 'update' : 'create'} banner`,
+          description: error.error || `Failed to ${cardId ? 'update' : 'create'} card`,
           variant: 'destructive',
         });
       }
@@ -193,6 +184,14 @@ export function BannerFormPage({ bannerId }: BannerFormPageProps) {
     }
   };
 
+  if (fetching) {
+    return (
+      <div className='flex items-center justify-center min-h-screen'>
+        <p className='text-gray-500'>Loading...</p>
+      </div>
+    );
+  }
+
   return (
     <div className='space-y-6'>
       <div className='flex items-center justify-between'>
@@ -201,7 +200,7 @@ export function BannerFormPage({ bannerId }: BannerFormPageProps) {
             <ArrowLeft className='h-4 w-4' />
             Back
           </Button>
-          <h1 className='text-3xl font-bold'>{bannerId ? 'Edit Banner' : 'Add New Banner'}</h1>
+          <h1 className='text-3xl font-bold'>{cardId ? 'Edit Dazzle Card' : 'Add New Dazzle Card'}</h1>
         </div>
       </div>
 
@@ -213,7 +212,7 @@ export function BannerFormPage({ bannerId }: BannerFormPageProps) {
               required
               value={formData.title}
               onChange={e => updateField('title', e.target.value)}
-              placeholder='Enter banner title'
+              placeholder='Enter section title'
               error={errors.title}
             />
 
@@ -222,30 +221,8 @@ export function BannerFormPage({ bannerId }: BannerFormPageProps) {
               required
               value={formData.subtitle}
               onChange={e => updateField('subtitle', e.target.value)}
-              placeholder='Enter banner subtitle'
+              placeholder='Enter section subtitle'
               error={errors.subtitle}
-            />
-          </div>
-
-          <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-            <Dropdown
-              labelMain='Banner Type *'
-              options={[
-                { label: 'Main Banner (Large)', value: 'main' },
-                { label: 'Side Banner (Small)', value: 'side' },
-              ]}
-              placeholder='Select banner type'
-              value={formData.type}
-              onChange={option => updateField('type', option.value as 'main' | 'side')}
-            />
-
-            <FormField
-              label='Display Order'
-              type='number'
-              numericOnly
-              value={formData.displayOrder}
-              onChange={e => updateField('displayOrder', parseInt(e.target.value) || 0)}
-              placeholder='0'
             />
           </div>
 
@@ -254,17 +231,21 @@ export function BannerFormPage({ bannerId }: BannerFormPageProps) {
             textarea
             value={formData.description}
             onChange={e => updateField('description', e.target.value)}
-            placeholder='Enter banner description'
+            placeholder='Enter section description'
           />
 
           <div>
-            <FormField label='Banner Image' required hideLabel>
+            <FormField
+              label='Section Image'
+              required
+              hideLabel
+            >
               <MainImageUpload
                 value={formData.image}
                 onChange={val => updateField('image', val)}
                 uploadHandler={uploadImage}
                 hideLabel
-                recommendedText='Recommended: 1920×600px, JPG/PNG'
+                recommendedText='Recommended: 800×600px, JPG/PNG'
               />
             </FormField>
             {errors.image && <p className='text-sm text-red-500 mt-1'>{errors.image}</p>}
@@ -272,51 +253,36 @@ export function BannerFormPage({ bannerId }: BannerFormPageProps) {
 
           <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
             <FormField
-              label='Link URL'
-              value={formData.link}
-              onChange={e => updateField('link', e.target.value)}
-              placeholder='https://example.com'
-            />
-
-            <FormField
               label='Button Text'
               value={formData.buttonText}
               onChange={e => updateField('buttonText', e.target.value)}
-              placeholder='Shop Now'
+              placeholder='Explore More'
+            />
+
+            <FormField
+              label='Button Link'
+              value={formData.buttonLink}
+              onChange={e => updateField('buttonLink', e.target.value)}
+              placeholder='/products'
             />
           </div>
 
-          <FormField label='Background Color' helperText='Choose a background color for the banner overlay'>
-            <div className='flex gap-2'>
-              <input
-                type='color'
-                value={formData.backgroundColor}
-                onChange={e => updateField('backgroundColor', e.target.value)}
-                className='w-20 h-10 rounded border border-slate-200 cursor-pointer'
-              />
-              <FormField
-                hideLabel
-                value={formData.backgroundColor}
-                onChange={e => updateField('backgroundColor', e.target.value)}
-                placeholder='#000000'
-              />
-            </div>
-          </FormField>
-
-          <div className='flex items-center gap-2'>
-            <Switch
-              checked={formData.status === 'active'}
-              onCheckedChange={checked => updateField('status', checked ? 'active' : 'inactive')}
-            />
-            <Label>Active</Label>
-          </div>
+          <FormField
+            label='Display Order'
+            type='number'
+            numericOnly
+            value={formData.displayOrder}
+            onChange={e => updateField('displayOrder', parseInt(e.target.value) || 0)}
+            placeholder='0'
+            helperText='Lower numbers appear first'
+          />
 
           <div className='flex justify-end gap-4'>
             <Button type='button' variant='outline' onClick={() => router.back()} disabled={loading}>
               Cancel
             </Button>
             <Button type='submit' disabled={loading} className='bg-[#22c55e]'>
-              {loading ? 'Saving...' : bannerId ? 'Update Banner' : 'Create Banner'}
+              {loading ? 'Saving...' : cardId ? 'Update Card' : 'Create Card'}
             </Button>
           </div>
         </form>
@@ -324,3 +290,4 @@ export function BannerFormPage({ bannerId }: BannerFormPageProps) {
     </div>
   );
 }
+

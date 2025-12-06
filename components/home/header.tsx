@@ -5,6 +5,7 @@ import SearchBar from './SearchBar/SearchBar';
 import Link from 'next/link';
 import { useState, useEffect, useRef, useContext } from 'react';
 import { CategoriesContext } from '@/contexts/CategoriesContext';
+import { CategoriesDropdown } from './CategoriesDropdown';
 
 // Grid2x2CheckIcon component (same as hero section)
 const Grid2x2CheckIcon = ({ size, className }: { size: number; className?: string }) => (
@@ -27,6 +28,7 @@ const Grid2x2CheckIcon = ({ size, className }: { size: number; className?: strin
 // Menu items with submenus for jewelry e-commerce
 const menuItems = [
   { name: 'Home', href: '/' },
+  { name: 'Jewellery', href: '/jewellery' },
   {
     name: 'Shop',
     href: '#shop',
@@ -85,17 +87,24 @@ export function HomeHeader() {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setOpenDropdown(null);
       }
+      // Close categories dropdown when clicking outside
+      if (categoriesContext) {
+        const target = event.target as HTMLElement;
+        if (!target.closest('[data-categories-dropdown]') && !target.closest('[data-categories-button]')) {
+          categoriesContext.setSidebarOpen(false);
+        }
+      }
     };
-    if (openDropdown) {
+    if (openDropdown || (categoriesContext && categoriesContext.sidebarOpen)) {
       document.addEventListener('mousedown', handleClickOutside);
       return () => document.removeEventListener('mousedown', handleClickOutside);
     }
-  }, [openDropdown]);
+  }, [openDropdown, categoriesContext]);
 
   return (
     <header className='bg-white sticky top-0 z-50 shadow-sm'>
       {/* Top bar with logo, search, and account/cart */}
-      <div className='mx-auto mb-2 sm:mb-3 md:mb-4 flex w-full max-w-[1400px] items-center justify-between gap-2 sm:gap-3 md:gap-4 px-4 sm:px-6 md:px-8 lg:px-12 py-2 sm:py-2.5 md:py-3 pt-3 sm:pt-4 md:pt-6 lg:pt-8'>
+      <div className='mx-auto mb-2 sm:mb-3 md:mb-4 flex w-full max-w-[1440px] items-center justify-between gap-2 sm:gap-3 md:gap-4 px-4 sm:px-6 md:px-8 lg:px-12 py-2 sm:py-2.5 md:py-3 pt-3 sm:pt-4 md:pt-6 lg:pt-8'>
         <Link
           href='/'
           className='flex items-center gap-1 sm:gap-1.5 md:gap-2 flex-shrink-0 transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer'>
@@ -146,7 +155,7 @@ export function HomeHeader() {
 
       {/* Navigation Menu Bar - Exact style from hero section */}
       <nav className='w-full bg-[#1F3B29] text-white duration-700 relative'>
-        <div className='mx-auto flex w-full max-w-[1400px] items-center justify-between px-4 sm:px-6 md:px-8 lg:px-8 py-2 sm:py-2.5 md:py-3 lg:py-4'>
+        <div className='mx-auto flex w-full max-w-[1440px] items-center justify-between px-4 sm:px-6 md:px-8  py-2 sm:py-2.5 md:py-3 lg:py-4'>
           {/* Mobile Menu Button */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -156,8 +165,9 @@ export function HomeHeader() {
           </button>
 
           {/* Desktop Categories Button */}
-          <div className='hidden md:flex items-center gap-2 sm:gap-3 md:gap-4 lg:gap-8 min-w-0 flex-1'>
+          <div className='hidden md:flex items-center gap-2 sm:gap-3 md:gap-4 lg:gap-8 min-w-0 flex-1 relative'>
             <button
+              data-categories-button
               onClick={() => {
                 if (categoriesContext) {
                   if (isMobile) {
@@ -175,6 +185,16 @@ export function HomeHeader() {
               />
               <span className='text-xs md:text-sm whitespace-nowrap'>Categories</span>
             </button>
+            {/* Categories Dropdown */}
+            {/* {categoriesContext && !isMobile && (
+              <div data-categories-dropdown>
+                <CategoriesDropdown
+                  isOpen={categoriesContext.sidebarOpen}
+                  onClose={() => categoriesContext.setSidebarOpen(false)}
+                  position="left"
+                />
+              </div>
+            )} */}
 
             <ul className='hidden lg:flex items-center gap-1 lg:gap-2 xl:gap-3 text-xs md:text-sm' ref={dropdownRef}>
               {menuItems.map((item, index) => (

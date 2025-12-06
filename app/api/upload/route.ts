@@ -1,5 +1,7 @@
-import { put } from '@vercel/blob';
 import { NextResponse } from 'next/server';
+import { writeFile, mkdir } from 'fs/promises';
+import { join } from 'path';
+import { existsSync } from 'fs';
 
 export async function POST(request: Request) {
   try {
@@ -26,15 +28,31 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'File must be an image' }, { status: 400 });
     }
 
-    console.log('[v0] Uploading to Vercel Blob...');
-    // Upload to Vercel Blob
-    const blob = await put(file.name, file, {
-      access: 'public',
-      addRandomSuffix: true,
-    });
+    // Convert file to buffer
+    const bytes = await file.arrayBuffer();
+    const buffer = Buffer.from(bytes);
 
-    console.log('[v0] Upload successful:', blob.url);
-    return NextResponse.json({ url: blob.url });
+    // Generate unique filename
+    const timestamp = Date.now();
+    const randomString = Math.random().toString(36).substring(2, 15);
+    const fileExtension = file.name.split('.').pop() || 'jpg';
+    const fileName = `${timestamp}-${randomString}.${fileExtension}`;
+
+    // Create uploads directory if it doesn't exist
+    const uploadsDir = join(process.cwd(), 'public', 'uploads');
+    if (!existsSync(uploadsDir)) {
+      await mkdir(uploadsDir, { recursive: true });
+    }
+
+    // Save file to public/uploads directory
+    const filePath = join(uploadsDir, fileName);
+    await writeFile(filePath, buffer);
+
+    // Return public URL
+    const publicUrl = `/uploads/${fileName}`;
+    console.log('[v0] Upload successful:', publicUrl);
+    
+    return NextResponse.json({ url: publicUrl });
   } catch (error) {
     console.error('[v0] Upload error details:', error);
     return NextResponse.json({ 

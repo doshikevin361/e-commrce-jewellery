@@ -40,3 +40,7 @@ Thumbs.db
 # Build cache
 .cache/
 turbo/
+
+# Uploaded files (keep directory structure but ignore files)
+public/uploads/*
+!public/uploads/.gitkeep

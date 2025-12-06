@@ -31,6 +31,7 @@ import { SectionHeader } from '@/components/home/common/section-header';
 import Link from 'next/link';
 import { getActiveHomepageFeatures } from '@/lib/constants/features';
 import { ProductCard, ProductCardData } from './common/product-card';
+import { CategoriesDropdown } from './CategoriesDropdown';
 
 type HeroSlide = {
   id: string | number;
@@ -49,6 +50,7 @@ type HeroSlide = {
     buttonText?: string;
   };
   link?: string;
+  backgroundColor?: string;
 };
 
 type CategoryStripItem = {
@@ -74,6 +76,30 @@ type HomepageFeatureItem = {
   description: string;
 };
 
+type DazzleCard = {
+  _id: string;
+  title: string;
+  subtitle: string;
+  description: string;
+  buttonText: string;
+  buttonLink: string;
+  image: string;
+};
+
+type GalleryItem = {
+  _id: string;
+  image: string;
+};
+
+type NewsItem = {
+  _id: string;
+  title: string;
+  excerpt: string;
+  image: string;
+  publishDate: string;
+  slug: string;
+};
+
 type HomepageSectionsState = {
   hero: HeroSlide[];
   categories: CategoryStripItem[];
@@ -81,9 +107,26 @@ type HomepageSectionsState = {
   featuredProducts: ProductCardData[];
   trendingProducts: ProductCardData[];
   features: HomepageFeatureItem[];
+  dazzle: DazzleCard[];
+  gallery: GalleryItem[];
+  news: NewsItem[];
+  newArrivals: {
+    banner: {
+      title: string;
+      subtitle: string;
+      description: string;
+      backgroundImage: string;
+    } | null;
+    cards: {
+      _id: string;
+      title: string;
+      image: string;
+      type: 'card' | 'banner';
+    }[];
+  };
 };
 
-const SECTION_SPACING = 'mt-12 sm:mt-16 lg:mt-20';
+const SECTION_SPACING = 'mt-12 sm:mt-16 lg:mt-20 mx-auto flex w-full max-w-[1440px] px-4 sm:px-6 md:px-8 lg:px-12';
 const DEFAULT_CATEGORY_IMAGE = 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=800&q=80';
 const DEFAULT_PRODUCT_IMAGE = 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=1200&q=80';
 
@@ -266,25 +309,26 @@ const mapBannersToSlides = (banners?: any[]): HeroSlide[] => {
   }
 
   return banners.map((banner, index) => {
-    const fallbackSlide = defaultHeroSlides[index % defaultHeroSlides.length];
+    const fallbackSlide = [];
 
     return {
       id: banner?._id?.toString?.() ?? `banner-${index}`,
       main: {
-        image: banner?.image || fallbackSlide.main.image,
-        subtitle: banner?.subtitle || fallbackSlide.main.subtitle,
-        title: banner?.title || fallbackSlide.main.title,
-        description: banner?.description || fallbackSlide.main.description,
-        buttonText: banner?.buttonText || fallbackSlide.main.buttonText,
+        image: banner?.image || '',
+        subtitle: banner?.subtitle || '',
+        title: banner?.title || '',
+        description: banner?.description || '',
+        buttonText: banner?.buttonText || '',
       },
       side: {
-        image: banner?.image || fallbackSlide.side.image,
-        subtitle: banner?.subtitle || fallbackSlide.side.subtitle,
-        title: banner?.title || fallbackSlide.side.title,
-        description: banner?.description || fallbackSlide.side.description,
-        buttonText: banner?.buttonText || fallbackSlide.side.buttonText,
+        image: banner?.image || '',
+        subtitle: banner?.subtitle || '',
+        title: banner?.title || '',
+        description: banner?.description || '',
+        buttonText: banner?.buttonText || '',
       },
       link: banner?.link || '/products',
+      backgroundColor: banner?.backgroundColor || '#000000',
     };
   });
 };
@@ -350,6 +394,13 @@ const createDefaultSectionsState = (): HomepageSectionsState => ({
   featuredProducts: [...fallbackBestSellers],
   trendingProducts: [...trendingPro],
   features: [...fallbackFeatureData],
+  dazzle: [],
+  gallery: [],
+  news: [],
+  newArrivals: {
+    banner: null,
+    cards: [],
+  },
 });
 
 export const HomePage = () => {
@@ -429,6 +480,66 @@ export const HomePage = () => {
               }
               break;
             }
+            case 'dazzle': {
+              const dazzleCards = (data as any).cards;
+              if (Array.isArray(dazzleCards) && dazzleCards.length > 0) {
+                nextState.dazzle = dazzleCards.map((card: any) => ({
+                  _id: card._id || '',
+                  title: card.title || '',
+                  subtitle: card.subtitle || '',
+                  description: card.description || '',
+                  buttonText: card.buttonText || 'Explore More',
+                  buttonLink: card.buttonLink || '/products',
+                  image: card.image || '',
+                }));
+              }
+              break;
+            }
+            case 'gallery': {
+              const galleryItems = (data as any).items;
+              if (Array.isArray(galleryItems) && galleryItems.length > 0) {
+                nextState.gallery = galleryItems.map((item: any) => ({
+                  _id: item._id || '',
+                  image: item.image || '',
+                }));
+              }
+              break;
+            }
+            case 'news': {
+              const newsItems = (data as any).items;
+              if (Array.isArray(newsItems) && newsItems.length > 0) {
+                nextState.news = newsItems.map((item: any) => ({
+                  _id: item._id || '',
+                  title: item.title || '',
+                  excerpt: item.excerpt || '',
+                  image: item.image || '',
+                  publishDate: item.publishDate || new Date().toISOString(),
+                  slug: item.slug || '',
+                }));
+              }
+              break;
+            }
+            case 'newArrivals': {
+              const bannerData = (data as any).banner;
+              const cardsData = (data as any).cards;
+              if (bannerData && typeof bannerData === 'object') {
+                nextState.newArrivals.banner = {
+                  title: bannerData.title || 'New Arrivals',
+                  subtitle: bannerData.subtitle || '💎 500+ New Items',
+                  description: bannerData.description || '',
+                  backgroundImage: bannerData.backgroundImage || '',
+                };
+              }
+              if (Array.isArray(cardsData) && cardsData.length > 0) {
+                nextState.newArrivals.cards = cardsData.map((card: any) => ({
+                  _id: card._id || '',
+                  title: card.title || '',
+                  image: card.image || '',
+                  type: card.type || 'card',
+                }));
+              }
+              break;
+            }
             default:
               break;
           }
@@ -459,17 +570,21 @@ export const HomePage = () => {
 
   return (
     <>
-      <div className='mx-auto flex w-full max-w-[1400px] flex-col gap-0 px-4 sm:px-6 md:px-8 lg:px-12'>
-        <Hero slides={sectionsData.hero} isLoading={isLoading} />
-        <CategoryStrip categoriesData={sectionsData.categories} isLoading={isLoading} />
+      <div className='flex-col gap-0 pt-4 sm:pt-6 md:pt-8 lg:pt-10'>
+        <div className={'mx-auto max-w-[1440px] w-full px-4 sm:px-6 md:px-8 lg:px-12'}>
+          <Hero slides={sectionsData.hero} isLoading={isLoading} />
+        </div>
+        <div className={'mx-auto max-w-[1440px] w-full px-4 sm:px-6 md:px-8 lg:px-12'}>
+          <CategoryStrip categoriesData={sectionsData.categories} isLoading={isLoading} />
+        </div>
         {errorMessage && (
           <div className='mt-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700'>{errorMessage}</div>
         )}
         <div className={SECTION_SPACING}>
           <FeaturedSlider products={sectionsData.newProducts} isLoading={isLoading} />
         </div>
-        <div className={SECTION_SPACING}>
-          <PromoShowcase />
+        <div className='mt-12 sm:mt-16 lg:mt-20'>
+          <NewArrivalsSection banner={sectionsData.newArrivals.banner} cards={sectionsData.newArrivals.cards} isLoading={isLoading} />
         </div>
         <div className={SECTION_SPACING}>
           <BestSellers products={sectionsData.featuredProducts} isLoading={isLoading} />
@@ -478,20 +593,21 @@ export const HomePage = () => {
           <TrendingProducts products={sectionsData.trendingProducts} isLoading={isLoading} />
         </div>
         <div className={SECTION_SPACING}>
-          <Collections />
+          <CollectionsSection dazzleData={sectionsData.dazzle} isLoading={isLoading} />
         </div>
         <div className={SECTION_SPACING}>
           <Testimonials />
         </div>
         <div className={SECTION_SPACING}>
-          <Updates />
-        </div>
-        <div className={SECTION_SPACING}>
           <WhyChooseUs features={sectionsData.features} isLoading={isLoading} />
         </div>
         <div className={SECTION_SPACING}>
-          <Gallery />
+          <GallerySection galleryItems={sectionsData.gallery} isLoading={isLoading} />
         </div>
+      </div>
+      {/* Updates section - Full width */}
+      <div className={SECTION_SPACING}>
+        <UpdatesSection newsItems={sectionsData.news} isLoading={isLoading} />
       </div>
       <div className='mt-12 sm:mt-16 lg:mt-20'>
         <Subscribe />
@@ -523,6 +639,7 @@ const Hero = ({ slides = defaultHeroSlides, isLoading = false }: { slides?: Hero
   const heroSwiperRef = useRef<SwiperType | null>(null);
   const slidesToRender = slides.length > 0 ? slides : defaultHeroSlides;
   const showLoadingState = isLoading && slidesToRender.length === 0;
+  const sidebarRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     // Set initial mobile state after mount to avoid hydration mismatch
@@ -553,6 +670,8 @@ const Hero = ({ slides = defaultHeroSlides, isLoading = false }: { slides?: Hero
     };
   }, [setMobileCategoriesOpen]);
 
+  const { categories, isLoadingCategories } = useCategories();
+
   return (
     <>
       <Sheet open={mobileCategoriesOpen} onOpenChange={setMobileCategoriesOpen}>
@@ -564,47 +683,63 @@ const Hero = ({ slides = defaultHeroSlides, isLoading = false }: { slides?: Hero
             </SheetTitle>
           </SheetHeader>
           <ul className='space-y-2 px-4 py-4'>
-            {sidebarCategories.map(category => (
-              <li
-                key={category}
-                className='flex cursor-pointer items-center justify-between rounded-xl bg-[#F7F3EE] px-4 py-3 text-sm font-semibold text-[#1C1F1A]'
-                onClick={() => setMobileCategoriesOpen(false)}>
-                <div className='flex items-center gap-3 text-[#3F5C45]'>
-                  <span>{categoryIcons[category]}</span>
-                  <span>{category}</span>
-                </div>
-                <ChevronRight size={18} className='text-[#3F5C45]' />
-              </li>
-            ))}
+            {isLoadingCategories ? (
+              <li className='px-4 py-3 text-sm text-gray-500'>Loading categories...</li>
+            ) : categories.length === 0 ? (
+              <li className='px-4 py-3 text-sm text-gray-500'>No categories available</li>
+            ) : (
+              categories.map(category => (
+                <li
+                  key={category._id}
+                  className='flex cursor-pointer items-center justify-between rounded-xl bg-[#F7F3EE] px-4 py-3 text-sm font-semibold text-[#1C1F1A]'
+                  onClick={() => setMobileCategoriesOpen(false)}>
+                  <Link
+                    href={`/products?category=${encodeURIComponent(category.slug || category.name)}`}
+                    className='flex items-center gap-3 text-[#3F5C45] flex-1'>
+                    <span>{categoryIcons[category.name] || <Diamond size={18} />}</span>
+                    <span>{category.name}</span>
+                  </Link>
+                  <ChevronRight size={18} className='text-[#3F5C45]' />
+                </li>
+              ))
+            )}
           </ul>
         </SheetContent>
       </Sheet>
 
       <section
-        className={`mx-auto grid w-full gap-4 ${
+        className={`grid w-full gap-4 ${
           sidebarOpen && !isMobile ? 'lg:grid-cols-[260px_minmax(0,1fr)]' : 'lg:grid-cols-[0px_minmax(0,1fr)]'
         }`}>
         <aside
-          className={`hidden overflow-hidden rounded-2xl   bg-white px-5 py-6 lg:block ${
-            sidebarOpen ? 'w-[260px] border border-web/50' : 'w-0 px-0 py-0'
+          ref={sidebarRef}
+          className={`hidden overflow-hidden rounded-2xl bg-white px-5 py-6 lg:block relative transition-all duration-300 ease-in-out ${
+            sidebarOpen ? 'w-[260px] border border-web/50 opacity-100' : 'w-0 px-0 py-0 opacity-0'
           }`}>
           {sidebarOpen && (
             <>
               <p className='mb-4 text-xs font-semibold uppercase tracking-[0.3em] text-[#1F3B29]'>Categories</p>
-              <ul className='space-y-2 text-sm font-semibold text-[#1C1F1A]'>
-                {sidebarCategories.map(category => (
-                  <li
-                    key={category}
-                    className='flex cursor-pointer items-center justify-between rounded-xl px-2 py-2 hover:bg-[#F5EEE5]'
-                    onClick={() => setMobileCategoriesOpen(false)}>
-                    <div className='flex items-center gap-2 text-[#3F5C45]'>
-                      <span>{categoryIcons[category]}</span>
-                      <span>{category}</span>
-                    </div>
-                    <ChevronRight size={14} className='text-[#3F5C45]' />
-                  </li>
-                ))}
-              </ul>
+              {isLoadingCategories ? (
+                <div className='px-2 py-4 text-sm text-gray-500'>Loading categories...</div>
+              ) : categories.length === 0 ? (
+                <div className='px-2 py-4 text-sm text-gray-500'>No categories available</div>
+              ) : (
+                <ul className='space-y-2 text-sm font-semibold text-[#1C1F1A]'>
+                  {categories.map(category => (
+                    <li
+                      key={category._id}
+                      className='flex cursor-pointer items-center justify-between rounded-xl px-2 py-2 hover:bg-[#F5EEE5] transition-colors'>
+                      <Link
+                        href={`/products?category=${encodeURIComponent(category.slug || category.name)}`}
+                        className='flex items-center gap-2 text-[#3F5C45] flex-1'>
+                        <span>{categoryIcons[category.name] || <Diamond size={14} />}</span>
+                        <span>{category.name}</span>
+                      </Link>
+                      <ChevronRight size={14} className='text-[#3F5C45]' />
+                    </li>
+                  ))}
+                </ul>
+              )}
             </>
           )}
         </aside>
@@ -639,11 +774,15 @@ const Hero = ({ slides = defaultHeroSlides, isLoading = false }: { slides?: Hero
                         src={slide.main.image}
                         alt={slide.main.title}
                         fill
-                        // priority={slide.id === 1 || slide.id === heroSlides[0]?.id}
                         sizes='(max-width: 768px) 100vw, (max-width: 1024px) 70vw, 70vw'
                         className='object-cover'
                       />
-                      <div className='absolute inset-0 bg-black/40' />
+                      <div
+                        className='absolute inset-0'
+                        style={{
+                          backgroundColor: slide.backgroundColor ? `${slide.backgroundColor}80` : 'rgba(0, 0, 0, 0.4)',
+                        }}
+                      />
                       <div className='relative z-10 space-y-4'>
                         {slide.main.subtitle && <p className='text-xs uppercase tracking-[0.3em] text-white/80'>{slide.main.subtitle}</p>}
                         <h1 className='text-3xl font-bold text-white sm:text-4xl lg:text-5xl'>{slide.main.title}</h1>
@@ -664,7 +803,12 @@ const Hero = ({ slides = defaultHeroSlides, isLoading = false }: { slides?: Hero
                         sizes='(max-width: 768px) 100vw, (max-width: 1024px) 35vw, 35vw'
                         className='object-cover'
                       />
-                      <div className='absolute inset-0 bg-black/40' />
+                      <div
+                        className='absolute inset-0'
+                        style={{
+                          backgroundColor: slide.backgroundColor ? `${slide.backgroundColor}80` : 'rgba(0, 0, 0, 0.4)',
+                        }}
+                      />
                       <div className='relative z-10 space-y-2'>
                         {slide.side.subtitle && (
                           <p className='text-[11px] uppercase tracking-[0.3em] text-white/80'>{slide.side.subtitle}</p>
@@ -897,7 +1041,7 @@ const TrendingProducts = ({ products, isLoading = false }: { products?: ProductC
 const PromoShowcase = () => {
   return (
     <section className='w-full bg-[#F3F5F7]'>
-      <div className='grid items-center gap-6 md:grid-cols-2 w-full py-8 sm:py-10 md:py-12'>
+      <div className='mx-auto grid items-center gap-6 md:grid-cols-2 w-full max-w-[1440px] px-4 sm:px-6 md:px-8 lg:px-12 py-8 sm:py-10 md:py-12'>
         <div className='flex gap-4'>
           <img
             src='https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1200&q=80'
@@ -931,99 +1075,197 @@ const PromoShowcase = () => {
   );
 };
 
-const Collections = () => {
+const CollectionsSection = ({ dazzleData, isLoading = false }: { dazzleData: DazzleCard[]; isLoading?: boolean }) => {
   const router = useRouter();
+
+  if (isLoading && dazzleData.length === 0) {
+    return (
+      <section className='w-full'>
+        <div className='flex items-center justify-center py-8'>
+          <p className='text-gray-500'>Loading section...</p>
+        </div>
+      </section>
+    );
+  }
+
+  const cardsToShow =
+    dazzleData.length > 0
+      ? dazzleData
+      : [
+          {
+            _id: 'fallback-1',
+            title: 'Modern heirlooms',
+            subtitle: 'Ancient jewelry collection',
+            description: 'Beautiful long earrings with opal and carnelian stones—lightweight and radiant.',
+            buttonText: 'Explore more',
+            buttonLink: '/products',
+            image: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=800&q=80',
+          },
+          {
+            _id: 'fallback-2',
+            title: 'Modern heirlooms',
+            subtitle: 'Premium Collection',
+            description:
+              'Since many jewelry products can be ultra expensive, it becomes necessary for shoppers to know what exactly they can expect.',
+            buttonText: 'Shop now',
+            buttonLink: '/products',
+            image: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=800&q=80',
+          },
+        ];
+
   return (
     <section className='w-full'>
       <div className='border-b border-web pb-3'>
-        <SectionHeader title='Dazzel in Every Moment' actionLabel='View all' onActionClick={() => router.push('/products')} />
+        <SectionHeader title='Dazzle in Every Moment' actionLabel='View all' onActionClick={() => router.push('/products')} />
       </div>
 
       <div className='mt-6 grid grid-cols-1 gap-4 md:grid-cols-2'>
-        <div className='flex flex-col items-center gap-6 rounded-2xl bg-[#F3F5F7] p-6 md:flex-row'>
-          <img
-            src='https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=800&q=80'
-            className='h-64 w-full rounded-xl object-cover md:h-full md:w-1/2'
-            alt='Earrings'
-          />
+        {cardsToShow.map((card, index) => {
+          // First card: image on left, content on right
+          if (index === 0) {
+            return (
+              <div key={card._id} className='flex flex-col items-center gap-6 rounded-2xl bg-[#F3F5F7] p-6 md:flex-row'>
+                {card.image && (
+                  <img
+                    src={card.image}
+                    className='h-64 w-full rounded-xl object-cover md:h-full md:w-1/2'
+                    alt={card.subtitle || card.title || 'Collection image'}
+                  />
+                )}
 
-          <div className='flex flex-col justify-center'>
-            <h3 className='text-2xl font-semibold text-[#1C1F1A]'>Ancient jewelry collection</h3>
-            <p className='mt-3 text-sm text-[#4F3A2E]'>Beautiful long earrings with opal and carnelian stones—lightweight and radiant.</p>
+                <div className='flex flex-col justify-center'>
+                  {card.subtitle && <h3 className='text-2xl font-semibold text-[#1C1F1A]'>{card.subtitle}</h3>}
+                  {card.description && <p className='mt-3 text-sm text-[#4F3A2E]'>{card.description}</p>}
 
-            <Link
-              href='/products'
-              className='inline-flex mt-5 w-fit items-center gap-2 rounded-full bg-[#1F3B29] px-5 py-2 text-sm text-white hover:bg-[#2a4d3a] transition-colors'>
-              Explore more
-            </Link>
-          </div>
-        </div>
+                  <Link
+                    href={card.buttonLink || '/products'}
+                    className='inline-flex mt-5 w-fit items-center gap-2 rounded-full bg-[#1F3B29] px-5 py-2 text-sm text-white hover:bg-[#2a4d3a] transition-colors'>
+                    {card.buttonText || 'Explore more'}
+                  </Link>
+                </div>
+              </div>
+            );
+          }
 
-        <div className='flex flex-col gap-4 rounded-2xl bg-[#F3F5F7] p-6'>
-          <div>
-            <h3 className='text-xl font-semibold text-[#1C1F1A]'>Modern heirlooms</h3>
-            <p className='mt-3 text-sm text-[#4F3A2E]'>
-              Since many jewelry products can be ultra expensive, it becomes necessary for shoppers to know what exactly they can
-              expect—this is where VRAI’s jewelry description example trumps.
-            </p>
+          // Other cards: content on top, image on bottom
+          return (
+            <div key={card._id} className='flex flex-col gap-4 rounded-2xl bg-[#F3F5F7] p-6'>
+              <div>
+                {card.title && <h3 className='text-xl font-semibold text-[#1C1F1A]'>{card.title}</h3>}
+                {card.description && <p className='mt-3 text-sm text-[#4F3A2E]'>{card.description}</p>}
 
-            <Link
-              href='/products'
-              className='inline-flex mt-4 items-center gap-2 rounded-full bg-[#1F3B29] px-5 py-2 text-sm text-white hover:bg-[#2a4d3a] transition-colors'>
-              Shop now
-            </Link>
-          </div>
+                <Link
+                  href={card.buttonLink || '/products'}
+                  className='inline-flex mt-4 items-center gap-2 rounded-full bg-[#1F3B29] px-5 py-2 text-sm text-white hover:bg-[#2a4d3a] transition-colors'>
+                  {card.buttonText || 'Shop now'}
+                </Link>
+              </div>
 
-          <img
-            src='https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=800&q=80'
-            className='h-[330px] w-full rounded-xl object-cover'
-            alt='Woman with earring'
-          />
-        </div>
+              {card.image && (
+                <img src={card.image} className='h-[330px] w-full rounded-xl object-cover' alt={card.title || 'Collection image'} />
+              )}
+            </div>
+          );
+        })}
       </div>
     </section>
   );
 };
 
-const Updates = () => {
+const UpdatesSection = ({ newsItems, isLoading = false }: { newsItems: NewsItem[]; isLoading?: boolean }) => {
   const router = useRouter();
+
+  if (isLoading && newsItems.length === 0) {
+    return (
+      <section className='max-w-[1440px] mx-auto px-4 sm:px-6 md:px-8 lg:px-12 w-full space-y-4'>
+        <div className='flex items-center justify-center py-8'>
+          <p className='text-gray-500'>Loading news...</p>
+        </div>
+      </section>
+    );
+  }
+
+  const itemsToShow =
+    newsItems.length > 0
+      ? newsItems
+      : blogCards.map((card, index) => ({
+          _id: `fallback-${index}`,
+          title: card.title,
+          excerpt: card.desc,
+          image: card.img,
+          publishDate: card.date,
+          slug: '',
+        }));
+
+  const formatDate = (dateString: string) => {
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+    } catch {
+      return dateString;
+    }
+  };
+
   return (
-    <section className='w-full'>
+    <section className='max-w-[1440px] mx-auto px-4 sm:px-6 md:px-8 lg:px-12 w-full space-y-4'>
       <div className='border-b border-web pb-3'>
         <SectionHeader title='Our News & Updates' actionLabel='View all' onActionClick={() => router.push('/blog')} />
       </div>
       <div className='grid grid-cols-1 gap-6 py-8 sm:grid-cols-2 lg:grid-cols-3'>
-        {blogCards.map(card => (
-          <div key={card.id} className='rounded-2xl border border-web/60 bg-[#F3F5F7] p-4 shadow-sm'>
+        {itemsToShow.map(item => (
+          <Link
+            key={item._id}
+            href={item.slug ? `/blog/${item.slug}` : '/blog'}
+            className='rounded-2xl border border-web/60 bg-[#F3F5F7] p-4 shadow-sm hover:shadow-md transition-shadow'>
             <div className='overflow-hidden rounded-xl'>
-              <img src={card.img} alt={card.title} className='h-56 w-full object-cover' />
+              <img
+                src={item.image || 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=800&q=80'}
+                alt={item.title}
+                className='h-56 w-full object-cover'
+              />
             </div>
 
             <div className='mt-4 text-[#1C1F1A]'>
-              <p className='text-xs text-[#4F3A2E]'>
-                {card.category} &nbsp; | &nbsp; {card.date}
-              </p>
+              <p className='text-xs text-[#4F3A2E]'>News &nbsp; | &nbsp; {formatDate(item.publishDate)}</p>
 
-              <h3 className='mt-2 text-lg font-semibold'>{card.title}</h3>
+              <h3 className='mt-2 text-lg font-semibold'>{item.title}</h3>
 
-              <p className='mt-2 text-sm text-[#4F3A2E]'>{card.desc}</p>
+              <p className='mt-2 text-sm text-[#4F3A2E]'>{item.excerpt}</p>
             </div>
-          </div>
+          </Link>
         ))}
       </div>
     </section>
   );
 };
 
-const Gallery = () => {
+const GallerySection = ({ galleryItems, isLoading = false }: { galleryItems: GalleryItem[]; isLoading?: boolean }) => {
+  if (isLoading && galleryItems.length === 0) {
+    return (
+      <section className='w-full'>
+        <div className='flex items-center justify-center py-8'>
+          <p className='text-gray-500'>Loading gallery...</p>
+        </div>
+      </section>
+    );
+  }
+
+  const itemsToShow =
+    galleryItems.length > 0
+      ? galleryItems
+      : images.map((src, index) => ({
+          _id: `fallback-${index}`,
+          image: src,
+        }));
+
   return (
     <section className='w-full'>
       <SectionHeader title='Gallery' align='center' description='A glimpse into our recent shoots and studio moments.' />
 
       <div className='mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4'>
-        {images.map((src, index) => (
-          <div key={`gallery-image-${index}-${src}`} className={`overflow-hidden rounded-xl shadow-sm`}>
-            <img src={src} className='h-40 w-full object-cover sm:h-56 lg:h-64' alt={`Gallery image ${index + 1}`} />
+        {itemsToShow.map(item => (
+          <div key={`gallery-image-${item._id}`} className='overflow-hidden rounded-xl shadow-sm hover:shadow-md transition-shadow'>
+            <img src={item.image} className='h-40 w-full object-cover sm:h-56 lg:h-64' alt='Gallery image' />
           </div>
         ))}
       </div>
@@ -1072,10 +1314,10 @@ const BestSellers = ({ products, isLoading = false }: { products?: ProductCardDa
   return (
     <section className='w-full space-y-6'>
       <div className='border-b border-web pb-3'>
-        <SectionHeader 
-          title='Best Sellers' 
-          description='Our most loved products' 
-          actionLabel='View all' 
+        <SectionHeader
+          title='Best Sellers'
+          description='Our most loved products'
+          actionLabel='View all'
           onActionClick={() => router.push('/products?featured=true')}
         />
       </div>
@@ -1151,6 +1393,102 @@ const Subscribe = () => {
           </button>
         </div>
       </div>
+    </section>
+  );
+};
+
+const NewArrivalsSection = ({
+  banner,
+  cards,
+  isLoading = false,
+}: {
+  banner: {
+    title: string;
+    subtitle: string;
+    description: string;
+    backgroundImage: string;
+  } | null;
+  cards: {
+    _id: string;
+    title: string;
+    image: string;
+    type: 'card' | 'banner';
+  }[];
+  isLoading?: boolean;
+}) => {
+  if (isLoading && !banner && cards.length === 0) {
+    return (
+      <section className='relative w-full'>
+        <div className='flex items-center justify-center py-8'>
+          <p className='text-gray-500'>Loading...</p>
+        </div>
+      </section>
+    );
+  }
+
+  const bannerData = banner || {
+    title: 'New Arrivals',
+    subtitle: '💎 500+ New Items',
+    description: 'New Arrivals Dropping Daily, Monday through Friday.\nExplore the Latest Launches Now!',
+    backgroundImage: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=1920&q=80',
+  };
+
+  // Filter cards to show only 'card' type items
+  const cardsToShow = cards.filter(card => card.type === 'card' || !card.type);
+
+  const fallbackCards = [
+    {
+      _id: 'fallback-1',
+      title: 'Silver Idols',
+      image: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=600&q=80',
+      type: 'card' as const,
+    },
+    {
+      _id: 'fallback-2',
+      title: 'Floral Bloom',
+      image: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=600&q=80',
+      type: 'card' as const,
+    },
+  ];
+
+  const displayCards = cardsToShow.length > 0 ? cardsToShow : fallbackCards;
+
+  return (
+    <section className='relative w-full'>
+      {/* Background Banner */}
+      <div className='relative h-[380px] md:h-[420px] w-full'>
+        <Image src={bannerData.backgroundImage} alt='New Arrivals Banner' fill className='object-cover' />
+
+        <div className='absolute inset-0 bg-black/20'></div>
+
+        <div className='absolute inset-0 flex flex-col justify-center px-6 md:px-20 text-white'>
+          <h2 className='text-4xl md:text-5xl font-semibold'>{bannerData.title}</h2>
+
+          {bannerData.subtitle && (
+            <div className='mt-3 bg-white/30 text-white px-4 py-1 rounded-full w-fit backdrop-blur-md text-sm'>{bannerData.subtitle}</div>
+          )}
+
+          {bannerData.description && (
+            <p className='mt-4 text-lg md:text-xl max-w-[600px] leading-relaxed whitespace-pre-line'>{bannerData.description}</p>
+          )}
+        </div>
+      </div>
+
+      {/* White Floating Cards */}
+      {displayCards.length > 0 && (
+        <div className='max-w-[1300px] mx-auto px-4 md:px-10 -mt-20 md:-mt-24 relative z-10'>
+          <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+            {displayCards.map(card => (
+              <div key={card._id} className='bg-white rounded-xl overflow-hidden shadow-lg'>
+                <div className='relative h-[300px] md:h-[350px]'>
+                  <Image src={card.image} alt={card.title} fill className='object-cover' />
+                </div>
+                <p className='px-6 py-4 text-lg font-medium'>{card.title}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </section>
   );
 };
