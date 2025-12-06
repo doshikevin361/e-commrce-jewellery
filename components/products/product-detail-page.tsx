@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { ProductCardData } from '@/components/home/common/product-card';
 import { ProductCard } from '@/components/home/common/product-card';
+import { PageLoader } from '@/components/common/page-loader';
 
 // Dynamic product interface
 interface ProductDetail {
@@ -152,12 +153,7 @@ export function ProductDetailPage({ productId }: { productId: string }) {
   }, [productId]);
 
   if (loading) {
-    return (
-      <div className='mx-auto w-full max-w-[1400px] px-4 sm:px-6 md:px-8 lg:px-12 py-20 text-center'>
-        <div className='animate-spin rounded-full h-16 w-16 border-4 border-[#E6D3C2] border-t-[#C8A15B] mx-auto mb-6'></div>
-        <div className='text-[#4F3A2E] text-lg font-medium'>Loading product details...</div>
-      </div>
-    );
+    return <PageLoader message="Loading product details..." />;
   }
 
   if (error || !product) {
