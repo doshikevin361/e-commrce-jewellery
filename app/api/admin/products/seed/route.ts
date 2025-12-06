@@ -1195,18 +1195,24 @@ export async function POST(request: NextRequest) {
   try {
     const { db } = await connectToDatabase();
     
+    // Check for force parameter
+    const { searchParams } = new URL(request.url);
+    const force = searchParams.get('force') === 'true';
+    
     // Check if products already exist
     const existingCount = await db.collection('products').countDocuments();
-    if (existingCount > 0) {
+    if (existingCount > 0 && !force) {
       return NextResponse.json(
         { 
           message: `Database already contains ${existingCount} products. To add sample products, please delete existing products first or use force=true parameter.`,
-          existingCount 
+          existingCount,
+          hint: 'Add ?force=true to the URL to add products anyway'
         },
         { status: 400 }
       );
     }
     
+    // If force is true, we'll add products anyway (they might have different SKUs)
     // Insert sample products
     const result = await db.collection('products').insertMany(sampleProducts);
     
