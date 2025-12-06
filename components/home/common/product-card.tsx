@@ -69,7 +69,7 @@ export const ProductCard = ({ product, className, actionLabel = 'Add to cart', o
           {product.title}
         </h3>
 
-        <div className='flex items-center gap-2 text-xs mt-1.5'>
+        <div className='flex items-center gap-2 text-xs my-1.5'>
           {[...Array(5)].map((_, i) => (
             <Star key={i} className={`w-4 h-4 ${i < Math.floor(rating) ? 'fill-amber-400 text-amber-400' : 'text-gray-300'}`} />
           ))}

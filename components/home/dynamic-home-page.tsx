@@ -126,7 +126,7 @@ type HomepageSectionsState = {
   };
 };
 
-const SECTION_SPACING = 'mt-12 sm:mt-16 lg:mt-20';
+const SECTION_SPACING = 'mt-12 sm:mt-16 lg:mt-20 mx-auto flex w-full max-w-[1440px] px-4 sm:px-6 md:px-8 lg:px-12';
 const DEFAULT_CATEGORY_IMAGE = 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=800&q=80';
 const DEFAULT_PRODUCT_IMAGE = 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=1200&q=80';
 
@@ -570,9 +570,13 @@ export const HomePage = () => {
 
   return (
     <>
-      <div className='mx-auto flex w-full max-w-[1440px] flex-col gap-0 px-4 sm:px-6 md:px-8 lg:px-12'>
-        <Hero slides={sectionsData.hero} isLoading={isLoading} />
-        <CategoryStrip categoriesData={sectionsData.categories} isLoading={isLoading} />
+      <div className='flex-col gap-0 '>
+        <div className={'mx-auto max-w-[1440px] w-full px-4 sm:px-6 md:px-8 lg:px-12'}>
+          <Hero slides={sectionsData.hero} isLoading={isLoading} />
+        </div>
+        <div className={'mx-auto max-w-[1440px] w-full px-4 sm:px-6 md:px-8 lg:px-12'}>
+          <CategoryStrip categoriesData={sectionsData.categories} isLoading={isLoading} />
+        </div>
         {errorMessage && (
           <div className='mt-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700'>{errorMessage}</div>
         )}
