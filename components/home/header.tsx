@@ -28,6 +28,7 @@ const Grid2x2CheckIcon = ({ size, className }: { size: number; className?: strin
 // Menu items with submenus for jewelry e-commerce
 const menuItems = [
   { name: 'Home', href: '/' },
+  { name: 'Jewellery', href: '/jewellery' },
   {
     name: 'Shop',
     href: '#shop',
