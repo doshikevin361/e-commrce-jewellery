@@ -9,6 +9,7 @@ import { X, Filter, Gem, ChevronDown, ChevronUp } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { PageLoader } from '@/components/common/page-loader';
 
 // Interfaces
 interface Category {
@@ -186,7 +187,7 @@ export function JewelleryPage() {
 
     // Parse attribute filters - check all URL params for attribute matches
     const attrFilters: Record<string, string[]> = {};
-    
+
     // Check known attribute names first
     attributes.forEach(attr => {
       const paramName = attr.name.toLowerCase().replace(/\s+/g, '_');
@@ -200,9 +201,7 @@ export function JewelleryPage() {
     searchParams.forEach((value, key) => {
       if (!['category', 'brand', 'minPrice', 'maxPrice', 'inStock', 'search'].includes(key)) {
         // This might be an attribute
-        const matchingAttr = attributes.find(
-          attr => attr.name.toLowerCase().replace(/\s+/g, '_') === key
-        );
+        const matchingAttr = attributes.find(attr => attr.name.toLowerCase().replace(/\s+/g, '_') === key);
         if (matchingAttr) {
           if (!attrFilters[matchingAttr.name]) {
             attrFilters[matchingAttr.name] = [];
@@ -211,13 +210,19 @@ export function JewelleryPage() {
         } else {
           // Try to match by common attribute patterns
           const normalizedKey = key.toLowerCase();
-          if (normalizedKey.includes('metal') || normalizedKey.includes('purity') || 
-              normalizedKey.includes('stone') || normalizedKey.includes('type') ||
-              normalizedKey.includes('gender') || normalizedKey.includes('occasion')) {
+          if (
+            normalizedKey.includes('metal') ||
+            normalizedKey.includes('purity') ||
+            normalizedKey.includes('stone') ||
+            normalizedKey.includes('type') ||
+            normalizedKey.includes('gender') ||
+            normalizedKey.includes('occasion')
+          ) {
             // Create a temporary attribute filter
-            const attrName = key.split('_').map(word => 
-              word.charAt(0).toUpperCase() + word.slice(1)
-            ).join(' ');
+            const attrName = key
+              .split('_')
+              .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+              .join(' ');
             attrFilters[attrName] = value.split(',').filter(Boolean);
           }
         }
@@ -228,9 +233,13 @@ export function JewelleryPage() {
       setSelectedAttributes(attrFilters);
     } else if (attributes.length > 0) {
       // Only reset if we have attributes loaded and no filters in URL
-      const hasAnyParam = searchParams.has('category') || searchParams.has('brand') || 
-                          searchParams.has('minPrice') || searchParams.has('maxPrice') ||
-                          searchParams.has('inStock') || searchParams.has('search');
+      const hasAnyParam =
+        searchParams.has('category') ||
+        searchParams.has('brand') ||
+        searchParams.has('minPrice') ||
+        searchParams.has('maxPrice') ||
+        searchParams.has('inStock') ||
+        searchParams.has('search');
       if (!hasAnyParam) {
         setSelectedAttributes({});
       }
@@ -280,7 +289,7 @@ export function JewelleryPage() {
       // Search query filter
       if (searchQuery.trim()) {
         const queryLower = searchQuery.toLowerCase();
-        const matchesSearch = 
+        const matchesSearch =
           product.name.toLowerCase().includes(queryLower) ||
           product.shortDescription?.toLowerCase().includes(queryLower) ||
           product.category?.toLowerCase().includes(queryLower) ||
@@ -424,14 +433,7 @@ export function JewelleryPage() {
   };
 
   if (loading) {
-    return (
-      <div className='min-h-screen flex items-center justify-center bg-[#F5EEE5]'>
-        <div className='text-center'>
-          <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-[#1F3B29] mx-auto mb-4'></div>
-          <p className='text-[#4F3A2E]'>Loading jewellery...</p>
-        </div>
-      </div>
-    );
+    return <PageLoader message='Loading jewellery...' className='min-h-screen' />;
   }
 
   if (error) {
@@ -506,16 +508,19 @@ export function JewelleryPage() {
         </div>
 
         {/* Active Filters */}
-        {(selectedCategories.length > 0 || selectedBrands.length > 0 || Object.keys(selectedAttributes).length > 0 || searchQuery.trim() || showInStockOnly || priceRange[0] > priceBounds[0] || priceRange[1] < priceBounds[1]) && (
+        {(selectedCategories.length > 0 ||
+          selectedBrands.length > 0 ||
+          Object.keys(selectedAttributes).length > 0 ||
+          searchQuery.trim() ||
+          showInStockOnly ||
+          priceRange[0] > priceBounds[0] ||
+          priceRange[1] < priceBounds[1]) && (
           <div className='mb-6 flex flex-wrap items-center gap-2'>
             <span className='text-sm font-medium text-[#1F3B29]'>Active filters:</span>
             {searchQuery.trim() && (
               <Badge variant='outline' className='bg-[#F5EEE5] border-[#E6D3C2] text-[#1F3B29]'>
                 Search: {searchQuery}
-                <button
-                  onClick={() => setSearchQuery('')}
-                  className='ml-2 hover:text-red-600'
-                >
+                <button onClick={() => setSearchQuery('')} className='ml-2 hover:text-red-600'>
                   <X className='w-3 h-3' />
                 </button>
               </Badge>
@@ -525,8 +530,7 @@ export function JewelleryPage() {
                 {category}
                 <button
                   onClick={() => setSelectedCategories(selectedCategories.filter(c => c !== category))}
-                  className='ml-2 hover:text-red-600'
-                >
+                  className='ml-2 hover:text-red-600'>
                   <X className='w-3 h-3' />
                 </button>
               </Badge>
@@ -534,10 +538,7 @@ export function JewelleryPage() {
             {selectedBrands.map(brand => (
               <Badge key={brand} variant='outline' className='bg-[#F5EEE5] border-[#E6D3C2] text-[#1F3B29]'>
                 {brand}
-                <button
-                  onClick={() => setSelectedBrands(selectedBrands.filter(b => b !== brand))}
-                  className='ml-2 hover:text-red-600'
-                >
+                <button onClick={() => setSelectedBrands(selectedBrands.filter(b => b !== brand))} className='ml-2 hover:text-red-600'>
                   <X className='w-3 h-3' />
                 </button>
               </Badge>
@@ -546,10 +547,7 @@ export function JewelleryPage() {
               values.map(value => (
                 <Badge key={`${attrName}-${value}`} variant='outline' className='bg-[#F5EEE5] border-[#E6D3C2] text-[#1F3B29]'>
                   {attrName}: {value}
-                  <button
-                    onClick={() => handleAttributeChange(attrName, value, false)}
-                    className='ml-2 hover:text-red-600'
-                  >
+                  <button onClick={() => handleAttributeChange(attrName, value, false)} className='ml-2 hover:text-red-600'>
                     <X className='w-3 h-3' />
                   </button>
                 </Badge>
@@ -558,10 +556,7 @@ export function JewelleryPage() {
             {showInStockOnly && (
               <Badge variant='outline' className='bg-[#F5EEE5] border-[#E6D3C2] text-[#1F3B29]'>
                 In Stock Only
-                <button
-                  onClick={() => setShowInStockOnly(false)}
-                  className='ml-2 hover:text-red-600'
-                >
+                <button onClick={() => setShowInStockOnly(false)} className='ml-2 hover:text-red-600'>
                   <X className='w-3 h-3' />
                 </button>
               </Badge>
@@ -569,10 +564,7 @@ export function JewelleryPage() {
             {(priceRange[0] > priceBounds[0] || priceRange[1] < priceBounds[1]) && (
               <Badge variant='outline' className='bg-[#F5EEE5] border-[#E6D3C2] text-[#1F3B29]'>
                 Price: ₹{priceRange[0].toLocaleString()} - ₹{priceRange[1].toLocaleString()}
-                <button
-                  onClick={() => setPriceRange(priceBounds)}
-                  className='ml-2 hover:text-red-600'
-                >
+                <button onClick={() => setPriceRange(priceBounds)} className='ml-2 hover:text-red-600'>
                   <X className='w-3 h-3' />
                 </button>
               </Badge>
@@ -583,7 +575,7 @@ export function JewelleryPage() {
         <div className='flex gap-6 lg:gap-8'>
           {/* Filters Sidebar */}
           <aside className={cn('w-full lg:w-80 flex-shrink-0 transition-all duration-300', 'lg:block', showFilters ? 'block' : 'hidden')}>
-            <div className='bg-white border border-[#E6D3C2] rounded-xl p-4 sm:p-6 sticky top-4'>
+            <div className='bg-white border border-[#E6D3C2] rounded-xl p-4 sm:p-6 sticky top-36'>
               <div className='flex items-center justify-between mb-6'>
                 <h3 className='text-lg font-semibold text-[#1F3B29]'>Filters</h3>
                 <div className='flex items-center gap-2'>
