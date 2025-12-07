@@ -153,7 +153,7 @@ export function ProductDetailPage({ productId }: { productId: string }) {
   }, [productId]);
 
   if (loading) {
-    return <PageLoader message="Loading product details..." />;
+    return <PageLoader message='Loading product details...' />;
   }
 
   if (error || !product) {
@@ -185,7 +185,7 @@ export function ProductDetailPage({ productId }: { productId: string }) {
   const relatedProducts = product.relatedProducts || [];
 
   return (
-    <div className='mx-auto w-full max-w-[1400px] px-4 sm:px-6 md:px-8 lg:px-12 py-8 sm:py-10 md:py-12'>
+    <div className='mx-auto w-full max-w-[1440px] px-4 sm:px-6 md:px-8 lg:px-12 py-8 sm:py-10 md:py-12'>
       {/* Back Button */}
       <button
         onClick={() => router.back()}
@@ -196,7 +196,7 @@ export function ProductDetailPage({ productId }: { productId: string }) {
 
       <div className='grid grid-cols-1 lg:grid-cols-2 gap-10 sm:gap-12 lg:gap-16 mb-16'>
         {/* Images */}
-        <div className='sticky top-8'>
+        <div className='sticky top-24 self-start h-fit'>
           <div className='relative aspect-square w-full overflow-hidden rounded-3xl bg-gradient-to-br from-[#F5EEE5] to-[#E6D3C2] mb-6 shadow-lg group'>
             <Image
               src={images[selectedImage]}
@@ -286,6 +286,39 @@ export function ProductDetailPage({ productId }: { productId: string }) {
                 {product.shortDescription ||
                   `Experience the elegance and sophistication of this exquisite ${product.category.toLowerCase()}. Crafted with precision and attention to detail, perfect for any occasion.`}
               </p>
+            </div>
+
+            <div>
+              <label className='block text-sm font-bold text-[#1F3B29] mb-3'>Quantity</label>
+              <div className='flex items-center gap-4'>
+                <div className='flex items-center border-2 border-[#E6D3C2] rounded-xl overflow-hidden bg-white'>
+                  <button
+                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                    className='p-3 hover:bg-[#F5EEE5] transition-colors text-[#1F3B29]'>
+                    <Minus size={18} />
+                  </button>
+                  <span className='px-6 py-3 text-[#1F3B29] font-bold text-lg min-w-[60px] text-center'>{quantity}</span>
+                  <button onClick={() => setQuantity(quantity + 1)} className='p-3 hover:bg-[#F5EEE5] transition-colors text-[#1F3B29]'>
+                    <Plus size={18} />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className='flex flex-col sm:flex-row gap-4'>
+              <Link
+                href='/cart'
+                className='flex-1 flex items-center justify-center gap-3 rounded-xl bg-gradient-to-r from-[#1F3B29] to-[#2a4d3a] px-8 py-4 text-white font-bold text-lg hover:shadow-xl transition-all hover:scale-[1.02]'>
+                <ShoppingCart size={22} />
+                Add to Cart
+              </Link>
+              <button className='flex items-center justify-center gap-2 rounded-xl border-2 border-[#1F3B29] px-6 py-4 text-[#1F3B29] font-semibold hover:bg-[#F5EEE5] transition-all hover:scale-105'>
+                <Heart size={22} />
+              </button>
+              <button className='flex items-center justify-center gap-2 rounded-xl border-2 border-[#1F3B29] px-6 py-4 text-[#1F3B29] font-semibold hover:bg-[#F5EEE5] transition-all hover:scale-105'>
+                <Share2 size={22} />
+              </button>
             </div>
 
             {/* Comprehensive Jewelry Details */}
@@ -628,39 +661,6 @@ export function ProductDetailPage({ productId }: { productId: string }) {
 
           {/* Quantity & Actions */}
           <div className='space-y-6 pt-6 border-t border-[#E6D3C2]'>
-            <div>
-              <label className='block text-sm font-bold text-[#1F3B29] mb-3'>Quantity</label>
-              <div className='flex items-center gap-4'>
-                <div className='flex items-center border-2 border-[#E6D3C2] rounded-xl overflow-hidden bg-white'>
-                  <button
-                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    className='p-3 hover:bg-[#F5EEE5] transition-colors text-[#1F3B29]'>
-                    <Minus size={18} />
-                  </button>
-                  <span className='px-6 py-3 text-[#1F3B29] font-bold text-lg min-w-[60px] text-center'>{quantity}</span>
-                  <button onClick={() => setQuantity(quantity + 1)} className='p-3 hover:bg-[#F5EEE5] transition-colors text-[#1F3B29]'>
-                    <Plus size={18} />
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Action Buttons */}
-            <div className='flex flex-col sm:flex-row gap-4'>
-              <Link
-                href='/cart'
-                className='flex-1 flex items-center justify-center gap-3 rounded-xl bg-gradient-to-r from-[#1F3B29] to-[#2a4d3a] px-8 py-4 text-white font-bold text-lg hover:shadow-xl transition-all hover:scale-[1.02]'>
-                <ShoppingCart size={22} />
-                Add to Cart
-              </Link>
-              <button className='flex items-center justify-center gap-2 rounded-xl border-2 border-[#1F3B29] px-6 py-4 text-[#1F3B29] font-semibold hover:bg-[#F5EEE5] transition-all hover:scale-105'>
-                <Heart size={22} />
-              </button>
-              <button className='flex items-center justify-center gap-2 rounded-xl border-2 border-[#1F3B29] px-6 py-4 text-[#1F3B29] font-semibold hover:bg-[#F5EEE5] transition-all hover:scale-105'>
-                <Share2 size={22} />
-              </button>
-            </div>
-
             {/* Features */}
             <div className='grid grid-cols-1 sm:grid-cols-3 gap-4 pt-6'>
               <div className='flex items-start gap-4 p-5 bg-gradient-to-br from-[#F5EEE5] to-white rounded-xl border border-[#E6D3C2] hover:shadow-md transition-shadow'>
