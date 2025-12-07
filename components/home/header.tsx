@@ -3,7 +3,7 @@
 import { Diamond, ShoppingCart, User, Menu, X, ChevronDown, Heart, List } from 'lucide-react';
 import SearchBar from './SearchBar/SearchBar';
 import Link from 'next/link';
-import { useState, useEffect, useRef, useContext } from 'react';
+import React, { useState, useEffect, useRef, useContext } from 'react';
 import { CategoriesContext } from '@/contexts/CategoriesContext';
 import { CategoriesDropdown } from './CategoriesDropdown';
 
@@ -51,7 +51,6 @@ export function HomeHeader() {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(false);
   const dropdownRef = useRef<HTMLUListElement>(null);
 
   useEffect(() => {
@@ -82,43 +81,6 @@ export function HomeHeader() {
     return () => window.removeEventListener('resize', handleResize);
   }, [categoriesContext, mounted]);
 
-  // Scroll detection for sticky header with throttling for better performance
-  useEffect(() => {
-    if (!mounted) return;
-
-    let lastScrollY = window.scrollY;
-    let ticking = false;
-    const scrollThreshold = 100; // Show header after scrolling 100px
-    const scrollBuffer = 20; // Buffer to prevent flickering
-
-    const handleScroll = () => {
-      if (!ticking) {
-        window.requestAnimationFrame(() => {
-          const scrollPosition = window.scrollY;
-          const scrollDifference = Math.abs(scrollPosition - lastScrollY);
-          
-          // Only update if scroll difference is significant (reduces jitter)
-          if (scrollDifference > 3) {
-            // Use buffer to prevent flickering when near threshold
-            if (scrollPosition > scrollThreshold + scrollBuffer) {
-              setIsScrolled(true);
-            } else if (scrollPosition < scrollThreshold - scrollBuffer) {
-              setIsScrolled(false);
-            }
-            // If within buffer zone, maintain current state
-            lastScrollY = scrollPosition;
-          }
-          
-          ticking = false;
-        });
-        ticking = true;
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [mounted]);
-
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -140,26 +102,15 @@ export function HomeHeader() {
   }, [openDropdown, categoriesContext]);
 
   return (
-    <>
-      {/* Compact Sticky Header - Shows when scrolled */}
-      <div
-        className={`fixed top-0 left-0 right-0 z-50 ${
-          isScrolled
-            ? 'translate-y-0 opacity-100 visible scale-100 transition-all duration-300 ease-out'
-            : '-translate-y-full opacity-0 invisible scale-[0.98] pointer-events-none transition-all duration-200 ease-in'
-        }`}>
-        {/* Backdrop with blur effect for modern glass-morphism look */}
-        <div
-          className={`absolute inset-0 bg-white/98 backdrop-blur-lg border-b border-gray-200/60 ${
-            isScrolled ? 'shadow-xl transition-shadow duration-300' : 'shadow-none'
-          }`}
-        />
-        <div className='relative mx-auto flex w-full max-w-[1440px] items-center justify-between gap-2 sm:gap-3 md:gap-4 px-4 sm:px-6 md:px-8 lg:px-12 py-3 sm:py-3.5'>
+    <React.Fragment>
+      {/* Top bar with logo, search, and account/cart - Fixed Sticky */}
+      <div className='fixed top-0 left-0 right-0 bg-white z-50 shadow-sm'>
+        <div className='mx-auto mb-2 sm:mb-3 md:mb-4 flex w-full max-w-[1440px] items-center justify-between gap-2 sm:gap-3 md:gap-4 px-4 sm:px-6 md:px-8 lg:px-12 py-2 sm:py-2.5 md:py-3 pt-3 sm:pt-4 md:pt-6 lg:pt-8'>
           <Link
             href='/'
-            className='flex items-center gap-1.5 sm:gap-2 flex-shrink-0 transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer'>
-            <Diamond size={18} className='text-[#1F3B29]' />
-            <span className='text-base md:text-lg font-semibold tracking-wide text-[#1F3B29] whitespace-nowrap'>
+            className='flex items-center gap-1 sm:gap-1.5 md:gap-2 flex-shrink-0 transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer'>
+            <Diamond size={16} className='sm:w-[17px] sm:h-[17px] md:w-[18px] md:h-[18px] text-[#1F3B29]' />
+            <span className='text-sm sm:text-base md:text-lg lg:text-xl font-semibold tracking-[0.08em] sm:tracking-[0.1em] md:tracking-[0.15em] lg:tracking-[0.2em] text-[#1F3B29] whitespace-nowrap'>
               LuxeLoom
             </span>
           </Link>
@@ -168,123 +119,80 @@ export function HomeHeader() {
             <SearchBar />
           </div>
 
-          <div className='flex items-center gap-2 sm:gap-3 md:gap-4 text-sm text-[#1F3B29]'>
+          <div className='flex items-center gap-1.5 sm:gap-2 md:gap-4 lg:gap-6 text-xs sm:text-sm text-[#1F3B29]'>
             <Link
               href='/wishlist'
-              className='hidden sm:flex items-center gap-1 font-semibold px-2 transition-all duration-300 hover:scale-110 active:scale-95'
+              className='hidden sm:flex items-center gap-1 font-semibold px-1 sm:px-1.5 md:px-2 transition-all duration-300 hover:scale-110 active:scale-95 relative'
               aria-label='Wishlist'>
-              <Heart size={18} className='flex-shrink-0' />
-              <span className='hidden md:inline text-sm whitespace-nowrap'>Wishlist</span>
+              <Heart size={15} className='sm:w-[16px] sm:h-[16px] md:w-[18px] md:h-[18px] flex-shrink-0' />
+              <span className='hidden md:inline text-xs sm:text-sm whitespace-nowrap'>Wishlist</span>
             </Link>
             <Link
               href='/'
-              className='flex items-center gap-1 font-semibold px-2 transition-all duration-300 hover:scale-110 active:scale-95 whitespace-nowrap'
+              className='flex items-center gap-0.5 sm:gap-1 font-semibold px-1 sm:px-1.5 md:px-2 transition-all duration-300 hover:scale-110 active:scale-95 whitespace-nowrap'
               aria-label='Account'>
-              <User size={18} className='flex-shrink-0' />
-              <span className='hidden sm:inline text-sm whitespace-nowrap'>Your Account</span>
+              <User size={15} className='sm:w-[16px] sm:h-[16px] md:w-[18px] md:h-[18px] flex-shrink-0' />
+              <span className='hidden sm:inline text-xs sm:text-sm whitespace-nowrap'>Your Account</span>
             </Link>
             <Link
               href='/cart'
-              className='flex items-center gap-1.5 font-semibold px-2 transition-all duration-300 hover:scale-110 active:scale-95 relative'
+              className='flex items-center gap-1 sm:gap-1.5 font-semibold px-1 sm:px-1.5 md:px-2 transition-all duration-300 hover:scale-110 active:scale-95 relative'
               aria-label='Cart'>
               <div className='relative flex-shrink-0'>
-                <ShoppingCart size={18} className='text-[#1F3B29]' />
-                <span className='absolute -top-1 -right-1 bg-[#C8A15B] text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center shadow-sm leading-none'>
+                <ShoppingCart size={15} className='sm:w-[16px] sm:h-[16px] md:w-[18px] md:h-[18px] text-[#1F3B29]' />
+                <span className='absolute -top-1 -right-1 bg-[#C8A15B] text-white text-[9px] sm:text-[10px] font-bold rounded-full w-3.5 h-3.5 sm:w-4 sm:h-4 flex items-center justify-center shadow-sm leading-none'>
                   0
                 </span>
               </div>
-              <span className='hidden sm:inline text-sm whitespace-nowrap text-[#1F3B29]'>Your Cart</span>
+              <span className='hidden sm:inline text-xs sm:text-sm whitespace-nowrap text-[#1F3B29]'>Your Cart</span>
             </Link>
+          </div>
+          {/* Mobile Search Bar */}
+          <div className='sm:hidden px-4 sm:px-6 pb-2 sm:pb-3'>
+            <SearchBar />
           </div>
         </div>
       </div>
 
-      {/* Main Header - Not sticky */}
+      {/* Main Header with Navigation */}
       <header className='bg-white'>
-        {/* Top bar with logo, search, and account/cart */}
-        <div className='mx-auto mb-2 sm:mb-3 md:mb-4 flex w-full max-w-[1440px] items-center justify-between gap-2 sm:gap-3 md:gap-4 px-4 sm:px-6 md:px-8 lg:px-12 py-2 sm:py-2.5 md:py-3 pt-3 sm:pt-4 md:pt-6 lg:pt-8'>
-        <Link
-          href='/'
-          className='flex items-center gap-1 sm:gap-1.5 md:gap-2 flex-shrink-0 transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer'>
-          <Diamond size={16} className='sm:w-[17px] sm:h-[17px] md:w-[18px] md:h-[18px] text-[#1F3B29]' />
-          <span className='text-sm sm:text-base md:text-lg lg:text-xl font-semibold tracking-[0.08em] sm:tracking-[0.1em] md:tracking-[0.15em] lg:tracking-[0.2em] text-[#1F3B29] whitespace-nowrap'>
-            LuxeLoom
-          </span>
-        </Link>
+        {/* Spacer to account for fixed header */}
+        <div className='h-[80px] sm:h-[90px] md:h-[100px] lg:h-[110px]' />
 
-        <div className='hidden sm:flex mx-2 sm:mx-3 md:mx-4 lg:mx-5 flex-1 max-w-xs sm:max-w-sm md:max-w-lg lg:max-w-2xl'>
-          <SearchBar />
-        </div>
-
-        <div className='flex items-center gap-1.5 sm:gap-2 md:gap-4 lg:gap-6 text-xs sm:text-sm text-[#1F3B29]'>
-          <Link
-            href='/wishlist'
-            className='hidden sm:flex items-center gap-1 font-semibold px-1 sm:px-1.5 md:px-2 transition-all duration-300 hover:scale-110 active:scale-95 relative'
-            aria-label='Wishlist'>
-            <Heart size={15} className='sm:w-[16px] sm:h-[16px] md:w-[18px] md:h-[18px] flex-shrink-0' />
-            <span className='hidden md:inline text-xs sm:text-sm whitespace-nowrap'>Wishlist</span>
-          </Link>
-          <Link
-            href='/'
-            className='flex items-center gap-0.5 sm:gap-1 font-semibold px-1 sm:px-1.5 md:px-2 transition-all duration-300 hover:scale-110 active:scale-95 whitespace-nowrap'
-            aria-label='Account'>
-            <User size={15} className='sm:w-[16px] sm:h-[16px] md:w-[18px] md:h-[18px] flex-shrink-0' />
-            <span className='hidden sm:inline text-xs sm:text-sm whitespace-nowrap'>Your Account</span>
-          </Link>
-          <Link
-            href='/cart'
-            className='flex items-center gap-1 sm:gap-1.5 font-semibold px-1 sm:px-1.5 md:px-2 transition-all duration-300 hover:scale-110 active:scale-95 relative'
-            aria-label='Cart'>
-            <div className='relative flex-shrink-0'>
-              <ShoppingCart size={15} className='sm:w-[16px] sm:h-[16px] md:w-[18px] md:h-[18px] text-[#1F3B29]' />
-              <span className='absolute -top-1 -right-1 bg-[#C8A15B] text-white text-[9px] sm:text-[10px] font-bold rounded-full w-3.5 h-3.5 sm:w-4 sm:h-4 flex items-center justify-center shadow-sm leading-none'>
-                0
-              </span>
-            </div>
-            <span className='hidden sm:inline text-xs sm:text-sm whitespace-nowrap text-[#1F3B29]'>Your Cart</span>
-          </Link>
-        </div>
-      </div>
-
-      {/* Mobile Search Bar */}
-      <div className='sm:hidden px-4 sm:px-6 pb-2 sm:pb-3'>
-        <SearchBar />
-      </div>
-
-      {/* Navigation Menu Bar - Exact style from hero section */}
-      <nav className='w-full bg-[#1F3B29] text-white duration-700 relative'>
-        <div className='mx-auto flex w-full max-w-[1440px] items-center justify-between px-4 sm:px-6 md:px-8  py-2 sm:py-2.5 md:py-3 lg:py-4'>
-          {/* Mobile Menu Button */}
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className='md:hidden flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-300 hover:bg-white/10 active:scale-95'
-            aria-label='Menu'>
-            {mobileMenuOpen ? <X size={20} className='text-white' /> : <Menu size={20} className='text-white' />}
-          </button>
-
-          {/* Desktop Categories Button */}
-          <div className='hidden md:flex items-center gap-2 sm:gap-3 md:gap-4 lg:gap-8 min-w-0 flex-1 relative'>
+        {/* Navigation Menu Bar - Not sticky */}
+        <nav className='w-full bg-[#1F3B29] text-white duration-700 relative'>
+          <div className='mx-auto flex w-full max-w-[1440px] items-center justify-between px-4 sm:px-6 md:px-8  py-2 sm:py-2.5 md:py-3 lg:py-4'>
+            {/* Mobile Menu Button */}
             <button
-              data-categories-button
-              onClick={() => {
-                if (categoriesContext) {
-                  if (isMobile) {
-                    categoriesContext.setMobileCategoriesOpen(!categoriesContext.mobileCategoriesOpen);
-                  } else {
-                    categoriesContext.setSidebarOpen(!categoriesContext.sidebarOpen);
-                  }
-                }
-              }}
-              className='flex w-auto md:w-[200px] lg:w-[270px] items-center gap-1.5 md:gap-2 cursor-pointer transition-all duration-300 hover:bg-white/10 active:scale-95 px-3 md:px-4 py-2 rounded-lg font-medium flex-shrink-0 group'
-              aria-label='Categories'>
-              <List
-                size={17}
-                className='md:w-[17px] md:h-[17px] lg:w-[18px] lg:h-[18px] flex-shrink-0 transition-transform duration-300 group-hover:rotate-90'
-              />
-              <span className='text-xs md:text-sm whitespace-nowrap'>Categories</span>
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className='md:hidden flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-300 hover:bg-white/10 active:scale-95'
+              aria-label='Menu'>
+              {mobileMenuOpen ? <X size={20} className='text-white' /> : <Menu size={20} className='text-white' />}
             </button>
-            {/* Categories Dropdown */}
-            {/* {categoriesContext && !isMobile && (
+
+            {/* Desktop Categories Button */}
+            <div className='hidden md:flex items-center gap-2 sm:gap-3 md:gap-4 lg:gap-8 min-w-0 flex-1 relative'>
+              <button
+                data-categories-button
+                onClick={() => {
+                  if (categoriesContext) {
+                    if (isMobile) {
+                      categoriesContext.setMobileCategoriesOpen(!categoriesContext.mobileCategoriesOpen);
+                    } else {
+                      categoriesContext.setSidebarOpen(!categoriesContext.sidebarOpen);
+                    }
+                  }
+                }}
+                className='flex w-auto md:w-[200px] lg:w-[270px] items-center gap-1.5 md:gap-2 cursor-pointer transition-all duration-300 hover:bg-white/10 active:scale-95 px-3 md:px-4 py-2 rounded-lg font-medium flex-shrink-0 group'
+                aria-label='Categories'>
+                <List
+                  size={17}
+                  className='md:w-[17px] md:h-[17px] lg:w-[18px] lg:h-[18px] flex-shrink-0 transition-transform duration-300 group-hover:rotate-90'
+                />
+                <span className='text-xs md:text-sm whitespace-nowrap'>Categories</span>
+              </button>
+              {/* Categories Dropdown */}
+              {/* {categoriesContext && !isMobile && (
               <div data-categories-dropdown>
                 <CategoriesDropdown
                   isOpen={categoriesContext.sidebarOpen}
@@ -294,17 +202,17 @@ export function HomeHeader() {
               </div>
             )} */}
 
-            <ul className='hidden lg:flex items-center gap-1 lg:gap-2 xl:gap-3 text-xs md:text-sm' ref={dropdownRef}>
-              {menuItems.map((item, index) => (
-                <li
-                  key={item.name}
-                  className='relative'
-                  onMouseEnter={() => item.submenu && setOpenDropdown(item.name)}
-                  onMouseLeave={() => item.submenu && setOpenDropdown(null)}
-                  style={{ animationDelay: `${index * 100}ms` }}>
-                  <Link
-                    href={item.href}
-                    className='
+              <ul className='hidden lg:flex items-center gap-1 lg:gap-2 xl:gap-3 text-xs md:text-sm' ref={dropdownRef}>
+                {menuItems.map((item, index) => (
+                  <li
+                    key={item.name}
+                    className='relative'
+                    onMouseEnter={() => item.submenu && setOpenDropdown(item.name)}
+                    onMouseLeave={() => item.submenu && setOpenDropdown(null)}
+                    style={{ animationDelay: `${index * 100}ms` }}>
+                    <Link
+                      href={item.href}
+                      className='
         relative flex items-center gap-1
         px-3 md:px-4 lg:px-5 py-2
         rounded-lg cursor-pointer
@@ -312,18 +220,18 @@ export function HomeHeader() {
         whitespace-nowrap font-medium
         group
       '>
-                    <span className='relative z-10'>{item.name}</span>
+                      <span className='relative z-10'>{item.name}</span>
 
-                    {item.submenu && (
-                      <ChevronDown
-                        size={14}
-                        className={`transition-transform duration-300 ${openDropdown === item.name ? 'rotate-180' : ''}`}
-                      />
-                    )}
+                      {item.submenu && (
+                        <ChevronDown
+                          size={14}
+                          className={`transition-transform duration-300 ${openDropdown === item.name ? 'rotate-180' : ''}`}
+                        />
+                      )}
 
-                    {/* White animated underline */}
-                    <span
-                      className='
+                      {/* White animated underline */}
+                      <span
+                        className='
         pointer-events-none
         absolute bottom-0 left-4 right-4 
         h-[2px] bg-white 
@@ -331,135 +239,135 @@ export function HomeHeader() {
         group-hover:scale-x-100 
         transition-transform duration-300
       '
-                    />
-                  </Link>
+                      />
+                    </Link>
 
-                  {/* Dropdown Menu */}
-                  {item.submenu && openDropdown === item.name && (
-                    <div
-                      className='
+                    {/* Dropdown Menu */}
+                    {item.submenu && openDropdown === item.name && (
+                      <div
+                        className='
         absolute top-full left-0 mt-2 w-56
         bg-white rounded-lg shadow-xl
         border border-gray-100 py-2 z-50
         animate-in fade-in slide-in-from-top-2 duration-200
       '>
-                      {item.submenu.map(subItem => (
-                        <Link
-                          key={subItem}
-                          href={`/products?category=${subItem}`}
-                          className='
+                        {item.submenu.map(subItem => (
+                          <Link
+                            key={subItem}
+                            href={`/products?category=${subItem}`}
+                            className='
               block px-4 py-2.5 text-sm text-[#1F3B29]
               hover:bg-[#F5EEE5]/60
               transition-colors duration-200
               font-medium
             '
-                          onClick={() => setOpenDropdown(null)}>
-                          {subItem}
-                        </Link>
-                      ))}
-                    </div>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </div>
+                            onClick={() => setOpenDropdown(null)}>
+                            {subItem}
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
 
-          {/* Desktop Contact Button - Last */}
-          <div className='hidden lg:flex items-center ml-auto'>
+            {/* Desktop Contact Button - Last */}
+            <div className='hidden lg:flex items-center ml-auto'>
+              <Link
+                href='/contact'
+                className='flex items-center text-xs sm:text-sm transition-all duration-300 hover:text-gray-200 px-4 md:px-5 py-2 font-medium whitespace-nowrappl-4 md:pl-5'>
+                Contact Us
+              </Link>
+            </div>
+
+            {/* Mobile/Tablet Categories Button */}
+            <button
+              onClick={() => {
+                if (categoriesContext) {
+                  if (isMobile) {
+                    categoriesContext.setMobileCategoriesOpen(!categoriesContext.mobileCategoriesOpen);
+                  } else {
+                    categoriesContext.setSidebarOpen(!categoriesContext.sidebarOpen);
+                  }
+                }
+              }}
+              className='lg:hidden flex items-center gap-1.5 cursor-pointer transition-all duration-300 hover:bg-white/10 active:scale-95 px-3 py-2 rounded-lg font-medium flex-shrink-0 group'
+              aria-label='Categories'>
+              <Grid2x2CheckIcon size={18} className='flex-shrink-0 transition-transform duration-300 group-hover:rotate-90' />
+              <span className='text-sm whitespace-nowrap hidden sm:inline'>Categories</span>
+            </button>
+
+            {/* Mobile Contact Button */}
             <Link
               href='/contact'
-              className='flex items-center text-xs sm:text-sm transition-all duration-300 hover:text-gray-200 px-4 md:px-5 py-2 font-medium whitespace-nowrappl-4 md:pl-5'>
-              Contact Us
+              className='lg:hidden text-xs sm:text-sm transition-all duration-300 hover:text-gray-200 hover:bg-white/10 px-2 sm:px-3 py-1.5 rounded-lg font-medium whitespace-nowrap'>
+              Contact
             </Link>
           </div>
 
-          {/* Mobile/Tablet Categories Button */}
-          <button
-            onClick={() => {
-              if (categoriesContext) {
-                if (isMobile) {
-                  categoriesContext.setMobileCategoriesOpen(!categoriesContext.mobileCategoriesOpen);
-                } else {
-                  categoriesContext.setSidebarOpen(!categoriesContext.sidebarOpen);
-                }
-              }
-            }}
-            className='lg:hidden flex items-center gap-1.5 cursor-pointer transition-all duration-300 hover:bg-white/10 active:scale-95 px-3 py-2 rounded-lg font-medium flex-shrink-0 group'
-            aria-label='Categories'>
-            <Grid2x2CheckIcon size={18} className='flex-shrink-0 transition-transform duration-300 group-hover:rotate-90' />
-            <span className='text-sm whitespace-nowrap hidden sm:inline'>Categories</span>
-          </button>
-
-          {/* Mobile Contact Button */}
-          <Link
-            href='/contact'
-            className='lg:hidden text-xs sm:text-sm transition-all duration-300 hover:text-gray-200 hover:bg-white/10 px-2 sm:px-3 py-1.5 rounded-lg font-medium whitespace-nowrap'>
-            Contact
-          </Link>
-        </div>
-
-        {/* Mobile/Tablet Menu Dropdown */}
-        <div
-          className={`lg:hidden overflow-hidden transition-all duration-300 ease-in-out ${
-            mobileMenuOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
-          }`}>
-          <div className='px-4 sm:px-6 py-3 bg-[#1F3B29] border-t border-white/10'>
-            <ul className='flex flex-col gap-1'>
-              {menuItems.map(item => (
-                <li key={item.name}>
-                  {item.submenu ? (
-                    <div>
-                      <button
-                        onClick={() => setOpenDropdown(openDropdown === item.name ? null : item.name)}
-                        className='flex items-center justify-between w-full text-left px-4 py-3 rounded-lg text-sm font-medium transition-all duration-300 hover:bg-white/10 hover:translate-x-2 active:bg-white/15'>
-                        <span>{item.name}</span>
-                        <ChevronDown
-                          size={16}
-                          className={`transition-transform duration-300 ${openDropdown === item.name ? 'rotate-180' : ''}`}
-                        />
-                      </button>
-                      {openDropdown === item.name && (
-                        <ul className='pl-4 mt-1 space-y-1'>
-                          {item.submenu.map(subItem => (
-                            <li key={subItem}>
-                              <Link
-                                href={`/products?category=${subItem}`}
-                                onClick={() => {
-                                  setMobileMenuOpen(false);
-                                  setOpenDropdown(null);
-                                }}
-                                className='block px-4 py-2 rounded-lg text-sm font-normal transition-all duration-300 hover:bg-white/10 hover:translate-x-2 active:bg-white/15 text-white/90'>
-                                {subItem}
-                              </Link>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </div>
-                  ) : (
-                    <Link
-                      href={item.href}
-                      onClick={() => setMobileMenuOpen(false)}
-                      className='block w-full text-left px-4 py-3 rounded-lg text-sm font-medium transition-all duration-300 hover:bg-white/10 hover:translate-x-2 active:bg-white/15'>
-                      {item.name}
-                    </Link>
-                  )}
+          {/* Mobile/Tablet Menu Dropdown */}
+          <div
+            className={`lg:hidden overflow-hidden transition-all duration-300 ease-in-out ${
+              mobileMenuOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
+            }`}>
+            <div className='px-4 sm:px-6 py-3 bg-[#1F3B29] border-t border-white/10'>
+              <ul className='flex flex-col gap-1'>
+                {menuItems.map(item => (
+                  <li key={item.name}>
+                    {item.submenu ? (
+                      <div>
+                        <button
+                          onClick={() => setOpenDropdown(openDropdown === item.name ? null : item.name)}
+                          className='flex items-center justify-between w-full text-left px-4 py-3 rounded-lg text-sm font-medium transition-all duration-300 hover:bg-white/10 hover:translate-x-2 active:bg-white/15'>
+                          <span>{item.name}</span>
+                          <ChevronDown
+                            size={16}
+                            className={`transition-transform duration-300 ${openDropdown === item.name ? 'rotate-180' : ''}`}
+                          />
+                        </button>
+                        {openDropdown === item.name && (
+                          <ul className='pl-4 mt-1 space-y-1'>
+                            {item.submenu.map(subItem => (
+                              <li key={subItem}>
+                                <Link
+                                  href={`/products?category=${subItem}`}
+                                  onClick={() => {
+                                    setMobileMenuOpen(false);
+                                    setOpenDropdown(null);
+                                  }}
+                                  className='block px-4 py-2 rounded-lg text-sm font-normal transition-all duration-300 hover:bg-white/10 hover:translate-x-2 active:bg-white/15 text-white/90'>
+                                  {subItem}
+                                </Link>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    ) : (
+                      <Link
+                        href={item.href}
+                        onClick={() => setMobileMenuOpen(false)}
+                        className='block w-full text-left px-4 py-3 rounded-lg text-sm font-medium transition-all duration-300 hover:bg-white/10 hover:translate-x-2 active:bg-white/15'>
+                        {item.name}
+                      </Link>
+                    )}
+                  </li>
+                ))}
+                {/* Contact Us - Always Last */}
+                <li className='mt-2 pt-2 border-t border-white/20'>
+                  <Link
+                    href='/contact'
+                    onClick={() => setMobileMenuOpen(false)}
+                    className='block w-full text-left px-4 py-3 rounded-lg text-sm font-semibold transition-all duration-300 hover:bg-white/10 hover:translate-x-2 active:bg-white/15 bg-white/5'>
+                    Contact Us
+                  </Link>
                 </li>
-              ))}
-              {/* Contact Us - Always Last */}
-              <li className='mt-2 pt-2 border-t border-white/20'>
-                <Link
-                  href='/contact'
-                  onClick={() => setMobileMenuOpen(false)}
-                  className='block w-full text-left px-4 py-3 rounded-lg text-sm font-semibold transition-all duration-300 hover:bg-white/10 hover:translate-x-2 active:bg-white/15 bg-white/5'>
-                  Contact Us
-                </Link>
-              </li>
-            </ul>
+              </ul>
+            </div>
           </div>
-        </div>
-      </nav>
+        </nav>
       </header>
-    </>
+    </React.Fragment>
   );
 }

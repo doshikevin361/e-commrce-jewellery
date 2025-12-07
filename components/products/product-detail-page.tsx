@@ -189,16 +189,16 @@ export function ProductDetailPage({ productId }: { productId: string }) {
       {/* Back Button */}
       <button
         onClick={() => router.back()}
-        className='mb-8 flex items-center gap-2 text-sm font-medium text-[#4F3A2E] hover:text-[#1F3B29] transition-colors group'>
+        className='mb-10 flex items-center gap-2 text-sm font-medium text-[#4F3A2E] hover:text-[#1F3B29] transition-colors group'>
         <ArrowLeft size={18} className='group-hover:-translate-x-1 transition-transform' />
         <span>Back to Products</span>
       </button>
 
       <div className='grid grid-cols-1 lg:grid-cols-2 gap-10 sm:gap-12 lg:gap-16 mb-16'>
         {/* Images */}
-        <div className='sticky top-24 self-start h-fit'>
+        <div className='sticky top-36 self-start h-fit'>
           <div className='relative w-full overflow-hidden rounded-3xl bg-gradient-to-br from-[#F5EEE5] to-[#E6D3C2] mb-4 shadow-lg group'>
-            <div className='relative aspect-[4/3] sm:aspect-[3/2] lg:aspect-[4/3]'>
+            <div className='relative aspect-[4/3] sm:aspect-[3/2] lg:aspect-[3/2]'>
               <Image
                 src={images[selectedImage]}
                 alt={product.name}
@@ -229,7 +229,7 @@ export function ProductDetailPage({ productId }: { productId: string }) {
                     ? 'border-[#C8A15B] ring-2 ring-[#C8A15B] ring-offset-2 shadow-md'
                     : 'border-[#E6D3C2] hover:border-[#C8A15B]/50'
                 }`}>
-                <Image src={img} alt={`${product.name} ${index + 1}`} fill sizes='25vw' className='object-cover' />
+                <Image src={img} alt={`${product.name} ${index + 1}`} fill sizes='20vw' className='object-cover' />
               </button>
             ))}
           </div>

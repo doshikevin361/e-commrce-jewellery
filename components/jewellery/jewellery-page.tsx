@@ -575,7 +575,7 @@ export function JewelleryPage() {
         <div className='flex gap-6 lg:gap-8'>
           {/* Filters Sidebar */}
           <aside className={cn('w-full lg:w-80 flex-shrink-0 transition-all duration-300', 'lg:block', showFilters ? 'block' : 'hidden')}>
-            <div className='bg-white border border-[#E6D3C2] rounded-xl p-4 sm:p-6 sticky top-32'>
+            <div className='bg-white border border-[#E6D3C2] rounded-xl p-4 sm:p-6 sticky top-36'>
               <div className='flex items-center justify-between mb-6'>
                 <h3 className='text-lg font-semibold text-[#1F3B29]'>Filters</h3>
                 <div className='flex items-center gap-2'>
