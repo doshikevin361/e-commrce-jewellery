@@ -197,27 +197,29 @@ export function ProductDetailPage({ productId }: { productId: string }) {
       <div className='grid grid-cols-1 lg:grid-cols-2 gap-10 sm:gap-12 lg:gap-16 mb-16'>
         {/* Images */}
         <div className='sticky top-24 self-start h-fit'>
-          <div className='relative aspect-square w-full overflow-hidden rounded-3xl bg-gradient-to-br from-[#F5EEE5] to-[#E6D3C2] mb-6 shadow-lg group'>
-            <Image
-              src={images[selectedImage]}
-              alt={product.name}
-              fill
-              sizes='(max-width: 1024px) 100vw, 50vw'
-              className='object-cover transition-transform duration-500 group-hover:scale-105'
-              priority
-            />
+          <div className='relative w-full overflow-hidden rounded-3xl bg-gradient-to-br from-[#F5EEE5] to-[#E6D3C2] mb-4 shadow-lg group'>
+            <div className='relative aspect-[4/3] sm:aspect-[3/2] lg:aspect-[4/3]'>
+              <Image
+                src={images[selectedImage]}
+                alt={product.name}
+                fill
+                sizes='(max-width: 1024px) 100vw, 50vw'
+                className='object-cover transition-transform duration-500 group-hover:scale-105'
+                priority
+              />
+            </div>
             {(product.featured || product.trending) && (
-              <span className='absolute left-6 top-6 rounded-full bg-gradient-to-r from-[#C8A15B] to-[#B8914F] px-5 py-2.5 text-xs font-bold text-white shadow-lg backdrop-blur-sm'>
+              <span className='absolute left-4 top-4 sm:left-6 sm:top-6 rounded-full bg-gradient-to-r from-[#C8A15B] to-[#B8914F] px-4 py-2 sm:px-5 sm:py-2.5 text-xs font-bold text-white shadow-lg backdrop-blur-sm'>
                 {product.featured ? '✨ Featured' : '🔥 Trending'}
               </span>
             )}
             {product.hasDiscount && (
-              <span className='absolute right-6 top-6 rounded-full bg-gradient-to-r from-red-500 to-red-600 px-5 py-2.5 text-xs font-bold text-white shadow-lg'>
+              <span className='absolute right-4 top-4 sm:right-6 sm:top-6 rounded-full bg-gradient-to-r from-red-500 to-red-600 px-4 py-2 sm:px-5 sm:py-2.5 text-xs font-bold text-white shadow-lg'>
                 {product.discountPercent}% OFF
               </span>
             )}
           </div>
-          <div className='grid grid-cols-4 gap-4'>
+          <div className='grid grid-cols-4 gap-3 sm:gap-4'>
             {images.map((img, index) => (
               <button
                 key={index}
