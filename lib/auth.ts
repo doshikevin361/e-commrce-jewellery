@@ -40,14 +40,15 @@ export function generateUserToken(user: Partial<User>) {
 
 export function getUserFromRequest(request: NextRequest): DecodedToken | null {
   try {
-    // Try to get token from cookie first
-    const tokenFromCookie = request.cookies.get('adminToken')?.value;
+    // Try to get token from cookies (admin or customer)
+    const adminToken = request.cookies.get('adminToken')?.value;
+    const customerToken = request.cookies.get('customerToken')?.value;
     
     // Fallback to Authorization header
     const authHeader = request.headers.get('authorization');
     const tokenFromHeader = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null;
     
-    const token = tokenFromCookie || tokenFromHeader;
+    const token = adminToken || customerToken || tokenFromHeader;
     
     if (!token) {
       console.log('[v0] No token found in request');
@@ -57,6 +58,34 @@ export function getUserFromRequest(request: NextRequest): DecodedToken | null {
     return verifyToken(token);
   } catch (error) {
     console.error('[v0] Error extracting user from request:', error);
+    return null;
+  }
+}
+
+export function getCustomerFromRequest(request: NextRequest): DecodedToken | null {
+  try {
+    // Get customer token from cookie
+    const customerToken = request.cookies.get('customerToken')?.value;
+    
+    // Fallback to Authorization header
+    const authHeader = request.headers.get('authorization');
+    const tokenFromHeader = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null;
+    
+    const token = customerToken || tokenFromHeader;
+    
+    if (!token) {
+      return null;
+    }
+    
+    const decoded = verifyToken(token);
+    // Only return if it's a customer token
+    if (decoded && decoded.role === 'customer') {
+      return decoded;
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('[Customer Auth] Error extracting customer from request:', error);
     return null;
   }
 }

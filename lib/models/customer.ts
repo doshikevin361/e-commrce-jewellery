@@ -1,5 +1,12 @@
+import bcrypt from 'bcryptjs';
+import { connectToDatabase } from '@/lib/mongodb';
+import { ObjectId } from 'mongodb';
+
 export interface Customer {
+  _id?: string;
   name: string;
+  firstName?: string;
+  lastName?: string;
   email: string;
   phone: string;
   password?: string;
@@ -24,6 +31,138 @@ export interface Customer {
   registrationDate: string;
   lastLogin?: string;
   notes?: string;
+  // Email verification fields
+  emailVerified?: boolean;
+  emailVerificationToken?: string;
+  emailVerificationExpires?: Date;
+  // Password reset fields
+  passwordResetToken?: string;
+  passwordResetExpires?: Date;
   createdAt?: Date;
   updatedAt?: Date;
+}
+
+// Password hashing
+export async function hashCustomerPassword(password: string): Promise<string> {
+  try {
+    const hashedPassword = await bcrypt.hash(password, 10);
+    return hashedPassword;
+  } catch (error) {
+    console.error('[Customer] Error hashing password:', error);
+    throw error;
+  }
+}
+
+// Password verification
+export async function verifyCustomerPassword(password: string, hashedPassword: string): Promise<boolean> {
+  try {
+    const match = await bcrypt.compare(password, hashedPassword);
+    return match;
+  } catch (error) {
+    console.error('[Customer] Error verifying password:', error);
+    throw error;
+  }
+}
+
+// Get customer by email
+export async function getCustomerByEmail(email: string): Promise<Customer | null> {
+  try {
+    const { db } = await connectToDatabase();
+    const customer = await db.collection('customers').findOne({ email: email.toLowerCase() });
+    return customer as Customer | null;
+  } catch (error) {
+    console.error('[Customer] Error fetching customer by email:', error);
+    throw error;
+  }
+}
+
+// Get customer by ID
+export async function getCustomerById(id: string): Promise<Customer | null> {
+  try {
+    const { db } = await connectToDatabase();
+    if (!ObjectId.isValid(id)) {
+      return null;
+    }
+    const customer = await db.collection('customers').findOne({ _id: new ObjectId(id) });
+    return customer as Customer | null;
+  } catch (error) {
+    console.error('[Customer] Error fetching customer by ID:', error);
+    throw error;
+  }
+}
+
+// Get customer by verification token
+export async function getCustomerByVerificationToken(token: string): Promise<Customer | null> {
+  try {
+    const { db } = await connectToDatabase();
+    const customer = await db.collection('customers').findOne({ 
+      emailVerificationToken: token,
+      emailVerificationExpires: { $gt: new Date() }
+    });
+    return customer as Customer | null;
+  } catch (error) {
+    console.error('[Customer] Error fetching customer by verification token:', error);
+    throw error;
+  }
+}
+
+// Get customer by password reset token
+export async function getCustomerByResetToken(token: string): Promise<Customer | null> {
+  try {
+    const { db } = await connectToDatabase();
+    const customer = await db.collection('customers').findOne({ 
+      passwordResetToken: token,
+      passwordResetExpires: { $gt: new Date() }
+    });
+    return customer as Customer | null;
+  } catch (error) {
+    console.error('[Customer] Error fetching customer by reset token:', error);
+    throw error;
+  }
+}
+
+// Update customer
+export async function updateCustomer(id: string, data: Partial<Customer>): Promise<boolean> {
+  try {
+    const { db } = await connectToDatabase();
+    if (!ObjectId.isValid(id)) {
+      return false;
+    }
+    await db.collection('customers').updateOne(
+      { _id: new ObjectId(id) },
+      { 
+        $set: { 
+          ...data, 
+          updatedAt: new Date() 
+        } 
+      }
+    );
+    return true;
+  } catch (error) {
+    console.error('[Customer] Error updating customer:', error);
+    throw error;
+  }
+}
+
+// Create customer
+export async function createCustomer(customerData: Omit<Customer, '_id' | 'createdAt' | 'updatedAt'>): Promise<string> {
+  try {
+    const { db } = await connectToDatabase();
+    const newCustomer = {
+      ...customerData,
+      email: customerData.email.toLowerCase(),
+      orders: 0,
+      spent: 0,
+      status: 'active',
+      registrationDate: new Date().toISOString().split('T')[0],
+      emailVerified: false,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    const result = await db.collection('customers').insertOne(newCustomer);
+    return result.insertedId.toString();
+  } catch (error) {
+    console.error('[Customer] Error creating customer:', error);
+    throw error;
+  }
 }
