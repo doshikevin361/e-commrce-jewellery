@@ -133,12 +133,12 @@
   }
   html {
     scroll-behavior: auto; /* Changed from smooth to prevent unwanted scrolling */
-    overflow-x: hidden;
+    /* Removed overflow-x: hidden - can break position: sticky */
   }
   body {
     @apply bg-background text-foreground;
-    overflow-x: hidden;
-    overflow-y: hidden;
+    /* Removed overflow-x: hidden and overflow-y: hidden - CRITICAL: breaks position: sticky */
+    /* Sticky elements require a scrollable ancestor. overflow-y: hidden prevents scrolling. */
     width: 100%;
     position: relative;
   }

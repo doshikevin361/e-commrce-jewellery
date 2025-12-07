@@ -8,9 +8,11 @@ interface PageLayoutProps {
 
 export function PageLayout({ children, className = '' }: PageLayoutProps) {
   return (
-    <div className={`min-h-screen w-full overflow-x-hidden bg-white ${className}`}>
+    <div className={`min-h-screen w-full bg-white ${className}`}>
+      {/* Removed overflow-x-hidden from wrapper - can break position: sticky on child elements */}
       <HomeHeader />
-      <main className='w-full overflow-x-hidden pt-4 sm:pt-6 md:pt-8 lg:pt-10'>
+      <main className='w-full pt-4 sm:pt-6 md:pt-8 lg:pt-10'>
+        {/* Removed overflow-x-hidden from main - can break position: sticky */}
         {children}
       </main>
       <HomeFooter />
