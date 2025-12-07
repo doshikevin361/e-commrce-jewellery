@@ -51,6 +51,7 @@ export function HomeHeader() {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   const dropdownRef = useRef<HTMLUListElement>(null);
 
   useEffect(() => {
@@ -81,6 +82,43 @@ export function HomeHeader() {
     return () => window.removeEventListener('resize', handleResize);
   }, [categoriesContext, mounted]);
 
+  // Scroll detection for sticky header with throttling for better performance
+  useEffect(() => {
+    if (!mounted) return;
+
+    let lastScrollY = window.scrollY;
+    let ticking = false;
+    const scrollThreshold = 100; // Show header after scrolling 100px
+    const scrollBuffer = 20; // Buffer to prevent flickering
+
+    const handleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const scrollPosition = window.scrollY;
+          const scrollDifference = Math.abs(scrollPosition - lastScrollY);
+          
+          // Only update if scroll difference is significant (reduces jitter)
+          if (scrollDifference > 3) {
+            // Use buffer to prevent flickering when near threshold
+            if (scrollPosition > scrollThreshold + scrollBuffer) {
+              setIsScrolled(true);
+            } else if (scrollPosition < scrollThreshold - scrollBuffer) {
+              setIsScrolled(false);
+            }
+            // If within buffer zone, maintain current state
+            lastScrollY = scrollPosition;
+          }
+          
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [mounted]);
+
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -102,9 +140,69 @@ export function HomeHeader() {
   }, [openDropdown, categoriesContext]);
 
   return (
-    <header className='bg-white sticky top-0 z-50 shadow-sm'>
-      {/* Top bar with logo, search, and account/cart */}
-      <div className='mx-auto mb-2 sm:mb-3 md:mb-4 flex w-full max-w-[1440px] items-center justify-between gap-2 sm:gap-3 md:gap-4 px-4 sm:px-6 md:px-8 lg:px-12 py-2 sm:py-2.5 md:py-3 pt-3 sm:pt-4 md:pt-6 lg:pt-8'>
+    <>
+      {/* Compact Sticky Header - Shows when scrolled */}
+      <div
+        className={`fixed top-0 left-0 right-0 z-50 ${
+          isScrolled
+            ? 'translate-y-0 opacity-100 visible scale-100 transition-all duration-300 ease-out'
+            : '-translate-y-full opacity-0 invisible scale-[0.98] pointer-events-none transition-all duration-200 ease-in'
+        }`}>
+        {/* Backdrop with blur effect for modern glass-morphism look */}
+        <div
+          className={`absolute inset-0 bg-white/98 backdrop-blur-lg border-b border-gray-200/60 ${
+            isScrolled ? 'shadow-xl transition-shadow duration-300' : 'shadow-none'
+          }`}
+        />
+        <div className='relative mx-auto flex w-full max-w-[1440px] items-center justify-between gap-2 sm:gap-3 md:gap-4 px-4 sm:px-6 md:px-8 lg:px-12 py-3 sm:py-3.5'>
+          <Link
+            href='/'
+            className='flex items-center gap-1.5 sm:gap-2 flex-shrink-0 transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer'>
+            <Diamond size={18} className='text-[#1F3B29]' />
+            <span className='text-base md:text-lg font-semibold tracking-wide text-[#1F3B29] whitespace-nowrap'>
+              LuxeLoom
+            </span>
+          </Link>
+
+          <div className='hidden sm:flex mx-2 sm:mx-3 md:mx-4 lg:mx-5 flex-1 max-w-xs sm:max-w-sm md:max-w-lg lg:max-w-2xl'>
+            <SearchBar />
+          </div>
+
+          <div className='flex items-center gap-2 sm:gap-3 md:gap-4 text-sm text-[#1F3B29]'>
+            <Link
+              href='/wishlist'
+              className='hidden sm:flex items-center gap-1 font-semibold px-2 transition-all duration-300 hover:scale-110 active:scale-95'
+              aria-label='Wishlist'>
+              <Heart size={18} className='flex-shrink-0' />
+              <span className='hidden md:inline text-sm whitespace-nowrap'>Wishlist</span>
+            </Link>
+            <Link
+              href='/'
+              className='flex items-center gap-1 font-semibold px-2 transition-all duration-300 hover:scale-110 active:scale-95 whitespace-nowrap'
+              aria-label='Account'>
+              <User size={18} className='flex-shrink-0' />
+              <span className='hidden sm:inline text-sm whitespace-nowrap'>Your Account</span>
+            </Link>
+            <Link
+              href='/cart'
+              className='flex items-center gap-1.5 font-semibold px-2 transition-all duration-300 hover:scale-110 active:scale-95 relative'
+              aria-label='Cart'>
+              <div className='relative flex-shrink-0'>
+                <ShoppingCart size={18} className='text-[#1F3B29]' />
+                <span className='absolute -top-1 -right-1 bg-[#C8A15B] text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center shadow-sm leading-none'>
+                  0
+                </span>
+              </div>
+              <span className='hidden sm:inline text-sm whitespace-nowrap text-[#1F3B29]'>Your Cart</span>
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Header - Not sticky */}
+      <header className='bg-white'>
+        {/* Top bar with logo, search, and account/cart */}
+        <div className='mx-auto mb-2 sm:mb-3 md:mb-4 flex w-full max-w-[1440px] items-center justify-between gap-2 sm:gap-3 md:gap-4 px-4 sm:px-6 md:px-8 lg:px-12 py-2 sm:py-2.5 md:py-3 pt-3 sm:pt-4 md:pt-6 lg:pt-8'>
         <Link
           href='/'
           className='flex items-center gap-1 sm:gap-1.5 md:gap-2 flex-shrink-0 transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer'>
@@ -361,6 +459,7 @@ export function HomeHeader() {
           </div>
         </div>
       </nav>
-    </header>
+      </header>
+    </>
   );
 }
