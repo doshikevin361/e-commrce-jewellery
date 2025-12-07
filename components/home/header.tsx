@@ -1,8 +1,9 @@
 'use client';
 
-import { Diamond, ShoppingCart, User, Menu, X, ChevronDown, Heart, List } from 'lucide-react';
+import { Diamond, ShoppingCart, User, Menu, X, ChevronDown, Heart, List, LogOut, Settings } from 'lucide-react';
 import SearchBar from './SearchBar/SearchBar';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import React, { useState, useEffect, useRef, useContext } from 'react';
 import { CategoriesContext } from '@/contexts/CategoriesContext';
 import { CategoriesDropdown } from './CategoriesDropdown';
@@ -46,18 +47,51 @@ const menuItems = [
 export function HomeHeader() {
   // Get categories context if available (only on home page)
   const categoriesContext = useContext(CategoriesContext);
+  const router = useRouter();
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const [accountDropdownOpen, setAccountDropdownOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [customerName, setCustomerName] = useState('');
   const dropdownRef = useRef<HTMLUListElement>(null);
+  const accountDropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setMounted(true);
     // Set initial mobile state after mount to avoid hydration mismatch
     const checkMobile = () => window.innerWidth < 1024;
     setIsMobile(checkMobile());
+
+    // Check if customer is logged in
+    const checkAuth = () => {
+      const token = localStorage.getItem('customerToken');
+      const customer = localStorage.getItem('currentCustomer');
+      if (token && customer) {
+        setIsLoggedIn(true);
+        try {
+          const customerData = JSON.parse(customer);
+          setCustomerName(customerData.name || customerData.firstName || '');
+        } catch (e) {
+          console.error('Error parsing customer data:', e);
+        }
+      } else {
+        setIsLoggedIn(false);
+        setCustomerName('');
+      }
+    };
+
+    checkAuth();
+    // Listen for storage changes (login/logout from other tabs)
+    window.addEventListener('storage', checkAuth);
+    // Listen for custom auth events (same tab login/logout)
+    window.addEventListener('authChange', checkAuth);
+    return () => {
+      window.removeEventListener('storage', checkAuth);
+      window.removeEventListener('authChange', checkAuth);
+    };
   }, []);
 
   // Handle resize and close menus (only after mount)
@@ -87,6 +121,9 @@ export function HomeHeader() {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setOpenDropdown(null);
       }
+      if (accountDropdownRef.current && !accountDropdownRef.current.contains(event.target as Node)) {
+        setAccountDropdownOpen(false);
+      }
       // Close categories dropdown when clicking outside
       if (categoriesContext) {
         const target = event.target as HTMLElement;
@@ -95,11 +132,22 @@ export function HomeHeader() {
         }
       }
     };
-    if (openDropdown || (categoriesContext && categoriesContext.sidebarOpen)) {
+    if (openDropdown || accountDropdownOpen || (categoriesContext && categoriesContext.sidebarOpen)) {
       document.addEventListener('mousedown', handleClickOutside);
       return () => document.removeEventListener('mousedown', handleClickOutside);
     }
-  }, [openDropdown, categoriesContext]);
+  }, [openDropdown, accountDropdownOpen, categoriesContext]);
+
+  const handleLogout = () => {
+    localStorage.removeItem('customerToken');
+    localStorage.removeItem('currentCustomer');
+    setIsLoggedIn(false);
+    setCustomerName('');
+    setAccountDropdownOpen(false);
+    // Trigger custom event for header update
+    window.dispatchEvent(new Event('authChange'));
+    router.push('/');
+  };
 
   return (
     <React.Fragment>
@@ -127,13 +175,73 @@ export function HomeHeader() {
               <Heart size={15} className='sm:w-[16px] sm:h-[16px] md:w-[18px] md:h-[18px] flex-shrink-0' />
               <span className='hidden md:inline text-xs sm:text-sm whitespace-nowrap'>Wishlist</span>
             </Link>
-            <Link
-              href='/'
-              className='flex items-center gap-0.5 sm:gap-1 font-semibold px-1 sm:px-1.5 md:px-2 transition-all duration-300 hover:scale-110 active:scale-95 whitespace-nowrap'
-              aria-label='Account'>
-              <User size={15} className='sm:w-[16px] sm:h-[16px] md:w-[18px] md:h-[18px] flex-shrink-0' />
-              <span className='hidden sm:inline text-xs sm:text-sm whitespace-nowrap'>Your Account</span>
-            </Link>
+            {/* Account Dropdown */}
+            <div className='relative' ref={accountDropdownRef}>
+              {isLoggedIn ? (
+                <>
+                  <button
+                    onClick={() => setAccountDropdownOpen(!accountDropdownOpen)}
+                    className='flex items-center gap-0.5 sm:gap-1 font-semibold px-1 sm:px-1.5 md:px-2 transition-all duration-300 hover:scale-110 active:scale-95 whitespace-nowrap'
+                    aria-label='Account'>
+                    <User size={15} className='sm:w-[16px] sm:h-[16px] md:w-[18px] md:h-[18px] flex-shrink-0' />
+                    <span className='hidden sm:inline text-xs sm:text-sm whitespace-nowrap'>
+                      {customerName || 'My Account'}
+                    </span>
+                    <ChevronDown
+                      size={12}
+                      className={`transition-transform duration-300 ${accountDropdownOpen ? 'rotate-180' : ''}`}
+                    />
+                  </button>
+                  {accountDropdownOpen && (
+                    <div className='absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-100 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200'>
+                      <Link
+                        href='/customer-profile'
+                        onClick={() => setAccountDropdownOpen(false)}
+                        className='flex items-center gap-2 px-4 py-2.5 text-sm text-[#1F3B29] hover:bg-[#F5EEE5]/60 transition-colors duration-200 font-medium'>
+                        <Settings size={16} />
+                        My Profile
+                      </Link>
+                      <button
+                        onClick={handleLogout}
+                        className='w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors duration-200 font-medium'>
+                        <LogOut size={16} />
+                        Logout
+                      </button>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <>
+                  <button
+                    onClick={() => setAccountDropdownOpen(!accountDropdownOpen)}
+                    className='flex items-center gap-0.5 sm:gap-1 font-semibold px-1 sm:px-1.5 md:px-2 transition-all duration-300 hover:scale-110 active:scale-95 whitespace-nowrap'
+                    aria-label='Login'>
+                    <User size={15} className='sm:w-[16px] sm:h-[16px] md:w-[18px] md:h-[18px] flex-shrink-0' />
+                    <span className='hidden sm:inline text-xs sm:text-sm whitespace-nowrap'>Login</span>
+                    <ChevronDown
+                      size={12}
+                      className={`transition-transform duration-300 ${accountDropdownOpen ? 'rotate-180' : ''}`}
+                    />
+                  </button>
+                  {accountDropdownOpen && (
+                    <div className='absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-100 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200'>
+                      <Link
+                        href='/customer-login'
+                        onClick={() => setAccountDropdownOpen(false)}
+                        className='block px-4 py-2.5 text-sm text-[#1F3B29] hover:bg-[#F5EEE5]/60 transition-colors duration-200 font-medium'>
+                        Login
+                      </Link>
+                      <Link
+                        href='/register'
+                        onClick={() => setAccountDropdownOpen(false)}
+                        className='block px-4 py-2.5 text-sm text-[#1F3B29] hover:bg-[#F5EEE5]/60 transition-colors duration-200 font-medium'>
+                        Create Account
+                      </Link>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
             <Link
               href='/cart'
               className='flex items-center gap-1 sm:gap-1.5 font-semibold px-1 sm:px-1.5 md:px-2 transition-all duration-300 hover:scale-110 active:scale-95 relative'

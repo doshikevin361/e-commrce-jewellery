@@ -123,8 +123,11 @@ export const emailTemplates = {
             <p>Or copy and paste this link into your browser:</p>
             <p style="word-break: break-all; color: #C8A15B;">${resetLink}</p>
             <div class="warning">
-              <strong>Important:</strong> This link will expire in 1 hour. If you didn't request a password reset, please ignore this email and your password will remain unchanged.
+              <strong>Important:</strong> This password reset link will expire in <strong>1 hour</strong> for security reasons. If you didn't request a password reset, please ignore this email and your password will remain unchanged.
             </div>
+            <p style="margin-top: 15px; font-size: 12px; color: #666;">
+              <strong>Security Note:</strong> For your account security, password reset links are only valid for 1 hour. If the link expires, you can request a new one from the login page.
+            </p>
           </div>
           <div class="footer">
             <p>&copy; ${new Date().getFullYear()} LuxeLoom Jewelry. All rights reserved.</p>

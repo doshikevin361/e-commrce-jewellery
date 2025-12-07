@@ -83,7 +83,7 @@ export default function RegisterPage() {
 
       setSuccess(true);
       setTimeout(() => {
-        router.push('/login?registered=true');
+        router.push('/customer-login?registered=true');
       }, 3000);
     } catch (err) {
       console.error('Registration error:', err);

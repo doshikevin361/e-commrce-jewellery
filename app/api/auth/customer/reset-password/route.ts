@@ -21,11 +21,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get customer by reset token
+    // Get customer by reset token (automatically checks expiry)
     const customer = await getCustomerByResetToken(token);
     if (!customer) {
       return NextResponse.json(
-        { error: 'Invalid or expired reset token' },
+        { 
+          error: 'Invalid or expired reset token. Password reset links expire after 1 hour. Please request a new one.',
+          expired: true 
+        },
         { status: 400 }
       );
     }
