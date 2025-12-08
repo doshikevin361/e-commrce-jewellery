@@ -110,6 +110,7 @@ interface ProductDetail {
   resizing_available?: boolean;
   gift_wrapping?: boolean;
   livePriceEnabled?: boolean;
+  specifications?: string;
 }
 
 export function ProductDetailPage({ productId }: { productId: string }) {
@@ -124,6 +125,8 @@ export function ProductDetailPage({ productId }: { productId: string }) {
   const [isInWishlist, setIsInWishlist] = useState(false);
   const [wishlistLoading, setWishlistLoading] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [zoomImage, setZoomImage] = useState<string | null>(null);
+  const [zoomPosition, setZoomPosition] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -263,6 +266,15 @@ export function ProductDetailPage({ productId }: { productId: string }) {
       ? [product.mainImage, ...product.galleryImages]
       : [product.mainImage, product.mainImage, product.mainImage];
 
+  // Handle image zoom
+  const handleImageMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!zoomImage) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    setZoomPosition({ x, y });
+  };
+
   const relatedProducts = product.relatedProducts || [];
 
   return (
@@ -278,14 +290,26 @@ export function ProductDetailPage({ productId }: { productId: string }) {
       <div className='grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 md:gap-10 lg:gap-12 xl:gap-16 mb-12 sm:mb-16'>
         {/* Images */}
         <div className='lg:sticky lg:top-36 lg:self-start lg:h-fit'>
-          <div className='relative w-full overflow-hidden rounded-3xl bg-gradient-to-br from-[#F5EEE5] to-[#E6D3C2] mb-4 shadow-lg group'>
-            <div className='relative aspect-[4/3] sm:aspect-[3/2] lg:aspect-[3/2]'>
+          <div 
+            className='relative w-full overflow-hidden rounded-3xl bg-gradient-to-br from-[#F5EEE5] to-[#E6D3C2] mb-4 shadow-lg group cursor-zoom-in'
+            onMouseEnter={() => setZoomImage(images[selectedImage])}
+            onMouseLeave={() => {
+              setZoomImage(null);
+              setZoomPosition({ x: 50, y: 50 });
+            }}
+            onMouseMove={handleImageMouseMove}
+          >
+            <div className='relative aspect-[4/3] sm:aspect-[3/2] lg:aspect-[3/2] overflow-hidden'>
               <Image
                 src={images[selectedImage]}
                 alt={product.name}
                 fill
                 sizes='(max-width: 1024px) 100vw, 50vw'
-                className='object-cover transition-transform duration-500 group-hover:scale-105'
+                className='object-cover transition-transform duration-300 ease-out'
+                style={{
+                  transform: zoomImage ? `scale(2.5) translate(${-zoomPosition.x * 0.5}%, ${-zoomPosition.y * 0.5}%)` : 'scale(1)',
+                  transformOrigin: `${zoomPosition.x}% ${zoomPosition.y}%`,
+                }}
                 priority
               />
             </div>
@@ -314,6 +338,17 @@ export function ProductDetailPage({ productId }: { productId: string }) {
               </button>
             ))}
           </div>
+          
+          {/* Specifications Section - Below Images */}
+          {product.specifications && (
+            <div className='mt-6 p-4 sm:p-6 bg-gradient-to-br from-[#F5EEE5] to-[#E6D3C2] rounded-2xl shadow-md'>
+              <h3 className='text-lg sm:text-xl font-bold text-[#1F3B29] mb-4'>Specifications</h3>
+              <div 
+                className='text-sm sm:text-base text-[#4F3A2E] prose prose-sm max-w-none'
+                dangerouslySetInnerHTML={{ __html: product.specifications }}
+              />
+            </div>
+          )}
         </div>
 
         {/* Product Info */}

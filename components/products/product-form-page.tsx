@@ -281,6 +281,7 @@ interface Product {
   trending: boolean;
   allowReviews: boolean;
   vendor: string;
+  specifications?: string; // Product specifications (HTML or plain text)
   createdAt?: string; // Added for potential API response
   updatedAt?: string; // Added for potential API response
 }
@@ -471,6 +472,7 @@ const INITIAL_PRODUCT: Product = {
   trending: false,
   allowReviews: true,
   vendor: 'Main Store',
+  specifications: '',
 };
 
 interface ProductFormPageProps {
@@ -3124,6 +3126,24 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                           />
                         </div>
 
+                      </div>
+
+                      {/* Specifications */}
+                      <div className='space-y-4'>
+                        <h3 className='text-xl font-semibold text-slate-900 dark:text-white'>Product Specifications</h3>
+                        <div>
+                          <label className='block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2'>
+                            Specifications
+                          </label>
+                          <RichTextEditor
+                            value={formData.specifications || ''}
+                            onChange={(html) => handleChange('specifications', html)}
+                            placeholder='Enter product specifications (e.g., Material, Weight, Dimensions, etc.)'
+                          />
+                          <p className='text-xs text-muted-foreground mt-2'>
+                            Add detailed specifications that will be displayed below the product image on the product detail page.
+                          </p>
+                        </div>
                       </div>
                     </div>
                   )}

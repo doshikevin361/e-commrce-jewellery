@@ -30,57 +30,7 @@ const Grid2x2CheckIcon = ({ size, className }: { size: number; className?: strin
   </svg>
 );
 
-// Common jewelry types for submenus
-const jewelryTypes = ['Ring', 'Necklace', 'Earrings', 'Bracelet', 'Bangle', 'Chain', 'Mangalsutra', 'Pendant'];
-
-// Function to generate menu items dynamically based on available product types
-// All items are flat - no dropdowns, all shown separately
-const generateMenuItems = (availableProductTypes: string[]) => {
-  const baseMenuItems = [
-    { name: 'Home', href: '/' },
-  ];
-
-  // Generate flat menu items - each product type and jewelry type combination as separate items
-  const flatMenuItems: { name: string; href: string }[] = [];
-  
-  availableProductTypes.forEach(productType => {
-    const typeName = productType === 'Gold' ? 'Gold' : 
-                     productType === 'Silver' ? 'Silver' : 
-                     productType === 'Platinum' ? 'Platinum' : 
-                     productType === 'Diamond' ? 'Diamond' : 
-                     productType === 'Gemstone' ? 'Gemstone' : productType;
-    
-    // Add main product type link
-    flatMenuItems.push({
-      name: typeName,
-      href: `/products?product_type=${productType}`,
-    });
-    
-    // Add each jewelry type as separate menu item
-    jewelryTypes.forEach(jType => {
-      flatMenuItems.push({
-        name: `${typeName} ${jType}s`,
-        href: `/products?product_type=${productType}&jewelryType=${jType}`,
-      });
-    });
-  });
-
-  // Add collection items as separate menu items
-  const collectionItems = [
-    { name: 'New Arrivals', href: '/products?featured=true' },
-    { name: 'Best Sellers', href: '/products?featured=true' },
-    { name: 'Trending Now', href: '/products?trending=true' },
-    { name: 'Limited Edition', href: '/products' },
-  ];
-
-  return [
-    ...baseMenuItems,
-    ...flatMenuItems,
-    ...collectionItems,
-    { name: 'Blog', href: '/blog' },
-    { name: 'About', href: '/about' },
-  ];
-};
+import { useMenuItems } from './navigation-menu';
 
 export function HomeHeader() {
   // Get categories context if available (only on home page)
@@ -98,9 +48,7 @@ export function HomeHeader() {
   const [forgotPasswordModalOpen, setForgotPasswordModalOpen] = useState(false);
   const [resetPasswordModalOpen, setResetPasswordModalOpen] = useState(false);
   const [resetToken, setResetToken] = useState<string | undefined>(undefined);
-  const [availableProductTypes, setAvailableProductTypes] = useState<string[]>([]);
-  const [menuItems, setMenuItems] = useState(generateMenuItems([]));
-  const [menuLoading, setMenuLoading] = useState(true);
+  const { menuItems, menuLoading } = useMenuItems();
   const accountDropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -138,38 +86,6 @@ export function HomeHeader() {
     };
   }, []);
 
-  // Fetch available product types
-  useEffect(() => {
-    const fetchProductTypes = async () => {
-      try {
-        setMenuLoading(true);
-        // Show default menu items immediately for better UX
-        const defaultTypes = ['Gold', 'Silver', 'Platinum', 'Diamond', 'Gemstone'];
-        setAvailableProductTypes(defaultTypes);
-        setMenuItems(generateMenuItems(defaultTypes));
-        
-        const response = await fetch('/api/public/products?limit=1000');
-        if (response.ok) {
-          const data = await response.json();
-          const products = data.products || [];
-          // Extract unique product types
-          const types = [...new Set(products.map((p: any) => p.product_type).filter(Boolean))];
-          
-          // Only update if we got actual types, otherwise keep defaults
-          if (types.length > 0) {
-            setAvailableProductTypes(types);
-            setMenuItems(generateMenuItems(types));
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching product types:', error);
-        // Keep default types on error
-      } finally {
-        setMenuLoading(false);
-      }
-    };
-    fetchProductTypes();
-  }, []);
 
   // Check for reset password token in URL
   useEffect(() => {
