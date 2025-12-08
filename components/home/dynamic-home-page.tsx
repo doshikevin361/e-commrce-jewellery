@@ -21,7 +21,7 @@ import { Swiper, SwiperSlide } from 'swiper/react';
 import type { Swiper as SwiperType } from 'swiper';
 import 'swiper/css';
 import 'swiper/css/pagination';
-import { blogCards, categoriess, featuredProducts, images, trendingPro } from '@/app/utils/dummyData';
+// Removed dummyData imports - using API data instead
 import { Pagination } from 'swiper/modules';
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
@@ -136,104 +136,26 @@ const fallbackFeatureData: HomepageFeatureItem[] = getActiveHomepageFeatures().m
   description: feature.description,
 }));
 
-const fallbackBestSellers: ProductCardData[] = [
-  {
-    id: 11,
-    title: 'Diamond Solitaire Ring',
-    category: 'Rings',
-    price: '$299.00',
-    originalPrice: '$399.00',
-    rating: 5,
-    reviews: 245,
-    image: 'https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=600&q=80',
-    badge: 'Best Seller',
-  },
-  {
-    id: 12,
-    title: 'Pearl Drop Earrings',
-    category: 'Earrings',
-    price: '$189.00',
-    originalPrice: '$249.00',
-    rating: 4.9,
-    reviews: 189,
-    image: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=700&q=80',
-    badge: 'Top Rated',
-  },
-  {
-    id: 13,
-    title: 'Gold Chain Necklace',
-    category: 'Necklace',
-    price: '$349.00',
-    originalPrice: '$449.00',
-    rating: 4.8,
-    reviews: 312,
-    image: 'https://images.unsplash.com/photo-1522312346375-d1a52e2b99b3?auto=format&fit=crop&w=800&q=80',
-    badge: 'Popular',
-  },
-  {
-    id: 14,
-    title: 'Silver Bracelet Set',
-    category: 'Bracelet',
-    price: '$159.00',
-    originalPrice: '$199.00',
-    rating: 4.7,
-    reviews: 156,
-    image: 'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?auto=format&fit=crop&w=800&q=80',
-    badge: 'Sale',
-  },
-];
+// Removed static fallback data - using API data only
+const fallbackBestSellers: ProductCardData[] = [];
 
 // Default fallback banners if no banners are available from backend
 const defaultHeroSlides: HeroSlide[] = [
   {
     id: 1,
     main: {
-      image: 'https://images.unsplash.com/photo-1601121141461-9d6647bca1ed?w=1200&q=85',
-      subtitle: 'Where Luxury',
-      title: 'Meets Affordability',
-      description: 'Exquisite, handcrafted jewelry that celebrates elegance and individuality.',
+      image: DEFAULT_PRODUCT_IMAGE,
+      subtitle: '',
+      title: '',
+      description: '',
       buttonText: 'Shop Now',
     },
     side: {
-      image: 'https://images.unsplash.com/photo-1611085583191-a3b181a88401?w=1200&q=85',
-      subtitle: 'Gold Pricing',
-      title: 'Flash Sale',
-      description: '2 March – 15 March',
+      image: DEFAULT_PRODUCT_IMAGE,
+      subtitle: '',
+      title: '',
+      description: '',
       buttonText: 'See more products',
-    },
-  },
-  {
-    id: 2,
-    main: {
-      image: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=1200&q=80',
-      subtitle: 'New Collection',
-      title: 'Spring Elegance',
-      description: 'Discover our latest collection of handcrafted pieces designed for the modern woman.',
-      buttonText: 'Explore Now',
-    },
-    side: {
-      image: 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=700&q=80',
-      subtitle: 'Limited Time',
-      title: 'Special Offer',
-      description: 'Up to 50% off on selected items',
-      buttonText: 'Shop Sale',
-    },
-  },
-  {
-    id: 3,
-    main: {
-      image: 'https://images.unsplash.com/photo-1602173574767-37ac01994b2a?auto=format&fit=crop&w=1200&q=80',
-      subtitle: 'Premium Quality',
-      title: 'Luxury Redefined',
-      description: 'Experience the finest craftsmanship in every piece of our exclusive collection.',
-      buttonText: 'Discover More',
-    },
-    side: {
-      image: 'https://images.unsplash.com/photo-1573408301185-9146fe634ad0?auto=format&fit=crop&w=700&q=80',
-      subtitle: 'Trending Now',
-      title: 'Best Sellers',
-      description: 'Shop our most popular designs loved by thousands',
-      buttonText: 'View Collection',
     },
   },
 ];
@@ -389,10 +311,10 @@ const mapFeaturesFromApi = (incoming?: any[]): HomepageFeatureItem[] => {
 
 const createDefaultSectionsState = (): HomepageSectionsState => ({
   hero: [...defaultHeroSlides],
-  categories: [...categoriess],
-  newProducts: [...featuredProducts],
-  featuredProducts: [...fallbackBestSellers],
-  trendingProducts: [...trendingPro],
+  categories: [],
+  newProducts: [],
+  featuredProducts: [],
+  trendingProducts: [],
   features: [...fallbackFeatureData],
   dazzle: [],
   gallery: [],
@@ -834,7 +756,7 @@ const Hero = ({ slides = defaultHeroSlides, isLoading = false }: { slides?: Hero
 };
 
 const CategoryStrip = ({ categoriesData, isLoading = false }: { categoriesData?: CategoryStripItem[]; isLoading?: boolean }) => {
-  const items = categoriesData && categoriesData.length > 0 ? categoriesData : categoriess;
+  const items = categoriesData && categoriesData.length > 0 ? categoriesData : [];
   const showSkeleton = isLoading && (!categoriesData || categoriesData.length === 0);
   const skeletonItems = Array.from({ length: 6 });
 
@@ -901,7 +823,7 @@ const FeaturedSlider = ({ products, isLoading = false }: { products?: ProductCar
   const swiperRef = useRef<SwiperType | null>(null);
   const prevButtonRef = useRef<HTMLButtonElement>(null);
   const nextButtonRef = useRef<HTMLButtonElement>(null);
-  const resolvedProducts = products && products.length > 0 ? products : featuredProducts;
+  const resolvedProducts = products && products.length > 0 ? products : [];
   const showLoading = isLoading && (!products || products.length === 0);
 
   useEffect(() => {
@@ -988,7 +910,7 @@ const FeaturedSlider = ({ products, isLoading = false }: { products?: ProductCar
 };
 
 const TrendingProducts = ({ products, isLoading = false }: { products?: ProductCardData[]; isLoading?: boolean }) => {
-  const resolvedProducts = products && products.length > 0 ? products : trendingPro;
+  const resolvedProducts = products && products.length > 0 ? products : [];
   const showLoading = isLoading && (!products || products.length === 0);
 
   const rightSlot = (
@@ -1188,10 +1110,7 @@ const UpdatesSection = ({ newsItems, isLoading = false }: { newsItems: NewsItem[
   const itemsToShow =
     newsItems.length > 0
       ? newsItems
-      : blogCards.map((card, index) => ({
-          _id: `fallback-${index}`,
-          title: card.title,
-          excerpt: card.desc,
+      : [];
           image: card.img,
           publishDate: card.date,
           slug: '',
@@ -1253,10 +1172,7 @@ const GallerySection = ({ galleryItems, isLoading = false }: { galleryItems: Gal
   const itemsToShow =
     galleryItems.length > 0
       ? galleryItems
-      : images.map((src, index) => ({
-          _id: `fallback-${index}`,
-          image: src,
-        }));
+      : [];
 
   return (
     <section className='w-full'>
@@ -1308,7 +1224,7 @@ const WhyChooseUs = ({ features, isLoading = false }: { features?: HomepageFeatu
 };
 
 const BestSellers = ({ products, isLoading = false }: { products?: ProductCardData[]; isLoading?: boolean }) => {
-  const items = products && products.length > 0 ? products : fallbackBestSellers;
+  const items = products && products.length > 0 ? products : [];
   const showLoading = isLoading && (!products || products.length === 0);
 
   return (

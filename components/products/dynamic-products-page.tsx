@@ -41,7 +41,6 @@ interface Product {
   metalPurity?: string;
   metalWeight?: number;
   stoneType?: string;
-  occasion?: string;
   gender?: string;
   size?: string;
 }
@@ -100,7 +99,6 @@ export function DynamicProductsPage() {
     const brands = [...new Set(products.map(p => p.brand).filter(Boolean))];
     const metalPurities = [...new Set(products.map(p => p.metalPurity).filter(Boolean))];
     const stoneTypes = [...new Set(products.map(p => p.stoneType).filter(Boolean))];
-    const occasions = [...new Set(products.map(p => p.occasion).filter(Boolean))];
     const genders = [...new Set(products.map(p => p.gender).filter(Boolean))];
     const sizes = [...new Set(products.map(p => p.size).filter(Boolean))];
 
@@ -109,7 +107,6 @@ export function DynamicProductsPage() {
       brands,
       metalPurities,
       stoneTypes,
-      occasions,
       genders,
       sizes,
     };
@@ -305,10 +302,10 @@ export function DynamicProductsPage() {
           <p className='text-gray-600 mt-1'>{filteredAndSortedProducts.length} products found</p>
         </div>
 
-        <div className='flex items-center gap-3'>
+        <div className='flex flex-col sm:flex-row items-stretch sm:items-center gap-3'>
           {/* Sort */}
           <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className='w-48'>
+            <SelectTrigger className='w-full sm:w-48'>
               <SelectValue placeholder='Sort by' />
             </SelectTrigger>
             <SelectContent>
@@ -339,11 +336,11 @@ export function DynamicProductsPage() {
         </div>
       </div>
 
-      <div className='flex gap-8'>
+      <div className='flex flex-col lg:flex-row gap-4 lg:gap-8'>
         {/* Filters Sidebar */}
         {showFilters && (
-          <div className='w-80 flex-shrink-0'>
-            <div className='bg-white border border-gray-200 rounded-lg p-6 sticky top-4'>
+          <div className='w-full lg:w-80 flex-shrink-0'>
+            <div className='bg-white border border-gray-200 rounded-lg p-4 sm:p-6 sticky top-4 max-h-[calc(100vh-2rem)] overflow-y-auto'>
               <div className='flex items-center justify-between mb-6'>
                 <h3 className='text-lg font-semibold text-gray-900'>Filters</h3>
                 <Button variant='ghost' size='sm' onClick={clearAllFilters}>

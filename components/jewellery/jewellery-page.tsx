@@ -52,7 +52,6 @@ interface Product {
   metalType?: string;
   metalPurity?: string;
   stoneType?: string;
-  occasion?: string;
   gender?: string;
   size?: string;
   [key: string]: any; // For dynamic attributes
@@ -215,8 +214,7 @@ export function JewelleryPage() {
             normalizedKey.includes('purity') ||
             normalizedKey.includes('stone') ||
             normalizedKey.includes('type') ||
-            normalizedKey.includes('gender') ||
-            normalizedKey.includes('occasion')
+            normalizedKey.includes('gender')
           ) {
             // Create a temporary attribute filter
             const attrName = key
@@ -330,7 +328,6 @@ export function JewelleryPage() {
               metaltype: 'metalType',
               metalpurity: 'metalPurity',
               stonetype: 'stoneType',
-              occasion: 'occasion',
               gender: 'gender',
               size: 'size',
             };

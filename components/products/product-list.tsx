@@ -53,11 +53,8 @@ interface ProductDetails extends Product {
   allowBackorders?: boolean;
   allowReviews?: boolean;
   return_policy?: string;
-  returnPolicyDays?: number;
-  warrantyPeriod?: string;
   mainImage?: string;
   galleryImages?: string[];
-  visibility?: string;
   featured?: boolean;
   createdAt?: string;
   updatedAt?: string;
@@ -590,7 +587,6 @@ export function ProductList() {
               <DetailItem label='Product Type' value={viewProductData.product_type} />
               <DetailItem label='Brand' value={viewProductData.brand} />
               <DetailItem label='Status' value={viewProductData.status} />
-              <DetailItem label='Visibility' value={viewProductData.visibility} />
               <DetailItem label='Featured' value={viewProductData.featured ? 'Yes' : 'No'} />
             </div>
 
@@ -617,7 +613,6 @@ export function ProductList() {
                 <DetailItem label='Stone Details' value={viewProductData.jewelleryStoneDetails || '-'} />
                 <DetailItem label='Stock' value={viewProductData.stock} />
                 <DetailItem label='Allow Reviews' value={viewProductData.allowReviews ? 'Yes' : 'No'} />
-                <DetailItem label='Return Policy (days)' value={viewProductData.returnPolicyDays} />
                 <DetailItem label='Return Policy' value={viewProductData.return_policy || '-'} />
               </div>
             ) : (
@@ -631,13 +626,11 @@ export function ProductList() {
                 <DetailItem label='Allow Reviews' value={viewProductData.allowReviews ? 'Yes' : 'No'} />
                 <DetailItem label='Free Shipping' value={viewProductData.free_shipping ? 'Yes' : 'No'} />
                 <DetailItem label='Allow Return' value={viewProductData.allow_return ? 'Yes' : 'No'} />
-                <DetailItem label='Return Policy (days)' value={viewProductData.returnPolicyDays} />
                 <DetailItem label='Return Policy' value={viewProductData.return_policy || '-'} />
               </div>
             )}
 
             <div className='grid grid-cols-1 sm:grid-cols-4 gap-4'>
-              <DetailItem label='Warranty' value={viewProductData.warrantyPeriod} />
               <DetailItem label='URL Slug' value={viewProductData.urlSlug} />
               <DetailItem label='Focus Keyword' value={viewProductData.focusKeyword} />
               <DetailItem

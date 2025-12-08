@@ -50,28 +50,12 @@ const STONE_TYPE_OPTIONS = [
   { label: 'Topaz', value: 'Topaz' },
 ] as const;
 
-const OCCASION_OPTIONS = [
-  { label: 'Select Occasion', value: '' },
-  { label: 'Wedding', value: 'Wedding' },
-  { label: 'Engagement', value: 'Engagement' },
-  { label: 'Anniversary', value: 'Anniversary' },
-  { label: 'Birthday', value: 'Birthday' },
-  { label: 'Festival', value: 'Festival' },
-  { label: 'Daily Wear', value: 'Daily Wear' },
-  { label: 'Party', value: 'Party' },
-] as const;
-
 const GENDER_OPTIONS = [
   { label: 'Select Gender', value: '' },
   { label: 'Men', value: 'Men' },
   { label: 'Women', value: 'Women' },
   { label: 'Unisex', value: 'Unisex' },
 ] as const;
-
-const AGE_GROUP_OPTIONS = [
-  { label: 'Select Age Group', value: '' },
-  { label: 'Kids', value: 'Kids' },
-  { label: 'Teens', value: 'Teens' },
   { label: 'Adults', value: 'Adults' },
   { label: 'All Ages', value: 'All Ages' },
 ] as const;
@@ -233,10 +217,8 @@ interface Product {
   totalWeight: number; // Total jewelry weight in grams
   stoneWeight: number; // Total stone weight (if different from diamondCarat)
   
-  // Occasion & Demographics
-  occasion: 'Wedding' | 'Engagement' | 'Anniversary' | 'Birthday' | 'Festival' | 'Daily Wear' | 'Party' | 'Formal' | 'Casual' | 'Religious' | 'Other' | '';
+  // Demographics
   gender: 'Men' | 'Women' | 'Unisex' | 'Kids' | '';
-  ageGroup: 'Kids' | 'Teens' | 'Adults' | 'All Ages' | '';
   
   // Quality & Certification
   hallmarked: boolean;
@@ -251,7 +233,6 @@ interface Product {
   engravingOptions: string; // e.g., "Name, Date, Initials"
   gift_wrapping: boolean;
   resizing_available: boolean;
-  warrantyPeriod: string;
   // Live pricing fields
   baseMaterialCost: number; // cost without live pricing
   livePriceEnabled: boolean;
@@ -296,12 +277,9 @@ interface Product {
   }>;
   relatedProducts: string[];
   status: string;
-  visibility: string;
   featured: boolean;
   trending: boolean;
   allowReviews: boolean;
-  returnPolicyDays: number;
-  warrantyPeriod: string;
   vendor: string;
   createdAt?: string; // Added for potential API response
   updatedAt?: string; // Added for potential API response
@@ -447,10 +425,8 @@ const INITIAL_PRODUCT: Product = {
   sizeUnit: '',
   totalWeight: 0,
   stoneWeight: 0,
-  // Occasion & Demographics
-  occasion: '',
+  // Demographics
   gender: '',
-  ageGroup: '',
   // Quality & Certification
   hallmarked: false,
   bis_hallmark: false,
@@ -463,7 +439,6 @@ const INITIAL_PRODUCT: Product = {
   engravingOptions: '',
   gift_wrapping: true,
   resizing_available: false,
-  warrantyPeriod: '',
   baseMaterialCost: 0,
   livePriceEnabled: true, // Default ON for jewelry products
   priceLastUpdated: '',
@@ -492,12 +467,9 @@ const INITIAL_PRODUCT: Product = {
   variants: [],
   relatedProducts: [],
   status: 'active',
-  visibility: 'Public',
   featured: false,
   trending: false,
   allowReviews: true,
-  returnPolicyDays: 30,
-  warrantyPeriod: '1 year',
   vendor: 'Main Store',
 };
 
@@ -967,9 +939,7 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
     makingCharges: 'jewelry',
     makingChargesType: 'jewelry',
     certification: 'jewelry',
-    occasion: 'jewelry',
     gender: 'jewelry',
-    ageGroup: 'jewelry',
     size: 'jewelry',
     sizeUnit: 'jewelry',
     hallmarked: 'jewelry',
@@ -1007,8 +977,6 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
     // Other fields
     brand: 'basic',
     tags: 'basic',
-    warrantyPeriod: 'other',
-    returnPolicyDays: 'other',
     processingTime: 'other',
     dimensions: 'other',
     weight: 'other',
@@ -1199,11 +1167,6 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
     }
     
      // Warranty validation - Optional field for better customer service
-    
-    // Return policy days validation
-    if (formData.allow_return && (!formData.returnPolicyDays || formData.returnPolicyDays <= 0)) {
-      newErrors.returnPolicyDays = 'Return policy days must be greater than 0 when returns are enabled';
-    }
 
     console.log('[v0] Validation errors found:', newErrors);
     console.log('[v0] Tabs with errors:', getTabsWithErrors(newErrors));
@@ -2444,27 +2407,11 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                         <h4 className='text-lg font-semibold text-slate-900 dark:text-white mb-4'>Product Details</h4>
                         <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4'>
                            <Dropdown
-                             labelMain='Occasion'
-                             options={OCCASION_OPTIONS}
-                             placeholder='Select Occasion'
-                             value={formData.occasion}
-                             onChange={option => handleChange('occasion', option.value as Product['occasion'])}
-                           />
-
-                           <Dropdown
                              labelMain='Gender'
                              options={GENDER_OPTIONS}
                              placeholder='Select Gender'
                              value={formData.gender}
                              onChange={option => handleChange('gender', option.value as Product['gender'])}
-                           />
-
-                           <Dropdown
-                             labelMain='Age Group'
-                             options={AGE_GROUP_OPTIONS}
-                             placeholder='Select Age Group'
-                             value={formData.ageGroup}
-                             onChange={option => handleChange('ageGroup', option.value as Product['ageGroup'])}
                            />
 
                           <div className='space-y-2'>
@@ -2484,9 +2431,9 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                           </div>
                         </div>
 
-                        {/* Additional Features */}
+                        {/* Customization & Services */}
                         <div className='mt-4'>
-                          <h5 className='text-md font-medium text-slate-900 dark:text-white mb-3'>Additional Features</h5>
+                          <h5 className='text-md font-medium text-slate-900 dark:text-white mb-3'>Customization & Services</h5>
                           <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
                             <label className='flex items-center'>
                               <input
@@ -3084,150 +3031,6 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                   {/* Other Details */}
                   {activeTab === 'other' && (
                     <div className='space-y-8'>
-                      {/* Variants */}
-                      {!isJewellery ? (
-                        <div className='space-y-4'>
-                          <h3 className='text-xl font-semibold text-slate-900 dark:text-white'>Product Variants</h3>
-                          <p className='text-sm text-slate-600 dark:text-slate-400'>Add product variants like different sizes or colors</p>
-                          <Button
-                            type='button'
-                            onClick={() => {
-                              const newVariant = {
-                                id: Date.now().toString(),
-                                type: 'Color',
-                                options: [],
-                              };
-                              const currentVariants = Array.isArray(formData.variants) ? formData.variants : [];
-                              handleChange('variants', [...currentVariants, newVariant]);
-                            }}
-                            className='bg-green-600 hover:bg-green-700 text-white'>
-                            <Plus className='w-4 h-4 mr-2' />
-                            Add Variant Type
-                          </Button>
-
-                          {(formData.variants || []).map((variant, variantIdx) => (
-                            <div key={variant.id} className='p-4 border border-slate-200 dark:border-slate-700 rounded-lg space-y-4'>
-                              <div className='flex flex-col md:flex-row md:items-center md:justify-between gap-3'>
-                                <FormField
-                                  label='Variant Type'
-                                  value={variant.type}
-                                  onChange={e => {
-                                    const currentVariants = Array.isArray(formData.variants) ? formData.variants : [];
-                                    const newVariants = [...currentVariants];
-                                    newVariants[variantIdx].type = e.target.value;
-                                    handleChange('variants', newVariants);
-                                  }}
-                                  placeholder='e.g., Color, Size'
-                                  containerClassName='flex-1'
-                                />
-                                <button
-                                  type='button'
-                                  onClick={() => {
-                                    const currentVariants = Array.isArray(formData.variants) ? formData.variants : [];
-                                    handleChange(
-                                      'variants',
-                                      currentVariants.filter((_, i) => i !== variantIdx)
-                                    );
-                                  }}
-                                  className='text-red-600 hover:text-red-700'>
-                                  <X className='w-4 h-4' />
-                                </button>
-                              </div>
-
-                              <div className='space-y-3'>
-                                <p className='text-sm font-medium text-slate-700 dark:text-slate-300'>Options</p>
-                                {(variant.options || []).map((option, optionIdx) => (
-                                  <div
-                                    key={`option-${variantIdx}-${optionIdx}`}
-                                    className='space-y-3 rounded-md border border-slate-200 dark:border-slate-700 p-3'>
-                                    <FormField
-                                      label='Option Name'
-                                      value={option.name}
-                                      onChange={e => {
-                                        const currentVariants = Array.isArray(formData.variants) ? formData.variants : [];
-                                        const newVariants = [...currentVariants];
-                                        newVariants[variantIdx].options[optionIdx].name = e.target.value;
-                                        handleChange('variants', newVariants);
-                                      }}
-                                      placeholder='Option Name'
-                                    />
-                                    <FormField
-                                      label='SKU'
-                                      value={option.sku}
-                                      onChange={e => {
-                                        const currentVariants = Array.isArray(formData.variants) ? formData.variants : [];
-                                        const newVariants = [...currentVariants];
-                                        newVariants[variantIdx].options[optionIdx].sku = e.target.value;
-                                        handleChange('variants', newVariants);
-                                      }}
-                                      placeholder='SKU'
-                                    />
-                                    <FormField
-                                      label='Price'
-                                      type='number'
-                                      value={option.price}
-                                      onChange={e => {
-                                        const currentVariants = Array.isArray(formData.variants) ? formData.variants : [];
-                                        const newVariants = [...currentVariants];
-                                        newVariants[variantIdx].options[optionIdx].price = parseFloat(e.target.value) || 0;
-                                        handleChange('variants', newVariants);
-                                      }}
-                                      placeholder='Price'
-                                    />
-                                    <div className='flex items-end gap-2'>
-                                      <FormField
-                                        label='Stock'
-                                        type='number'
-                                        value={option.stock}
-                                        onChange={e => {
-                                          const currentVariants = Array.isArray(formData.variants) ? formData.variants : [];
-                                          const newVariants = [...currentVariants];
-                                          newVariants[variantIdx].options[optionIdx].stock = parseInt(e.target.value) || 0;
-                                          handleChange('variants', newVariants);
-                                        }}
-                                        placeholder='Stock'
-                                        containerClassName='flex-1'
-                                      />
-                                      <button
-                                        type='button'
-                                        onClick={() => {
-                                          const currentVariants = Array.isArray(formData.variants) ? formData.variants : [];
-                                          const newVariants = [...currentVariants];
-                                          newVariants[variantIdx].options.splice(optionIdx, 1);
-                                          handleChange('variants', newVariants);
-                                        }}
-                                        className='text-red-600 hover:text-red-700 mb-1'>
-                                        <X className='w-4 h-4' />
-                                      </button>
-                                    </div>
-                                  </div>
-                                ))}
-                                <Button
-                                  type='button'
-                                  onClick={() => {
-                                    const currentVariants = Array.isArray(formData.variants) ? formData.variants : [];
-                                    const newVariants = [...currentVariants];
-                                    newVariants[variantIdx].options.push({
-                                      name: '',
-                                      sku: '',
-                                      price: 0,
-                                      stock: 0,
-                                      image: '',
-                                    });
-                                    handleChange('variants', newVariants);
-                                  }}
-                                  className='bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-800/50'>
-                                  <Plus className='w-4 h-4 mr-2' />
-                                  Add Option
-                                </Button>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div></div>
-                      )}
-
                       {/* Shipping */}
                       <div className='space-y-4'>
                         <h3 className='text-xl font-semibold text-slate-900 dark:text-white'>Shipping Details</h3>
@@ -3285,17 +3088,6 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                           />
                         </div>
 
-                        <Dropdown
-                          labelMain='Visibility'
-                          options={[
-                            { label: 'Public', value: 'Public' },
-                            { label: 'Hidden', value: 'Hidden' },
-                          ]}
-                          value={formData.visibility}
-                          onChange={option => handleChange('visibility', option.value)}
-                          placeholder='Select visibility'
-                        />
-
                         <div className='flex items-center justify-between p-4 border rounded-lg'>
                           <div>
                             <p className='text-sm font-medium text-slate-700 dark:text-slate-300'>Featured Product</p>
@@ -3332,20 +3124,6 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                           />
                         </div>
 
-                        <FormField
-                          label='Return Policy (Days)'
-                          type='number'
-                          value={formData.returnPolicyDays}
-                          onChange={e => handleChange('returnPolicyDays', parseInt(e.target.value) || 0)}
-                          placeholder='30'
-                        />
-
-                        <FormField
-                          label='Warranty Period'
-                          value={formData.warrantyPeriod}
-                          onChange={e => handleChange('warrantyPeriod', e.target.value)}
-                          placeholder='e.g., 1 year'
-                        />
                       </div>
                     </div>
                   )}

@@ -49,11 +49,8 @@ export interface Product {
   }>; // Added variants field
   relatedProducts: string[]; // Added related products field
   status: string;
-  visibility: string;
   featured: boolean;
   allowReviews: boolean;
-  returnPolicyDays: number;
-  warrantyPeriod: string;
   vendor: string;
   vendorId?: string;
   createdAt?: Date;

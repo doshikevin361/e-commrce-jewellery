@@ -95,9 +95,7 @@ interface ProductDetail {
   makingChargesType?: string;
   certification?: string;
   certificationNumber?: string;
-  occasion?: string;
   gender?: string;
-  ageGroup?: string;
   size?: string;
   sizeUnit?: string;
   totalWeight?: number;
@@ -109,7 +107,6 @@ interface ProductDetail {
   engravingOptions?: string;
   resizing_available?: boolean;
   gift_wrapping?: boolean;
-  warrantyPeriod?: string;
   livePriceEnabled?: boolean;
 }
 
@@ -194,9 +191,9 @@ export function ProductDetailPage({ productId }: { productId: string }) {
         <span>Back to Products</span>
       </button>
 
-      <div className='grid grid-cols-1 lg:grid-cols-2 gap-10 sm:gap-12 lg:gap-16 mb-16'>
+      <div className='grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 md:gap-10 lg:gap-12 xl:gap-16 mb-12 sm:mb-16'>
         {/* Images */}
-        <div className='sticky top-36 self-start h-fit'>
+        <div className='lg:sticky lg:top-36 lg:self-start lg:h-fit'>
           <div className='relative w-full overflow-hidden rounded-3xl bg-gradient-to-br from-[#F5EEE5] to-[#E6D3C2] mb-4 shadow-lg group'>
             <div className='relative aspect-[4/3] sm:aspect-[3/2] lg:aspect-[3/2]'>
               <Image
@@ -239,7 +236,7 @@ export function ProductDetailPage({ productId }: { productId: string }) {
         <div className='space-y-6'>
           <div>
             <p className='text-xs uppercase tracking-[0.3em] text-[#4F3A2E] mb-3 font-medium'>{product.category}</p>
-            <h1 className='text-4xl sm:text-5xl font-bold text-[#1F3B29] mb-6 leading-tight'>{product.name}</h1>
+            <h1 className='text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-[#1F3B29] mb-4 sm:mb-6 leading-tight'>{product.name}</h1>
 
             <div className='flex items-center gap-4 mb-6'>
               <div className='flex items-center gap-2'>
@@ -259,12 +256,12 @@ export function ProductDetailPage({ productId }: { productId: string }) {
           </div>
 
           <div className='pb-6 border-b border-[#E6D3C2]'>
-            <div className='flex items-baseline gap-4 flex-wrap'>
-              <span className='text-4xl sm:text-5xl font-bold text-[#1F3B29]'>₹{product.displayPrice.toLocaleString()}</span>
+            <div className='flex items-baseline gap-2 sm:gap-3 md:gap-4 flex-wrap'>
+              <span className='text-3xl sm:text-4xl md:text-5xl font-bold text-[#1F3B29]'>₹{product.displayPrice.toLocaleString()}</span>
               {product.hasDiscount && (
                 <>
-                  <span className='text-2xl text-[#4F3A2E] line-through opacity-60'>₹{product.originalPrice.toLocaleString()}</span>
-                  <span className='text-sm font-bold bg-gradient-to-r from-red-500 to-red-600 text-white px-4 py-2 rounded-full shadow-md'>
+                  <span className='text-xl sm:text-2xl text-[#4F3A2E] line-through opacity-60'>₹{product.originalPrice.toLocaleString()}</span>
+                  <span className='text-xs sm:text-sm font-bold bg-gradient-to-r from-red-500 to-red-600 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-full shadow-md'>
                     Save {product.discountPercent}%
                   </span>
                 </>
@@ -325,15 +322,15 @@ export function ProductDetailPage({ productId }: { productId: string }) {
 
             {/* Comprehensive Jewelry Details */}
             {(product.hasGold || product.hasSilver || product.hasDiamond || product.jewelryType) && (
-              <div className='bg-gradient-to-br from-[#F5EEE5] to-white p-6 rounded-2xl border border-[#E6D3C2] shadow-sm'>
-                <h3 className='text-xl font-bold text-[#1F3B29] mb-6 flex items-center gap-2'>
-                  <Sparkles className='w-5 h-5 text-[#C8A15B]' />
+              <div className='bg-gradient-to-br from-[#F5EEE5] to-white p-4 sm:p-6 rounded-xl sm:rounded-2xl border border-[#E6D3C2] shadow-sm'>
+                <h3 className='text-lg sm:text-xl font-bold text-[#1F3B29] mb-4 sm:mb-6 flex items-center gap-2'>
+                  <Sparkles className='w-4 h-4 sm:w-5 sm:h-5 text-[#C8A15B]' />
                   Jewelry Specifications
                 </h3>
-                <div className='space-y-5'>
+                <div className='space-y-4 sm:space-y-5'>
                   {/* Jewelry Type */}
                   {(product.jewelryType || product.jewelrySubType) && (
-                    <div className='grid grid-cols-2 gap-6 pb-5 border-b border-[#E6D3C2]'>
+                    <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 pb-4 sm:pb-5 border-b border-[#E6D3C2]'>
                       {product.jewelryType && (
                         <div>
                           <span className='text-xs uppercase tracking-wide text-[#4F3A2E] font-medium block mb-1'>Jewelry Type</span>
@@ -350,7 +347,7 @@ export function ProductDetailPage({ productId }: { productId: string }) {
                   )}
 
                   {/* Material Details */}
-                  <div className='grid grid-cols-2 gap-6 pb-5 border-b border-[#E6D3C2]'>
+                  <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 pb-4 sm:pb-5 border-b border-[#E6D3C2]'>
                     {product.hasGold && (
                       <>
                         {product.goldWeight && (
@@ -433,7 +430,7 @@ export function ProductDetailPage({ productId }: { productId: string }) {
 
                   {/* Ring Specific */}
                   {product.jewelryType === 'Ring' && (
-                    <div className='grid grid-cols-2 gap-6 pb-5 border-b border-[#E6D3C2]'>
+                    <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 pb-4 sm:pb-5 border-b border-[#E6D3C2]'>
                       {product.ringSetting && (
                         <div>
                           <span className='text-xs uppercase tracking-wide text-[#4F3A2E] font-medium block mb-1'>Setting</span>
@@ -465,7 +462,7 @@ export function ProductDetailPage({ productId }: { productId: string }) {
 
                   {/* Chain/Necklace Specific */}
                   {(product.jewelryType === 'Necklace' || product.jewelryType === 'Chain') && (
-                    <div className='grid grid-cols-2 gap-6 pb-5 border-b border-[#E6D3C2]'>
+                    <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 pb-4 sm:pb-5 border-b border-[#E6D3C2]'>
                       {product.chainType && (
                         <div>
                           <span className='text-xs uppercase tracking-wide text-[#4F3A2E] font-medium block mb-1'>Chain Type</span>
@@ -485,7 +482,7 @@ export function ProductDetailPage({ productId }: { productId: string }) {
 
                   {/* Earring Specific */}
                   {product.jewelryType === 'Earrings' && (
-                    <div className='grid grid-cols-2 gap-6 pb-5 border-b border-[#E6D3C2]'>
+                    <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 pb-4 sm:pb-5 border-b border-[#E6D3C2]'>
                       {product.earringType && (
                         <div>
                           <span className='text-xs uppercase tracking-wide text-[#4F3A2E] font-medium block mb-1'>Earring Type</span>
@@ -503,7 +500,7 @@ export function ProductDetailPage({ productId }: { productId: string }) {
 
                   {/* Bracelet Specific */}
                   {product.jewelryType === 'Bracelet' && (
-                    <div className='grid grid-cols-2 gap-6 pb-5 border-b border-[#E6D3C2]'>
+                    <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 pb-4 sm:pb-5 border-b border-[#E6D3C2]'>
                       {product.braceletType && (
                         <div>
                           <span className='text-xs uppercase tracking-wide text-[#4F3A2E] font-medium block mb-1'>Bracelet Type</span>
@@ -529,7 +526,7 @@ export function ProductDetailPage({ productId }: { productId: string }) {
 
                   {/* Design & Style */}
                   {(product.designStyle || product.finishType || product.pattern) && (
-                    <div className='grid grid-cols-2 gap-6 pb-5 border-b border-[#E6D3C2]'>
+                    <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 pb-4 sm:pb-5 border-b border-[#E6D3C2]'>
                       {product.designStyle && (
                         <div>
                           <span className='text-xs uppercase tracking-wide text-[#4F3A2E] font-medium block mb-1'>Design Style</span>
@@ -553,7 +550,7 @@ export function ProductDetailPage({ productId }: { productId: string }) {
 
                   {/* Stone Setting */}
                   {product.hasDiamond && (product.stoneSetting || product.stoneArrangement) && (
-                    <div className='grid grid-cols-2 gap-6 pb-5 border-b border-[#E6D3C2]'>
+                    <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 pb-4 sm:pb-5 border-b border-[#E6D3C2]'>
                       {product.stoneSetting && (
                         <div>
                           <span className='text-xs uppercase tracking-wide text-[#4F3A2E] font-medium block mb-1'>Stone Setting</span>
@@ -570,13 +567,7 @@ export function ProductDetailPage({ productId }: { productId: string }) {
                   )}
 
                   {/* Other Details */}
-                  <div className='grid grid-cols-2 gap-6'>
-                    {product.occasion && (
-                      <div>
-                        <span className='text-xs uppercase tracking-wide text-[#4F3A2E] font-medium block mb-1'>Occasion</span>
-                        <p className='font-semibold text-[#1F3B29] text-lg'>{product.occasion}</p>
-                      </div>
-                    )}
+                  <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6'>
                     {product.gender && (
                       <div>
                         <span className='text-xs uppercase tracking-wide text-[#4F3A2E] font-medium block mb-1'>Gender</span>
@@ -625,19 +616,13 @@ export function ProductDetailPage({ productId }: { productId: string }) {
                         <p className='font-semibold text-[#1F3B29] text-lg'>Available</p>
                       </div>
                     )}
-                    {product.warrantyPeriod && (
-                      <div>
-                        <span className='text-xs uppercase tracking-wide text-[#4F3A2E] font-medium block mb-1'>Warranty</span>
-                        <p className='font-semibold text-[#1F3B29] text-lg'>{product.warrantyPeriod}</p>
-                      </div>
-                    )}
                   </div>
                 </div>
               </div>
             )}
 
             {/* Quick Info Cards */}
-            <div className='grid grid-cols-2 gap-4'>
+            <div className='grid grid-cols-2 sm:grid-cols-2 gap-3 sm:gap-4'>
               <div className='bg-gradient-to-br from-[#F5EEE5] to-white p-4 rounded-xl border border-[#E6D3C2]'>
                 <p className='text-xs uppercase tracking-wide text-[#4F3A2E] font-medium mb-2'>Material</p>
                 <p className='text-base font-bold text-[#1F3B29]'>{product.material || 'Gold'}</p>
@@ -662,9 +647,9 @@ export function ProductDetailPage({ productId }: { productId: string }) {
           </div>
 
           {/* Quantity & Actions */}
-          <div className='space-y-6 pt-6 border-t border-[#E6D3C2]'>
+          <div className='space-y-4 sm:space-y-6 pt-4 sm:pt-6 border-t border-[#E6D3C2]'>
             {/* Features */}
-            <div className='grid grid-cols-1 sm:grid-cols-3 gap-4 pt-6'>
+            <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 pt-4 sm:pt-6'>
               <div className='flex items-start gap-4 p-5 bg-gradient-to-br from-[#F5EEE5] to-white rounded-xl border border-[#E6D3C2] hover:shadow-md transition-shadow'>
                 <div className='p-3 bg-[#C8A15B]/10 rounded-lg'>
                   <Truck size={24} className='text-[#C8A15B]' />
@@ -698,15 +683,15 @@ export function ProductDetailPage({ productId }: { productId: string }) {
       </div>
 
       {/* Product Details Tabs */}
-      <div className='mb-12 border-b-2 border-[#E6D3C2]'>
-        <div className='flex gap-8 overflow-x-auto scrollbar-hide'>
+      <div className='mb-8 sm:mb-12 border-b-2 border-[#E6D3C2]'>
+        <div className='flex gap-4 sm:gap-6 md:gap-8 overflow-x-auto scrollbar-hide'>
           {['Description', 'Care Instructions', 'Reviews'].map(tab => {
             const tabId = tab.toLowerCase().replace(/\s+/g, '-');
             return (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tabId)}
-                className={`pb-5 px-2 text-sm font-bold border-b-2 transition-all whitespace-nowrap ${
+                className={`pb-3 sm:pb-5 px-2 sm:px-4 text-xs sm:text-sm font-bold border-b-2 transition-all whitespace-nowrap ${
                   activeTab === tabId
                     ? 'border-[#C8A15B] text-[#1F3B29]'
                     : 'border-transparent text-[#4F3A2E] hover:text-[#1F3B29] hover:border-[#E6D3C2]'
@@ -719,10 +704,10 @@ export function ProductDetailPage({ productId }: { productId: string }) {
       </div>
 
       {/* Tab Content */}
-      <div className='mb-16'>
+      <div className='mb-12 sm:mb-16'>
         {activeTab === 'description' && (
           <div className='max-w-4xl'>
-            <h3 className='text-2xl font-bold text-[#1F3B29] mb-6'>Product Description</h3>
+            <h3 className='text-xl sm:text-2xl font-bold text-[#1F3B29] mb-4 sm:mb-6'>Product Description</h3>
             <div
               className='text-[#4F3A2E] space-y-4 prose prose-lg max-w-none leading-relaxed'
               dangerouslySetInnerHTML={{
@@ -749,8 +734,8 @@ export function ProductDetailPage({ productId }: { productId: string }) {
 
         {activeTab === 'care-instructions' && (
           <div className='max-w-4xl'>
-            <h3 className='text-2xl font-bold text-[#1F3B29] mb-6'>Care Instructions</h3>
-            <div className='bg-gradient-to-br from-[#F5EEE5] to-white p-8 rounded-2xl border border-[#E6D3C2] space-y-4'>
+            <h3 className='text-xl sm:text-2xl font-bold text-[#1F3B29] mb-4 sm:mb-6'>Care Instructions</h3>
+            <div className='bg-gradient-to-br from-[#F5EEE5] to-white p-4 sm:p-6 md:p-8 rounded-xl sm:rounded-2xl border border-[#E6D3C2] space-y-3 sm:space-y-4'>
               <div className='space-y-3'>
                 <h4 className='font-bold text-[#1F3B29] text-lg'>Cleaning</h4>
                 <p className='text-[#4F3A2E]'>
@@ -778,8 +763,8 @@ export function ProductDetailPage({ productId }: { productId: string }) {
 
         {activeTab === 'reviews' && (
           <div className='max-w-4xl'>
-            <div className='flex items-center justify-between mb-8'>
-              <h3 className='text-2xl font-bold text-[#1F3B29]'>Customer Reviews</h3>
+            <div className='flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 sm:mb-8'>
+              <h3 className='text-xl sm:text-2xl font-bold text-[#1F3B29]'>Customer Reviews</h3>
               <div className='flex items-center gap-2'>
                 <div className='flex items-center gap-1'>
                   {[...Array(5)].map((_, i) => (
@@ -849,17 +834,17 @@ export function ProductDetailPage({ productId }: { productId: string }) {
 
       {/* Related Products */}
       {relatedProducts.length > 0 && (
-        <div className='mt-20 pt-12 border-t-2 border-[#E6D3C2]'>
-          <div className='flex items-center justify-between mb-10'>
-            <h2 className='text-3xl sm:text-4xl font-bold text-[#1F3B29]'>Related Products</h2>
+        <div className='mt-12 sm:mt-16 md:mt-20 pt-8 sm:pt-12 border-t-2 border-[#E6D3C2]'>
+          <div className='flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 sm:mb-8 md:mb-10'>
+            <h2 className='text-2xl sm:text-3xl md:text-4xl font-bold text-[#1F3B29]'>Related Products</h2>
             <Link
               href='/products'
-              className='hidden sm:flex items-center gap-2 text-[#1F3B29] font-semibold hover:text-[#C8A15B] transition-colors group'>
-              <span>View All</span>
-              <ChevronRight size={18} className='group-hover:translate-x-1 transition-transform' />
+              className='flex items-center gap-2 text-[#1F3B29] font-semibold hover:text-[#C8A15B] transition-colors group'>
+              <span className='text-sm sm:text-base'>View All</span>
+              <ChevronRight size={16} className='sm:w-[18px] sm:h-[18px] group-hover:translate-x-1 transition-transform' />
             </Link>
           </div>
-          <div className='grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6 sm:gap-8'>
+          <div className='grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 md:gap-8'>
             {relatedProducts.map(relatedProduct => (
               <ProductCard key={relatedProduct.id} product={relatedProduct} />
             ))}

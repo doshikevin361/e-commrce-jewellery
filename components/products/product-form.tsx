@@ -42,9 +42,7 @@ interface Product {
   makingCharges: number; // percentage or fixed amount
   makingChargesType: 'percentage' | 'fixed';
   certification: string; // GIA, IGI, etc.
-  occasion: 'Wedding' | 'Engagement' | 'Anniversary' | 'Birthday' | 'Festival' | 'Daily Wear' | 'Party' | '';
   gender: 'Men' | 'Women' | 'Unisex' | '';
-  ageGroup: 'Kids' | 'Teens' | 'Adults' | 'All Ages' | '';
   size: string; // ring size, chain length, etc.
   sizeUnit: 'inches' | 'cm' | 'ring_size' | '';
   hallmarked: boolean;
@@ -88,11 +86,8 @@ interface Product {
   }>;
   relatedProducts: string[];
   status: string;
-  visibility: string;
   featured: boolean;
   allowReviews: boolean;
-  returnPolicyDays: number;
-  warrantyPeriod: string;
   vendor: string;
 }
 
@@ -130,9 +125,7 @@ const INITIAL_PRODUCT: Product = {
   makingCharges: 15, // 15% default making charges
   makingChargesType: 'percentage',
   certification: '',
-  occasion: '',
   gender: '',
-  ageGroup: '',
   size: '',
   sizeUnit: '',
   hallmarked: false,
@@ -165,11 +158,8 @@ const INITIAL_PRODUCT: Product = {
   variants: [],
   relatedProducts: [],
   status: 'Draft',
-  visibility: 'Public',
   featured: false,
   allowReviews: true,
-  returnPolicyDays: 30,
-  warrantyPeriod: '1 year',
   vendor: 'Main Store',
 };
 
@@ -986,25 +976,6 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                      Occasion
-                    </label>
-                    <select
-                      value={formData.occasion}
-                      onChange={(e) => handleChange('occasion', e.target.value)}
-                      className="w-full px-3 py-2 rounded-md border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
-                    >
-                      <option value="">Select Occasion</option>
-                      <option value="Wedding">Wedding</option>
-                      <option value="Engagement">Engagement</option>
-                      <option value="Anniversary">Anniversary</option>
-                      <option value="Birthday">Birthday</option>
-                      <option value="Festival">Festival</option>
-                      <option value="Daily Wear">Daily Wear</option>
-                      <option value="Party">Party</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                       Gender
                     </label>
                     <select
@@ -1041,22 +1012,6 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
                         <option value="cm">CM</option>
                       </select>
                     </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                      Age Group
-                    </label>
-                    <select
-                      value={formData.ageGroup}
-                      onChange={(e) => handleChange('ageGroup', e.target.value)}
-                      className="w-full px-3 py-2 rounded-md border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
-                    >
-                      <option value="">Select Age Group</option>
-                      <option value="Kids">Kids</option>
-                      <option value="Teens">Teens</option>
-                      <option value="Adults">Adults</option>
-                      <option value="All Ages">All Ages</option>
-                    </select>
                   </div>
                 </div>
               </div>
@@ -1760,20 +1715,6 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
                 </select>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  Visibility
-                </label>
-                <select
-                  value={formData.visibility}
-                  onChange={(e) => handleChange('visibility', e.target.value)}
-                  className="w-full px-3 py-2 rounded-md border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
-                >
-                  <option>Public</option>
-                  <option>Hidden</option>
-                </select>
-              </div>
-
               <div className="flex items-center gap-2">
                 <input
                   type="checkbox"
@@ -1798,31 +1739,6 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
                 <label htmlFor="reviews" className="text-sm font-medium text-slate-700 dark:text-slate-300">
                   Allow Reviews
                 </label>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  Return Policy (Days)
-                </label>
-                <Input
-                  type="number"
-                  value={formData.returnPolicyDays}
-                  onChange={(e) => handleChange('returnPolicyDays', parseInt(e.target.value))}
-                  placeholder="30"
-                  className="bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  Warranty Period
-                </label>
-                <Input
-                  value={formData.warrantyPeriod}
-                  onChange={(e) => handleChange('warrantyPeriod', e.target.value)}
-                  placeholder="e.g., 1 year"
-                  className="bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600"
-                />
               </div>
 
               <div>
