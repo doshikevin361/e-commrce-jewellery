@@ -1,12 +1,17 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { Eye, EyeOff, Mail, Lock, User, Phone, MapPin } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Eye, EyeOff, Mail, Lock, User, Phone } from 'lucide-react';
+import { CheckCircle, AlertCircle } from 'lucide-react';
 
-export default function RegisterPage() {
-  const router = useRouter();
+interface RegisterModalProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSwitchToLogin?: () => void;
+}
+
+export function RegisterModal({ open, onOpenChange, onSwitchToLogin }: RegisterModalProps) {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -48,7 +53,6 @@ export default function RegisterPage() {
     setError('');
     setLoading(true);
 
-    // Validation
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match');
       setLoading(false);
@@ -83,7 +87,10 @@ export default function RegisterPage() {
 
       setSuccess(true);
       setTimeout(() => {
-        router.push('/customer-login?registered=true');
+        onOpenChange(false);
+        if (onSwitchToLogin) {
+          onSwitchToLogin();
+        }
       }, 3000);
     } catch (err) {
       console.error('Registration error:', err);
@@ -95,36 +102,35 @@ export default function RegisterPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#F5EEE5] to-white flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center">
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Mail className="w-8 h-8 text-green-600" />
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-md">
+          <div className="text-center py-4">
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <CheckCircle className="w-8 h-8 text-green-600" />
+            </div>
+            <h2 className="text-2xl font-bold text-[#1F3B29] mb-2">Registration Successful!</h2>
+            <p className="text-gray-600 mb-4">
+              We've sent a verification email to <strong>{formData.email}</strong>
+            </p>
+            <p className="text-sm text-gray-500">
+              Please check your inbox and click the verification link to activate your account.
+            </p>
           </div>
-          <h2 className="text-2xl font-bold text-[#1F3B29] mb-2">Registration Successful!</h2>
-          <p className="text-gray-600 mb-4">
-            We've sent a verification email to <strong>{formData.email}</strong>
-          </p>
-          <p className="text-sm text-gray-500">
-            Please check your inbox and click the verification link to activate your account.
-          </p>
-          <p className="text-sm text-gray-500 mt-2">
-            Redirecting to login page...
-          </p>
-        </div>
-      </div>
+        </DialogContent>
+      </Dialog>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#F5EEE5] to-white flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-[#1F3B29] mb-2">Create Account</h1>
-          <p className="text-gray-600">Join LuxeLoom Jewelry today</p>
-        </div>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-2xl font-bold text-[#1F3B29]">Create Account</DialogTitle>
+          <DialogDescription>Join LuxeLoom Jewelry today</DialogDescription>
+        </DialogHeader>
 
         {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+          <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
             {error}
           </div>
         )}
@@ -245,16 +251,25 @@ export default function RegisterPage() {
           </div>
         </form>
 
-        <div className="mt-6 text-center">
-          <p className="text-gray-600">
-            Already have an account?{' '}
-            <Link href="/login" className="text-[#C8A15B] font-semibold hover:underline">
-              Login here
-            </Link>
-          </p>
-        </div>
-      </div>
-    </div>
+        {onSwitchToLogin && (
+          <div className="mt-6 text-center">
+            <p className="text-gray-600">
+              Already have an account?{' '}
+              <button
+                type="button"
+                onClick={() => {
+                  onOpenChange(false);
+                  onSwitchToLogin();
+                }}
+                className="text-[#C8A15B] font-semibold hover:underline"
+              >
+                Login here
+              </button>
+            </p>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }
 

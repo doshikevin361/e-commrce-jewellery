@@ -1,13 +1,26 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import Link from 'next/link';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Eye, EyeOff, Mail, Lock, AlertCircle } from 'lucide-react';
 
-function CustomerLoginForm() {
+interface LoginModalProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSwitchToRegister?: () => void;
+  onSwitchToForgotPassword?: () => void;
+  showSuccessMessage?: string;
+}
+
+export function LoginModal({ 
+  open, 
+  onOpenChange, 
+  onSwitchToRegister, 
+  onSwitchToForgotPassword,
+  showSuccessMessage 
+}: LoginModalProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -16,11 +29,10 @@ function CustomerLoginForm() {
   const [success, setSuccess] = useState('');
 
   useEffect(() => {
-    const registered = searchParams.get('registered');
-    if (registered === 'true') {
-      setSuccess('Registration successful! Please verify your email to login.');
+    if (showSuccessMessage) {
+      setSuccess(showSuccessMessage);
     }
-  }, [searchParams]);
+  }, [showSuccessMessage]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,7 +62,8 @@ function CustomerLoginForm() {
         }
         // Trigger custom event for header update
         window.dispatchEvent(new Event('authChange'));
-        router.push('/');
+        onOpenChange(false);
+        router.refresh();
       }
     } catch (err) {
       console.error('Login error:', err);
@@ -61,22 +74,22 @@ function CustomerLoginForm() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#F5EEE5] to-white flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-[#1F3B29] mb-2">Welcome Back</h1>
-          <p className="text-gray-600">Login to your LuxeLoom account</p>
-        </div>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="text-2xl font-bold text-[#1F3B29]">Welcome Back</DialogTitle>
+          <DialogDescription>Login to your LuxeLoom account</DialogDescription>
+        </DialogHeader>
 
         {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2 text-red-700 text-sm">
+          <div className="p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2 text-red-700 text-sm">
             <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
             <span>{error}</span>
           </div>
         )}
 
         {success && (
-          <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm">
+          <div className="p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm">
             {success}
           </div>
         )}
@@ -128,9 +141,18 @@ function CustomerLoginForm() {
               <input type="checkbox" className="rounded border-gray-300 text-[#C8A15B] focus:ring-[#C8A15B]" />
               <span className="ml-2 text-sm text-gray-600">Remember me</span>
             </label>
-            <Link href="/forgot-password" className="text-sm text-[#C8A15B] hover:underline">
-              Forgot Password?
-            </Link>
+            {onSwitchToForgotPassword && (
+              <button
+                type="button"
+                onClick={() => {
+                  onOpenChange(false);
+                  onSwitchToForgotPassword();
+                }}
+                className="text-sm text-[#C8A15B] hover:underline"
+              >
+                Forgot Password?
+              </button>
+            )}
           </div>
 
           <div className="pt-4">
@@ -144,35 +166,25 @@ function CustomerLoginForm() {
           </div>
         </form>
 
-        <div className="mt-6 text-center">
-          <p className="text-gray-600">
-            Don't have an account?{' '}
-            <Link href="/register" className="text-[#C8A15B] font-semibold hover:underline">
-              Register here
-            </Link>
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-export default function CustomerLoginPage() {
-  return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen bg-gradient-to-br from-[#F5EEE5] to-white flex items-center justify-center p-4">
-          <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center">
-            <div className="animate-pulse">
-              <div className="h-8 bg-gray-200 rounded w-3/4 mx-auto mb-4"></div>
-              <div className="h-4 bg-gray-200 rounded w-1/2 mx-auto"></div>
-            </div>
+        {onSwitchToRegister && (
+          <div className="mt-6 text-center">
+            <p className="text-gray-600">
+              Don't have an account?{' '}
+              <button
+                type="button"
+                onClick={() => {
+                  onOpenChange(false);
+                  onSwitchToRegister();
+                }}
+                className="text-[#C8A15B] font-semibold hover:underline"
+              >
+                Register here
+              </button>
+            </p>
           </div>
-        </div>
-      }
-    >
-      <CustomerLoginForm />
-    </Suspense>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }
 

@@ -3,10 +3,14 @@
 import { Diamond, ShoppingCart, User, Menu, X, ChevronDown, Heart, List, LogOut, Settings } from 'lucide-react';
 import SearchBar from './SearchBar/SearchBar';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import React, { useState, useEffect, useRef, useContext } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import React, { useState, useEffect, useRef, useContext, Suspense } from 'react';
 import { CategoriesContext } from '@/contexts/CategoriesContext';
 import { CategoriesDropdown } from './CategoriesDropdown';
+import { LoginModal } from '@/components/auth/login-modal';
+import { RegisterModal } from '@/components/auth/register-modal';
+import { ForgotPasswordModal } from '@/components/auth/forgot-password-modal';
+import { ResetPasswordModal } from '@/components/auth/reset-password-modal';
 
 // Grid2x2CheckIcon component (same as hero section)
 const Grid2x2CheckIcon = ({ size, className }: { size: number; className?: string }) => (
@@ -56,6 +60,11 @@ export function HomeHeader() {
   const [isMobile, setIsMobile] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [customerName, setCustomerName] = useState('');
+  const [loginModalOpen, setLoginModalOpen] = useState(false);
+  const [registerModalOpen, setRegisterModalOpen] = useState(false);
+  const [forgotPasswordModalOpen, setForgotPasswordModalOpen] = useState(false);
+  const [resetPasswordModalOpen, setResetPasswordModalOpen] = useState(false);
+  const [resetToken, setResetToken] = useState<string | undefined>(undefined);
   const dropdownRef = useRef<HTMLUListElement>(null);
   const accountDropdownRef = useRef<HTMLDivElement>(null);
 
@@ -92,6 +101,20 @@ export function HomeHeader() {
       window.removeEventListener('storage', checkAuth);
       window.removeEventListener('authChange', checkAuth);
     };
+  }, []);
+
+  // Check for reset password token in URL
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const token = params.get('token');
+      if (token) {
+        setResetToken(token);
+        setResetPasswordModalOpen(true);
+        // Clean URL
+        window.history.replaceState({}, '', window.location.pathname);
+      }
+    }
   }, []);
 
   // Handle resize and close menus (only after mount)
@@ -225,18 +248,22 @@ export function HomeHeader() {
                   </button>
                   {accountDropdownOpen && (
                     <div className='absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-100 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200'>
-                      <Link
-                        href='/customer-login'
-                        onClick={() => setAccountDropdownOpen(false)}
-                        className='block px-4 py-2.5 text-sm text-[#1F3B29] hover:bg-[#F5EEE5]/60 transition-colors duration-200 font-medium'>
+                      <button
+                        onClick={() => {
+                          setAccountDropdownOpen(false);
+                          setLoginModalOpen(true);
+                        }}
+                        className='w-full text-left block px-4 py-2.5 text-sm text-[#1F3B29] hover:bg-[#F5EEE5]/60 transition-colors duration-200 font-medium'>
                         Login
-                      </Link>
-                      <Link
-                        href='/register'
-                        onClick={() => setAccountDropdownOpen(false)}
-                        className='block px-4 py-2.5 text-sm text-[#1F3B29] hover:bg-[#F5EEE5]/60 transition-colors duration-200 font-medium'>
+                      </button>
+                      <button
+                        onClick={() => {
+                          setAccountDropdownOpen(false);
+                          setRegisterModalOpen(true);
+                        }}
+                        className='w-full text-left block px-4 py-2.5 text-sm text-[#1F3B29] hover:bg-[#F5EEE5]/60 transition-colors duration-200 font-medium'>
                         Create Account
-                      </Link>
+                      </button>
                     </div>
                   )}
                 </>
@@ -476,6 +503,49 @@ export function HomeHeader() {
           </div>
         </nav>
       </header>
+
+      {/* Auth Modals */}
+      <LoginModal
+        open={loginModalOpen}
+        onOpenChange={setLoginModalOpen}
+        onSwitchToRegister={() => {
+          setLoginModalOpen(false);
+          setRegisterModalOpen(true);
+        }}
+        onSwitchToForgotPassword={() => {
+          setLoginModalOpen(false);
+          setForgotPasswordModalOpen(true);
+        }}
+      />
+      <RegisterModal
+        open={registerModalOpen}
+        onOpenChange={setRegisterModalOpen}
+        onSwitchToLogin={() => {
+          setRegisterModalOpen(false);
+          setLoginModalOpen(true);
+        }}
+      />
+      <ForgotPasswordModal
+        open={forgotPasswordModalOpen}
+        onOpenChange={setForgotPasswordModalOpen}
+        onSwitchToLogin={() => {
+          setForgotPasswordModalOpen(false);
+          setLoginModalOpen(true);
+        }}
+      />
+      <ResetPasswordModal
+        open={resetPasswordModalOpen}
+        onOpenChange={setResetPasswordModalOpen}
+        token={resetToken}
+        onSwitchToLogin={() => {
+          setResetPasswordModalOpen(false);
+          setLoginModalOpen(true);
+        }}
+        onSwitchToForgotPassword={() => {
+          setResetPasswordModalOpen(false);
+          setForgotPasswordModalOpen(true);
+        }}
+      />
     </React.Fragment>
   );
 }

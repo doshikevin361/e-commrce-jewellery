@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { User, Mail, Phone, MapPin, Save, Lock, ArrowLeft } from 'lucide-react';
+import { ChangePasswordModal } from '@/components/auth/change-password-modal';
 
 interface Customer {
   _id: string;
@@ -36,6 +37,7 @@ export default function CustomerProfilePage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [changePasswordModalOpen, setChangePasswordModalOpen] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     firstName: '',
@@ -196,13 +198,13 @@ export default function CustomerProfilePage() {
         <div className="bg-white rounded-2xl shadow-xl p-8">
           <div className="flex items-center justify-between mb-6">
             <h1 className="text-3xl font-bold text-[#1F3B29]">My Profile</h1>
-            <Link
-              href="/change-password"
+            <button
+              onClick={() => setChangePasswordModalOpen(true)}
               className="inline-flex items-center gap-2 text-[#C8A15B] hover:text-[#1F3B29] transition-colors"
             >
               <Lock className="w-4 h-4" />
               Change Password
-            </Link>
+            </button>
           </div>
 
           {error && (
@@ -333,6 +335,11 @@ export default function CustomerProfilePage() {
           </form>
         </div>
       </div>
+
+      <ChangePasswordModal
+        open={changePasswordModalOpen}
+        onOpenChange={setChangePasswordModalOpen}
+      />
     </div>
   );
 }
