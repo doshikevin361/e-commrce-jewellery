@@ -99,6 +99,7 @@ export function HomeHeader() {
   const [resetToken, setResetToken] = useState<string | undefined>(undefined);
   const [availableProductTypes, setAvailableProductTypes] = useState<string[]>([]);
   const [menuItems, setMenuItems] = useState(generateMenuItems([]));
+  const [menuLoading, setMenuLoading] = useState(true);
   const dropdownRef = useRef<HTMLUListElement>(null);
   const accountDropdownRef = useRef<HTMLDivElement>(null);
 
@@ -141,20 +142,30 @@ export function HomeHeader() {
   useEffect(() => {
     const fetchProductTypes = async () => {
       try {
+        setMenuLoading(true);
+        // Show default menu items immediately for better UX
+        const defaultTypes = ['Gold', 'Silver', 'Platinum', 'Diamond', 'Gemstone'];
+        setAvailableProductTypes(defaultTypes);
+        setMenuItems(generateMenuItems(defaultTypes));
+        
         const response = await fetch('/api/public/products?limit=1000');
         if (response.ok) {
           const data = await response.json();
           const products = data.products || [];
           // Extract unique product types
           const types = [...new Set(products.map((p: any) => p.product_type).filter(Boolean))];
-          setAvailableProductTypes(types);
-          setMenuItems(generateMenuItems(types));
+          
+          // Only update if we got actual types, otherwise keep defaults
+          if (types.length > 0) {
+            setAvailableProductTypes(types);
+            setMenuItems(generateMenuItems(types));
+          }
         }
       } catch (error) {
         console.error('Error fetching product types:', error);
-        // Fallback to default types if API fails
-        setAvailableProductTypes(['Gold', 'Silver', 'Platinum', 'Diamond', 'Gemstone']);
-        setMenuItems(generateMenuItems(['Gold', 'Silver', 'Platinum', 'Diamond', 'Gemstone']));
+        // Keep default types on error
+      } finally {
+        setMenuLoading(false);
       }
     };
     fetchProductTypes();
@@ -395,13 +406,26 @@ export function HomeHeader() {
             )} */}
 
               <ul className='hidden lg:flex items-center gap-1 lg:gap-2 xl:gap-3 text-xs md:text-sm' ref={dropdownRef}>
-                {menuItems.map((item, index) => (
-                  <li
-                    key={item.name}
-                    className='relative'
-                    onMouseEnter={() => item.submenu && setOpenDropdown(item.name)}
-                    onMouseLeave={() => item.submenu && setOpenDropdown(null)}
-                    style={{ animationDelay: `${index * 100}ms` }}>
+                {menuLoading ? (
+                  // Skeleton loading for desktop menu
+                  <>
+                    {[1, 2, 3, 4, 5].map((i) => (
+                      <li key={i} className='relative'>
+                        <div className='flex items-center gap-1 px-3 md:px-4 lg:px-5 py-2 rounded-lg animate-pulse'>
+                          <div className='h-4 w-16 bg-white/20 rounded'></div>
+                          <div className='h-3 w-3 bg-white/20 rounded'></div>
+                        </div>
+                      </li>
+                    ))}
+                  </>
+                ) : (
+                  menuItems.map((item, index) => (
+                    <li
+                      key={item.name}
+                      className='relative'
+                      onMouseEnter={() => item.submenu && setOpenDropdown(item.name)}
+                      onMouseLeave={() => item.submenu && setOpenDropdown(null)}
+                      style={{ animationDelay: `${index * 100}ms` }}>
                     <Link
                       href={item.href}
                       className='
@@ -464,7 +488,8 @@ export function HomeHeader() {
                       </div>
                     )}
                   </li>
-                ))}
+                  ))
+                )}
               </ul>
             </div>
 
@@ -509,8 +534,20 @@ export function HomeHeader() {
             }`}>
             <div className='px-4 sm:px-6 py-3 bg-[#1F3B29] border-t border-white/10'>
               <ul className='flex flex-col gap-1'>
-                {menuItems.map(item => (
-                  <li key={item.name}>
+                {menuLoading ? (
+                  // Skeleton loading for mobile menu
+                  <>
+                    {[1, 2, 3, 4, 5].map((i) => (
+                      <li key={i} className='mb-2'>
+                        <div className='block w-full text-left px-4 py-3 rounded-lg animate-pulse'>
+                          <div className='h-5 w-24 bg-white/20 rounded'></div>
+                        </div>
+                      </li>
+                    ))}
+                  </>
+                ) : (
+                  menuItems.map(item => (
+                    <li key={item.name}>
                     {item.submenu ? (
                       <div>
                         <button
@@ -553,7 +590,8 @@ export function HomeHeader() {
                       </Link>
                     )}
                   </li>
-                ))}
+                  ))
+                )}
                 {/* Contact Us - Always Last */}
                 <li className='mt-2 pt-2 border-t border-white/20'>
                   <Link
