@@ -2,10 +2,16 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import Link from 'next/link';
 import { CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { AuthModal } from '@/components/auth/auth-modal';
 
-function VerifyEmailForm() {
+function VerifyEmailForm({ 
+  onOpenLogin, 
+  onOpenRegister 
+}: { 
+  onOpenLogin: () => void;
+  onOpenRegister: () => void;
+}) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(true);
@@ -69,12 +75,12 @@ function VerifyEmailForm() {
           <p className="text-gray-600 mb-4">
             Your email has been verified successfully. You can now login to your account.
           </p>
-          <Link
-            href="/customer-login"
+          <button
+            onClick={onOpenLogin}
             className="inline-block bg-[#1F3B29] text-white px-6 py-2 rounded-lg font-semibold hover:bg-[#2a4d3a] transition-colors"
           >
             Go to Login
-          </Link>
+          </button>
         </div>
       </div>
     );
@@ -91,18 +97,18 @@ function VerifyEmailForm() {
           {error || 'The verification link is invalid or has expired.'}
         </p>
         <div className="space-y-2">
-          <Link
-            href="/register"
-            className="block bg-[#1F3B29] text-white px-6 py-2 rounded-lg font-semibold hover:bg-[#2a4d3a] transition-colors"
+          <button
+            onClick={onOpenRegister}
+            className="block w-full bg-[#1F3B29] text-white px-6 py-2 rounded-lg font-semibold hover:bg-[#2a4d3a] transition-colors"
           >
             Register Again
-          </Link>
-          <Link
-            href="/customer-login"
-            className="block text-[#C8A15B] font-semibold hover:underline"
+          </button>
+          <button
+            onClick={onOpenLogin}
+            className="block w-full text-[#C8A15B] font-semibold hover:underline"
           >
             Go to Login
-          </Link>
+          </button>
         </div>
       </div>
     </div>
@@ -110,20 +116,42 @@ function VerifyEmailForm() {
 }
 
 export default function VerifyEmailPage() {
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
+
   return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen bg-gradient-to-br from-[#F5EEE5] to-white flex items-center justify-center p-4">
-          <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center">
-            <Loader2 className="w-12 h-12 text-[#C8A15B] animate-spin mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-[#1F3B29] mb-2">Loading...</h2>
-            <p className="text-gray-600">Please wait...</p>
+    <>
+      <Suspense
+        fallback={
+          <div className="min-h-screen bg-gradient-to-br from-[#F5EEE5] to-white flex items-center justify-center p-4">
+            <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center">
+              <Loader2 className="w-12 h-12 text-[#C8A15B] animate-spin mx-auto mb-4" />
+              <h2 className="text-2xl font-bold text-[#1F3B29] mb-2">Loading...</h2>
+              <p className="text-gray-600">Please wait...</p>
+            </div>
           </div>
-        </div>
-      }
-    >
-      <VerifyEmailForm />
-    </Suspense>
+        }
+      >
+        <VerifyEmailForm 
+          onOpenLogin={() => {
+            setAuthMode('login');
+            setAuthModalOpen(true);
+          }}
+          onOpenRegister={() => {
+            setAuthMode('register');
+            setAuthModalOpen(true);
+          }}
+        />
+      </Suspense>
+      <AuthModal
+        open={authModalOpen}
+        onOpenChange={setAuthModalOpen}
+        mode={authMode}
+        onSwitchMode={() => {
+          setAuthMode(authMode === 'login' ? 'register' : 'login');
+        }}
+      />
+    </>
   );
 }
 

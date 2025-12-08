@@ -7,8 +7,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import React, { useState, useEffect, useRef, useContext, Suspense } from 'react';
 import { CategoriesContext } from '@/contexts/CategoriesContext';
 import { CategoriesDropdown } from './CategoriesDropdown';
-import { LoginModal } from '@/components/auth/login-modal';
-import { RegisterModal } from '@/components/auth/register-modal';
+import { AuthModal } from '@/components/auth/auth-modal';
 import { ForgotPasswordModal } from '@/components/auth/forgot-password-modal';
 import { ResetPasswordModal } from '@/components/auth/reset-password-modal';
 
@@ -43,8 +42,8 @@ export function HomeHeader() {
   const [isMobile, setIsMobile] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [customerName, setCustomerName] = useState('');
-  const [loginModalOpen, setLoginModalOpen] = useState(false);
-  const [registerModalOpen, setRegisterModalOpen] = useState(false);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
   const [forgotPasswordModalOpen, setForgotPasswordModalOpen] = useState(false);
   const [resetPasswordModalOpen, setResetPasswordModalOpen] = useState(false);
   const [resetToken, setResetToken] = useState<string | undefined>(undefined);
@@ -231,7 +230,8 @@ export function HomeHeader() {
                       <button
                         onClick={() => {
                           setAccountDropdownOpen(false);
-                          setLoginModalOpen(true);
+                          setAuthMode('login');
+                          setAuthModalOpen(true);
                         }}
                         className='w-full text-left block px-4 py-2.5 text-sm text-[#1F3B29] hover:bg-[#F5EEE5]/60 transition-colors duration-200 font-medium'>
                         Login
@@ -239,7 +239,8 @@ export function HomeHeader() {
                       <button
                         onClick={() => {
                           setAccountDropdownOpen(false);
-                          setRegisterModalOpen(true);
+                          setAuthMode('register');
+                          setAuthModalOpen(true);
                         }}
                         className='w-full text-left block px-4 py-2.5 text-sm text-[#1F3B29] hover:bg-[#F5EEE5]/60 transition-colors duration-200 font-medium'>
                         Create Account
@@ -422,24 +423,16 @@ export function HomeHeader() {
       </header>
 
       {/* Auth Modals */}
-      <LoginModal
-        open={loginModalOpen}
-        onOpenChange={setLoginModalOpen}
-        onSwitchToRegister={() => {
-          setLoginModalOpen(false);
-          setRegisterModalOpen(true);
+      <AuthModal
+        open={authModalOpen}
+        onOpenChange={setAuthModalOpen}
+        mode={authMode}
+        onSwitchMode={() => {
+          setAuthMode(authMode === 'login' ? 'register' : 'login');
         }}
         onSwitchToForgotPassword={() => {
-          setLoginModalOpen(false);
+          setAuthModalOpen(false);
           setForgotPasswordModalOpen(true);
-        }}
-      />
-      <RegisterModal
-        open={registerModalOpen}
-        onOpenChange={setRegisterModalOpen}
-        onSwitchToLogin={() => {
-          setRegisterModalOpen(false);
-          setLoginModalOpen(true);
         }}
       />
       <ForgotPasswordModal
@@ -447,7 +440,8 @@ export function HomeHeader() {
         onOpenChange={setForgotPasswordModalOpen}
         onSwitchToLogin={() => {
           setForgotPasswordModalOpen(false);
-          setLoginModalOpen(true);
+          setAuthMode('login');
+          setAuthModalOpen(true);
         }}
       />
       <ResetPasswordModal
@@ -456,7 +450,8 @@ export function HomeHeader() {
         token={resetToken}
         onSwitchToLogin={() => {
           setResetPasswordModalOpen(false);
-          setLoginModalOpen(true);
+          setAuthMode('login');
+          setAuthModalOpen(true);
         }}
         onSwitchToForgotPassword={() => {
           setResetPasswordModalOpen(false);

@@ -15,7 +15,7 @@ export default function UserDashboard() {
   useEffect(() => {
     const token = localStorage.getItem('userToken');
     if (!token) {
-      router.push('/user-login');
+      router.push('/');
       return;
     }
 
@@ -29,7 +29,7 @@ export default function UserDashboard() {
   const handleLogout = () => {
     localStorage.removeItem('userToken');
     localStorage.removeItem('currentUser');
-    router.push('/user-login');
+    router.push('/');
   };
 
   if (loading) {
