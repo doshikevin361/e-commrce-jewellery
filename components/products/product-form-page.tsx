@@ -3133,15 +3133,25 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                         <h3 className='text-xl font-semibold text-slate-900 dark:text-white'>Product Specifications</h3>
                         <div>
                           <label className='block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2'>
-                            Specifications
+                            Specifications (Table Format)
                           </label>
                           <RichTextEditor
                             value={formData.specifications || ''}
                             onChange={(html) => handleChange('specifications', html)}
-                            placeholder='Enter product specifications (e.g., Material, Weight, Dimensions, etc.)'
+                            placeholder='Create a table with specifications. Use the table button in the editor to insert a table with rows like: Material | Gold, Weight | 10g, etc.'
                           />
+                          <div className='mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800'>
+                            <p className='text-xs font-medium text-blue-900 dark:text-blue-100 mb-2'>💡 Tip: Create a table format</p>
+                            <p className='text-xs text-blue-700 dark:text-blue-300'>
+                              Click the table icon in the editor toolbar to insert a table. Add specifications in two columns:
+                            </p>
+                            <ul className='text-xs text-blue-700 dark:text-blue-300 mt-2 list-disc list-inside space-y-1'>
+                              <li>Left column: Specification name (e.g., Material, Weight, Purity)</li>
+                              <li>Right column: Specification value (e.g., Gold, 10g, 18K)</li>
+                            </ul>
+                          </div>
                           <p className='text-xs text-muted-foreground mt-2'>
-                            Add detailed specifications that will be displayed below the product image on the product detail page.
+                            Specifications will be displayed in a styled table format below the product image on the product detail page.
                           </p>
                         </div>
                       </div>

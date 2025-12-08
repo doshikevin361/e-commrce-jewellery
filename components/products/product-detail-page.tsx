@@ -344,9 +344,54 @@ export function ProductDetailPage({ productId }: { productId: string }) {
             <div className='mt-6 p-4 sm:p-6 bg-gradient-to-br from-[#F5EEE5] to-[#E6D3C2] rounded-2xl shadow-md'>
               <h3 className='text-lg sm:text-xl font-bold text-[#1F3B29] mb-4'>Specifications</h3>
               <div 
-                className='text-sm sm:text-base text-[#4F3A2E] prose prose-sm max-w-none'
+                className='text-sm sm:text-base text-[#4F3A2E] prose prose-sm max-w-none overflow-x-auto'
                 dangerouslySetInnerHTML={{ __html: product.specifications }}
+                style={{
+                  // Ensure tables are properly styled
+                  '--tw-prose-tables': '1',
+                } as React.CSSProperties}
               />
+              <style jsx global>{`
+                .prose table {
+                  width: 100%;
+                  border-collapse: collapse;
+                  margin-top: 1rem;
+                  margin-bottom: 1rem;
+                  background: white;
+                  border-radius: 0.5rem;
+                  overflow: hidden;
+                  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+                }
+                .prose thead {
+                  background: linear-gradient(to right, #1F3B29, #2a4d3a);
+                  color: white;
+                }
+                .prose th {
+                  padding: 0.75rem 1rem;
+                  text-align: left;
+                  font-weight: 600;
+                  font-size: 0.875rem;
+                  text-transform: uppercase;
+                  letter-spacing: 0.05em;
+                }
+                .prose td {
+                  padding: 0.75rem 1rem;
+                  border-bottom: 1px solid #E6D3C2;
+                  color: #4F3A2E;
+                }
+                .prose tr:last-child td {
+                  border-bottom: none;
+                }
+                .prose tbody tr:hover {
+                  background-color: #F5EEE5;
+                }
+                .prose tbody tr:nth-child(even) {
+                  background-color: #faf8f5;
+                }
+                .prose tbody tr:nth-child(even):hover {
+                  background-color: #F5EEE5;
+                }
+              `}</style>
             </div>
           )}
         </div>
