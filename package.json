@@ -78,6 +78,7 @@
     "react-day-picker": "latest",
     "react-dom": "^18.3.1",
     "react-hook-form": "latest",
+    "react-hot-toast": "^2.6.0",
     "react-is": "^18.3.1",
     "react-quill": "^2.0.0",
     "react-resizable-panels": "latest",

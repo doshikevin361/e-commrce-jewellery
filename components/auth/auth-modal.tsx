@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Eye, EyeOff, Mail, Lock, User, Phone, AlertCircle, CheckCircle, X } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 interface AuthModalProps {
   open: boolean;
@@ -94,6 +95,7 @@ export function AuthModal({ open, onOpenChange, mode, onSwitchMode, onSwitchToFo
       const data = await response.json();
 
       if (!response.ok) {
+        toast.error('Invalid credentials');
         setError(data.error || 'Login failed');
         return;
       }
@@ -103,12 +105,14 @@ export function AuthModal({ open, onOpenChange, mode, onSwitchMode, onSwitchToFo
         if (data.customer) {
           localStorage.setItem('currentCustomer', JSON.stringify(data.customer));
         }
+        toast.success('Login successful!');
         window.dispatchEvent(new Event('authChange'));
         onOpenChange(false);
         router.refresh();
       }
     } catch (err) {
       console.error('Login error:', err);
+      toast.error('Invalid credentials');
       setError('An error occurred. Please try again.');
     } finally {
       setLoading(false);
@@ -164,10 +168,12 @@ export function AuthModal({ open, onOpenChange, mode, onSwitchMode, onSwitchToFo
       const data = await response.json();
 
       if (!response.ok) {
+        toast.error('Registration failed');
         setError(data.error || 'Registration failed');
         return;
       }
 
+      toast.success('Account created successfully!');
       setRegisterSuccess(true);
       setTimeout(() => {
         onOpenChange(false);
@@ -177,6 +183,7 @@ export function AuthModal({ open, onOpenChange, mode, onSwitchMode, onSwitchToFo
       }, 3000);
     } catch (err) {
       console.error('Registration error:', err);
+      toast.error('Registration failed');
       setError('An error occurred. Please try again.');
     } finally {
       setLoading(false);
