@@ -254,6 +254,8 @@ export function DynamicProductsPage() {
 
         // Get URL parameters
         const category = searchParams.get('category');
+        const productType = searchParams.get('product_type');
+        const jewelryType = searchParams.get('jewelryType');
         const featured = searchParams.get('featured');
         const trending = searchParams.get('trending');
         const search = searchParams.get('search');
@@ -261,6 +263,8 @@ export function DynamicProductsPage() {
         // Build API URL
         const params = new URLSearchParams();
         if (category && category !== 'all') params.set('category', category);
+        if (productType) params.set('product_type', productType);
+        if (jewelryType) params.set('jewelryType', jewelryType);
         if (featured) params.set('featured', featured);
         if (trending) params.set('trending', trending);
         params.set('limit', '100'); // Get more products for filtering
@@ -304,8 +308,21 @@ export function DynamicProductsPage() {
   // Initialize filters from URL params
   useEffect(() => {
     const category = searchParams.get('category');
+    const productType = searchParams.get('product_type');
+    const jewelryType = searchParams.get('jewelryType');
+    
     if (category && category !== 'all') {
       setSelectedCategories([category]);
+    }
+    
+    // Set product type filter from URL
+    if (productType) {
+      setSelectedProductTypes([productType]);
+    }
+    
+    // Set jewelry type filter from URL
+    if (jewelryType) {
+      setSelectedJewelryTypes([jewelryType]);
     }
   }, [searchParams]);
 

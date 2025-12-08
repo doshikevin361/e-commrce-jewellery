@@ -1114,10 +1114,6 @@ const UpdatesSection = ({ newsItems, isLoading = false }: { newsItems: NewsItem[
     newsItems.length > 0
       ? newsItems
       : [];
-          image: card.img,
-          publishDate: card.date,
-          slug: '',
-        }));
 
   const formatDate = (dateString: string) => {
     try {

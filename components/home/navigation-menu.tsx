@@ -8,12 +8,16 @@ const jewelryTypes = ['Ring', 'Necklace', 'Earrings', 'Bracelet', 'Bangle', 'Cha
 
 // Function to generate menu items dynamically based on available product types
 // All items are flat - no dropdowns, all shown separately
-export const generateMenuItems = (availableProductTypes: string[]) => {
+// Only main product types are shown, not jewelry type combinations
+export const generateMenuItems = (
+  availableProductTypes: string[], 
+  productTypesWithJewelry?: Array<{ productType: string; jewelryTypes: string[] }>
+) => {
   const baseMenuItems = [
     { name: 'Home', href: '/' },
   ];
 
-  // Generate flat menu items - each product type and jewelry type combination as separate items
+  // Generate flat menu items - only main product types, no jewelry type combinations
   const flatMenuItems: { name: string; href: string }[] = [];
   
   availableProductTypes.forEach(productType => {
@@ -23,35 +27,19 @@ export const generateMenuItems = (availableProductTypes: string[]) => {
                      productType === 'Diamond' ? 'Diamond' : 
                      productType === 'Gemstone' ? 'Gemstone' : productType;
     
-    // Add main product type link
+    // Add only main product type link (no jewelry type combinations)
     flatMenuItems.push({
       name: typeName,
       href: `/products?product_type=${productType}`,
     });
-    
-    // Add each jewelry type as separate menu item
-    jewelryTypes.forEach(jType => {
-      flatMenuItems.push({
-        name: `${typeName} ${jType}s`,
-        href: `/products?product_type=${productType}&jewelryType=${jType}`,
-      });
-    });
   });
-
-  // Add collection items as separate menu items
-  const collectionItems = [
-    { name: 'New Arrivals', href: '/products?featured=true' },
-    { name: 'Best Sellers', href: '/products?featured=true' },
-    { name: 'Trending Now', href: '/products?trending=true' },
-    { name: 'Limited Edition', href: '/products' },
-  ];
 
   return [
     ...baseMenuItems,
     ...flatMenuItems,
-    ...collectionItems,
     { name: 'Blog', href: '/blog' },
     { name: 'About', href: '/about' },
+    { name: 'Contact Us', href: '/contact' },
   ];
 };
 
@@ -63,14 +51,28 @@ export const useMenuItems = () => {
   useEffect(() => {
     const fetchProductTypes = async () => {
       try {
+        // Fetch actual product types from database with jewelry types
         const response = await fetch('/api/public/product-types');
         if (response.ok) {
           const data = await response.json();
           const productTypes = data.productTypes || [];
-          setMenuItems(generateMenuItems(productTypes));
+          const productTypesWithJewelry = data.productTypesWithJewelry || [];
+          
+          // Only show product types that actually exist in database
+          if (productTypes.length > 0) {
+            setMenuItems(generateMenuItems(productTypes, productTypesWithJewelry));
+          } else {
+            // If no product types found, show only base menu items (Home, Collections, etc.)
+            setMenuItems(generateMenuItems([], []));
+          }
+        } else {
+          // On error, show only base menu items
+          setMenuItems(generateMenuItems([], []));
         }
       } catch (error) {
         console.error('Failed to fetch product types:', error);
+        // On error, show only base menu items
+        setMenuItems(generateMenuItems([], []));
       } finally {
         setMenuLoading(false);
       }

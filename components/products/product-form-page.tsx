@@ -56,9 +56,6 @@ const GENDER_OPTIONS = [
   { label: 'Women', value: 'Women' },
   { label: 'Unisex', value: 'Unisex' },
 ] as const;
-  { label: 'Adults', value: 'Adults' },
-  { label: 'All Ages', value: 'All Ages' },
-] as const;
 
 const SIZE_UNIT_OPTIONS = [
   { label: 'Unit', value: '' },

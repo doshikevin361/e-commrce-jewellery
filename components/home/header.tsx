@@ -366,15 +366,6 @@ export function HomeHeader() {
               </ul>
             </div>
 
-            {/* Desktop Contact Button - Last */}
-            <div className='hidden lg:flex items-center ml-auto'>
-              <Link
-                href='/contact'
-                className='flex items-center text-xs sm:text-sm transition-all duration-300 hover:text-gray-200 px-4 md:px-5 py-2 font-medium whitespace-nowrappl-4 md:pl-5'>
-                Contact Us
-              </Link>
-            </div>
-
             {/* Mobile/Tablet Categories Button */}
             <button
               onClick={() => {
@@ -392,12 +383,6 @@ export function HomeHeader() {
               <span className='text-sm whitespace-nowrap hidden sm:inline'>Categories</span>
             </button>
 
-            {/* Mobile Contact Button */}
-            <Link
-              href='/contact'
-              className='lg:hidden text-xs sm:text-sm transition-all duration-300 hover:text-gray-200 hover:bg-white/10 px-2 sm:px-3 py-1.5 rounded-lg font-medium whitespace-nowrap'>
-              Contact
-            </Link>
           </div>
 
           {/* Mobile/Tablet Menu Dropdown */}
@@ -430,15 +415,6 @@ export function HomeHeader() {
                     </li>
                   ))
                 )}
-                {/* Contact Us - Always Last */}
-                <li className='mt-2 pt-2 border-t border-white/20'>
-                  <Link
-                    href='/contact'
-                    onClick={() => setMobileMenuOpen(false)}
-                    className='block w-full text-left px-4 py-3 rounded-lg text-sm font-semibold transition-all duration-300 hover:bg-white/10 hover:translate-x-2 active:bg-white/15 bg-white/5'>
-                    Contact Us
-                  </Link>
-                </li>
               </ul>
             </div>
           </div>
