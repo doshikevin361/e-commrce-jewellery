@@ -281,7 +281,7 @@ interface Product {
   trending: boolean;
   allowReviews: boolean;
   vendor: string;
-  specifications?: string; // Product specifications (HTML or plain text)
+  specifications?: Array<{ key: string; value: string }>; // Product specifications as key-value pairs
   createdAt?: string; // Added for potential API response
   updatedAt?: string; // Added for potential API response
 }
@@ -472,7 +472,7 @@ const INITIAL_PRODUCT: Product = {
   trending: false,
   allowReviews: true,
   vendor: 'Main Store',
-  specifications: '',
+  specifications: [],
 };
 
 interface ProductFormPageProps {
@@ -870,6 +870,11 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
               }))
             : [],
           relatedProducts: Array.isArray(data.relatedProducts) ? data.relatedProducts : [],
+          specifications: Array.isArray(data.specifications) 
+            ? data.specifications 
+            : (typeof data.specifications === 'string' && data.specifications.trim() 
+                ? [] // If old string format exists, convert to empty array (user can re-add)
+                : []),
         };
 
         console.log('[v0] Safe product data:', safeData);
@@ -3132,26 +3137,64 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                       <div className='space-y-4'>
                         <h3 className='text-xl font-semibold text-slate-900 dark:text-white'>Product Specifications</h3>
                         <div>
-                          <label className='block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2'>
-                            Specifications (Table Format)
+                          <label className='block text-sm font-medium text-slate-700 dark:text-slate-300 mb-3'>
+                            Specifications (Key-Value Pairs)
                           </label>
-                          <RichTextEditor
-                            value={formData.specifications || ''}
-                            onChange={(html) => handleChange('specifications', html)}
-                            placeholder='Create a table with specifications. Use the table button in the editor to insert a table with rows like: Material | Gold, Weight | 10g, etc.'
-                          />
-                          <div className='mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800'>
-                            <p className='text-xs font-medium text-blue-900 dark:text-blue-100 mb-2'>💡 Tip: Create a table format</p>
-                            <p className='text-xs text-blue-700 dark:text-blue-300'>
-                              Click the table icon in the editor toolbar to insert a table. Add specifications in two columns:
-                            </p>
-                            <ul className='text-xs text-blue-700 dark:text-blue-300 mt-2 list-disc list-inside space-y-1'>
-                              <li>Left column: Specification name (e.g., Material, Weight, Purity)</li>
-                              <li>Right column: Specification value (e.g., Gold, 10g, 18K)</li>
-                            </ul>
+                          
+                          <div className='space-y-3'>
+                            {(formData.specifications || []).map((spec, index) => (
+                              <div key={index} className='flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700'>
+                                <div className='flex-1'>
+                                  <FormField
+                                    label=''
+                                    placeholder='Key (e.g., Material, Size, Color)'
+                                    value={spec.key}
+                                    onChange={(e) => {
+                                      const newSpecs = [...(formData.specifications || [])];
+                                      newSpecs[index] = { ...spec, key: e.target.value };
+                                      handleChange('specifications', newSpecs);
+                                    }}
+                                  />
+                                </div>
+                                <div className='flex-1'>
+                                  <FormField
+                                    label=''
+                                    placeholder='Value (e.g., Cotton, M, Red)'
+                                    value={spec.value}
+                                    onChange={(e) => {
+                                      const newSpecs = [...(formData.specifications || [])];
+                                      newSpecs[index] = { ...spec, value: e.target.value };
+                                      handleChange('specifications', newSpecs);
+                                    }}
+                                  />
+                                </div>
+                                <button
+                                  type='button'
+                                  onClick={() => {
+                                    const newSpecs = (formData.specifications || []).filter((_, i) => i !== index);
+                                    handleChange('specifications', newSpecs);
+                                  }}
+                                  className='p-2 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors'
+                                  title='Remove specification'>
+                                  <X className='w-5 h-5' />
+                                </button>
+                              </div>
+                            ))}
+                            
+                            <button
+                              type='button'
+                              onClick={() => {
+                                const newSpecs = [...(formData.specifications || []), { key: '', value: '' }];
+                                handleChange('specifications', newSpecs);
+                              }}
+                              className='w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-green-500 text-green-700 dark:text-green-400 rounded-lg hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors font-medium'>
+                              <Plus className='w-5 h-5' />
+                              Add Specification
+                            </button>
                           </div>
-                          <p className='text-xs text-muted-foreground mt-2'>
-                            Specifications will be displayed in a styled table format below the product image on the product detail page.
+                          
+                          <p className='text-xs text-muted-foreground mt-3'>
+                            Add key-value pairs that will be displayed in a table format below the product image on the product detail page.
                           </p>
                         </div>
                       </div>
