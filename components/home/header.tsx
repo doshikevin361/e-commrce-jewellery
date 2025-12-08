@@ -30,23 +30,55 @@ const Grid2x2CheckIcon = ({ size, className }: { size: number; className?: strin
   </svg>
 );
 
-// Menu items with submenus for jewelry e-commerce
-const menuItems = [
-  { name: 'Home', href: '/' },
-  { name: 'Jewellery', href: '/jewellery' },
-  {
-    name: 'Shop',
-    href: '#shop',
-    submenu: ['All Jewelry', 'Rings', 'Necklaces', 'Earrings', 'Bracelets', 'Anklets', 'Brooches'],
-  },
-  {
-    name: 'Collections',
-    href: '#collections',
-    submenu: ['New Arrivals', 'Best Sellers', 'Limited Edition', 'Vintage Collection', 'Custom Designs'],
-  },
-  { name: 'Blog', href: '/blog' },
-  { name: 'About', href: '/about' },
-];
+// Common jewelry types for submenus
+const jewelryTypes = ['Ring', 'Necklace', 'Earrings', 'Bracelet', 'Bangle', 'Chain', 'Mangalsutra', 'Pendant'];
+
+// Function to generate menu items dynamically based on available product types
+const generateMenuItems = (availableProductTypes: string[]) => {
+  const baseMenuItems = [
+    { name: 'Home', href: '/' },
+  ];
+
+  // Generate menu items for each available product type
+  const productTypeMenus = availableProductTypes.map(productType => {
+    const typeName = productType === 'Gold' ? 'Gold' : 
+                     productType === 'Silver' ? 'Silver' : 
+                     productType === 'Platinum' ? 'Platinum' : 
+                     productType === 'Diamond' ? 'Diamond' : 
+                     productType === 'Gemstone' ? 'Gemstone' : productType;
+    
+    const submenu = [
+      ...jewelryTypes.map(jType => ({
+        name: `${typeName} ${jType}s`,
+        href: `/products?product_type=${productType}&jewelryType=${jType}`,
+      })),
+      { name: `All ${typeName} Jewelry`, href: `/products?product_type=${productType}` },
+    ];
+
+    return {
+      name: typeName,
+      href: `/products?product_type=${productType}`,
+      submenu,
+    };
+  });
+
+  return [
+    ...baseMenuItems,
+    ...productTypeMenus,
+    {
+      name: 'Collections',
+      href: '#collections',
+      submenu: [
+        { name: 'New Arrivals', href: '/products?featured=true' },
+        { name: 'Best Sellers', href: '/products?featured=true' },
+        { name: 'Trending Now', href: '/products?trending=true' },
+        { name: 'Limited Edition', href: '/products' },
+      ],
+    },
+    { name: 'Blog', href: '/blog' },
+    { name: 'About', href: '/about' },
+  ];
+};
 
 export function HomeHeader() {
   // Get categories context if available (only on home page)
@@ -65,6 +97,8 @@ export function HomeHeader() {
   const [forgotPasswordModalOpen, setForgotPasswordModalOpen] = useState(false);
   const [resetPasswordModalOpen, setResetPasswordModalOpen] = useState(false);
   const [resetToken, setResetToken] = useState<string | undefined>(undefined);
+  const [availableProductTypes, setAvailableProductTypes] = useState<string[]>([]);
+  const [menuItems, setMenuItems] = useState(generateMenuItems([]));
   const dropdownRef = useRef<HTMLUListElement>(null);
   const accountDropdownRef = useRef<HTMLDivElement>(null);
 
@@ -101,6 +135,29 @@ export function HomeHeader() {
       window.removeEventListener('storage', checkAuth);
       window.removeEventListener('authChange', checkAuth);
     };
+  }, []);
+
+  // Fetch available product types
+  useEffect(() => {
+    const fetchProductTypes = async () => {
+      try {
+        const response = await fetch('/api/public/products?limit=1000');
+        if (response.ok) {
+          const data = await response.json();
+          const products = data.products || [];
+          // Extract unique product types
+          const types = [...new Set(products.map((p: any) => p.product_type).filter(Boolean))];
+          setAvailableProductTypes(types);
+          setMenuItems(generateMenuItems(types));
+        }
+      } catch (error) {
+        console.error('Error fetching product types:', error);
+        // Fallback to default types if API fails
+        setAvailableProductTypes(['Gold', 'Silver', 'Platinum', 'Diamond', 'Gemstone']);
+        setMenuItems(generateMenuItems(['Gold', 'Silver', 'Platinum', 'Diamond', 'Gemstone']));
+      }
+    };
+    fetchProductTypes();
   }, []);
 
   // Check for reset password token in URL
@@ -386,20 +443,24 @@ export function HomeHeader() {
         border border-gray-100 py-2 z-50
         animate-in fade-in slide-in-from-top-2 duration-200
       '>
-                        {item.submenu.map(subItem => (
-                          <Link
-                            key={subItem}
-                            href={`/products?category=${subItem}`}
-                            className='
+                        {item.submenu.map((subItem: any) => {
+                          const subItemName = typeof subItem === 'string' ? subItem : subItem.name;
+                          const subItemHref = typeof subItem === 'string' ? `#` : subItem.href;
+                          return (
+                            <Link
+                              key={subItemName}
+                              href={subItemHref}
+                              className='
               block px-4 py-2.5 text-sm text-[#1F3B29]
               hover:bg-[#F5EEE5]/60
               transition-colors duration-200
               font-medium
             '
-                            onClick={() => setOpenDropdown(null)}>
-                            {subItem}
-                          </Link>
-                        ))}
+                              onClick={() => setOpenDropdown(null)}>
+                              {subItemName}
+                            </Link>
+                          );
+                        })}
                       </div>
                     )}
                   </li>
@@ -463,19 +524,23 @@ export function HomeHeader() {
                         </button>
                         {openDropdown === item.name && (
                           <ul className='pl-4 mt-1 space-y-1'>
-                            {item.submenu.map(subItem => (
-                              <li key={subItem}>
-                                <Link
-                                  href={`/products?category=${subItem}`}
-                                  onClick={() => {
-                                    setMobileMenuOpen(false);
-                                    setOpenDropdown(null);
-                                  }}
-                                  className='block px-4 py-2 rounded-lg text-sm font-normal transition-all duration-300 hover:bg-white/10 hover:translate-x-2 active:bg-white/15 text-white/90'>
-                                  {subItem}
-                                </Link>
-                              </li>
-                            ))}
+                            {item.submenu.map((subItem: any) => {
+                              const subItemName = typeof subItem === 'string' ? subItem : subItem.name;
+                              const subItemHref = typeof subItem === 'string' ? `#` : subItem.href;
+                              return (
+                                <li key={subItemName}>
+                                  <Link
+                                    href={subItemHref}
+                                    onClick={() => {
+                                      setMobileMenuOpen(false);
+                                      setOpenDropdown(null);
+                                    }}
+                                    className='block px-4 py-2 rounded-lg text-sm font-normal transition-all duration-300 hover:bg-white/10 hover:translate-x-2 active:bg-white/15 text-white/90'>
+                                    {subItemName}
+                                  </Link>
+                                </li>
+                              );
+                            })}
                           </ul>
                         )}
                       </div>

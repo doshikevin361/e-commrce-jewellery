@@ -22,6 +22,8 @@ import {
 import { ProductCardData } from '@/components/home/common/product-card';
 import { ProductCard } from '@/components/home/common/product-card';
 import { PageLoader } from '@/components/common/page-loader';
+import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
 // Dynamic product interface
 interface ProductDetail {
@@ -112,12 +114,16 @@ interface ProductDetail {
 
 export function ProductDetailPage({ productId }: { productId: string }) {
   const router = useRouter();
+  const { toast } = useToast();
   const [product, setProduct] = useState<ProductDetail | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('description');
+  const [isInWishlist, setIsInWishlist] = useState(false);
+  const [wishlistLoading, setWishlistLoading] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -148,6 +154,84 @@ export function ProductDetailPage({ productId }: { productId: string }) {
       fetchProduct();
     }
   }, [productId]);
+
+  // Check authentication and wishlist status
+  useEffect(() => {
+    const checkAuth = () => {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('customerToken') : null;
+      setIsLoggedIn(!!token);
+    };
+    checkAuth();
+    window.addEventListener('authChange', checkAuth);
+    return () => window.removeEventListener('authChange', checkAuth);
+  }, []);
+
+  useEffect(() => {
+    if (isLoggedIn && productId) {
+      checkWishlistStatus();
+    }
+  }, [isLoggedIn, productId]);
+
+  const checkWishlistStatus = async () => {
+    try {
+      const response = await fetch('/api/customer/wishlist');
+      if (response.ok) {
+        const data = await response.json();
+        const productIds = data.products?.map((p: any) => (p._id || p.id).toString()) || [];
+        setIsInWishlist(productIds.includes(productId));
+      }
+    } catch (error) {
+      // Silent fail
+    }
+  };
+
+  const handleWishlistToggle = async () => {
+    if (!isLoggedIn) {
+      router.push('/?login=true');
+      return;
+    }
+
+    try {
+      setWishlistLoading(true);
+      
+      if (isInWishlist) {
+        const response = await fetch(`/api/customer/wishlist?productId=${productId}`, {
+          method: 'DELETE',
+        });
+        
+        if (response.ok) {
+          setIsInWishlist(false);
+          toast({
+            title: 'Removed',
+            description: 'Product removed from wishlist',
+          });
+        }
+      } else {
+        const response = await fetch('/api/customer/wishlist', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ productId }),
+        });
+        
+        if (response.ok) {
+          setIsInWishlist(true);
+          toast({
+            title: 'Added',
+            description: 'Product added to wishlist',
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Wishlist error:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update wishlist',
+        variant: 'destructive',
+      });
+    } finally {
+      setWishlistLoading(false);
+    }
+  };
 
   if (loading) {
     return <PageLoader message='Loading product details...' />;
@@ -312,8 +396,16 @@ export function ProductDetailPage({ productId }: { productId: string }) {
                 <ShoppingCart size={22} />
                 Add to Cart
               </Link>
-              <button className='flex items-center justify-center gap-2 rounded-xl border-2 border-[#1F3B29] px-6 py-4 text-[#1F3B29] font-semibold hover:bg-[#F5EEE5] transition-all hover:scale-105'>
-                <Heart size={22} />
+              <button
+                onClick={handleWishlistToggle}
+                disabled={wishlistLoading}
+                className={cn(
+                  'flex items-center justify-center gap-2 rounded-xl border-2 px-6 py-4 font-semibold transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed',
+                  isInWishlist
+                    ? 'border-red-500 bg-red-50 text-red-600 hover:bg-red-100'
+                    : 'border-[#1F3B29] text-[#1F3B29] hover:bg-[#F5EEE5]'
+                )}>
+                <Heart size={22} className={isInWishlist ? 'fill-red-500' : ''} />
               </button>
               <button className='flex items-center justify-center gap-2 rounded-xl border-2 border-[#1F3B29] px-6 py-4 text-[#1F3B29] font-semibold hover:bg-[#F5EEE5] transition-all hover:scale-105'>
                 <Share2 size={22} />

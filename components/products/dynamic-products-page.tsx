@@ -651,29 +651,106 @@ export function DynamicProductsPage() {
                   </div>
                 )}
 
-                {/* Material Type */}
-                {filterOptions.materials.length > 0 && (
+                {/* Product Type - Dynamic from all product types */}
+                {filterOptions.productTypes.length > 0 && (
                   <div>
-                    <h4 className='font-medium text-gray-900 mb-3'>Material</h4>
-                    <div className='space-y-2'>
-                      {filterOptions.materials.map(material => (
-                        <label key={material} className='flex items-center gap-2 cursor-pointer'>
-                          <input
-                            type='checkbox'
-                            checked={selectedMaterials.includes(material)}
-                            onChange={e => {
-                              if (e.target.checked) {
-                                setSelectedMaterials([...selectedMaterials, material]);
-                              } else {
-                                setSelectedMaterials(selectedMaterials.filter(m => m !== material));
-                              }
-                              setCurrentPage(1);
-                            }}
-                            className='rounded border-gray-300'
-                          />
-                          <span className='text-sm text-gray-700'>{material}</span>
-                        </label>
-                      ))}
+                    <h4 className='font-medium text-gray-900 mb-3'>Product Type</h4>
+                    <div className='space-y-3'>
+                      {filterOptions.productTypes.map(productType => {
+                        // Determine styling based on product type
+                        const getTypeStyle = (type: string) => {
+                          if (type.includes('Gold')) {
+                            return { borderColor: 'border-[#C8A15B]/30', textColor: 'text-[#C8A15B]' };
+                          } else if (type.includes('Silver')) {
+                            return { borderColor: 'border-gray-300', textColor: 'text-gray-600' };
+                          } else if (type.includes('Diamond')) {
+                            return { borderColor: 'border-blue-300', textColor: 'text-blue-600' };
+                          } else if (type.includes('Platinum')) {
+                            return { borderColor: 'border-gray-400', textColor: 'text-gray-700' };
+                          } else if (type.includes('Gemstone')) {
+                            return { borderColor: 'border-purple-300', textColor: 'text-purple-600' };
+                          }
+                          return { borderColor: 'border-gray-200', textColor: 'text-gray-700' };
+                        };
+
+                        const style = getTypeStyle(productType);
+                        const isGold = productType.includes('Gold');
+                        const isSilver = productType.includes('Silver');
+
+                        // Get border color class
+                        const borderClass = style.borderColor;
+
+                        return (
+                          <div key={productType} className={`pl-2 border-l-2 ${borderClass}`}>
+                            <label className='flex items-center gap-2 cursor-pointer'>
+                              <input
+                                type='checkbox'
+                                checked={selectedProductTypes.includes(productType)}
+                                onChange={e => {
+                                  if (e.target.checked) {
+                                    setSelectedProductTypes([...selectedProductTypes, productType]);
+                                  } else {
+                                    setSelectedProductTypes(selectedProductTypes.filter(t => t !== productType));
+                                  }
+                                  setCurrentPage(1);
+                                }}
+                                className='rounded border-gray-300'
+                              />
+                              <span className={`text-sm font-medium ${style.textColor}`}>{productType}</span>
+                            </label>
+                            
+                            {/* Show Gold Purity if Gold Jewelry */}
+                            {isGold && filterOptions.goldPurities.length > 0 && selectedProductTypes.includes(productType) && (
+                              <div className='ml-6 mt-2 space-y-2'>
+                                <p className='text-xs text-gray-600 mb-2'>Gold Purity:</p>
+                                {filterOptions.goldPurities.map(purity => (
+                                  <label key={purity} className='flex items-center gap-2 cursor-pointer'>
+                                    <input
+                                      type='checkbox'
+                                      checked={selectedGoldPurity.includes(purity)}
+                                      onChange={e => {
+                                        if (e.target.checked) {
+                                          setSelectedGoldPurity([...selectedGoldPurity, purity]);
+                                        } else {
+                                          setSelectedGoldPurity(selectedGoldPurity.filter(p => p !== purity));
+                                        }
+                                        setCurrentPage(1);
+                                      }}
+                                      className='rounded border-gray-300'
+                                    />
+                                    <span className='text-sm text-gray-700'>{purity}</span>
+                                  </label>
+                                ))}
+                              </div>
+                            )}
+
+                            {/* Show Silver Purity if Silver Jewelry */}
+                            {isSilver && filterOptions.silverPurities.length > 0 && selectedProductTypes.includes(productType) && (
+                              <div className='ml-6 mt-2 space-y-2'>
+                                <p className='text-xs text-gray-600 mb-2'>Silver Purity:</p>
+                                {filterOptions.silverPurities.map(purity => (
+                                  <label key={purity} className='flex items-center gap-2 cursor-pointer'>
+                                    <input
+                                      type='checkbox'
+                                      checked={selectedSilverPurity.includes(purity)}
+                                      onChange={e => {
+                                        if (e.target.checked) {
+                                          setSelectedSilverPurity([...selectedSilverPurity, purity]);
+                                        } else {
+                                          setSelectedSilverPurity(selectedSilverPurity.filter(p => p !== purity));
+                                        }
+                                        setCurrentPage(1);
+                                      }}
+                                      className='rounded border-gray-300'
+                                    />
+                                    <span className='text-sm text-gray-700'>{purity}</span>
+                                  </label>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 )}

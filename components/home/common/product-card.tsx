@@ -2,11 +2,14 @@
 
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { ShoppingCart, Star } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { ShoppingCart, Star, Heart } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
 
 export type ProductCardData = {
   id: number | string;
+  _id?: string;
   title: string;
   category: string;
   price: string;
@@ -31,15 +34,103 @@ type ProductCardProps = {
 
 export const ProductCard = ({ product, className, actionLabel = 'Add to cart', onClick }: ProductCardProps) => {
   const router = useRouter();
+  const { toast } = useToast();
   const rating = product.rating || 4.5;
   const isListView = className?.includes('flex-row');
+  const [isInWishlist, setIsInWishlist] = useState(false);
+  const [wishlistLoading, setWishlistLoading] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  const productId = (product as any)._id || product.id.toString();
+
+  // Check if user is logged in and if product is in wishlist
+  useEffect(() => {
+    const checkAuth = () => {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('customerToken') : null;
+      setIsLoggedIn(!!token);
+    };
+    checkAuth();
+    window.addEventListener('authChange', checkAuth);
+    return () => window.removeEventListener('authChange', checkAuth);
+  }, []);
+
+  useEffect(() => {
+    if (isLoggedIn) {
+      checkWishlistStatus();
+    }
+  }, [isLoggedIn, productId]);
+
+  const checkWishlistStatus = async () => {
+    try {
+      const response = await fetch('/api/customer/wishlist');
+      if (response.ok) {
+        const data = await response.json();
+        const productIds = data.products?.map((p: any) => (p._id || p.id).toString()) || [];
+        setIsInWishlist(productIds.includes(productId));
+      }
+    } catch (error) {
+      // Silent fail - user might not be logged in
+    }
+  };
+
+  const handleWishlistToggle = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    if (!isLoggedIn) {
+      router.push('/?login=true');
+      return;
+    }
+
+    try {
+      setWishlistLoading(true);
+      
+      if (isInWishlist) {
+        // Remove from wishlist
+        const response = await fetch(`/api/customer/wishlist?productId=${productId}`, {
+          method: 'DELETE',
+        });
+        
+        if (response.ok) {
+          setIsInWishlist(false);
+          toast({
+            title: 'Removed',
+            description: 'Product removed from wishlist',
+          });
+        }
+      } else {
+        // Add to wishlist
+        const response = await fetch('/api/customer/wishlist', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ productId }),
+        });
+        
+        if (response.ok) {
+          setIsInWishlist(true);
+          toast({
+            title: 'Added',
+            description: 'Product added to wishlist',
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Wishlist error:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update wishlist',
+        variant: 'destructive',
+      });
+    } finally {
+      setWishlistLoading(false);
+    }
+  };
 
   const handleProductClick = () => {
     if (onClick) {
       onClick();
     } else {
       // Navigate to product detail page using product ID
-      router.push(`/products/${product.id}`);
+      router.push(`/products/${productId}`);
     }
   };
 
@@ -52,6 +143,21 @@ export const ProductCard = ({ product, className, actionLabel = 'Add to cart', o
               {product.badge}
             </span>
           )}
+          {/* Wishlist Icon */}
+          <button
+            onClick={handleWishlistToggle}
+            disabled={wishlistLoading}
+            className='absolute right-3 top-3 z-10 w-10 h-10 rounded-full bg-white/90 backdrop-blur-sm border border-[#E6D3C2] flex items-center justify-center hover:bg-red-50 hover:border-red-300 transition-all group/wishlist disabled:opacity-50 disabled:cursor-not-allowed'>
+            <Heart
+              size={18}
+              className={cn(
+                'transition-colors',
+                isInWishlist
+                  ? 'fill-red-500 text-red-500'
+                  : 'text-[#4F3A2E] group-hover/wishlist:text-red-600'
+              )}
+            />
+          </button>
           <img
             src={product.image}
             alt={product.title}

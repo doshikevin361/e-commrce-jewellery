@@ -1,17 +1,95 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Heart, ShoppingCart, Trash2, ArrowRight } from 'lucide-react';
-import { ProductCard } from '@/components/home/common/product-card';
-import { featuredProducts } from '@/app/utils/dummyData';
+import { useRouter } from 'next/navigation';
+import { Heart, ShoppingCart, Trash2, ArrowRight, Loader2 } from 'lucide-react';
+import { ProductCard, ProductCardData } from '@/components/home/common/product-card';
+import { PageLoader } from '@/components/common/page-loader';
+import { useToast } from '@/hooks/use-toast';
 
 export function WishlistPage() {
-  const [wishlistItems, setWishlistItems] = useState(featuredProducts.slice(0, 4));
+  const [wishlistItems, setWishlistItems] = useState<ProductCardData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [removing, setRemoving] = useState<string | null>(null);
+  const router = useRouter();
+  const { toast } = useToast();
 
-  const removeFromWishlist = (id: number | string) => {
-    setWishlistItems(items => items.filter(item => item.id !== id));
+  // Fetch wishlist items
+  useEffect(() => {
+    const fetchWishlist = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch('/api/customer/wishlist');
+        
+        if (response.status === 401) {
+          // Not logged in, redirect to login
+          router.push('/?login=true');
+          return;
+        }
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch wishlist');
+        }
+
+        const data = await response.json();
+        setWishlistItems(data.products || []);
+      } catch (error) {
+        console.error('Error fetching wishlist:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to load wishlist. Please try again.',
+          variant: 'destructive',
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchWishlist();
+  }, [router, toast]);
+
+  const removeFromWishlist = async (productId: string) => {
+    try {
+      setRemoving(productId);
+      const response = await fetch(`/api/customer/wishlist?productId=${productId}`, {
+        method: 'DELETE',
+      });
+
+      if (response.status === 401) {
+        router.push('/?login=true');
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error('Failed to remove from wishlist');
+      }
+
+      // Remove from local state
+      setWishlistItems(items => items.filter(item => {
+        const itemId = (item as any)._id || item.id.toString();
+        return itemId !== productId;
+      }));
+      
+      toast({
+        title: 'Success',
+        description: 'Product removed from wishlist',
+      });
+    } catch (error) {
+      console.error('Error removing from wishlist:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to remove product. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setRemoving(null);
+    }
   };
+
+  if (loading) {
+    return <PageLoader message="Loading wishlist..." className="min-h-screen" />;
+  }
 
   if (wishlistItems.length === 0) {
     return (
@@ -54,18 +132,29 @@ export function WishlistPage() {
 
       {/* Wishlist Items */}
       <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6'>
-        {wishlistItems.map(product => (
-          <div key={product.id} className='group relative'>
-            <ProductCard product={product} />
-            <div className='absolute top-3 right-3 flex gap-2'>
-              <button
-                onClick={() => removeFromWishlist(product.id)}
-                className='w-10 h-10 rounded-full bg-white/90 backdrop-blur-sm border border-[#E6D3C2] flex items-center justify-center hover:bg-red-50 hover:border-red-300 transition-all group/btn'>
-                <Trash2 size={18} className='text-[#4F3A2E] group-hover/btn:text-red-600' />
-              </button>
+        {wishlistItems.map(product => {
+          const productId = (product as any)._id || product.id.toString();
+          return (
+            <div key={productId} className='group relative'>
+              <ProductCard product={product} onClick={() => router.push(`/products/${productId}`)} />
+              <div className='absolute top-3 right-3 flex gap-2 z-10'>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    removeFromWishlist(productId);
+                  }}
+                  disabled={removing === productId}
+                  className='w-10 h-10 rounded-full bg-white/90 backdrop-blur-sm border border-[#E6D3C2] flex items-center justify-center hover:bg-red-50 hover:border-red-300 transition-all group/btn disabled:opacity-50 disabled:cursor-not-allowed'>
+                  {removing === productId ? (
+                    <Loader2 size={18} className='text-red-600 animate-spin' />
+                  ) : (
+                    <Trash2 size={18} className='text-[#4F3A2E] group-hover/btn:text-red-600' />
+                  )}
+                </button>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Actions */}
