@@ -10,6 +10,7 @@ import { CategoriesDropdown } from './CategoriesDropdown';
 import { AuthModal } from '@/components/auth/auth-modal';
 import { ForgotPasswordModal } from '@/components/auth/forgot-password-modal';
 import { ResetPasswordModal } from '@/components/auth/reset-password-modal';
+import toast from 'react-hot-toast';
 
 // Grid2x2CheckIcon component (same as hero section)
 const Grid2x2CheckIcon = ({ size, className }: { size: number; className?: string }) => (
@@ -85,7 +86,6 @@ export function HomeHeader() {
     };
   }, []);
 
-
   // Check for reset password token in URL
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -149,6 +149,7 @@ export function HomeHeader() {
     // Trigger custom event for header update
     window.dispatchEvent(new Event('authChange'));
     router.push('/');
+    toast.success('Logout successful!');
   };
 
   return (
@@ -186,13 +187,8 @@ export function HomeHeader() {
                     className='flex items-center gap-0.5 sm:gap-1 font-semibold px-1 sm:px-1.5 md:px-2 transition-all duration-300 hover:scale-110 active:scale-95 whitespace-nowrap'
                     aria-label='Account'>
                     <User size={15} className='sm:w-[16px] sm:h-[16px] md:w-[18px] md:h-[18px] flex-shrink-0' />
-                    <span className='hidden sm:inline text-xs sm:text-sm whitespace-nowrap'>
-                      {customerName || 'My Account'}
-                    </span>
-                    <ChevronDown
-                      size={12}
-                      className={`transition-transform duration-300 ${accountDropdownOpen ? 'rotate-180' : ''}`}
-                    />
+                    <span className='hidden sm:inline text-xs sm:text-sm whitespace-nowrap'>{customerName || 'My Account'}</span>
+                    <ChevronDown size={12} className={`transition-transform duration-300 ${accountDropdownOpen ? 'rotate-180' : ''}`} />
                   </button>
                   {accountDropdownOpen && (
                     <div className='absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-100 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200'>
@@ -220,10 +216,7 @@ export function HomeHeader() {
                     aria-label='Login'>
                     <User size={15} className='sm:w-[16px] sm:h-[16px] md:w-[18px] md:h-[18px] flex-shrink-0' />
                     <span className='hidden sm:inline text-xs sm:text-sm whitespace-nowrap'>Login</span>
-                    <ChevronDown
-                      size={12}
-                      className={`transition-transform duration-300 ${accountDropdownOpen ? 'rotate-180' : ''}`}
-                    />
+                    <ChevronDown size={12} className={`transition-transform duration-300 ${accountDropdownOpen ? 'rotate-180' : ''}`} />
                   </button>
                   {accountDropdownOpen && (
                     <div className='absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-100 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200'>
@@ -322,7 +315,7 @@ export function HomeHeader() {
                 {menuLoading ? (
                   // Skeleton loading for desktop menu
                   <>
-                    {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+                    {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
                       <li key={i} className='relative'>
                         <div className='flex items-center gap-1 px-3 md:px-4 lg:px-5 py-2 rounded-lg animate-pulse'>
                           <div className='h-4 w-16 bg-white/20 rounded'></div>
@@ -332,10 +325,7 @@ export function HomeHeader() {
                   </>
                 ) : (
                   menuItems.map((item, index) => (
-                    <li
-                      key={item.name}
-                      className='relative'
-                      style={{ animationDelay: `${index * 50}ms` }}>
+                    <li key={item.name} className='relative' style={{ animationDelay: `${index * 50}ms` }}>
                       <Link
                         href={item.href}
                         className='
@@ -383,7 +373,6 @@ export function HomeHeader() {
               <Grid2x2CheckIcon size={18} className='flex-shrink-0 transition-transform duration-300 group-hover:rotate-90' />
               <span className='text-sm whitespace-nowrap hidden sm:inline'>Categories</span>
             </button>
-
           </div>
 
           {/* Mobile/Tablet Menu Dropdown */}
@@ -396,7 +385,7 @@ export function HomeHeader() {
                 {menuLoading ? (
                   // Skeleton loading for mobile menu
                   <>
-                    {[1, 2, 3, 4, 5].map((i) => (
+                    {[1, 2, 3, 4, 5].map(i => (
                       <li key={i} className='mb-2'>
                         <div className='block w-full text-left px-4 py-3 rounded-lg animate-pulse'>
                           <div className='h-5 w-24 bg-white/20 rounded'></div>
