@@ -34,47 +34,49 @@ const Grid2x2CheckIcon = ({ size, className }: { size: number; className?: strin
 const jewelryTypes = ['Ring', 'Necklace', 'Earrings', 'Bracelet', 'Bangle', 'Chain', 'Mangalsutra', 'Pendant'];
 
 // Function to generate menu items dynamically based on available product types
+// All items are flat - no dropdowns, all shown separately
 const generateMenuItems = (availableProductTypes: string[]) => {
   const baseMenuItems = [
     { name: 'Home', href: '/' },
   ];
 
-  // Generate menu items for each available product type
-  const productTypeMenus = availableProductTypes.map(productType => {
+  // Generate flat menu items - each product type and jewelry type combination as separate items
+  const flatMenuItems: { name: string; href: string }[] = [];
+  
+  availableProductTypes.forEach(productType => {
     const typeName = productType === 'Gold' ? 'Gold' : 
                      productType === 'Silver' ? 'Silver' : 
                      productType === 'Platinum' ? 'Platinum' : 
                      productType === 'Diamond' ? 'Diamond' : 
                      productType === 'Gemstone' ? 'Gemstone' : productType;
     
-    const submenu = [
-      ...jewelryTypes.map(jType => ({
-        name: `${typeName} ${jType}s`,
-        href: `/products?product_type=${productType}&jewelryType=${jType}`,
-      })),
-      { name: `All ${typeName} Jewelry`, href: `/products?product_type=${productType}` },
-    ];
-
-    return {
+    // Add main product type link
+    flatMenuItems.push({
       name: typeName,
       href: `/products?product_type=${productType}`,
-      submenu,
-    };
+    });
+    
+    // Add each jewelry type as separate menu item
+    jewelryTypes.forEach(jType => {
+      flatMenuItems.push({
+        name: `${typeName} ${jType}s`,
+        href: `/products?product_type=${productType}&jewelryType=${jType}`,
+      });
+    });
   });
+
+  // Add collection items as separate menu items
+  const collectionItems = [
+    { name: 'New Arrivals', href: '/products?featured=true' },
+    { name: 'Best Sellers', href: '/products?featured=true' },
+    { name: 'Trending Now', href: '/products?trending=true' },
+    { name: 'Limited Edition', href: '/products' },
+  ];
 
   return [
     ...baseMenuItems,
-    ...productTypeMenus,
-    {
-      name: 'Collections',
-      href: '#collections',
-      submenu: [
-        { name: 'New Arrivals', href: '/products?featured=true' },
-        { name: 'Best Sellers', href: '/products?featured=true' },
-        { name: 'Trending Now', href: '/products?trending=true' },
-        { name: 'Limited Edition', href: '/products' },
-      ],
-    },
+    ...flatMenuItems,
+    ...collectionItems,
     { name: 'Blog', href: '/blog' },
     { name: 'About', href: '/about' },
   ];
@@ -86,7 +88,6 @@ export function HomeHeader() {
   const router = useRouter();
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [accountDropdownOpen, setAccountDropdownOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -100,7 +101,6 @@ export function HomeHeader() {
   const [availableProductTypes, setAvailableProductTypes] = useState<string[]>([]);
   const [menuItems, setMenuItems] = useState(generateMenuItems([]));
   const [menuLoading, setMenuLoading] = useState(true);
-  const dropdownRef = useRef<HTMLUListElement>(null);
   const accountDropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -199,7 +199,6 @@ export function HomeHeader() {
         if (categoriesContext) {
           categoriesContext.setMobileCategoriesOpen(false);
         }
-        setOpenDropdown(null);
       }
     };
     window.addEventListener('resize', handleResize);
@@ -209,9 +208,6 @@ export function HomeHeader() {
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setOpenDropdown(null);
-      }
       if (accountDropdownRef.current && !accountDropdownRef.current.contains(event.target as Node)) {
         setAccountDropdownOpen(false);
       }
@@ -223,11 +219,11 @@ export function HomeHeader() {
         }
       }
     };
-    if (openDropdown || accountDropdownOpen || (categoriesContext && categoriesContext.sidebarOpen)) {
+    if (accountDropdownOpen || (categoriesContext && categoriesContext.sidebarOpen)) {
       document.addEventListener('mousedown', handleClickOutside);
       return () => document.removeEventListener('mousedown', handleClickOutside);
     }
-  }, [openDropdown, accountDropdownOpen, categoriesContext]);
+  }, [accountDropdownOpen, categoriesContext]);
 
   const handleLogout = () => {
     localStorage.removeItem('customerToken');
@@ -405,15 +401,14 @@ export function HomeHeader() {
               </div>
             )} */}
 
-              <ul className='hidden lg:flex items-center gap-1 lg:gap-2 xl:gap-3 text-xs md:text-sm' ref={dropdownRef}>
+              <ul className='hidden lg:flex items-center gap-1 lg:gap-2 xl:gap-3 text-xs md:text-sm flex-wrap'>
                 {menuLoading ? (
                   // Skeleton loading for desktop menu
                   <>
-                    {[1, 2, 3, 4, 5].map((i) => (
+                    {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
                       <li key={i} className='relative'>
                         <div className='flex items-center gap-1 px-3 md:px-4 lg:px-5 py-2 rounded-lg animate-pulse'>
                           <div className='h-4 w-16 bg-white/20 rounded'></div>
-                          <div className='h-3 w-3 bg-white/20 rounded'></div>
                         </div>
                       </li>
                     ))}
@@ -423,31 +418,23 @@ export function HomeHeader() {
                     <li
                       key={item.name}
                       className='relative'
-                      onMouseEnter={() => item.submenu && setOpenDropdown(item.name)}
-                      onMouseLeave={() => item.submenu && setOpenDropdown(null)}
-                      style={{ animationDelay: `${index * 100}ms` }}>
-                    <Link
-                      href={item.href}
-                      className='
+                      style={{ animationDelay: `${index * 50}ms` }}>
+                      <Link
+                        href={item.href}
+                        className='
         relative flex items-center gap-1
         px-3 md:px-4 lg:px-5 py-2
         rounded-lg cursor-pointer
         transition-all duration-300
         whitespace-nowrap font-medium
         group
+        hover:bg-white/10
       '>
-                      <span className='relative z-10'>{item.name}</span>
+                        <span className='relative z-10'>{item.name}</span>
 
-                      {item.submenu && (
-                        <ChevronDown
-                          size={14}
-                          className={`transition-transform duration-300 ${openDropdown === item.name ? 'rotate-180' : ''}`}
-                        />
-                      )}
-
-                      {/* White animated underline */}
-                      <span
-                        className='
+                        {/* White animated underline */}
+                        <span
+                          className='
         pointer-events-none
         absolute bottom-0 left-4 right-4 
         h-[2px] bg-white 
@@ -455,39 +442,9 @@ export function HomeHeader() {
         group-hover:scale-x-100 
         transition-transform duration-300
       '
-                      />
-                    </Link>
-
-                    {/* Dropdown Menu */}
-                    {item.submenu && openDropdown === item.name && (
-                      <div
-                        className='
-        absolute top-full left-0 mt-2 w-56
-        bg-white rounded-lg shadow-xl
-        border border-gray-100 py-2 z-50
-        animate-in fade-in slide-in-from-top-2 duration-200
-      '>
-                        {item.submenu.map((subItem: any) => {
-                          const subItemName = typeof subItem === 'string' ? subItem : subItem.name;
-                          const subItemHref = typeof subItem === 'string' ? `#` : subItem.href;
-                          return (
-                            <Link
-                              key={subItemName}
-                              href={subItemHref}
-                              className='
-              block px-4 py-2.5 text-sm text-[#1F3B29]
-              hover:bg-[#F5EEE5]/60
-              transition-colors duration-200
-              font-medium
-            '
-                              onClick={() => setOpenDropdown(null)}>
-                              {subItemName}
-                            </Link>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </li>
+                        />
+                      </Link>
+                    </li>
                   ))
                 )}
               </ul>
@@ -548,48 +505,13 @@ export function HomeHeader() {
                 ) : (
                   menuItems.map(item => (
                     <li key={item.name}>
-                    {item.submenu ? (
-                      <div>
-                        <button
-                          onClick={() => setOpenDropdown(openDropdown === item.name ? null : item.name)}
-                          className='flex items-center justify-between w-full text-left px-4 py-3 rounded-lg text-sm font-medium transition-all duration-300 hover:bg-white/10 hover:translate-x-2 active:bg-white/15'>
-                          <span>{item.name}</span>
-                          <ChevronDown
-                            size={16}
-                            className={`transition-transform duration-300 ${openDropdown === item.name ? 'rotate-180' : ''}`}
-                          />
-                        </button>
-                        {openDropdown === item.name && (
-                          <ul className='pl-4 mt-1 space-y-1'>
-                            {item.submenu.map((subItem: any) => {
-                              const subItemName = typeof subItem === 'string' ? subItem : subItem.name;
-                              const subItemHref = typeof subItem === 'string' ? `#` : subItem.href;
-                              return (
-                                <li key={subItemName}>
-                                  <Link
-                                    href={subItemHref}
-                                    onClick={() => {
-                                      setMobileMenuOpen(false);
-                                      setOpenDropdown(null);
-                                    }}
-                                    className='block px-4 py-2 rounded-lg text-sm font-normal transition-all duration-300 hover:bg-white/10 hover:translate-x-2 active:bg-white/15 text-white/90'>
-                                    {subItemName}
-                                  </Link>
-                                </li>
-                              );
-                            })}
-                          </ul>
-                        )}
-                      </div>
-                    ) : (
                       <Link
                         href={item.href}
                         onClick={() => setMobileMenuOpen(false)}
                         className='block w-full text-left px-4 py-3 rounded-lg text-sm font-medium transition-all duration-300 hover:bg-white/10 hover:translate-x-2 active:bg-white/15'>
                         {item.name}
                       </Link>
-                    )}
-                  </li>
+                    </li>
                   ))
                 )}
                 {/* Contact Us - Always Last */}

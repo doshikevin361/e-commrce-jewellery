@@ -283,8 +283,11 @@ const mapProductsFromApi = (incoming?: any[], defaultBadge?: string): ProductCar
 
     const hasDiscount = regularPrice > sellingPrice && regularPrice !== 0;
 
+    const productId = typeof product?._id === 'string' ? product._id : product?._id?.toString?.() ?? `product-${index}`;
+    
     return {
-      id: typeof product?._id === 'string' ? product._id : product?._id?.toString?.() ?? `product-${index}`,
+      id: productId,
+      _id: productId, // Ensure _id is set for ProductCard component
       title: product?.name || 'Untitled Product',
       category: product?.category || 'Jewellery',
       price: formatCurrency(sellingPrice),

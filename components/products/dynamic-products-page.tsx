@@ -96,23 +96,27 @@ interface Product {
 }
 
 // Convert Product to ProductCardData
-const convertToProductCard = (product: Product): ProductCardData => ({
-  id: parseInt(product._id.slice(-6), 16), // Convert ObjectId to number
-  title: product.name,
-  category: product.category,
-  price: `₹${product.displayPrice.toLocaleString()}`,
-  originalPrice: product.hasDiscount ? `₹${product.originalPrice.toLocaleString()}` : undefined,
-  rating: product.rating || 4.5,
-  reviews: product.reviewCount || 0,
-  image: product.mainImage || 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=600&q=80',
-  badge: product.featured ? 'Featured' : product.trending ? 'Trending' : undefined,
-  // Extended attributes for filtering
-  material: product.metalType || 'Gold',
-  brand: product.brand || 'Unknown',
-  inStock: product.stock > 0,
-  color: product.metalPurity || 'Gold',
-  size: product.size || 'Medium',
-});
+const convertToProductCard = (product: Product): ProductCardData => {
+  const productId = product._id.toString();
+  return {
+    id: productId,
+    _id: productId, // Ensure _id is set as string for ProductCard component
+    title: product.name,
+    category: product.category,
+    price: `₹${product.displayPrice.toLocaleString()}`,
+    originalPrice: product.hasDiscount ? `₹${product.originalPrice.toLocaleString()}` : undefined,
+    rating: product.rating || 4.5,
+    reviews: product.reviewCount || 0,
+    image: product.mainImage || 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=600&q=80',
+    badge: product.featured ? 'Featured' : product.trending ? 'Trending' : undefined,
+    // Extended attributes for filtering
+    material: product.metalType || 'Gold',
+    brand: product.brand || 'Unknown',
+    inStock: product.stock > 0,
+    color: product.metalPurity || 'Gold',
+    size: product.size || 'Medium',
+  };
+};
 
 export function DynamicProductsPage() {
   const searchParams = useSearchParams();
@@ -612,33 +616,6 @@ export function DynamicProductsPage() {
                                 setSelectedJewelryTypes([...selectedJewelryTypes, type]);
                               } else {
                                 setSelectedJewelryTypes(selectedJewelryTypes.filter(t => t !== type));
-                              }
-                              setCurrentPage(1);
-                            }}
-                            className='rounded border-gray-300'
-                          />
-                          <span className='text-sm text-gray-700'>{type}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Product Type */}
-                {filterOptions.productTypes.length > 0 && (
-                  <div>
-                    <h4 className='font-medium text-gray-900 mb-3'>Product Type</h4>
-                    <div className='space-y-2'>
-                      {filterOptions.productTypes.map(type => (
-                        <label key={type} className='flex items-center gap-2 cursor-pointer'>
-                          <input
-                            type='checkbox'
-                            checked={selectedProductTypes.includes(type)}
-                            onChange={e => {
-                              if (e.target.checked) {
-                                setSelectedProductTypes([...selectedProductTypes, type]);
-                              } else {
-                                setSelectedProductTypes(selectedProductTypes.filter(t => t !== type));
                               }
                               setCurrentPage(1);
                             }}

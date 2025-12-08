@@ -69,10 +69,19 @@ export async function GET(
       discountPercent: product.discount || 0,
       // Related products
       relatedProducts: relatedProducts.map(rp => ({
-        ...rp,
+        id: rp._id.toString(),
         _id: rp._id.toString(),
+        title: rp.name || 'Untitled Product',
+        category: product.category || 'Jewellery',
+        price: `₹${(rp.sellingPrice || rp.regularPrice || 0).toLocaleString()}`,
+        originalPrice: rp.mrp && rp.mrp > (rp.sellingPrice || rp.regularPrice) 
+          ? `₹${rp.mrp.toLocaleString()}` 
+          : undefined,
+        rating: rp.rating || 4.5,
+        reviews: rp.reviewCount || 0,
+        image: rp.mainImage || 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=600&q=80',
         displayPrice: rp.sellingPrice || rp.regularPrice || 0,
-        originalPrice: rp.mrp || rp.regularPrice || 0,
+        originalPriceValue: rp.mrp || rp.regularPrice || 0,
       })),
     };
 
