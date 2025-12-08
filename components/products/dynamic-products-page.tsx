@@ -36,13 +36,63 @@ interface Product {
   featured: boolean;
   trending: boolean;
   tags: string[];
-  // Jewelry specific
+  // Product Type
+  product_type?: string;
+  // Material flags
+  hasGold?: boolean;
+  hasSilver?: boolean;
+  hasDiamond?: boolean;
+  // Gold fields
+  goldPurity?: string;
+  goldWeight?: number;
+  // Silver fields
+  silverPurity?: string;
+  silverWeight?: number;
+  // Diamond fields
+  diamondCarat?: number;
+  diamondShape?: string;
+  diamondCut?: string;
+  numberOfStones?: number;
+  // Legacy fields
   metalType?: string;
   metalPurity?: string;
   metalWeight?: number;
   stoneType?: string;
+  stoneClarity?: string;
+  stoneColor?: string;
+  stoneCut?: string;
+  // Jewelry Type & Details
+  jewelryType?: string;
+  jewelrySubType?: string;
+  // Ring Details
+  ringSetting?: string;
+  ringSize?: string;
+  ringSizeSystem?: string;
+  ringStyle?: string;
+  // Chain Details
+  chainType?: string;
+  chainLength?: number;
+  // Earring Details
+  earringType?: string;
+  earringBackType?: string;
+  // Bracelet Details
+  braceletType?: string;
+  braceletLength?: number;
+  // Design & Style
+  designStyle?: string;
+  finishType?: string;
+  pattern?: string;
+  stoneSetting?: string;
+  stoneArrangement?: string;
+  // Demographics
   gender?: string;
+  // Quality & Certification
+  hallmarked?: boolean;
+  bis_hallmark?: boolean;
+  certification?: string;
+  // Size
   size?: string;
+  totalWeight?: number;
 }
 
 // Convert Product to ProductCardData
@@ -80,35 +130,115 @@ export function DynamicProductsPage() {
   const [sortBy, setSortBy] = useState<string>('default');
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 100000]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [selectedMaterials, setSelectedMaterials] = useState<string[]>([]);
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
-  const [selectedColors, setSelectedColors] = useState<string[]>([]);
-  const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
-  const [selectedGemstones, setSelectedGemstones] = useState<string[]>([]);
-  const [selectedStyles, setSelectedStyles] = useState<string[]>([]);
-  const [selectedCollections, setSelectedCollections] = useState<string[]>([]);
-  const [selectedMetalPurity, setSelectedMetalPurity] = useState<string[]>([]);
   const [showInStockOnly, setShowInStockOnly] = useState(false);
   const [minRating, setMinRating] = useState<number>(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(12);
+  
+  // Jewelry Type Filters
+  const [selectedJewelryTypes, setSelectedJewelryTypes] = useState<string[]>([]);
+  const [selectedProductTypes, setSelectedProductTypes] = useState<string[]>([]);
+  
+  // Material Filters
+  const [selectedMaterials, setSelectedMaterials] = useState<string[]>([]); // Gold, Silver, Diamond
+  const [selectedGoldPurity, setSelectedGoldPurity] = useState<string[]>([]);
+  const [selectedSilverPurity, setSelectedSilverPurity] = useState<string[]>([]);
+  
+  // Diamond/Gemstone Filters
+  const [selectedDiamondShapes, setSelectedDiamondShapes] = useState<string[]>([]);
+  const [selectedDiamondCuts, setSelectedDiamondCuts] = useState<string[]>([]);
+  const [selectedStoneTypes, setSelectedStoneTypes] = useState<string[]>([]);
+  const [diamondCaratRange, setDiamondCaratRange] = useState<[number, number]>([0, 10]);
+  
+  // Ring Specific Filters
+  const [selectedRingSettings, setSelectedRingSettings] = useState<string[]>([]);
+  const [selectedRingSizes, setSelectedRingSizes] = useState<string[]>([]);
+  const [selectedRingStyles, setSelectedRingStyles] = useState<string[]>([]);
+  
+  // Chain Specific Filters
+  const [selectedChainTypes, setSelectedChainTypes] = useState<string[]>([]);
+  
+  // Earring Specific Filters
+  const [selectedEarringTypes, setSelectedEarringTypes] = useState<string[]>([]);
+  
+  // Bracelet Specific Filters
+  const [selectedBraceletTypes, setSelectedBraceletTypes] = useState<string[]>([]);
+  
+  // Design & Style Filters
+  const [selectedDesignStyles, setSelectedDesignStyles] = useState<string[]>([]);
+  const [selectedFinishTypes, setSelectedFinishTypes] = useState<string[]>([]);
+  const [selectedStoneSettings, setSelectedStoneSettings] = useState<string[]>([]);
+  
+  // Demographics
+  const [selectedGenders, setSelectedGenders] = useState<string[]>([]);
+  
+  // Quality Filters
+  const [showHallmarkedOnly, setShowHallmarkedOnly] = useState(false);
+  const [showBISHallmarkedOnly, setShowBISHallmarkedOnly] = useState(false);
+  const [selectedCertifications, setSelectedCertifications] = useState<string[]>([]);
 
   // Extract filter options from products
   const filterOptions = useMemo(() => {
-    const materials = [...new Set(products.map(p => p.metalType).filter(Boolean))];
+    const materials: string[] = [];
+    products.forEach(p => {
+      if (p.hasGold) materials.push('Gold');
+      if (p.hasSilver) materials.push('Silver');
+      if (p.hasDiamond) materials.push('Diamond');
+      // Legacy support
+      if (p.metalType && !materials.includes(p.metalType)) materials.push(p.metalType);
+    });
+
+    const jewelryTypes = [...new Set(products.map(p => p.jewelryType).filter(Boolean))];
+    const productTypes = [...new Set(products.map(p => p.product_type).filter(Boolean))];
     const brands = [...new Set(products.map(p => p.brand).filter(Boolean))];
-    const metalPurities = [...new Set(products.map(p => p.metalPurity).filter(Boolean))];
+    
+    const goldPurities = [...new Set(products.map(p => p.goldPurity).filter(Boolean))];
+    const silverPurities = [...new Set(products.map(p => p.silverPurity).filter(Boolean))];
+    
+    const diamondShapes = [...new Set(products.map(p => p.diamondShape).filter(Boolean))];
+    const diamondCuts = [...new Set(products.map(p => p.diamondCut).filter(Boolean))];
     const stoneTypes = [...new Set(products.map(p => p.stoneType).filter(Boolean))];
+    
+    const ringSettings = [...new Set(products.map(p => p.ringSetting).filter(Boolean))];
+    const ringSizes = [...new Set(products.map(p => p.ringSize).filter(Boolean))];
+    const ringStyles = [...new Set(products.map(p => p.ringStyle).filter(Boolean))];
+    
+    const chainTypes = [...new Set(products.map(p => p.chainType).filter(Boolean))];
+    const earringTypes = [...new Set(products.map(p => p.earringType).filter(Boolean))];
+    const braceletTypes = [...new Set(products.map(p => p.braceletType).filter(Boolean))];
+    
+    const designStyles = [...new Set(products.map(p => p.designStyle).filter(Boolean))];
+    const finishTypes = [...new Set(products.map(p => p.finishType).filter(Boolean))];
+    const stoneSettings = [...new Set(products.map(p => p.stoneSetting).filter(Boolean))];
+    
     const genders = [...new Set(products.map(p => p.gender).filter(Boolean))];
-    const sizes = [...new Set(products.map(p => p.size).filter(Boolean))];
+    const certifications = [...new Set(products.map(p => p.certification).filter(Boolean))];
+
+    const maxDiamondCarat = Math.max(...products.map(p => p.diamondCarat || 0).filter(c => c > 0), 10);
 
     return {
-      materials,
+      materials: [...new Set(materials)],
+      jewelryTypes,
+      productTypes,
       brands,
-      metalPurities,
+      goldPurities,
+      silverPurities,
+      diamondShapes,
+      diamondCuts,
       stoneTypes,
+      ringSettings,
+      ringSizes,
+      ringStyles,
+      chainTypes,
+      earringTypes,
+      braceletTypes,
+      designStyles,
+      finishTypes,
+      stoneSettings,
       genders,
-      sizes,
+      certifications,
+      maxDiamondCarat,
     };
   }, [products]);
 
@@ -184,17 +314,91 @@ export function DynamicProductsPage() {
       // Category filter
       if (selectedCategories.length > 0 && !selectedCategories.includes(product.category)) return false;
 
-      // Material filter
-      if (selectedMaterials.length > 0 && (!product.metalType || !selectedMaterials.includes(product.metalType))) return false;
-
       // Brand filter
       if (selectedBrands.length > 0 && (!product.brand || !selectedBrands.includes(product.brand))) return false;
 
-      // Metal purity filter
-      if (selectedMetalPurity.length > 0 && (!product.metalPurity || !selectedMetalPurity.includes(product.metalPurity))) return false;
+      // Jewelry Type filter
+      if (selectedJewelryTypes.length > 0 && (!product.jewelryType || !selectedJewelryTypes.includes(product.jewelryType))) return false;
 
-      // Stone type filter
-      if (selectedGemstones.length > 0 && (!product.stoneType || !selectedGemstones.includes(product.stoneType))) return false;
+      // Product Type filter
+      if (selectedProductTypes.length > 0 && (!product.product_type || !selectedProductTypes.includes(product.product_type))) return false;
+
+      // Material filter (Gold, Silver, Diamond)
+      if (selectedMaterials.length > 0) {
+        const hasSelectedMaterial = selectedMaterials.some(material => {
+          if (material === 'Gold') return product.hasGold || product.metalType === 'Gold';
+          if (material === 'Silver') return product.hasSilver || product.metalType === 'Silver';
+          if (material === 'Diamond') return product.hasDiamond || product.stoneType === 'Diamond';
+          return product.metalType === material;
+        });
+        if (!hasSelectedMaterial) return false;
+      }
+
+      // Gold Purity filter
+      if (selectedGoldPurity.length > 0 && (!product.goldPurity || !selectedGoldPurity.includes(product.goldPurity))) {
+        // Also check legacy metalPurity if it's a gold purity
+        if (!product.metalPurity || !selectedGoldPurity.includes(product.metalPurity)) return false;
+      }
+
+      // Silver Purity filter
+      if (selectedSilverPurity.length > 0 && (!product.silverPurity || !selectedSilverPurity.includes(product.silverPurity))) {
+        // Also check legacy metalPurity if it's a silver purity
+        if (!product.metalPurity || !selectedSilverPurity.includes(product.metalPurity)) return false;
+      }
+
+      // Diamond Shape filter
+      if (selectedDiamondShapes.length > 0 && (!product.diamondShape || !selectedDiamondShapes.includes(product.diamondShape))) return false;
+
+      // Diamond Cut filter
+      if (selectedDiamondCuts.length > 0 && (!product.diamondCut || !selectedDiamondCuts.includes(product.diamondCut))) {
+        // Also check legacy stoneCut
+        if (!product.stoneCut || !selectedDiamondCuts.includes(product.stoneCut)) return false;
+      }
+
+      // Stone Type filter
+      if (selectedStoneTypes.length > 0 && (!product.stoneType || !selectedStoneTypes.includes(product.stoneType))) return false;
+
+      // Diamond Carat Range filter
+      if (product.diamondCarat && (product.diamondCarat < diamondCaratRange[0] || product.diamondCarat > diamondCaratRange[1])) return false;
+
+      // Ring Setting filter
+      if (selectedRingSettings.length > 0 && (!product.ringSetting || !selectedRingSettings.includes(product.ringSetting))) return false;
+
+      // Ring Size filter
+      if (selectedRingSizes.length > 0 && (!product.ringSize || !selectedRingSizes.includes(product.ringSize))) return false;
+
+      // Ring Style filter
+      if (selectedRingStyles.length > 0 && (!product.ringStyle || !selectedRingStyles.includes(product.ringStyle))) return false;
+
+      // Chain Type filter
+      if (selectedChainTypes.length > 0 && (!product.chainType || !selectedChainTypes.includes(product.chainType))) return false;
+
+      // Earring Type filter
+      if (selectedEarringTypes.length > 0 && (!product.earringType || !selectedEarringTypes.includes(product.earringType))) return false;
+
+      // Bracelet Type filter
+      if (selectedBraceletTypes.length > 0 && (!product.braceletType || !selectedBraceletTypes.includes(product.braceletType))) return false;
+
+      // Design Style filter
+      if (selectedDesignStyles.length > 0 && (!product.designStyle || !selectedDesignStyles.includes(product.designStyle))) return false;
+
+      // Finish Type filter
+      if (selectedFinishTypes.length > 0 && (!product.finishType || !selectedFinishTypes.includes(product.finishType))) return false;
+
+      // Stone Setting filter
+      if (selectedStoneSettings.length > 0 && (!product.stoneSetting || !selectedStoneSettings.includes(product.stoneSetting))) return false;
+
+      // Gender filter
+      if (selectedGenders.length > 0 && (!product.gender || !selectedGenders.includes(product.gender))) return false;
+
+      // Hallmark filter
+      if (showHallmarkedOnly && !product.hallmarked && !product.bis_hallmark) return false;
+
+      // BIS Hallmark filter
+      if (showBISHallmarkedOnly && !product.bis_hallmark) return false;
+
+      // Certification filter
+      if (selectedCertifications.length > 0 && (!product.certification || !selectedCertifications.includes(product.certification))) return false;
 
       // Stock filter
       if (showInStockOnly && product.stock <= 0) return false;
@@ -239,10 +443,29 @@ export function DynamicProductsPage() {
     products,
     priceRange,
     selectedCategories,
-    selectedMaterials,
     selectedBrands,
-    selectedMetalPurity,
-    selectedGemstones,
+    selectedJewelryTypes,
+    selectedProductTypes,
+    selectedMaterials,
+    selectedGoldPurity,
+    selectedSilverPurity,
+    selectedDiamondShapes,
+    selectedDiamondCuts,
+    selectedStoneTypes,
+    diamondCaratRange,
+    selectedRingSettings,
+    selectedRingSizes,
+    selectedRingStyles,
+    selectedChainTypes,
+    selectedEarringTypes,
+    selectedBraceletTypes,
+    selectedDesignStyles,
+    selectedFinishTypes,
+    selectedStoneSettings,
+    selectedGenders,
+    showHallmarkedOnly,
+    showBISHallmarkedOnly,
+    selectedCertifications,
     showInStockOnly,
     minRating,
     sortBy,
@@ -256,14 +479,29 @@ export function DynamicProductsPage() {
   const clearAllFilters = () => {
     setPriceRange([0, 100000]);
     setSelectedCategories([]);
-    setSelectedMaterials([]);
     setSelectedBrands([]);
-    setSelectedColors([]);
-    setSelectedSizes([]);
-    setSelectedGemstones([]);
-    setSelectedStyles([]);
-    setSelectedCollections([]);
-    setSelectedMetalPurity([]);
+    setSelectedJewelryTypes([]);
+    setSelectedProductTypes([]);
+    setSelectedMaterials([]);
+    setSelectedGoldPurity([]);
+    setSelectedSilverPurity([]);
+    setSelectedDiamondShapes([]);
+    setSelectedDiamondCuts([]);
+    setSelectedStoneTypes([]);
+    setDiamondCaratRange([0, Math.max(10, filterOptions.maxDiamondCarat || 10)]);
+    setSelectedRingSettings([]);
+    setSelectedRingSizes([]);
+    setSelectedRingStyles([]);
+    setSelectedChainTypes([]);
+    setSelectedEarringTypes([]);
+    setSelectedBraceletTypes([]);
+    setSelectedDesignStyles([]);
+    setSelectedFinishTypes([]);
+    setSelectedStoneSettings([]);
+    setSelectedGenders([]);
+    setShowHallmarkedOnly(false);
+    setShowBISHallmarkedOnly(false);
+    setSelectedCertifications([]);
     setShowInStockOnly(false);
     setMinRating(0);
     setCurrentPage(1);
@@ -351,13 +589,493 @@ export function DynamicProductsPage() {
               <div className='space-y-6'>
                 {/* Price Range */}
                 <div>
-                  <h4 className='font-medium text-gray-900 mb-3'>Price Range</h4>
+                  <h4 className='font-medium text-gray-900 mb-3'>Price Range (₹)</h4>
                   <Slider value={priceRange} onValueChange={setPriceRange} max={100000} min={0} step={1000} className='mb-2' />
                   <div className='flex justify-between text-sm text-gray-600'>
                     <span>₹{priceRange[0].toLocaleString()}</span>
                     <span>₹{priceRange[1].toLocaleString()}</span>
                   </div>
                 </div>
+
+                {/* Jewelry Type - Most Important Filter */}
+                {filterOptions.jewelryTypes.length > 0 && (
+                  <div>
+                    <h4 className='font-medium text-gray-900 mb-3'>Jewelry Type</h4>
+                    <div className='space-y-2 max-h-48 overflow-y-auto'>
+                      {filterOptions.jewelryTypes.map(type => (
+                        <label key={type} className='flex items-center gap-2 cursor-pointer'>
+                          <input
+                            type='checkbox'
+                            checked={selectedJewelryTypes.includes(type)}
+                            onChange={e => {
+                              if (e.target.checked) {
+                                setSelectedJewelryTypes([...selectedJewelryTypes, type]);
+                              } else {
+                                setSelectedJewelryTypes(selectedJewelryTypes.filter(t => t !== type));
+                              }
+                              setCurrentPage(1);
+                            }}
+                            className='rounded border-gray-300'
+                          />
+                          <span className='text-sm text-gray-700'>{type}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Product Type */}
+                {filterOptions.productTypes.length > 0 && (
+                  <div>
+                    <h4 className='font-medium text-gray-900 mb-3'>Product Type</h4>
+                    <div className='space-y-2'>
+                      {filterOptions.productTypes.map(type => (
+                        <label key={type} className='flex items-center gap-2 cursor-pointer'>
+                          <input
+                            type='checkbox'
+                            checked={selectedProductTypes.includes(type)}
+                            onChange={e => {
+                              if (e.target.checked) {
+                                setSelectedProductTypes([...selectedProductTypes, type]);
+                              } else {
+                                setSelectedProductTypes(selectedProductTypes.filter(t => t !== type));
+                              }
+                              setCurrentPage(1);
+                            }}
+                            className='rounded border-gray-300'
+                          />
+                          <span className='text-sm text-gray-700'>{type}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Material Type */}
+                {filterOptions.materials.length > 0 && (
+                  <div>
+                    <h4 className='font-medium text-gray-900 mb-3'>Material</h4>
+                    <div className='space-y-2'>
+                      {filterOptions.materials.map(material => (
+                        <label key={material} className='flex items-center gap-2 cursor-pointer'>
+                          <input
+                            type='checkbox'
+                            checked={selectedMaterials.includes(material)}
+                            onChange={e => {
+                              if (e.target.checked) {
+                                setSelectedMaterials([...selectedMaterials, material]);
+                              } else {
+                                setSelectedMaterials(selectedMaterials.filter(m => m !== material));
+                              }
+                              setCurrentPage(1);
+                            }}
+                            className='rounded border-gray-300'
+                          />
+                          <span className='text-sm text-gray-700'>{material}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Gold Purity */}
+                {filterOptions.goldPurities.length > 0 && (
+                  <div>
+                    <h4 className='font-medium text-gray-900 mb-3'>Gold Purity</h4>
+                    <div className='space-y-2'>
+                      {filterOptions.goldPurities.map(purity => (
+                        <label key={purity} className='flex items-center gap-2 cursor-pointer'>
+                          <input
+                            type='checkbox'
+                            checked={selectedGoldPurity.includes(purity)}
+                            onChange={e => {
+                              if (e.target.checked) {
+                                setSelectedGoldPurity([...selectedGoldPurity, purity]);
+                              } else {
+                                setSelectedGoldPurity(selectedGoldPurity.filter(p => p !== purity));
+                              }
+                              setCurrentPage(1);
+                            }}
+                            className='rounded border-gray-300'
+                          />
+                          <span className='text-sm text-gray-700'>{purity}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Silver Purity */}
+                {filterOptions.silverPurities.length > 0 && (
+                  <div>
+                    <h4 className='font-medium text-gray-900 mb-3'>Silver Purity</h4>
+                    <div className='space-y-2'>
+                      {filterOptions.silverPurities.map(purity => (
+                        <label key={purity} className='flex items-center gap-2 cursor-pointer'>
+                          <input
+                            type='checkbox'
+                            checked={selectedSilverPurity.includes(purity)}
+                            onChange={e => {
+                              if (e.target.checked) {
+                                setSelectedSilverPurity([...selectedSilverPurity, purity]);
+                              } else {
+                                setSelectedSilverPurity(selectedSilverPurity.filter(p => p !== purity));
+                              }
+                              setCurrentPage(1);
+                            }}
+                            className='rounded border-gray-300'
+                          />
+                          <span className='text-sm text-gray-700'>{purity}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Diamond Carat Range */}
+                {filterOptions.maxDiamondCarat > 0 && (
+                  <div>
+                    <h4 className='font-medium text-gray-900 mb-3'>Diamond Carat</h4>
+                    <Slider 
+                      value={diamondCaratRange} 
+                      onValueChange={setDiamondCaratRange} 
+                      max={filterOptions.maxDiamondCarat} 
+                      min={0} 
+                      step={0.1} 
+                      className='mb-2' 
+                    />
+                    <div className='flex justify-between text-sm text-gray-600'>
+                      <span>{diamondCaratRange[0]} ct</span>
+                      <span>{diamondCaratRange[1]} ct</span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Diamond Shape */}
+                {filterOptions.diamondShapes.length > 0 && (
+                  <div>
+                    <h4 className='font-medium text-gray-900 mb-3'>Diamond Shape</h4>
+                    <div className='space-y-2'>
+                      {filterOptions.diamondShapes.map(shape => (
+                        <label key={shape} className='flex items-center gap-2 cursor-pointer'>
+                          <input
+                            type='checkbox'
+                            checked={selectedDiamondShapes.includes(shape)}
+                            onChange={e => {
+                              if (e.target.checked) {
+                                setSelectedDiamondShapes([...selectedDiamondShapes, shape]);
+                              } else {
+                                setSelectedDiamondShapes(selectedDiamondShapes.filter(s => s !== shape));
+                              }
+                              setCurrentPage(1);
+                            }}
+                            className='rounded border-gray-300'
+                          />
+                          <span className='text-sm text-gray-700'>{shape}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Diamond Cut */}
+                {filterOptions.diamondCuts.length > 0 && (
+                  <div>
+                    <h4 className='font-medium text-gray-900 mb-3'>Diamond Cut</h4>
+                    <div className='space-y-2'>
+                      {filterOptions.diamondCuts.map(cut => (
+                        <label key={cut} className='flex items-center gap-2 cursor-pointer'>
+                          <input
+                            type='checkbox'
+                            checked={selectedDiamondCuts.includes(cut)}
+                            onChange={e => {
+                              if (e.target.checked) {
+                                setSelectedDiamondCuts([...selectedDiamondCuts, cut]);
+                              } else {
+                                setSelectedDiamondCuts(selectedDiamondCuts.filter(c => c !== cut));
+                              }
+                              setCurrentPage(1);
+                            }}
+                            className='rounded border-gray-300'
+                          />
+                          <span className='text-sm text-gray-700'>{cut}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Stone Type */}
+                {filterOptions.stoneTypes.length > 0 && (
+                  <div>
+                    <h4 className='font-medium text-gray-900 mb-3'>Gemstone Type</h4>
+                    <div className='space-y-2 max-h-40 overflow-y-auto'>
+                      {filterOptions.stoneTypes.map(stone => (
+                        <label key={stone} className='flex items-center gap-2 cursor-pointer'>
+                          <input
+                            type='checkbox'
+                            checked={selectedStoneTypes.includes(stone)}
+                            onChange={e => {
+                              if (e.target.checked) {
+                                setSelectedStoneTypes([...selectedStoneTypes, stone]);
+                              } else {
+                                setSelectedStoneTypes(selectedStoneTypes.filter(s => s !== stone));
+                              }
+                              setCurrentPage(1);
+                            }}
+                            className='rounded border-gray-300'
+                          />
+                          <span className='text-sm text-gray-700'>{stone}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Ring Specific Filters */}
+                {filterOptions.ringSettings.length > 0 && (
+                  <div>
+                    <h4 className='font-medium text-gray-900 mb-3'>Ring Setting</h4>
+                    <div className='space-y-2 max-h-40 overflow-y-auto'>
+                      {filterOptions.ringSettings.map(setting => (
+                        <label key={setting} className='flex items-center gap-2 cursor-pointer'>
+                          <input
+                            type='checkbox'
+                            checked={selectedRingSettings.includes(setting)}
+                            onChange={e => {
+                              if (e.target.checked) {
+                                setSelectedRingSettings([...selectedRingSettings, setting]);
+                              } else {
+                                setSelectedRingSettings(selectedRingSettings.filter(s => s !== setting));
+                              }
+                              setCurrentPage(1);
+                            }}
+                            className='rounded border-gray-300'
+                          />
+                          <span className='text-sm text-gray-700'>{setting}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {filterOptions.ringStyles.length > 0 && (
+                  <div>
+                    <h4 className='font-medium text-gray-900 mb-3'>Ring Style</h4>
+                    <div className='space-y-2'>
+                      {filterOptions.ringStyles.map(style => (
+                        <label key={style} className='flex items-center gap-2 cursor-pointer'>
+                          <input
+                            type='checkbox'
+                            checked={selectedRingStyles.includes(style)}
+                            onChange={e => {
+                              if (e.target.checked) {
+                                setSelectedRingStyles([...selectedRingStyles, style]);
+                              } else {
+                                setSelectedRingStyles(selectedRingStyles.filter(s => s !== style));
+                              }
+                              setCurrentPage(1);
+                            }}
+                            className='rounded border-gray-300'
+                          />
+                          <span className='text-sm text-gray-700'>{style}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Chain Type */}
+                {filterOptions.chainTypes.length > 0 && (
+                  <div>
+                    <h4 className='font-medium text-gray-900 mb-3'>Chain Type</h4>
+                    <div className='space-y-2 max-h-40 overflow-y-auto'>
+                      {filterOptions.chainTypes.map(type => (
+                        <label key={type} className='flex items-center gap-2 cursor-pointer'>
+                          <input
+                            type='checkbox'
+                            checked={selectedChainTypes.includes(type)}
+                            onChange={e => {
+                              if (e.target.checked) {
+                                setSelectedChainTypes([...selectedChainTypes, type]);
+                              } else {
+                                setSelectedChainTypes(selectedChainTypes.filter(t => t !== type));
+                              }
+                              setCurrentPage(1);
+                            }}
+                            className='rounded border-gray-300'
+                          />
+                          <span className='text-sm text-gray-700'>{type}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Earring Type */}
+                {filterOptions.earringTypes.length > 0 && (
+                  <div>
+                    <h4 className='font-medium text-gray-900 mb-3'>Earring Type</h4>
+                    <div className='space-y-2'>
+                      {filterOptions.earringTypes.map(type => (
+                        <label key={type} className='flex items-center gap-2 cursor-pointer'>
+                          <input
+                            type='checkbox'
+                            checked={selectedEarringTypes.includes(type)}
+                            onChange={e => {
+                              if (e.target.checked) {
+                                setSelectedEarringTypes([...selectedEarringTypes, type]);
+                              } else {
+                                setSelectedEarringTypes(selectedEarringTypes.filter(t => t !== type));
+                              }
+                              setCurrentPage(1);
+                            }}
+                            className='rounded border-gray-300'
+                          />
+                          <span className='text-sm text-gray-700'>{type}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Bracelet Type */}
+                {filterOptions.braceletTypes.length > 0 && (
+                  <div>
+                    <h4 className='font-medium text-gray-900 mb-3'>Bracelet Type</h4>
+                    <div className='space-y-2'>
+                      {filterOptions.braceletTypes.map(type => (
+                        <label key={type} className='flex items-center gap-2 cursor-pointer'>
+                          <input
+                            type='checkbox'
+                            checked={selectedBraceletTypes.includes(type)}
+                            onChange={e => {
+                              if (e.target.checked) {
+                                setSelectedBraceletTypes([...selectedBraceletTypes, type]);
+                              } else {
+                                setSelectedBraceletTypes(selectedBraceletTypes.filter(t => t !== type));
+                              }
+                              setCurrentPage(1);
+                            }}
+                            className='rounded border-gray-300'
+                          />
+                          <span className='text-sm text-gray-700'>{type}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Design Style */}
+                {filterOptions.designStyles.length > 0 && (
+                  <div>
+                    <h4 className='font-medium text-gray-900 mb-3'>Design Style</h4>
+                    <div className='space-y-2'>
+                      {filterOptions.designStyles.map(style => (
+                        <label key={style} className='flex items-center gap-2 cursor-pointer'>
+                          <input
+                            type='checkbox'
+                            checked={selectedDesignStyles.includes(style)}
+                            onChange={e => {
+                              if (e.target.checked) {
+                                setSelectedDesignStyles([...selectedDesignStyles, style]);
+                              } else {
+                                setSelectedDesignStyles(selectedDesignStyles.filter(s => s !== style));
+                              }
+                              setCurrentPage(1);
+                            }}
+                            className='rounded border-gray-300'
+                          />
+                          <span className='text-sm text-gray-700'>{style}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Gender */}
+                {filterOptions.genders.length > 0 && (
+                  <div>
+                    <h4 className='font-medium text-gray-900 mb-3'>Gender</h4>
+                    <div className='space-y-2'>
+                      {filterOptions.genders.map(gender => (
+                        <label key={gender} className='flex items-center gap-2 cursor-pointer'>
+                          <input
+                            type='checkbox'
+                            checked={selectedGenders.includes(gender)}
+                            onChange={e => {
+                              if (e.target.checked) {
+                                setSelectedGenders([...selectedGenders, gender]);
+                              } else {
+                                setSelectedGenders(selectedGenders.filter(g => g !== gender));
+                              }
+                              setCurrentPage(1);
+                            }}
+                            className='rounded border-gray-300'
+                          />
+                          <span className='text-sm text-gray-700'>{gender}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Quality & Certification */}
+                <div>
+                  <h4 className='font-medium text-gray-900 mb-3'>Quality & Certification</h4>
+                  <div className='space-y-2'>
+                    <label className='flex items-center gap-2 cursor-pointer'>
+                      <input
+                        type='checkbox'
+                        checked={showHallmarkedOnly}
+                        onChange={e => {
+                          setShowHallmarkedOnly(e.target.checked);
+                          setCurrentPage(1);
+                        }}
+                        className='rounded border-gray-300'
+                      />
+                      <span className='text-sm text-gray-700'>Hallmarked</span>
+                    </label>
+                    <label className='flex items-center gap-2 cursor-pointer'>
+                      <input
+                        type='checkbox'
+                        checked={showBISHallmarkedOnly}
+                        onChange={e => {
+                          setShowBISHallmarkedOnly(e.target.checked);
+                          setCurrentPage(1);
+                        }}
+                        className='rounded border-gray-300'
+                      />
+                      <span className='text-sm text-gray-700'>BIS Hallmarked</span>
+                    </label>
+                  </div>
+                </div>
+
+                {filterOptions.certifications.length > 0 && (
+                  <div>
+                    <h4 className='font-medium text-gray-900 mb-3'>Certification</h4>
+                    <div className='space-y-2'>
+                      {filterOptions.certifications.map(cert => (
+                        <label key={cert} className='flex items-center gap-2 cursor-pointer'>
+                          <input
+                            type='checkbox'
+                            checked={selectedCertifications.includes(cert)}
+                            onChange={e => {
+                              if (e.target.checked) {
+                                setSelectedCertifications([...selectedCertifications, cert]);
+                              } else {
+                                setSelectedCertifications(selectedCertifications.filter(c => c !== cert));
+                              }
+                              setCurrentPage(1);
+                            }}
+                            className='rounded border-gray-300'
+                          />
+                          <span className='text-sm text-gray-700'>{cert}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {/* Categories */}
                 {categories.length > 0 && (
@@ -381,33 +1099,6 @@ export function DynamicProductsPage() {
                           />
                           <span className='text-sm text-gray-700'>{category.name}</span>
                           <span className='text-xs text-gray-500'>({category.productCount})</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Materials */}
-                {filterOptions.materials.length > 0 && (
-                  <div>
-                    <h4 className='font-medium text-gray-900 mb-3'>Metal Type</h4>
-                    <div className='space-y-2'>
-                      {filterOptions.materials.map(material => (
-                        <label key={material} className='flex items-center gap-2 cursor-pointer'>
-                          <input
-                            type='checkbox'
-                            checked={selectedMaterials.includes(material)}
-                            onChange={e => {
-                              if (e.target.checked) {
-                                setSelectedMaterials([...selectedMaterials, material]);
-                              } else {
-                                setSelectedMaterials(selectedMaterials.filter(m => m !== material));
-                              }
-                              setCurrentPage(1);
-                            }}
-                            className='rounded border-gray-300'
-                          />
-                          <span className='text-sm text-gray-700'>{material}</span>
                         </label>
                       ))}
                     </div>
