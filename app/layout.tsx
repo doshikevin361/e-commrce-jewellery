@@ -11,8 +11,17 @@ import 'react-toastify/dist/ReactToastify.css';
 import '@/styles/toastify.css';
 import { ToastContainer } from 'react-toastify';
 
-const _geist = Geist({ subsets: ['latin'] });
-const _geistMono = Geist_Mono({ subsets: ['latin'] });
+const geist = Geist({ 
+  subsets: ['latin'],
+  display: 'swap',
+  fallback: ['system-ui', 'arial'],
+});
+
+const geistMono = Geist_Mono({ 
+  subsets: ['latin'],
+  display: 'swap',
+  fallback: ['monospace'],
+});
 
 export const metadata: Metadata = {
   title: 'LuxeLoom - Exquisite Jewelry Collection',
@@ -44,7 +53,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang='en' suppressHydrationWarning>
-      <body className={`font-sans antialiased`}>
+      <body className={`${geist.className} ${geistMono.variable} antialiased`}>
         <ThemeProvider attribute='class' defaultTheme='light' enableSystem>
           <SettingsProvider>
             <CategoriesProvider>
