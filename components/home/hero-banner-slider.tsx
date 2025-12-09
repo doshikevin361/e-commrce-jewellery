@@ -48,8 +48,8 @@ export function HeroBannerSlider({ banners = [], isLoading = false }: HeroBanner
 
   if (isLoading && activeBanners.length === 0) {
     return (
-      <div className='w-full h-[400px] md:h-[500px] lg:h-[600px] rounded-2xl bg-gray-100 flex items-center justify-center'>
-        <p className='text-gray-500'>Loading banners...</p>
+      <div className='w-full  h-[400px] md:h-[450px] rounded-2xl bg-gray-100 flex items-center justify-center'>
+        {/* <p className='text-gray-500'>Loading banners...</p> */}
       </div>
     );
   }
