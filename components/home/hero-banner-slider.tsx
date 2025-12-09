@@ -68,7 +68,7 @@ export function HeroBannerSlider({ banners = [], isLoading = false }: HeroBanner
         autoplay={{
           delay: 3000,
           disableOnInteraction: false,
-          pauseOnMouseEnter: true,
+          pauseOnMouseEnter: false,
         }}
         pagination={{
           clickable: true,

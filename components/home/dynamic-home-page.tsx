@@ -294,7 +294,7 @@ const mapProductsFromApi = (incoming?: any[], defaultBadge?: string): ProductCar
     const hasDiscount = regularPrice > sellingPrice && regularPrice !== 0;
 
     const productId = typeof product?._id === 'string' ? product._id : product?._id?.toString?.() ?? `product-${index}`;
-    
+
     return {
       id: productId,
       _id: productId, // Ensure _id is set for ProductCard component
@@ -537,9 +537,9 @@ export const HomePage = () => {
         <div className={SECTION_SPACING}>
           <CollectionsSection dazzleData={sectionsData.dazzle} isLoading={isLoading} />
         </div>
-        <div className={SECTION_SPACING}>
+        {/* <div className={SECTION_SPACING}>
           <Testimonials />
-        </div>
+        </div> */}
         <div className={SECTION_SPACING}>
           <WhyChooseUs features={sectionsData.features} isLoading={isLoading} />
         </div>
@@ -1127,10 +1127,7 @@ const UpdatesSection = ({ newsItems, isLoading = false }: { newsItems: NewsItem[
     );
   }
 
-  const itemsToShow =
-    newsItems.length > 0
-      ? newsItems
-      : [];
+  const itemsToShow = newsItems.length > 0 ? newsItems : [];
 
   const formatDate = (dateString: string) => {
     try {
@@ -1185,10 +1182,7 @@ const GallerySection = ({ galleryItems, isLoading = false }: { galleryItems: Gal
     );
   }
 
-  const itemsToShow =
-    galleryItems.length > 0
-      ? galleryItems
-      : [];
+  const itemsToShow = galleryItems.length > 0 ? galleryItems : [];
 
   return (
     <section className='w-full'>

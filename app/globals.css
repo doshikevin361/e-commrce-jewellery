@@ -205,3 +205,12 @@
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+
+.swiper-pagination-bullet {
+  background: #ffffff !important; /* inactive bullet color */
+  opacity: 1 !important;
+}
+
+.swiper-pagination-bullet-active {
+  background: #1f3b29 !important; /* active bullet color (gold) */
+}
