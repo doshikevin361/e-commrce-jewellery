@@ -65,6 +65,7 @@ export async function GET(request: NextRequest) {
         tags: 1,
         createdAt: 1,
         views: 1,
+        urlSlug: 1,
         // Jewelry specific fields for pricing display
         metalType: 1,
         metalPurity: 1,

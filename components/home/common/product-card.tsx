@@ -3,9 +3,9 @@
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { ShoppingCart, Star, Heart } from 'lucide-react';
+import { ShoppingCart, Star, Heart, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useToast } from '@/hooks/use-toast';
+import toast from 'react-hot-toast';
 
 export type ProductCardData = {
   id: number | string;
@@ -23,6 +23,7 @@ export type ProductCardData = {
   inStock?: boolean;
   color?: string;
   size?: string;
+  urlSlug?: string;
 };
 
 type ProductCardProps = {
@@ -30,11 +31,19 @@ type ProductCardProps = {
   className?: string;
   actionLabel?: string;
   onClick?: () => void;
+  showDeleteIcon?: boolean; // Show trash icon instead of heart when true (for wishlist page)
+  onDelete?: () => void; // Callback for delete action (for wishlist page)
 };
 
-export const ProductCard = ({ product, className, actionLabel = 'Add to cart', onClick }: ProductCardProps) => {
+export const ProductCard = ({
+  product,
+  className,
+  actionLabel = 'Add to cart',
+  onClick,
+  showDeleteIcon = false,
+  onDelete,
+}: ProductCardProps) => {
   const router = useRouter();
-  const { toast } = useToast();
   const rating = product.rating || 4.5;
   const isListView = className?.includes('flex-row');
   const [isInWishlist, setIsInWishlist] = useState(false);
@@ -42,6 +51,7 @@ export const ProductCard = ({ product, className, actionLabel = 'Add to cart', o
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   const productId = (product as any)._id || product.id.toString();
+  const productSlug = (product as any).urlSlug || productId;
 
   // Check if user is logged in and if product is in wishlist
   useEffect(() => {
@@ -75,51 +85,42 @@ export const ProductCard = ({ product, className, actionLabel = 'Add to cart', o
 
   const handleWishlistToggle = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    
+
     if (!isLoggedIn) {
-      router.push('/?login=true');
+      // Dispatch event to open login modal
+      window.dispatchEvent(new Event('openLoginModal'));
       return;
     }
 
     try {
       setWishlistLoading(true);
-      
+
       if (isInWishlist) {
-        // Remove from wishlist
+        // Remove from wishlist - use productId (not slug) for wishlist operations
         const response = await fetch(`/api/customer/wishlist?productId=${productId}`, {
           method: 'DELETE',
         });
-        
+
         if (response.ok) {
           setIsInWishlist(false);
-          toast({
-            title: 'Removed',
-            description: 'Product removed from wishlist',
-          });
+          toast.success('Product removed from wishlist');
         }
       } else {
-        // Add to wishlist
+        // Add to wishlist - API will handle slug or ID
         const response = await fetch('/api/customer/wishlist', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ productId }),
+          body: JSON.stringify({ productId: productSlug }),
         });
-        
+
         if (response.ok) {
           setIsInWishlist(true);
-          toast({
-            title: 'Added',
-            description: 'Product added to wishlist',
-          });
+          toast.success('Product added to wishlist');
         }
       }
     } catch (error) {
       console.error('Wishlist error:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to update wishlist',
-        variant: 'destructive',
-      });
+      toast.error('Failed to update wishlist');
     } finally {
       setWishlistLoading(false);
     }
@@ -129,8 +130,8 @@ export const ProductCard = ({ product, className, actionLabel = 'Add to cart', o
     if (onClick) {
       onClick();
     } else {
-      // Navigate to product detail page using product ID
-      router.push(`/products/${productId}`);
+      // Navigate to product detail page using product slug
+      router.push(`/products/${productSlug}`);
     }
   };
 
@@ -143,21 +144,31 @@ export const ProductCard = ({ product, className, actionLabel = 'Add to cart', o
               {product.badge}
             </span>
           )}
-          {/* Wishlist Icon */}
-          <button
-            onClick={handleWishlistToggle}
-            disabled={wishlistLoading}
-            className='absolute right-3 top-3 z-10 w-10 h-10 rounded-full bg-white/90 backdrop-blur-sm border border-[#E6D3C2] flex items-center justify-center hover:bg-red-50 hover:border-red-300 transition-all group/wishlist disabled:opacity-50 disabled:cursor-not-allowed'>
-            <Heart
-              size={18}
-              className={cn(
-                'transition-colors',
-                isInWishlist
-                  ? 'fill-red-500 text-red-500'
-                  : 'text-[#4F3A2E] group-hover/wishlist:text-red-600'
-              )}
-            />
-          </button>
+          {/* Wishlist Icon or Delete Icon */}
+          {showDeleteIcon && onDelete ? (
+            <button
+              onClick={e => {
+                e.stopPropagation();
+                onDelete();
+              }}
+              disabled={wishlistLoading}
+              className='absolute right-3 top-3 z-10 w-10 h-10 rounded-full bg-white/90 backdrop-blur-sm border border-[#E6D3C2] flex items-center justify-center hover:bg-red-50 hover:border-red-300 transition-all group/delete disabled:opacity-50 disabled:cursor-not-allowed'>
+              <Trash2 size={18} className='text-[#4F3A2E] group-hover/delete:text-red-600 transition-colors' />
+            </button>
+          ) : (
+            <button
+              onClick={handleWishlistToggle}
+              disabled={wishlistLoading}
+              className='absolute right-3 top-3 z-10 w-10 h-10 rounded-full bg-white/90 backdrop-blur-sm border border-[#E6D3C2] flex items-center justify-center hover:bg-red-50 hover:border-red-300 transition-all group/wishlist disabled:opacity-50 disabled:cursor-not-allowed'>
+              <Heart
+                size={18}
+                className={cn(
+                  'transition-colors',
+                  isInWishlist ? 'fill-red-500 text-red-500' : 'text-[#4F3A2E] group-hover/wishlist:text-red-600'
+                )}
+              />
+            </button>
+          )}
           <img
             src={product.image}
             alt={product.title}

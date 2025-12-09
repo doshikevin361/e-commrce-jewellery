@@ -49,6 +49,7 @@ interface Product {
   featured: boolean;
   trending: boolean;
   tags: string[];
+  urlSlug?: string;
   metalType?: string;
   metalPurity?: string;
   stoneType?: string;
@@ -402,7 +403,8 @@ export function JewelleryPage() {
 
   // Handle product click
   const handleProductClick = (product: Product) => {
-    router.push(`/products/${product._id}`);
+    const slug = product.urlSlug || product._id;
+    router.push(`/products/${slug}`);
   };
 
   // Toggle section

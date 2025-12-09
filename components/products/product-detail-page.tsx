@@ -115,7 +115,7 @@ interface ProductDetail {
   specifications?: Array<{ key: string; value: string }>;
 }
 
-export function ProductDetailPage({ productId }: { productId: string }) {
+export function ProductDetailPage({ productSlug }: { productSlug: string }) {
   const router = useRouter();
   const { toast } = useToast();
   const [product, setProduct] = useState<ProductDetail | null>(null);
@@ -134,7 +134,7 @@ export function ProductDetailPage({ productId }: { productId: string }) {
     const fetchProduct = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`/api/public/products/${productId}`);
+        const response = await fetch(`/api/public/products/${productSlug}`);
 
         if (!response.ok) {
           if (response.status === 404) {
@@ -155,10 +155,10 @@ export function ProductDetailPage({ productId }: { productId: string }) {
       }
     };
 
-    if (productId) {
+    if (productSlug) {
       fetchProduct();
     }
-  }, [productId]);
+  }, [productSlug]);
 
   // Check authentication and wishlist status
   useEffect(() => {
@@ -172,18 +172,19 @@ export function ProductDetailPage({ productId }: { productId: string }) {
   }, []);
 
   useEffect(() => {
-    if (isLoggedIn && productId) {
+    if (isLoggedIn && product?._id) {
       checkWishlistStatus();
     }
-  }, [isLoggedIn, productId]);
+  }, [isLoggedIn, product?._id]);
 
   const checkWishlistStatus = async () => {
+    if (!product?._id) return;
     try {
       const response = await fetch('/api/customer/wishlist');
       if (response.ok) {
         const data = await response.json();
         const productIds = data.products?.map((p: any) => (p._id || p.id).toString()) || [];
-        setIsInWishlist(productIds.includes(productId));
+        setIsInWishlist(productIds.includes(product._id.toString()));
       }
     } catch (error) {
       // Silent fail
@@ -192,9 +193,21 @@ export function ProductDetailPage({ productId }: { productId: string }) {
 
   const handleWishlistToggle = async () => {
     if (!isLoggedIn) {
-      router.push('/?login=true');
+      // Dispatch event to open login modal
+      window.dispatchEvent(new Event('openLoginModal'));
       return;
     }
+
+    if (!product?._id) {
+      toast({
+        title: 'Error',
+        description: 'Product information not available',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const productId = product._id.toString();
 
     try {
       setWishlistLoading(true);
@@ -207,8 +220,9 @@ export function ProductDetailPage({ productId }: { productId: string }) {
         if (response.ok) {
           setIsInWishlist(false);
           toast({
-            title: 'Removed',
+            title: 'Success',
             description: 'Product removed from wishlist',
+            variant: 'success',
           });
         }
       } else {
@@ -221,8 +235,9 @@ export function ProductDetailPage({ productId }: { productId: string }) {
         if (response.ok) {
           setIsInWishlist(true);
           toast({
-            title: 'Added',
+            title: 'Success',
             description: 'Product added to wishlist',
+            variant: 'success',
           });
         }
       }

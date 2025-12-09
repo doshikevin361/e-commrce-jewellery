@@ -36,6 +36,7 @@ interface Product {
   featured: boolean;
   trending: boolean;
   tags: string[];
+  urlSlug?: string;
   // Product Type
   product_type?: string;
   // Material flags
@@ -530,7 +531,8 @@ export function DynamicProductsPage() {
 
   // Handle product click
   const handleProductClick = (product: Product) => {
-    router.push(`/products/${product._id}`);
+    const slug = product.urlSlug || product._id;
+    router.push(`/products/${slug}`);
   };
 
   if (loading) {

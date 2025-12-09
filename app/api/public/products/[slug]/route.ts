@@ -4,29 +4,35 @@ import { ObjectId } from "mongodb";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
-    const { id } = await params;
+    const { slug } = await params;
     const { db } = await connectToDatabase();
     
-    if (!ObjectId.isValid(id)) {
-      return NextResponse.json({ error: "Invalid product ID" }, { status: 400 });
-    }
-
-    // Fetch product details for public view
-    const product = await db.collection("products").findOne({
-      _id: new ObjectId(id),
+    // Try to find product by slug first
+    let product = await db.collection("products").findOne({
+      urlSlug: slug,
       status: "active", // Only show active products
     });
+
+    // If not found by slug, try to find by ID (for backward compatibility)
+    if (!product && ObjectId.isValid(slug)) {
+      product = await db.collection("products").findOne({
+        _id: new ObjectId(slug),
+        status: "active",
+      });
+    }
 
     if (!product) {
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }
 
+    const productId = product._id;
+
     // Increment view count for trending calculation
     await db.collection("products").updateOne(
-      { _id: new ObjectId(id) },
+      { _id: productId },
       { $inc: { views: 1 } }
     );
 
@@ -35,7 +41,7 @@ export async function GET(
       .collection("products")
       .find({
         category: product.category,
-        _id: { $ne: new ObjectId(id) },
+        _id: { $ne: productId },
         status: "active",
         stock: { $gt: 0 },
       })
@@ -49,6 +55,7 @@ export async function GET(
         mrp: 1,
         rating: 1,
         reviewCount: 1,
+        urlSlug: 1,
       })
       .toArray();
 
@@ -82,6 +89,7 @@ export async function GET(
         image: rp.mainImage || 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=600&q=80',
         displayPrice: rp.sellingPrice || rp.regularPrice || 0,
         originalPriceValue: rp.mrp || rp.regularPrice || 0,
+        urlSlug: rp.urlSlug || rp._id.toString(),
       })),
     };
 
@@ -94,3 +102,4 @@ export async function GET(
     );
   }
 }
+

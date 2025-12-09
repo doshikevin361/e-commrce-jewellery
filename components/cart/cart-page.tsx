@@ -13,6 +13,7 @@ type CartItem = {
   image: string;
   quantity: number;
   category: string;
+  urlSlug?: string;
 };
 
 export function CartPage() {
@@ -89,12 +90,12 @@ export function CartPage() {
             <div
               key={item.id}
               className='bg-white border-2 border-[#E6D3C2] rounded-xl p-4 sm:p-6 flex flex-col sm:flex-row gap-4 hover:border-[#C8A15B] transition-all'>
-              <Link href={`/products/${item.id}`} className='relative w-full sm:w-32 h-32 rounded-lg overflow-hidden bg-[#F5EEE5] flex-shrink-0'>
+              <Link href={`/products/${item.urlSlug || item.id}`} className='relative w-full sm:w-32 h-32 rounded-lg overflow-hidden bg-[#F5EEE5] flex-shrink-0'>
                 <Image src={item.image} alt={item.title} fill sizes='128px' className='object-cover' />
               </Link>
               <div className='flex-1 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4'>
                 <div className='flex-1'>
-                  <Link href={`/products/${item.id}`}>
+                  <Link href={`/products/${item.urlSlug || item.id}`}>
                     <h3 className='text-lg font-semibold text-[#1F3B29] mb-1 hover:text-[#C8A15B] transition-colors'>
                       {item.title}
                     </h3>

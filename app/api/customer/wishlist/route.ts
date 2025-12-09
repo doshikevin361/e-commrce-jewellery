@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
     // Fetch products
     const products = await db.collection('products').find({
       _id: { $in: wishlistProductIds.map((id: string) => new ObjectId(id)) },
-      status: 'published'
+      status: { $in: ['published', 'active'] }
     }).toArray();
 
     // Format products for frontend
@@ -51,6 +51,7 @@ export async function GET(request: NextRequest) {
       originalPriceNum: product.regularPrice || 0,
       stock: product.stock || 0,
       inStock: (product.stock || 0) > 0,
+      urlSlug: product.urlSlug || product._id.toString(),
     }));
 
     return NextResponse.json({ products: formattedProducts });
@@ -78,11 +79,19 @@ export async function POST(request: NextRequest) {
 
     const { db } = await connectToDatabase();
     
-    // Validate product exists
-    const product = await db.collection('products').findOne({ 
-      _id: new ObjectId(productId),
-      status: 'published'
+    // Try to find product by slug first, then by ID
+    let product = await db.collection('products').findOne({ 
+      urlSlug: productId,
+      status: { $in: ['published', 'active'] }
     });
+
+    // If not found by slug, try to find by ID
+    if (!product && ObjectId.isValid(productId)) {
+      product = await db.collection('products').findOne({ 
+        _id: new ObjectId(productId),
+        status: { $in: ['published', 'active'] }
+      });
+    }
 
     if (!product) {
       return NextResponse.json({ error: 'Product not found' }, { status: 404 });

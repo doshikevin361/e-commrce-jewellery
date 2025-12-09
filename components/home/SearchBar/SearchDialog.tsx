@@ -125,7 +125,8 @@ export function SearchDialog({ open, onOpenChange, query, onQueryChange }: Searc
 
   // Handle product click
   const handleProductClick = (product: SearchResult['products'][0]) => {
-    router.push(`/products/${product._id || product._id}`);
+    const slug = product.slug || product._id;
+    router.push(`/products/${slug}`);
     onOpenChange(false);
   };
 

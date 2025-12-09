@@ -24,6 +24,7 @@ const PRODUCT_PROJECTION = {
   tags: 1,
   createdAt: 1,
   views: 1,
+  urlSlug: 1,
   metalType: 1,
   metalPurity: 1,
   livePriceEnabled: 1,
@@ -53,6 +54,7 @@ const serializeProduct = (product: any, fallbackIndex = 0) => {
     featured: !!product?.featured,
     trending: !!product?.trending,
     badge: product?.featured ? 'Featured' : product?.trending ? 'Trending' : undefined,
+    urlSlug: product?.urlSlug || id,
   };
 };
 

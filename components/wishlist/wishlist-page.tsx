@@ -74,6 +74,7 @@ export function WishlistPage() {
       toast({
         title: 'Success',
         description: 'Product removed from wishlist',
+        variant: 'success',
       });
     } catch (error) {
       console.error('Error removing from wishlist:', error);
@@ -134,24 +135,15 @@ export function WishlistPage() {
       <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6'>
         {wishlistItems.map(product => {
           const productId = (product as any)._id || product.id.toString();
+          const productSlug = (product as any).urlSlug || productId;
           return (
             <div key={productId} className='group relative'>
-              <ProductCard product={product} onClick={() => router.push(`/products/${productId}`)} />
-              <div className='absolute top-3 right-3 flex gap-2 z-10'>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    removeFromWishlist(productId);
-                  }}
-                  disabled={removing === productId}
-                  className='w-10 h-10 rounded-full bg-white/90 backdrop-blur-sm border border-[#E6D3C2] flex items-center justify-center hover:bg-red-50 hover:border-red-300 transition-all group/btn disabled:opacity-50 disabled:cursor-not-allowed'>
-                  {removing === productId ? (
-                    <Loader2 size={18} className='text-red-600 animate-spin' />
-                  ) : (
-                    <Trash2 size={18} className='text-[#4F3A2E] group-hover/btn:text-red-600' />
-                  )}
-                </button>
-              </div>
+              <ProductCard 
+                product={product} 
+                onClick={() => router.push(`/products/${productSlug}`)}
+                showDeleteIcon={true}
+                onDelete={() => removeFromWishlist(productId)}
+              />
             </div>
           );
         })}

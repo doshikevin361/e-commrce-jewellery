@@ -80,9 +80,16 @@ export function HomeHeader() {
     window.addEventListener('storage', checkAuth);
     // Listen for custom auth events (same tab login/logout)
     window.addEventListener('authChange', checkAuth);
+    // Listen for open login modal event
+    const handleOpenLoginModal = () => {
+      setAuthMode('login');
+      setAuthModalOpen(true);
+    };
+    window.addEventListener('openLoginModal', handleOpenLoginModal);
     return () => {
       window.removeEventListener('storage', checkAuth);
       window.removeEventListener('authChange', checkAuth);
+      window.removeEventListener('openLoginModal', handleOpenLoginModal);
     };
   }, []);
 
