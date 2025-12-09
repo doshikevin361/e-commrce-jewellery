@@ -171,16 +171,16 @@ export function AuthModal({ open, onOpenChange, mode, onSwitchMode, onSwitchToFo
 
   const validateLoginForm = (): boolean => {
     const errors: { email?: string; password?: string } = {};
-    
+
     const emailError = validateEmail(email);
     if (emailError) errors.email = emailError;
-    
+
     if (!password || !password.trim()) {
       errors.password = 'Password is required';
     } else if (password.length < 6) {
       errors.password = 'Password must be at least 6 characters long';
     }
-    
+
     setLoginErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -189,7 +189,7 @@ export function AuthModal({ open, onOpenChange, mode, onSwitchMode, onSwitchToFo
     e.preventDefault();
     setError('');
     setSuccess('');
-    
+
     // Validate form
     if (!validateLoginForm()) {
       setError('Please fix the errors in the form');
@@ -235,7 +235,7 @@ export function AuthModal({ open, onOpenChange, mode, onSwitchMode, onSwitchToFo
 
   const handleRegisterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    
+
     // Handle email and phone with special validation
     if (name === 'email') {
       handleRegisterEmailChange(e);
@@ -245,7 +245,7 @@ export function AuthModal({ open, onOpenChange, mode, onSwitchMode, onSwitchToFo
       handleRegisterPhoneChange(e);
       return;
     }
-    
+
     if (name.startsWith('address.')) {
       const addressField = name.split('.')[1];
       setFormData(prev => ({
@@ -295,7 +295,7 @@ export function AuthModal({ open, onOpenChange, mode, onSwitchMode, onSwitchToFo
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    
+
     // Validate form
     if (!validateRegisterForm()) {
       setError('Please fix the errors in the form');
@@ -404,21 +404,22 @@ export function AuthModal({ open, onOpenChange, mode, onSwitchMode, onSwitchToFo
                 <p className='text-sm sm:text-base text-gray-600 mb-3 sm:mb-4'>
                   We've sent a verification email to <strong className='break-all'>{formData.email}</strong>
                 </p>
-                <p className='text-xs sm:text-sm text-gray-500 mb-4 sm:mb-6'>Please check your inbox and click the verification link to activate your account. You will not be able to login until you verify your email.</p>
-                
+                <p className='text-xs sm:text-sm text-gray-500 mb-4 sm:mb-6'>
+                  Please check your inbox and click the verification link to activate your account. You will not be able to login until you
+                  verify your email.
+                </p>
+
                 {/* Resend Verification Button */}
                 <div className='mb-4 sm:mb-6'>
                   <button
                     onClick={handleResendVerification}
                     disabled={resendLoading || cooldownSeconds > 0}
                     className='w-full bg-[#C8A15B] text-white px-6 py-2.5 sm:py-3 rounded-lg text-sm sm:text-base font-semibold hover:bg-[#b8914a] transition-colors disabled:opacity-50 disabled:cursor-not-allowed mb-3'>
-                    {resendLoading ? (
-                      'Sending...'
-                    ) : cooldownSeconds > 0 ? (
-                      `Resend in ${Math.floor(cooldownSeconds / 60)}:${String(cooldownSeconds % 60).padStart(2, '0')}`
-                    ) : (
-                      'Resend Verification Email'
-                    )}
+                    {resendLoading
+                      ? 'Sending...'
+                      : cooldownSeconds > 0
+                      ? `Resend in ${Math.floor(cooldownSeconds / 60)}:${String(cooldownSeconds % 60).padStart(2, '0')}`
+                      : 'Resend Verification Email'}
                   </button>
                 </div>
 
@@ -442,9 +443,7 @@ export function AuthModal({ open, onOpenChange, mode, onSwitchMode, onSwitchToFo
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent
-        className='sm:max-w-5xl p-0 overflow-hidden animate-in fade-in-0 zoom-in-95 duration-300'
-        showCloseButton={true}>
+      <DialogContent className='sm:max-w-5xl p-0 overflow-hidden animate-in fade-in-0 zoom-in-95 duration-300' showCloseButton={true}>
         <div className='grid md:grid-cols-2'>
           {/* Left side - Image */}
           <div className='hidden md:block relative bg-gradient-to-br from-[#F5EEE5] to-[#E8D5C4] overflow-hidden'>
@@ -670,7 +669,7 @@ export function AuthModal({ open, onOpenChange, mode, onSwitchMode, onSwitchToFo
                         className={`w-full pl-9 sm:pl-10 pr-4 py-2.5 sm:py-3 text-sm sm:text-base border rounded-lg focus:ring-2 focus:ring-[#C8A15B] focus:border-transparent transition-all ${
                           registerErrors.phone ? 'border-red-300 focus:ring-red-500' : 'border-gray-300'
                         }`}
-                        placeholder='Enter your phone number (10 digits minimum)'
+                        placeholder='Enter your phone number'
                       />
                     </div>
                     {registerErrors.phone && (
