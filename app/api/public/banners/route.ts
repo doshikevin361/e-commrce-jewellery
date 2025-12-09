@@ -1,6 +1,5 @@
 import { connectToDatabase } from "@/lib/mongodb";
 import { NextRequest, NextResponse } from "next/server";
-import { getAbsoluteImageUrl } from "@/lib/utils";
 
 export async function GET(request: NextRequest) {
   try {
@@ -16,9 +15,6 @@ export async function GET(request: NextRequest) {
       .limit(10) // Limit for performance
       .toArray();
 
-    // Get base URL from request
-    const requestUrl = request.url;
-    
     // Transform admin banner data to match frontend interface
     const transformedBanners = banners.map((banner) => ({
       _id: banner._id.toString(),
@@ -26,7 +22,7 @@ export async function GET(request: NextRequest) {
       subtitle: banner.subtitle || "Default Subtitle", 
       description: banner.description || "Default Description",
       buttonText: banner.buttonText || "Shop Now",
-      image: getAbsoluteImageUrl(banner.image || "https://images.unsplash.com/photo-1601121141461-9d6647bca1ed?w=1200&q=85", requestUrl),
+      image: banner.image || "https://images.unsplash.com/photo-1601121141461-9d6647bca1ed?w=1200&q=85",
       type: banner.type || "main", // main or side
       status: banner.status,
       order: banner.displayOrder || 0,
