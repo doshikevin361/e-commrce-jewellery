@@ -123,7 +123,7 @@ export function ProductDetailPage({ productId }: { productId: string }) {
   const [selectedImage, setSelectedImage] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState('description');
+  const [activeTab, setActiveTab] = useState('specifications');
   const [isInWishlist, setIsInWishlist] = useState(false);
   const [wishlistLoading, setWishlistLoading] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -198,12 +198,12 @@ export function ProductDetailPage({ productId }: { productId: string }) {
 
     try {
       setWishlistLoading(true);
-      
+
       if (isInWishlist) {
         const response = await fetch(`/api/customer/wishlist?productId=${productId}`, {
           method: 'DELETE',
         });
-        
+
         if (response.ok) {
           setIsInWishlist(false);
           toast({
@@ -217,7 +217,7 @@ export function ProductDetailPage({ productId }: { productId: string }) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ productId }),
         });
-        
+
         if (response.ok) {
           setIsInWishlist(true);
           toast({
@@ -291,16 +291,15 @@ export function ProductDetailPage({ productId }: { productId: string }) {
 
       <div className='grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 md:gap-10 lg:gap-12 xl:gap-16 mb-12 sm:mb-16'>
         {/* Images */}
-        <div className='lg:sticky lg:top-36 lg:self-start lg:h-fit'>
-          <div 
+        <div>
+          <div
             className='relative w-full overflow-hidden rounded-3xl bg-gradient-to-br from-[#F5EEE5] to-[#E6D3C2] mb-4 shadow-lg group cursor-zoom-in'
             onMouseEnter={() => setZoomImage(images[selectedImage])}
             onMouseLeave={() => {
               setZoomImage(null);
               setZoomPosition({ x: 50, y: 50 });
             }}
-            onMouseMove={handleImageMouseMove}
-          >
+            onMouseMove={handleImageMouseMove}>
             <div className='relative aspect-[4/3] sm:aspect-[3/2] lg:aspect-[3/2] overflow-hidden'>
               <Image
                 src={images[selectedImage]}
@@ -346,7 +345,9 @@ export function ProductDetailPage({ productId }: { productId: string }) {
         <div className='space-y-6'>
           <div>
             <p className='text-xs uppercase tracking-[0.3em] text-[#4F3A2E] mb-3 font-medium'>{product.category}</p>
-            <h1 className='text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-[#1F3B29] mb-4 sm:mb-6 leading-tight'>{product.name}</h1>
+            <h1 className='text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-[#1F3B29] mb-4 sm:mb-6 leading-tight'>
+              {product.name}
+            </h1>
 
             {product.rating && product.rating > 0 && (
               <div className='flex items-center gap-4 mb-6'>
@@ -372,7 +373,9 @@ export function ProductDetailPage({ productId }: { productId: string }) {
               <span className='text-3xl sm:text-4xl md:text-5xl font-bold text-[#1F3B29]'>₹{product.displayPrice.toLocaleString()}</span>
               {product.hasDiscount && product.discountPercent > 0 && (
                 <>
-                  <span className='text-xl sm:text-2xl text-[#4F3A2E] line-through opacity-60'>₹{product.originalPrice.toLocaleString()}</span>
+                  <span className='text-xl sm:text-2xl text-[#4F3A2E] line-through opacity-60'>
+                    ₹{product.originalPrice.toLocaleString()}
+                  </span>
                   <span className='text-xs sm:text-sm font-bold bg-gradient-to-r from-red-500 to-red-600 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-full shadow-md'>
                     Save {product.discountPercent}%
                   </span>
@@ -394,9 +397,7 @@ export function ProductDetailPage({ productId }: { productId: string }) {
           <div className='space-y-6'>
             {product.shortDescription && (
               <div>
-                <p className='text-base text-[#4F3A2E] leading-relaxed'>
-                  {product.shortDescription}
-                </p>
+                <p className='text-base text-[#4F3A2E] leading-relaxed'>{product.shortDescription}</p>
               </div>
             )}
 
@@ -441,8 +442,158 @@ export function ProductDetailPage({ productId }: { productId: string }) {
               </button>
             </div>
 
-            {/* Comprehensive Jewelry Details */}
-            {(product.hasGold || product.hasSilver || product.hasDiamond || product.jewelryType) && (
+            {/* Quick Info Cards - Only show if data exists */}
+            {(product.product_type || product.brand) && (
+              <div className='grid grid-cols-2 sm:grid-cols-2 gap-3 sm:gap-4'>
+                {product.product_type && (
+                  <div className='bg-gradient-to-br from-[#F5EEE5] to-white p-4 rounded-xl border border-[#E6D3C2]'>
+                    <p className='text-xs uppercase tracking-wide text-[#4F3A2E] font-medium mb-2'>Product Type</p>
+                    <p className='text-base font-bold text-[#1F3B29]'>{product.product_type}</p>
+                  </div>
+                )}
+                {product.brand && (
+                  <div className='bg-gradient-to-br from-[#F5EEE5] to-white p-4 rounded-xl border border-[#E6D3C2]'>
+                    <p className='text-xs uppercase tracking-wide text-[#4F3A2E] font-medium mb-2'>Brand</p>
+                    <p className='text-base font-bold text-[#1F3B29]'>{product.brand}</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Quantity & Actions */}
+          <div className='space-y-4 sm:space-y-6 pt-4 sm:pt-6 border-t border-[#E6D3C2]'>
+            {/* Features - Only show if product has free_shipping or allow_return */}
+            {((product as any).free_shipping || (product as any).allow_return) && (
+              <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 pt-4 sm:pt-6'>
+                {(product as any).free_shipping && (
+                  <div className='flex items-start gap-4 p-5 bg-gradient-to-br from-[#F5EEE5] to-white rounded-xl border border-[#E6D3C2] hover:shadow-md transition-shadow'>
+                    <div className='p-3 bg-[#C8A15B]/10 rounded-lg'>
+                      <Truck size={24} className='text-[#C8A15B]' />
+                    </div>
+                    <div>
+                      <p className='text-sm font-bold text-[#1F3B29] mb-1'>Free Shipping</p>
+                      <p className='text-xs text-[#4F3A2E]'>
+                        {(product as any).freeShippingThreshold
+                          ? `On orders over ₹${(product as any).freeShippingThreshold.toLocaleString()}`
+                          : 'Available'}
+                      </p>
+                    </div>
+                  </div>
+                )}
+                <div className='flex items-start gap-4 p-5 bg-gradient-to-br from-[#F5EEE5] to-white rounded-xl border border-[#E6D3C2] hover:shadow-md transition-shadow'>
+                  <div className='p-3 bg-[#C8A15B]/10 rounded-lg'>
+                    <Shield size={24} className='text-[#C8A15B]' />
+                  </div>
+                  <div>
+                    <p className='text-sm font-bold text-[#1F3B29] mb-1'>Secure Payment</p>
+                    <p className='text-xs text-[#4F3A2E]'>100% protected</p>
+                  </div>
+                </div>
+                {(product as any).allow_return && (
+                  <div className='flex items-start gap-4 p-5 bg-gradient-to-br from-[#F5EEE5] to-white rounded-xl border border-[#E6D3C2] hover:shadow-md transition-shadow'>
+                    <div className='p-3 bg-[#C8A15B]/10 rounded-lg'>
+                      <RotateCcw size={24} className='text-[#C8A15B]' />
+                    </div>
+                    <div>
+                      <p className='text-sm font-bold text-[#1F3B29] mb-1'>Easy Returns</p>
+                      <p className='text-xs text-[#4F3A2E]'>{(product as any).return_policy || 'Available'}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Description and Specifications Side by Side */}
+      <div className='mb-12 sm:mb-16'>
+        <div className='grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 md:gap-10 lg:gap-12'>
+          {/* Description Section */}
+          <div>
+            <h3 className='text-xl sm:text-2xl font-bold text-[#1F3B29] mb-4 sm:mb-6 flex items-center gap-2'>
+              <Sparkles className='w-5 h-5 sm:w-6 sm:h-6 text-[#C8A15B]' />
+              Product Description
+            </h3>
+            {product.longDescription ? (
+              <div
+                className='text-[#4F3A2E] space-y-4 prose prose-lg max-w-none leading-relaxed bg-gradient-to-br from-[#F5EEE5] to-white p-4 sm:p-6 rounded-xl border border-[#E6D3C2]'
+                dangerouslySetInnerHTML={{
+                  __html: product.longDescription,
+                }}
+              />
+            ) : (
+              <div className='bg-gradient-to-br from-[#F5EEE5] to-white p-6 rounded-xl border border-[#E6D3C2]'>
+                <p className='text-[#4F3A2E] text-center'>No description available for this product.</p>
+              </div>
+            )}
+          </div>
+
+          {/* Specifications Section */}
+          <div>
+            <h3 className='text-xl sm:text-2xl font-bold text-[#1F3B29] mb-4 sm:mb-6 flex items-center gap-2'>
+              <Gem className='w-5 h-5 sm:w-6 sm:h-6 text-[#C8A15B]' />
+              Specifications
+            </h3>
+            {product.specifications && product.specifications.length > 0 ? (
+              <div className='overflow-x-auto bg-gradient-to-br from-[#F5EEE5] to-white rounded-xl border border-[#E6D3C2]'>
+                <table className='w-full border-collapse bg-white rounded-lg overflow-hidden shadow-sm'>
+                  <thead>
+                    <tr className='bg-gradient-to-r from-[#1F3B29] to-[#2a4d3a]'>
+                      <th className='px-4 py-3 text-left text-sm font-semibold text-white uppercase tracking-wider'>Specification</th>
+                      <th className='px-4 py-3 text-left text-sm font-semibold text-white uppercase tracking-wider'>Value</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {product.specifications.map((spec, index) => (
+                      <tr
+                        key={index}
+                        className={`border-b border-[#E6D3C2] transition-colors ${
+                          index % 2 === 0 ? 'bg-white' : 'bg-[#faf8f5]'
+                        } hover:bg-[#F5EEE5]`}>
+                        <td className='px-4 py-3 text-sm font-medium text-[#1F3B29]'>{spec.key}</td>
+                        <td className='px-4 py-3 text-sm text-[#4F3A2E]'>{spec.value}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className='bg-gradient-to-br from-[#F5EEE5] to-white p-6 rounded-xl border border-[#E6D3C2]'>
+                <p className='text-[#4F3A2E] text-center'>No specifications available for this product.</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Product Details Tabs */}
+      <div className='mb-8 sm:mb-12 border-b-2 border-[#E6D3C2]'>
+        <div className='flex gap-4 sm:gap-6 md:gap-8 overflow-x-auto scrollbar-hide'>
+          {['Specifications', 'Care Instructions', 'Reviews'].map(tab => {
+            const tabId = tab.toLowerCase().replace(/\s+/g, '-');
+            return (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tabId)}
+                className={`pb-3 sm:pb-5 px-2 sm:px-4 text-xs sm:text-sm font-bold border-b-2 transition-all whitespace-nowrap ${
+                  activeTab === tabId
+                    ? 'border-[#C8A15B] text-[#1F3B29]'
+                    : 'border-transparent text-[#4F3A2E] hover:text-[#1F3B29] hover:border-[#E6D3C2]'
+                }`}>
+                {tab}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Tab Content */}
+      <div className='mb-12 sm:mb-16'>
+        {activeTab === 'specifications' && (
+          <div className='max-w-6xl'>
+            {product.hasGold || product.hasSilver || product.hasDiamond || product.jewelryType ? (
               <div className='bg-gradient-to-br from-[#F5EEE5] to-white p-4 sm:p-6 rounded-xl sm:rounded-2xl border border-[#E6D3C2] shadow-sm'>
                 <h3 className='text-lg sm:text-xl font-bold text-[#1F3B29] mb-4 sm:mb-6 flex items-center gap-2'>
                   <Sparkles className='w-4 h-4 sm:w-5 sm:h-5 text-[#C8A15B]' />
@@ -740,177 +891,11 @@ export function ProductDetailPage({ productId }: { productId: string }) {
                   </div>
                 </div>
               </div>
-            )}
-
-            {/* Quick Info Cards - Only show if data exists */}
-            {((product.product_type || product.brand) && (
-              <div className='grid grid-cols-2 sm:grid-cols-2 gap-3 sm:gap-4'>
-                {product.product_type && (
-                  <div className='bg-gradient-to-br from-[#F5EEE5] to-white p-4 rounded-xl border border-[#E6D3C2]'>
-                    <p className='text-xs uppercase tracking-wide text-[#4F3A2E] font-medium mb-2'>Product Type</p>
-                    <p className='text-base font-bold text-[#1F3B29]'>{product.product_type}</p>
-                  </div>
-                )}
-                {product.brand && (
-                  <div className='bg-gradient-to-br from-[#F5EEE5] to-white p-4 rounded-xl border border-[#E6D3C2]'>
-                    <p className='text-xs uppercase tracking-wide text-[#4F3A2E] font-medium mb-2'>Brand</p>
-                    <p className='text-base font-bold text-[#1F3B29]'>{product.brand}</p>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-
-          {/* Quantity & Actions */}
-          <div className='space-y-4 sm:space-y-6 pt-4 sm:pt-6 border-t border-[#E6D3C2]'>
-            {/* Features - Only show if product has free_shipping or allow_return */}
-            {((product as any).free_shipping || (product as any).allow_return) && (
-              <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 pt-4 sm:pt-6'>
-                {(product as any).free_shipping && (
-                  <div className='flex items-start gap-4 p-5 bg-gradient-to-br from-[#F5EEE5] to-white rounded-xl border border-[#E6D3C2] hover:shadow-md transition-shadow'>
-                    <div className='p-3 bg-[#C8A15B]/10 rounded-lg'>
-                      <Truck size={24} className='text-[#C8A15B]' />
-                    </div>
-                    <div>
-                      <p className='text-sm font-bold text-[#1F3B29] mb-1'>Free Shipping</p>
-                      <p className='text-xs text-[#4F3A2E]'>
-                        {(product as any).freeShippingThreshold ? `On orders over ₹${(product as any).freeShippingThreshold.toLocaleString()}` : 'Available'}
-                      </p>
-                    </div>
-                  </div>
-                )}
-                <div className='flex items-start gap-4 p-5 bg-gradient-to-br from-[#F5EEE5] to-white rounded-xl border border-[#E6D3C2] hover:shadow-md transition-shadow'>
-                  <div className='p-3 bg-[#C8A15B]/10 rounded-lg'>
-                    <Shield size={24} className='text-[#C8A15B]' />
-                  </div>
-                  <div>
-                    <p className='text-sm font-bold text-[#1F3B29] mb-1'>Secure Payment</p>
-                    <p className='text-xs text-[#4F3A2E]'>100% protected</p>
-                  </div>
-                </div>
-                {(product as any).allow_return && (
-                  <div className='flex items-start gap-4 p-5 bg-gradient-to-br from-[#F5EEE5] to-white rounded-xl border border-[#E6D3C2] hover:shadow-md transition-shadow'>
-                    <div className='p-3 bg-[#C8A15B]/10 rounded-lg'>
-                      <RotateCcw size={24} className='text-[#C8A15B]' />
-                    </div>
-                    <div>
-                      <p className='text-sm font-bold text-[#1F3B29] mb-1'>Easy Returns</p>
-                      <p className='text-xs text-[#4F3A2E]'>
-                        {(product as any).return_policy || 'Available'}
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Description and Specifications Side by Side */}
-      <div className='mb-12 sm:mb-16'>
-        <div className='grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 md:gap-10 lg:gap-12'>
-          {/* Description Section */}
-          <div>
-            <h3 className='text-xl sm:text-2xl font-bold text-[#1F3B29] mb-4 sm:mb-6 flex items-center gap-2'>
-              <Sparkles className='w-5 h-5 sm:w-6 sm:h-6 text-[#C8A15B]' />
-              Product Description
-            </h3>
-            {product.longDescription ? (
-              <div
-                className='text-[#4F3A2E] space-y-4 prose prose-lg max-w-none leading-relaxed bg-gradient-to-br from-[#F5EEE5] to-white p-4 sm:p-6 rounded-xl border border-[#E6D3C2]'
-                dangerouslySetInnerHTML={{
-                  __html: product.longDescription,
-                }}
-              />
             ) : (
-              <div className='bg-gradient-to-br from-[#F5EEE5] to-white p-6 rounded-xl border border-[#E6D3C2]'>
-                <p className='text-[#4F3A2E] text-center'>No description available for this product.</p>
-              </div>
-            )}
-          </div>
-
-          {/* Specifications Section */}
-          <div>
-            <h3 className='text-xl sm:text-2xl font-bold text-[#1F3B29] mb-4 sm:mb-6 flex items-center gap-2'>
-              <Gem className='w-5 h-5 sm:w-6 sm:h-6 text-[#C8A15B]' />
-              Specifications
-            </h3>
-            {product.specifications && product.specifications.length > 0 ? (
-              <div className='overflow-x-auto bg-gradient-to-br from-[#F5EEE5] to-white rounded-xl border border-[#E6D3C2]'>
-                <table className='w-full border-collapse bg-white rounded-lg overflow-hidden shadow-sm'>
-                  <thead>
-                    <tr className='bg-gradient-to-r from-[#1F3B29] to-[#2a4d3a]'>
-                      <th className='px-4 py-3 text-left text-sm font-semibold text-white uppercase tracking-wider'>
-                        Specification
-                      </th>
-                      <th className='px-4 py-3 text-left text-sm font-semibold text-white uppercase tracking-wider'>
-                        Value
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {product.specifications.map((spec, index) => (
-                      <tr 
-                        key={index}
-                        className={`border-b border-[#E6D3C2] transition-colors ${
-                          index % 2 === 0 ? 'bg-white' : 'bg-[#faf8f5]'
-                        } hover:bg-[#F5EEE5]`}
-                      >
-                        <td className='px-4 py-3 text-sm font-medium text-[#1F3B29]'>
-                          {spec.key}
-                        </td>
-                        <td className='px-4 py-3 text-sm text-[#4F3A2E]'>
-                          {spec.value}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <div className='bg-gradient-to-br from-[#F5EEE5] to-white p-6 rounded-xl border border-[#E6D3C2]'>
+              <div className='bg-gradient-to-br from-[#F5EEE5] to-white p-6 sm:p-8 rounded-xl sm:rounded-2xl border border-[#E6D3C2]'>
                 <p className='text-[#4F3A2E] text-center'>No specifications available for this product.</p>
               </div>
             )}
-          </div>
-        </div>
-      </div>
-
-      {/* Product Details Tabs */}
-      <div className='mb-8 sm:mb-12 border-b-2 border-[#E6D3C2]'>
-        <div className='flex gap-4 sm:gap-6 md:gap-8 overflow-x-auto scrollbar-hide'>
-          {['Care Instructions', 'Reviews'].map(tab => {
-            const tabId = tab.toLowerCase().replace(/\s+/g, '-');
-            return (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tabId)}
-                className={`pb-3 sm:pb-5 px-2 sm:px-4 text-xs sm:text-sm font-bold border-b-2 transition-all whitespace-nowrap ${
-                  activeTab === tabId
-                    ? 'border-[#C8A15B] text-[#1F3B29]'
-                    : 'border-transparent text-[#4F3A2E] hover:text-[#1F3B29] hover:border-[#E6D3C2]'
-                }`}>
-                {tab}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Tab Content */}
-      <div className='mb-12 sm:mb-16'>
-
-        {activeTab === 'specifications' && (
-          <div className='max-w-4xl'>
-            <h3 className='text-2xl font-bold text-[#1F3B29] mb-6'>Technical Specifications</h3>
-            <div className='bg-gradient-to-br from-[#F5EEE5] to-white p-8 rounded-2xl border border-[#E6D3C2]'>
-              {product.hasGold || product.hasSilver || product.hasDiamond || product.jewelryType ? (
-                <p className='text-[#4F3A2E]'>All specifications are displayed above in the product details section.</p>
-              ) : (
-                <p className='text-[#4F3A2E]'>No additional specifications available for this product.</p>
-              )}
-            </div>
           </div>
         )}
 
@@ -918,9 +903,7 @@ export function ProductDetailPage({ productId }: { productId: string }) {
           <div className='max-w-4xl'>
             <h3 className='text-xl sm:text-2xl font-bold text-[#1F3B29] mb-4 sm:mb-6'>Care Instructions</h3>
             <div className='bg-gradient-to-br from-[#F5EEE5] to-white p-4 sm:p-6 md:p-8 rounded-xl sm:rounded-2xl border border-[#E6D3C2]'>
-              <p className='text-[#4F3A2E] text-center'>
-                Care instructions will be displayed here when available for this product.
-              </p>
+              <p className='text-[#4F3A2E] text-center'>Care instructions will be displayed here when available for this product.</p>
             </div>
           </div>
         )}
@@ -947,15 +930,11 @@ export function ProductDetailPage({ productId }: { productId: string }) {
             </div>
             {product.reviewCount && product.reviewCount > 0 ? (
               <div className='bg-gradient-to-br from-[#F5EEE5] to-white p-6 rounded-xl border border-[#E6D3C2]'>
-                <p className='text-[#4F3A2E] text-center'>
-                  Reviews will be displayed here when available. Reviews feature coming soon.
-                </p>
+                <p className='text-[#4F3A2E] text-center'>Reviews will be displayed here when available. Reviews feature coming soon.</p>
               </div>
             ) : (
               <div className='bg-gradient-to-br from-[#F5EEE5] to-white p-6 rounded-xl border border-[#E6D3C2]'>
-                <p className='text-[#4F3A2E] text-center'>
-                  No reviews yet. Be the first to review this product!
-                </p>
+                <p className='text-[#4F3A2E] text-center'>No reviews yet. Be the first to review this product!</p>
               </div>
             )}
           </div>

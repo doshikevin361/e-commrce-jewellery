@@ -7,17 +7,15 @@ import { CategoriesProvider } from '@/contexts/CategoriesContext';
 import { WebsiteLayout } from '@/components/layout/website-layout';
 import { ScrollToTop } from '@/components/scroll-to-top';
 import './globals.css';
-import 'react-toastify/dist/ReactToastify.css';
-import '@/styles/toastify.css';
-import { ToastContainer } from 'react-toastify';
+import { Toaster } from 'react-hot-toast';
 
-const geist = Geist({ 
+const geist = Geist({
   subsets: ['latin'],
   display: 'swap',
   fallback: ['system-ui', 'arial'],
 });
 
-const geistMono = Geist_Mono({ 
+const geistMono = Geist_Mono({
   subsets: ['latin'],
   display: 'swap',
   fallback: ['monospace'],
@@ -62,17 +60,21 @@ export default function RootLayout({
             </CategoriesProvider>
           </SettingsProvider>
         </ThemeProvider>
-        <ToastContainer
-          position='top-center'
-          autoClose={3000}
-          hideProgressBar
-          closeOnClick
-          pauseOnHover={false}
-          pauseOnFocusLoss={false}
-          draggable={false}
-          theme='colored'
+        <Toaster
+          position='top-right'
+          toastOptions={{
+            duration: 3000,
+            style: {
+              background: '#fff',
+              color: '#1F3B29',
+              border: '1px solid #E6D3C2',
+              borderRadius: '12px',
+              padding: '16px 20px',
+              fontSize: '14px',
+              fontWeight: '500',
+            },
+          }}
         />
-
         <Analytics />
       </body>
     </html>
