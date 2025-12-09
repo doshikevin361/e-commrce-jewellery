@@ -18,7 +18,9 @@ export async function GET(request: Request) {
     const client = await clientPromise;
     const db = client.db('admin_panel');
     
-    const filter: any = {};
+    const filter: any = {
+      emailVerified: true // Only show verified customers
+    };
     
     if (search) {
       filter.$or = [
