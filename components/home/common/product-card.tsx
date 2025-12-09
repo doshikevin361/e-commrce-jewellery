@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { ShoppingCart, Star, Heart, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useCart } from '@/contexts/CartContext';
 import toast from 'react-hot-toast';
 
 export type ProductCardData = {
@@ -44,14 +45,19 @@ export const ProductCard = ({
   onDelete,
 }: ProductCardProps) => {
   const router = useRouter();
+  const { addToCart, cartItems } = useCart();
   const rating = product.rating || 4.5;
   const isListView = className?.includes('flex-row');
   const [isInWishlist, setIsInWishlist] = useState(false);
   const [wishlistLoading, setWishlistLoading] = useState(false);
+  const [cartLoading, setCartLoading] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   const productId = (product as any)._id || product.id.toString();
   const productSlug = (product as any).urlSlug || productId;
+  
+  // Check if product is already in cart
+  const isInCart = cartItems.some(item => item._id === productId || item.id === productId.toString());
 
   // Check if user is logged in and if product is in wishlist
   useEffect(() => {
@@ -135,6 +141,32 @@ export const ProductCard = ({
     }
   };
 
+  const handleAddToCart = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    if (isInCart) {
+      toast('This item already exists in cart', {
+        icon: '⚠️',
+        style: {
+          background: '#FEF3C7',
+          color: '#92400E',
+          border: '1px solid #FCD34D',
+        },
+      });
+      return;
+    }
+
+    setCartLoading(true);
+    try {
+      // Use productId (the _id) for cart operations, fallback to slug if needed
+      await addToCart(productId, 1);
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+    } finally {
+      setCartLoading(false);
+    }
+  };
+
   return (
     <article className={cn('flex flex-col rounded-xl border border-[#E6D3C2]/70 bg-white p-3 sm:p-4 group w-[320px] h-full', className)}>
       <div onClick={handleProductClick} className='block cursor-pointer w-full'>
@@ -201,10 +233,16 @@ export const ProductCard = ({
           </div>
 
           <button
-            onClick={e => e.stopPropagation()}
-            className='cursor-pointer inline-flex items-center justify-center gap-2 rounded-full border border-[#1F3B29] px-4 py-2 text-sm font-semibold text-[#1F3B29] transition-all hover:bg-[#1F3B29] hover:text-white'>
+            onClick={handleAddToCart}
+            disabled={cartLoading || isInCart}
+            className={cn(
+              'cursor-pointer inline-flex items-center justify-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed',
+              isInCart
+                ? 'border-[#C8A15B] bg-[#C8A15B] text-white'
+                : 'border-[#1F3B29] text-[#1F3B29] hover:bg-[#1F3B29] hover:text-white'
+            )}>
             <ShoppingCart size={16} />
-            <span>{actionLabel}</span>
+            <span>{cartLoading ? 'Adding...' : isInCart ? 'In Cart' : actionLabel}</span>
           </button>
         </div>
       </div>

@@ -24,6 +24,7 @@ import { ProductCardData } from '@/components/home/common/product-card';
 import { ProductCard } from '@/components/home/common/product-card';
 import { PageLoader } from '@/components/common/page-loader';
 import { useToast } from '@/hooks/use-toast';
+import { useCart } from '@/contexts/CartContext';
 import { cn } from '@/lib/utils';
 
 // Dynamic product interface
@@ -118,6 +119,7 @@ interface ProductDetail {
 export function ProductDetailPage({ productSlug }: { productSlug: string }) {
   const router = useRouter();
   const { toast } = useToast();
+  const { addToCart, cartItems, isLoading: cartLoading } = useCart();
   const [product, setProduct] = useState<ProductDetail | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
@@ -126,6 +128,7 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
   const [activeTab, setActiveTab] = useState('description');
   const [isInWishlist, setIsInWishlist] = useState(false);
   const [wishlistLoading, setWishlistLoading] = useState(false);
+  const [cartButtonLoading, setCartButtonLoading] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [zoomImage, setZoomImage] = useState<string | null>(null);
   const [zoomPosition, setZoomPosition] = useState({ x: 0, y: 0 });
@@ -298,6 +301,27 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
 
   const relatedProducts = product.relatedProducts || [];
 
+  // Check if product is already in cart
+  const isInCart = product?._id ? cartItems.some(item => item._id === product._id.toString()) : false;
+
+  const handleAddToCart = async () => {
+    if (!product?._id) {
+      toast({
+        title: 'Error',
+        description: 'Product information not available',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setCartButtonLoading(true);
+    try {
+      await addToCart(product._id.toString(), quantity);
+    } finally {
+      setCartButtonLoading(false);
+    }
+  };
+
   return (
     <div className='mx-auto w-full max-w-[1440px] px-4 sm:px-6 md:px-8 lg:px-12 py-6 sm:py-8 md:py-10'>
       {/* Back Button - Premium Styling */}
@@ -466,12 +490,18 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
 
           {/* Action Buttons - Premium Styling */}
           <div className='flex flex-col sm:flex-row gap-3 pt-2'>
-            <Link
-              href='/cart'
-              className='flex-1 flex items-center justify-center gap-2.5 rounded-xl bg-gradient-to-r from-[#1F3B29] to-[#2a4d3a] px-8 py-4 text-white font-semibold text-base hover:shadow-xl hover:shadow-[#1F3B29]/20 transition-all duration-200 hover:scale-[1.01]'>
+            <button
+              onClick={handleAddToCart}
+              disabled={cartButtonLoading || cartLoading || !product?.stock || product.stock === 0}
+              className={cn(
+                'flex-1 flex items-center justify-center gap-2.5 rounded-xl px-8 py-4 text-white font-semibold text-base transition-all duration-200 hover:scale-[1.01] disabled:opacity-50 disabled:cursor-not-allowed',
+                isInCart
+                  ? 'bg-gradient-to-r from-[#C8A15B] to-[#B8914F] hover:shadow-xl hover:shadow-[#C8A15B]/20'
+                  : 'bg-gradient-to-r from-[#1F3B29] to-[#2a4d3a] hover:shadow-xl hover:shadow-[#1F3B29]/20'
+              )}>
               <ShoppingCart size={20} />
-              Add to Cart
-            </Link>
+              {cartButtonLoading ? 'Adding...' : isInCart ? 'Already in Cart' : 'Add to Cart'}
+            </button>
             <button
               onClick={handleWishlistToggle}
               disabled={wishlistLoading}

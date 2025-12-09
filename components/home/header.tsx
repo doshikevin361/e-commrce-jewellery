@@ -8,6 +8,7 @@ import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { AuthModal } from '@/components/auth/auth-modal';
 import { ForgotPasswordModal } from '@/components/auth/forgot-password-modal';
 import { ResetPasswordModal } from '@/components/auth/reset-password-modal';
+import { useCart } from '@/contexts/CartContext';
 import toast from 'react-hot-toast';
 
 // Grid2x2CheckIcon component (same as hero section)
@@ -32,6 +33,7 @@ import { useMenuItems } from './navigation-menu';
 
 export function HomeHeader() {
   const router = useRouter();
+  const { cartCount } = useCart();
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [accountDropdownOpen, setAccountDropdownOpen] = useState(false);
@@ -244,9 +246,11 @@ export function HomeHeader() {
               aria-label='Cart'>
               <div className='relative flex-shrink-0'>
                 <ShoppingCart size={15} className='sm:w-[16px] sm:h-[16px] md:w-[18px] md:h-[18px] text-[#1F3B29]' />
-                <span className='absolute -top-1 -right-1 bg-[#C8A15B] text-white text-[9px] sm:text-[10px] font-bold rounded-full w-3.5 h-3.5 sm:w-4 sm:h-4 flex items-center justify-center shadow-sm leading-none'>
-                  0
-                </span>
+                {cartCount > 0 && (
+                  <span className='absolute -top-1 -right-1 bg-[#C8A15B] text-white text-[9px] sm:text-[10px] font-bold rounded-full w-3.5 h-3.5 sm:w-4 sm:h-4 flex items-center justify-center shadow-sm leading-none'>
+                    {cartCount > 99 ? '99+' : cartCount}
+                  </span>
+                )}
               </div>
               <span className='hidden sm:inline text-xs sm:text-sm whitespace-nowrap text-[#1F3B29]'>Your Cart</span>
             </Link>

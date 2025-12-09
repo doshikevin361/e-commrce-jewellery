@@ -4,6 +4,7 @@ import { Analytics } from '@vercel/analytics/next';
 import { ThemeProvider } from '@/components/theme-provider';
 import { SettingsProvider } from '@/components/settings/settings-provider';
 import { CategoriesProvider } from '@/contexts/CategoriesContext';
+import { CartProvider } from '@/contexts/CartContext';
 import { WebsiteLayout } from '@/components/layout/website-layout';
 import { ScrollToTop } from '@/components/scroll-to-top';
 import './globals.css';
@@ -55,8 +56,10 @@ export default function RootLayout({
         <ThemeProvider attribute='class' defaultTheme='light' enableSystem>
           <SettingsProvider>
             <CategoriesProvider>
-              <ScrollToTop />
-              <WebsiteLayout>{children}</WebsiteLayout>
+              <CartProvider>
+                <ScrollToTop />
+                <WebsiteLayout>{children}</WebsiteLayout>
+              </CartProvider>
             </CategoriesProvider>
           </SettingsProvider>
         </ThemeProvider>
