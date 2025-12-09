@@ -311,56 +311,59 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
       {/* Main Product Section */}
       <div className='grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12 lg:gap-16 mb-16 md:mb-20'>
         {/* Image Gallery - Premium Layout */}
-        <div className='space-y-4'>
-          {/* Main Image */}
-          <div
-            className='relative w-full overflow-hidden rounded-2xl bg-gradient-to-br from-[#F5EEE5] via-white to-[#F5EEE5] shadow-[0_4px_20px_rgba(31,59,41,0.08)] group cursor-zoom-in border border-[#E6D3C2]/30'
-            onMouseEnter={() => setZoomImage(images[selectedImage])}
-            onMouseLeave={() => {
-              setZoomImage(null);
-              setZoomPosition({ x: 50, y: 50 });
-            }}
-            onMouseMove={handleImageMouseMove}>
-            <div className='relative aspect-[4/3] sm:aspect-[3/2] lg:aspect-[4/3] overflow-hidden'>
-              <Image
-                src={images[selectedImage]}
-                alt={product.name}
-                fill
-                sizes='(max-width: 1024px) 100vw, 50vw'
-                className='object-cover transition-transform duration-500 ease-out'
-                style={{
-                  transform: zoomImage ? `scale(2.5) translate(${-zoomPosition.x * 0.5}%, ${-zoomPosition.y * 0.5}%)` : 'scale(1)',
-                  transformOrigin: `${zoomPosition.x}% ${zoomPosition.y}%`,
-                }}
-                priority
-              />
-            </div>
-            {/* Badges - Refined Positioning */}
-            {(product.featured || product.trending) && (
-              <span className='absolute left-5 top-5 rounded-full bg-gradient-to-r from-[#C8A15B] to-[#B8914F] px-4 py-1.5 text-[11px] font-semibold text-white shadow-lg backdrop-blur-sm border border-white/20'>
-                {product.featured ? '✨ Featured' : '🔥 Trending'}
-              </span>
-            )}
-            {product.hasDiscount && product.discountPercent > 0 && (
-              <span className='absolute right-5 top-5 rounded-full bg-gradient-to-r from-red-500 to-red-600 px-4 py-1.5 text-[11px] font-semibold text-white shadow-lg border border-white/20'>
-                {product.discountPercent}% OFF
-              </span>
-            )}
-          </div>
-          {/* Thumbnail Gallery */}
-          <div className='grid grid-cols-4 gap-3'>
+        <div className='flex gap-3 items-start'>
+          {/* Thumbnail Gallery - Top Left Column */}
+          <div className='flex flex-col gap-2 flex-shrink-0'>
             {images.map((img, index) => (
               <button
                 key={index}
                 onClick={() => setSelectedImage(index)}
-                className={`relative aspect-square overflow-hidden rounded-lg border-2 transition-all duration-300 hover:scale-[1.02] ${
+                className={`relative w-16 h-16 sm:w-20 sm:h-20 overflow-hidden rounded-lg border-2 transition-all duration-300 hover:scale-110 bg-white shadow-md ${
                   selectedImage === index
-                    ? 'border-[#C8A15B] ring-2 ring-[#C8A15B]/30 ring-offset-1 shadow-md'
-                    : 'border-[#E6D3C2] hover:border-[#C8A15B]/60'
+                    ? 'border-[#C8A15B] ring-2 ring-[#C8A15B]/50 ring-offset-1 shadow-lg'
+                    : 'border-[#E6D3C2] hover:border-[#C8A15B]/80'
                 }`}>
-                <Image src={img} alt={`${product.name} ${index + 1}`} fill sizes='20vw' className='object-cover' />
+                <Image src={img} alt={`${product.name} ${index + 1}`} fill sizes='80px' className='object-cover' />
               </button>
             ))}
+          </div>
+
+          {/* Main Image Container */}
+          <div className='relative flex-1'>
+            <div
+              className='relative w-full overflow-hidden rounded-2xl bg-gradient-to-br from-[#F5EEE5] via-white to-[#F5EEE5] shadow-[0_4px_20px_rgba(31,59,41,0.08)] group cursor-zoom-in border border-[#E6D3C2]/30'
+              onMouseEnter={() => setZoomImage(images[selectedImage])}
+              onMouseLeave={() => {
+                setZoomImage(null);
+                setZoomPosition({ x: 50, y: 50 });
+              }}
+              onMouseMove={handleImageMouseMove}>
+              <div className='relative aspect-[4/3] sm:aspect-[3/2] lg:aspect-[4/3] overflow-hidden'>
+                <Image
+                  src={images[selectedImage]}
+                  alt={product.name}
+                  fill
+                  sizes='(max-width: 1024px) 100vw, 50vw'
+                  className='object-cover transition-transform duration-500 ease-out'
+                  style={{
+                    transform: zoomImage ? `scale(2.5) translate(${-zoomPosition.x * 0.5}%, ${-zoomPosition.y * 0.5}%)` : 'scale(1)',
+                    transformOrigin: `${zoomPosition.x}% ${zoomPosition.y}%`,
+                  }}
+                  priority
+                />
+              </div>
+              {/* Badges - Refined Positioning */}
+              {(product.featured || product.trending) && (
+                <span className='absolute left-5 top-5 rounded-full bg-gradient-to-r from-[#C8A15B] to-[#B8914F] px-4 py-1.5 text-[11px] font-semibold text-white shadow-lg backdrop-blur-sm border border-white/20 z-10'>
+                  {product.featured ? '✨ Featured' : '🔥 Trending'}
+                </span>
+              )}
+              {product.hasDiscount && product.discountPercent > 0 && (
+                <span className='absolute right-5 top-5 rounded-full bg-gradient-to-r from-red-500 to-red-600 px-4 py-1.5 text-[11px] font-semibold text-white shadow-lg border border-white/20 z-10'>
+                  {product.discountPercent}% OFF
+                </span>
+              )}
+            </div>
           </div>
         </div>
 

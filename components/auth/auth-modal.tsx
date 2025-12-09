@@ -23,6 +23,7 @@ export function AuthModal({ open, onOpenChange, mode, onSwitchMode, onSwitchToFo
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const [loginErrors, setLoginErrors] = useState<{ email?: string; password?: string }>({});
 
   // Register state
   const [formData, setFormData] = useState({
@@ -41,6 +42,7 @@ export function AuthModal({ open, onOpenChange, mode, onSwitchMode, onSwitchToFo
   });
   const [showRegisterPassword, setShowRegisterPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [registerErrors, setRegisterErrors] = useState<{ email?: string; phone?: string; [key: string]: string | undefined }>({});
 
   // Common state
   const [loading, setLoading] = useState(false);
@@ -82,6 +84,8 @@ export function AuthModal({ open, onOpenChange, mode, onSwitchMode, onSwitchToFo
       setError('');
       setSuccess('');
       setRegisterSuccess(false);
+      setLoginErrors({});
+      setRegisterErrors({});
       setFormData({
         name: '',
         email: '',
@@ -99,18 +103,86 @@ export function AuthModal({ open, onOpenChange, mode, onSwitchMode, onSwitchToFo
     }
   }, [open, mode]);
 
-  const validateLoginForm = () => {
-    if (!email || !email.trim()) {
+  // Email validation helper
+  const validateEmail = (emailValue: string): string | undefined => {
+    if (!emailValue || !emailValue.trim()) {
       return 'Email is required';
     }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
+    if (!emailRegex.test(emailValue.trim())) {
       return 'Please enter a valid email address';
     }
-    if (!password || password.length < 6) {
-      return 'Password must be at least 6 characters long';
+    return undefined;
+  };
+
+  // Phone validation helper
+  const validatePhone = (phoneValue: string): string | undefined => {
+    if (!phoneValue || !phoneValue.trim()) {
+      return 'Phone number is required';
     }
-    return null;
+    // Remove all non-numeric characters for validation
+    const numericPhone = phoneValue.replace(/\D/g, '');
+    if (numericPhone.length === 0) {
+      return 'Phone number is required';
+    }
+    if (numericPhone.length < 10) {
+      return 'Phone number must be at least 10 digits';
+    }
+    if (numericPhone.length > 15) {
+      return 'Phone number must not exceed 15 digits';
+    }
+    // Check if it contains only numbers
+    if (!/^\d+$/.test(numericPhone)) {
+      return 'Phone number must contain only numbers';
+    }
+    return undefined;
+  };
+
+  // Handle login email change with real-time validation
+  const handleLoginEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setEmail(value);
+    const emailError = validateEmail(value);
+    setLoginErrors(prev => ({ ...prev, email: emailError }));
+  };
+
+  // Handle register email change with real-time validation
+  const handleRegisterEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setFormData(prev => ({ ...prev, email: value }));
+    const emailError = validateEmail(value);
+    setRegisterErrors(prev => ({ ...prev, email: emailError }));
+  };
+
+  // Handle register phone change with real-time validation and numeric only
+  const handleRegisterPhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let value = e.target.value;
+    // Only allow numeric characters
+    value = value.replace(/\D/g, '');
+    // Limit to 15 digits maximum
+    if (value.length > 15) {
+      value = value.slice(0, 15);
+    }
+    setFormData(prev => ({ ...prev, phone: value }));
+    // Real-time validation
+    const phoneError = validatePhone(value);
+    setRegisterErrors(prev => ({ ...prev, phone: phoneError }));
+  };
+
+  const validateLoginForm = (): boolean => {
+    const errors: { email?: string; password?: string } = {};
+    
+    const emailError = validateEmail(email);
+    if (emailError) errors.email = emailError;
+    
+    if (!password || !password.trim()) {
+      errors.password = 'Password is required';
+    } else if (password.length < 6) {
+      errors.password = 'Password must be at least 6 characters long';
+    }
+    
+    setLoginErrors(errors);
+    return Object.keys(errors).length === 0;
   };
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -119,9 +191,8 @@ export function AuthModal({ open, onOpenChange, mode, onSwitchMode, onSwitchToFo
     setSuccess('');
     
     // Validate form
-    const validationError = validateLoginForm();
-    if (validationError) {
-      setError(validationError);
+    if (!validateLoginForm()) {
+      setError('Please fix the errors in the form');
       return;
     }
 
@@ -164,6 +235,17 @@ export function AuthModal({ open, onOpenChange, mode, onSwitchMode, onSwitchToFo
 
   const handleRegisterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
+    
+    // Handle email and phone with special validation
+    if (name === 'email') {
+      handleRegisterEmailChange(e);
+      return;
+    }
+    if (name === 'phone') {
+      handleRegisterPhoneChange(e);
+      return;
+    }
+    
     if (name.startsWith('address.')) {
       const addressField = name.split('.')[1];
       setFormData(prev => ({
@@ -178,39 +260,36 @@ export function AuthModal({ open, onOpenChange, mode, onSwitchMode, onSwitchToFo
     }
   };
 
-  const validateRegisterForm = () => {
-    const errors: string[] = [];
+  const validateRegisterForm = (): boolean => {
+    const errors: { [key: string]: string } = {};
 
     // Name validation
     if (!formData.name || formData.name.trim().length < 2) {
-      errors.push('Full name must be at least 2 characters long');
+      errors.name = 'Full name must be at least 2 characters long';
     }
 
     // Email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!formData.email || !emailRegex.test(formData.email)) {
-      errors.push('Please enter a valid email address');
-    }
+    const emailError = validateEmail(formData.email);
+    if (emailError) errors.email = emailError;
 
-    // Phone validation (Indian phone number format)
-    const phoneRegex = /^[6-9]\d{9}$/;
-    if (!formData.phone || !phoneRegex.test(formData.phone.replace(/\D/g, ''))) {
-      errors.push('Please enter a valid 10-digit phone number');
-    }
+    // Phone validation
+    const phoneError = validatePhone(formData.phone);
+    if (phoneError) errors.phone = phoneError;
 
     // Password validation
     if (!formData.password || formData.password.length < 6) {
-      errors.push('Password must be at least 6 characters long');
+      errors.password = 'Password must be at least 6 characters long';
     } else if (formData.password.length > 50) {
-      errors.push('Password must be less than 50 characters');
+      errors.password = 'Password must be less than 50 characters';
     }
 
     // Confirm password validation
     if (formData.password !== formData.confirmPassword) {
-      errors.push('Passwords do not match');
+      errors.confirmPassword = 'Passwords do not match';
     }
 
-    return errors;
+    setRegisterErrors(errors);
+    return Object.keys(errors).length === 0;
   };
 
   const handleRegister = async (e: React.FormEvent) => {
@@ -218,9 +297,8 @@ export function AuthModal({ open, onOpenChange, mode, onSwitchMode, onSwitchToFo
     setError('');
     
     // Validate form
-    const validationErrors = validateRegisterForm();
-    if (validationErrors.length > 0) {
-      setError(validationErrors[0]); // Show first error
+    if (!validateRegisterForm()) {
+      setError('Please fix the errors in the form');
       return;
     }
 
@@ -416,12 +494,24 @@ export function AuthModal({ open, onOpenChange, mode, onSwitchMode, onSwitchToFo
                       <input
                         type='email'
                         value={email}
-                        onChange={e => setEmail(e.target.value)}
+                        onChange={handleLoginEmailChange}
+                        onBlur={() => {
+                          const emailError = validateEmail(email);
+                          setLoginErrors(prev => ({ ...prev, email: emailError }));
+                        }}
                         required
-                        className='w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#C8A15B] focus:border-transparent transition-all'
+                        className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-[#C8A15B] focus:border-transparent transition-all ${
+                          loginErrors.email ? 'border-red-300 focus:ring-red-500' : 'border-gray-300'
+                        }`}
                         placeholder='Enter your email'
                       />
                     </div>
+                    {loginErrors.email && (
+                      <p className='mt-1 text-xs text-red-600 flex items-center gap-1'>
+                        <AlertCircle className='w-3 h-3' />
+                        {loginErrors.email}
+                      </p>
+                    )}
                   </div>
 
                   <div>
@@ -431,9 +521,25 @@ export function AuthModal({ open, onOpenChange, mode, onSwitchMode, onSwitchToFo
                       <input
                         type={showPassword ? 'text' : 'password'}
                         value={password}
-                        onChange={e => setPassword(e.target.value)}
+                        onChange={e => {
+                          setPassword(e.target.value);
+                          // Clear password error when user starts typing
+                          if (loginErrors.password) {
+                            setLoginErrors(prev => ({ ...prev, password: undefined }));
+                          }
+                        }}
+                        onBlur={() => {
+                          if (!password || password.length < 6) {
+                            setLoginErrors(prev => ({
+                              ...prev,
+                              password: password.length === 0 ? 'Password is required' : 'Password must be at least 6 characters long',
+                            }));
+                          }
+                        }}
                         required
-                        className='w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#C8A15B] focus:border-transparent transition-all'
+                        className={`w-full pl-10 pr-12 py-3 border rounded-lg focus:ring-2 focus:ring-[#C8A15B] focus:border-transparent transition-all ${
+                          loginErrors.password ? 'border-red-300 focus:ring-red-500' : 'border-gray-300'
+                        }`}
                         placeholder='Enter your password'
                       />
                       <button
@@ -443,6 +549,12 @@ export function AuthModal({ open, onOpenChange, mode, onSwitchMode, onSwitchToFo
                         {showPassword ? <EyeOff className='w-5 h-5' /> : <Eye className='w-5 h-5' />}
                       </button>
                     </div>
+                    {loginErrors.password && (
+                      <p className='mt-1 text-xs text-red-600 flex items-center gap-1'>
+                        <AlertCircle className='w-3 h-3' />
+                        {loginErrors.password}
+                      </p>
+                    )}
                   </div>
 
                   <div className='flex items-center justify-between'>
@@ -471,7 +583,7 @@ export function AuthModal({ open, onOpenChange, mode, onSwitchMode, onSwitchToFo
                   <div className='pt-2'>
                     <button
                       type='submit'
-                      disabled={loading}
+                      disabled={loading || !!loginErrors.email || !!loginErrors.password}
                       className='w-full bg-[#1F3B29] text-white py-3 rounded-lg font-semibold hover:bg-[#2a4d3a] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg'>
                       {loading ? 'Logging in...' : 'Login'}
                     </button>
@@ -520,11 +632,23 @@ export function AuthModal({ open, onOpenChange, mode, onSwitchMode, onSwitchToFo
                         name='email'
                         value={formData.email}
                         onChange={handleRegisterChange}
+                        onBlur={() => {
+                          const emailError = validateEmail(formData.email);
+                          setRegisterErrors(prev => ({ ...prev, email: emailError }));
+                        }}
                         required
-                        className='w-full pl-9 sm:pl-10 pr-4 py-2.5 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#C8A15B] focus:border-transparent transition-all'
+                        className={`w-full pl-9 sm:pl-10 pr-4 py-2.5 sm:py-3 text-sm sm:text-base border rounded-lg focus:ring-2 focus:ring-[#C8A15B] focus:border-transparent transition-all ${
+                          registerErrors.email ? 'border-red-300 focus:ring-red-500' : 'border-gray-300'
+                        }`}
                         placeholder='Enter your email'
                       />
                     </div>
+                    {registerErrors.email && (
+                      <p className='mt-1 text-xs text-red-600 flex items-center gap-1'>
+                        <AlertCircle className='w-3 h-3' />
+                        {registerErrors.email}
+                      </p>
+                    )}
                   </div>
 
                   <div>
@@ -535,12 +659,26 @@ export function AuthModal({ open, onOpenChange, mode, onSwitchMode, onSwitchToFo
                         type='tel'
                         name='phone'
                         value={formData.phone}
-                        onChange={handleRegisterChange}
+                        onChange={handleRegisterPhoneChange}
+                        onBlur={() => {
+                          const phoneError = validatePhone(formData.phone);
+                          setRegisterErrors(prev => ({ ...prev, phone: phoneError }));
+                        }}
                         required
-                        className='w-full pl-9 sm:pl-10 pr-4 py-2.5 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#C8A15B] focus:border-transparent transition-all'
-                        placeholder='Enter your phone number'
+                        inputMode='numeric'
+                        pattern='[0-9]*'
+                        className={`w-full pl-9 sm:pl-10 pr-4 py-2.5 sm:py-3 text-sm sm:text-base border rounded-lg focus:ring-2 focus:ring-[#C8A15B] focus:border-transparent transition-all ${
+                          registerErrors.phone ? 'border-red-300 focus:ring-red-500' : 'border-gray-300'
+                        }`}
+                        placeholder='Enter your phone number (10 digits minimum)'
                       />
                     </div>
+                    {registerErrors.phone && (
+                      <p className='mt-1 text-xs text-red-600 flex items-center gap-1'>
+                        <AlertCircle className='w-3 h-3' />
+                        {registerErrors.phone}
+                      </p>
+                    )}
                   </div>
 
                   <div>
@@ -590,7 +728,14 @@ export function AuthModal({ open, onOpenChange, mode, onSwitchMode, onSwitchToFo
                   <div className='pt-1 sm:pt-2'>
                     <button
                       type='submit'
-                      disabled={loading}
+                      disabled={
+                        loading ||
+                        !!registerErrors.email ||
+                        !!registerErrors.phone ||
+                        !!registerErrors.password ||
+                        !!registerErrors.confirmPassword ||
+                        !!registerErrors.name
+                      }
                       className='w-full bg-[#1F3B29] text-white py-2.5 sm:py-3 rounded-lg text-sm sm:text-base font-semibold hover:bg-[#2a4d3a] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg'>
                       {loading ? 'Creating Account...' : 'Create Account'}
                     </button>
