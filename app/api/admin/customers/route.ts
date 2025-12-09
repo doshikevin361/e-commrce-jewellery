@@ -16,9 +16,11 @@ export async function GET(request: Request) {
     const search = searchParams.get('search');
 
     const client = await clientPromise;
-    const db = client.db('ecommerce');
+    const db = client.db('admin_panel');
     
-    const filter: any = {};
+    const filter: any = {
+      emailVerified: true // Only show verified customers
+    };
     
     if (search) {
       filter.$or = [
@@ -66,7 +68,7 @@ export async function POST(request: Request) {
     const body = await request.json();
     
     const client = await clientPromise;
-    const db = client.db('ecommerce');
+    const db = client.db('admin_panel');
     
     const newCustomer = {
       ...body,

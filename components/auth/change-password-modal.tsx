@@ -26,17 +26,33 @@ export function ChangePasswordModal({ open, onOpenChange }: ChangePasswordModalP
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
+  const validateForm = () => {
+    if (!formData.currentPassword || formData.currentPassword.length < 6) {
+      return 'Current password is required';
+    }
+    if (!formData.newPassword || formData.newPassword.length < 6) {
+      return 'New password must be at least 6 characters long';
+    }
+    if (formData.newPassword.length > 50) {
+      return 'New password must be less than 50 characters';
+    }
+    if (formData.newPassword === formData.currentPassword) {
+      return 'New password must be different from current password';
+    }
+    if (formData.newPassword !== formData.confirmPassword) {
+      return 'New passwords do not match';
+    }
+    return null;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
-    if (formData.newPassword !== formData.confirmPassword) {
-      setError('New passwords do not match');
-      return;
-    }
-
-    if (formData.newPassword.length < 6) {
-      setError('New password must be at least 6 characters long');
+    // Validate form
+    const validationError = validateForm();
+    if (validationError) {
+      setError(validationError);
       return;
     }
 

@@ -35,6 +35,7 @@ export interface Customer {
   emailVerified?: boolean;
   emailVerificationToken?: string;
   emailVerificationExpires?: Date;
+  lastVerificationEmailSent?: Date;
   // Password reset fields
   passwordResetToken?: string;
   passwordResetExpires?: Date;
@@ -95,10 +96,31 @@ export async function getCustomerById(id: string): Promise<Customer | null> {
 export async function getCustomerByVerificationToken(token: string): Promise<Customer | null> {
   try {
     const { db } = await connectToDatabase();
+    
+    // First, try to find customer with the token (without expiration check to see if token exists)
     const customer = await db.collection('customers').findOne({ 
-      emailVerificationToken: token,
-      emailVerificationExpires: { $gt: new Date() }
+      emailVerificationToken: token
     });
+    
+    if (!customer) {
+      console.log('[Customer] No customer found with verification token:', token.substring(0, 10) + '...');
+      return null;
+    }
+    
+    // Check if token has expired
+    if (customer.emailVerificationExpires) {
+      const expiresDate = new Date(customer.emailVerificationExpires);
+      const now = new Date();
+      
+      // Add 5 minutes buffer to account for timezone differences
+      const bufferTime = 5 * 60 * 1000; // 5 minutes in milliseconds
+      
+      if (expiresDate.getTime() + bufferTime < now.getTime()) {
+        console.log('[Customer] Verification token expired. Expires:', expiresDate, 'Now:', now);
+        return null;
+      }
+    }
+    
     return customer as Customer | null;
   } catch (error) {
     console.error('[Customer] Error fetching customer by verification token:', error);

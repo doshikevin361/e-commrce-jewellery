@@ -93,16 +93,20 @@ export function HomeHeader() {
     };
   }, []);
 
-  // Check for reset password token in URL
+  // Check for reset password token in URL (only on home page, not on verify-email page)
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search);
-      const token = params.get('token');
-      if (token) {
-        setResetToken(token);
-        setResetPasswordModalOpen(true);
-        // Clean URL
-        window.history.replaceState({}, '', window.location.pathname);
+      const pathname = window.location.pathname;
+      // Only check for reset password token if we're NOT on the verify-email page
+      if (pathname !== '/verify-email') {
+        const params = new URLSearchParams(window.location.search);
+        const token = params.get('token');
+        if (token) {
+          setResetToken(token);
+          setResetPasswordModalOpen(true);
+          // Clean URL
+          window.history.replaceState({}, '', window.location.pathname);
+        }
       }
     }
   }, []);

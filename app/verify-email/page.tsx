@@ -17,9 +17,45 @@ function VerifyEmailForm({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
+  const [cooldownSeconds, setCooldownSeconds] = useState(0);
+  const [email, setEmail] = useState('');
+
+  // Cooldown timer
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (cooldownSeconds > 0) {
+      interval = setInterval(() => {
+        setCooldownSeconds(prev => {
+          if (prev <= 1) {
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [cooldownSeconds]);
 
   useEffect(() => {
     const token = searchParams.get('token');
+    const errorParam = searchParams.get('error');
+    const successParam = searchParams.get('success');
+    
+    if (successParam === 'true') {
+      setSuccess(true);
+      setLoading(false);
+      return;
+    }
+    
+    if (errorParam) {
+      setError(decodeURIComponent(errorParam));
+      setLoading(false);
+      return;
+    }
+    
     if (token) {
       verifyEmail(token);
     } else {
@@ -49,6 +85,42 @@ function VerifyEmailForm({
       setError('An error occurred. Please try again.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResendVerification = async () => {
+    if (!email || cooldownSeconds > 0) return;
+
+    setResendLoading(true);
+    setError('');
+
+    try {
+      const response = await fetch('/api/auth/customer/resend-verification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        if (response.status === 429 && data.cooldownRemaining) {
+          setCooldownSeconds(data.cooldownRemaining);
+          setError(data.error || 'Please wait before requesting another email.');
+        } else {
+          setError(data.error || 'Failed to send verification email');
+        }
+        return;
+      }
+
+      setCooldownSeconds(300); // 5 minutes = 300 seconds
+      setError('');
+      alert('Verification email has been sent! Please check your inbox.');
+    } catch (err) {
+      console.error('Resend verification error:', err);
+      setError('An error occurred. Please try again.');
+    } finally {
+      setResendLoading(false);
     }
   };
 
@@ -96,18 +168,49 @@ function VerifyEmailForm({
         <p className="text-gray-600 mb-4">
           {error || 'The verification link is invalid or has expired.'}
         </p>
+        <p className="text-sm text-gray-500 mb-4">
+          If the link has expired, you can request a new verification email.
+        </p>
+        
+        {/* Resend Verification Section */}
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-700 mb-2 text-left">
+            Email Address
+          </label>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="Enter your email"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#C8A15B] focus:border-transparent mb-3"
+          />
+          <button
+            onClick={handleResendVerification}
+            disabled={resendLoading || cooldownSeconds > 0 || !email}
+            className="w-full bg-[#C8A15B] text-white px-6 py-2 rounded-lg font-semibold hover:bg-[#b8914a] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {resendLoading ? (
+              'Sending...'
+            ) : cooldownSeconds > 0 ? (
+              `Resend in ${Math.floor(cooldownSeconds / 60)}:${String(cooldownSeconds % 60).padStart(2, '0')}`
+            ) : (
+              'Resend Verification Email'
+            )}
+          </button>
+        </div>
+
         <div className="space-y-2">
           <button
-            onClick={onOpenRegister}
+            onClick={onOpenLogin}
             className="block w-full bg-[#1F3B29] text-white px-6 py-2 rounded-lg font-semibold hover:bg-[#2a4d3a] transition-colors"
           >
-            Register Again
+            Go to Login
           </button>
           <button
-            onClick={onOpenLogin}
+            onClick={onOpenRegister}
             className="block w-full text-[#C8A15B] font-semibold hover:underline"
           >
-            Go to Login
+            Register Again
           </button>
         </div>
       </div>

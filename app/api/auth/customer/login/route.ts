@@ -16,6 +16,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return NextResponse.json(
+        { error: 'Please enter a valid email address' },
+        { status: 400 }
+      );
+    }
+
+    // Password validation
+    if (password.length < 6) {
+      return NextResponse.json(
+        { error: 'Password must be at least 6 characters long' },
+        { status: 400 }
+      );
+    }
+
     // Get customer
     const customer = await getCustomerByEmail(email);
     if (!customer) {
@@ -34,10 +51,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if email is verified
-    if (!customer.emailVerified) {
+    if (customer.emailVerified === false || customer.emailVerified === undefined) {
+      console.log('[Customer Auth] Login attempt with unverified email:', email);
       return NextResponse.json(
         { 
-          error: 'Please verify your email address before logging in. Check your inbox for the verification link.',
+          error: 'Please verify your email address before logging in. Check your inbox for the verification link. If you did not receive the email, please check your spam folder or contact support.',
           requiresVerification: true 
         },
         { status: 401 }

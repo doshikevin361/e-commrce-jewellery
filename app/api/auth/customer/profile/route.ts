@@ -52,12 +52,45 @@ export async function PUT(request: NextRequest) {
     const body = await request.json();
     const { name, firstName, lastName, phone, address, billingAddress, avatar } = body;
 
+    // Validation
+    if (name !== undefined && name.trim().length < 2) {
+      return NextResponse.json(
+        { error: 'Name must be at least 2 characters long' },
+        { status: 400 }
+      );
+    }
+
+    if (phone !== undefined) {
+      const phoneRegex = /^[6-9]\d{9}$/;
+      const cleanPhone = phone.replace(/\D/g, '');
+      if (!phoneRegex.test(cleanPhone)) {
+        return NextResponse.json(
+          { error: 'Please enter a valid 10-digit phone number' },
+          { status: 400 }
+        );
+      }
+    }
+
+    if (address?.postalCode && !/^\d{6}$/.test(address.postalCode)) {
+      return NextResponse.json(
+        { error: 'Postal code must be 6 digits' },
+        { status: 400 }
+      );
+    }
+
+    if (billingAddress?.postalCode && !/^\d{6}$/.test(billingAddress.postalCode)) {
+      return NextResponse.json(
+        { error: 'Billing postal code must be 6 digits' },
+        { status: 400 }
+      );
+    }
+
     // Prepare update data
     const updateData: any = {};
-    if (name !== undefined) updateData.name = name;
-    if (firstName !== undefined) updateData.firstName = firstName;
-    if (lastName !== undefined) updateData.lastName = lastName;
-    if (phone !== undefined) updateData.phone = phone;
+    if (name !== undefined) updateData.name = name.trim();
+    if (firstName !== undefined) updateData.firstName = firstName.trim();
+    if (lastName !== undefined) updateData.lastName = lastName.trim();
+    if (phone !== undefined) updateData.phone = phone.replace(/\D/g, '');
     if (address !== undefined) updateData.address = address;
     if (billingAddress !== undefined) updateData.billingAddress = billingAddress;
     if (avatar !== undefined) updateData.avatar = avatar;

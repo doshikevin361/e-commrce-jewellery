@@ -10,7 +10,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     }
 
     const client = await clientPromise;
-    const db = client.db('ecommerce');
+    const db = client.db('admin_panel');
     
     const customer = await db.collection('customers').findOne({ _id: new ObjectId(id) });
 
@@ -38,7 +38,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     }
 
     const client = await clientPromise;
-    const db = client.db('ecommerce');
+    const db = client.db('admin_panel');
     
     // Check if customer exists
     const existingCustomer = await db.collection('customers').findOne({ _id: new ObjectId(id) });
@@ -83,7 +83,7 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
     }
 
     const client = await clientPromise;
-    const db = client.db('ecommerce');
+    const db = client.db('admin_panel');
     
     const result = await db.collection('customers').deleteOne({ _id: new ObjectId(id) });
 

@@ -135,10 +135,43 @@ export default function CustomerProfilePage() {
     }
   };
 
+  const validateForm = () => {
+    const errors: string[] = [];
+
+    // Name validation
+    if (!formData.name || formData.name.trim().length < 2) {
+      errors.push('Full name must be at least 2 characters long');
+    }
+
+    // Phone validation (Indian phone number format)
+    const phoneRegex = /^[6-9]\d{9}$/;
+    if (!formData.phone || !phoneRegex.test(formData.phone.replace(/\D/g, ''))) {
+      errors.push('Please enter a valid 10-digit phone number');
+    }
+
+    // Address validation (optional but if provided, should be valid)
+    if (formData.address.street && formData.address.street.trim().length < 5) {
+      errors.push('Street address must be at least 5 characters long');
+    }
+    if (formData.address.postalCode && !/^\d{6}$/.test(formData.address.postalCode)) {
+      errors.push('Postal code must be 6 digits');
+    }
+
+    return errors;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setSuccess('');
+
+    // Validate form
+    const validationErrors = validateForm();
+    if (validationErrors.length > 0) {
+      setError(validationErrors[0]); // Show first error
+      return;
+    }
+
     setSaving(true);
 
     try {
