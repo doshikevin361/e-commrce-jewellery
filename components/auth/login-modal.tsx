@@ -34,10 +34,32 @@ export function LoginModal({
     }
   }, [showSuccessMessage]);
 
+  const validateForm = () => {
+    if (!email || !email.trim()) {
+      return 'Email is required';
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return 'Please enter a valid email address';
+    }
+    if (!password || password.length < 6) {
+      return 'Password must be at least 6 characters long';
+    }
+    return null;
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setSuccess('');
+    
+    // Validate form
+    const validationError = validateForm();
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+
     setLoading(true);
 
     try {

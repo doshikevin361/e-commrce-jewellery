@@ -48,19 +48,58 @@ export function RegisterModal({ open, onOpenChange, onSwitchToLogin }: RegisterM
     }
   };
 
+  const validateForm = () => {
+    const errors: string[] = [];
+
+    // Name validation
+    if (!formData.name || formData.name.trim().length < 2) {
+      errors.push('Full name must be at least 2 characters long');
+    }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!formData.email || !emailRegex.test(formData.email)) {
+      errors.push('Please enter a valid email address');
+    }
+
+    // Phone validation (Indian phone number format)
+    const phoneRegex = /^[6-9]\d{9}$/;
+    if (!formData.phone || !phoneRegex.test(formData.phone.replace(/\D/g, ''))) {
+      errors.push('Please enter a valid 10-digit phone number');
+    }
+
+    // Password validation
+    if (!formData.password || formData.password.length < 6) {
+      errors.push('Password must be at least 6 characters long');
+    } else if (formData.password.length > 50) {
+      errors.push('Password must be less than 50 characters');
+    }
+
+    // Confirm password validation
+    if (formData.password !== formData.confirmPassword) {
+      errors.push('Passwords do not match');
+    }
+
+    // Address validation
+    if (formData.address.street && formData.address.street.trim().length < 5) {
+      errors.push('Street address must be at least 5 characters long');
+    }
+    if (formData.address.postalCode && !/^\d{6}$/.test(formData.address.postalCode)) {
+      errors.push('Postal code must be 6 digits');
+    }
+
+    return errors;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
-    if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
-      setLoading(false);
-      return;
-    }
-
-    if (formData.password.length < 6) {
-      setError('Password must be at least 6 characters long');
+    // Validate form
+    const validationErrors = validateForm();
+    if (validationErrors.length > 0) {
+      setError(validationErrors[0]); // Show first error
       setLoading(false);
       return;
     }
@@ -85,13 +124,9 @@ export function RegisterModal({ open, onOpenChange, onSwitchToLogin }: RegisterM
         return;
       }
 
+      // Show email verification message - don't auto-login
       setSuccess(true);
-      setTimeout(() => {
-        onOpenChange(false);
-        if (onSwitchToLogin) {
-          onSwitchToLogin();
-        }
-      }, 3000);
+      // Don't close modal automatically - let user see the verification message
     } catch (err) {
       console.error('Registration error:', err);
       setError('An error occurred. Please try again.');
@@ -112,9 +147,20 @@ export function RegisterModal({ open, onOpenChange, onSwitchToLogin }: RegisterM
             <p className="text-gray-600 mb-4">
               We've sent a verification email to <strong>{formData.email}</strong>
             </p>
-            <p className="text-sm text-gray-500">
-              Please check your inbox and click the verification link to activate your account.
+            <p className="text-sm text-gray-500 mb-6">
+              Please check your inbox and click the verification link to activate your account. You will not be able to login until you verify your email.
             </p>
+            {onSwitchToLogin && (
+              <button
+                onClick={() => {
+                  onOpenChange(false);
+                  onSwitchToLogin();
+                }}
+                className="inline-block bg-[#1F3B29] text-white px-6 py-2 rounded-lg font-semibold hover:bg-[#2a4d3a] transition-colors"
+              >
+                Go to Login
+              </button>
+            )}
           </div>
         </DialogContent>
       </Dialog>

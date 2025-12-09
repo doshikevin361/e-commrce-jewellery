@@ -15,6 +15,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return NextResponse.json(
+        { error: 'Please enter a valid email address' },
+        { status: 400 }
+      );
+    }
+
     // Get customer
     const customer = await getCustomerByEmail(email);
     
@@ -33,7 +42,7 @@ export async function POST(request: NextRequest) {
       });
 
       // Send reset email
-      const resetLink = `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/reset-password?token=${resetToken}`;
+      const resetLink = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://jewellery-commrce-824e.vercel.app'}/reset-password?token=${resetToken}`;
       const emailTemplate = emailTemplates.passwordReset(customer.name, resetLink);
       
       await sendEmail({

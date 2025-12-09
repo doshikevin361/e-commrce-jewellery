@@ -16,6 +16,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return NextResponse.json(
+        { error: 'Please enter a valid email address' },
+        { status: 400 }
+      );
+    }
+
+    // Password validation
+    if (password.length < 6) {
+      return NextResponse.json(
+        { error: 'Password must be at least 6 characters long' },
+        { status: 400 }
+      );
+    }
+
     // Get customer
     const customer = await getCustomerByEmail(email);
     if (!customer) {
