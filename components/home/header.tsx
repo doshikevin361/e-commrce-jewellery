@@ -298,7 +298,6 @@ export function HomeHeader() {
         transition-all duration-300
         whitespace-nowrap font-medium
         group
-        hover:bg-white/10
       '>
                       <span className='relative z-10'>{item.name}</span>
 
