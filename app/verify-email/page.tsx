@@ -20,6 +20,21 @@ function VerifyEmailForm({
 
   useEffect(() => {
     const token = searchParams.get('token');
+    const errorParam = searchParams.get('error');
+    const successParam = searchParams.get('success');
+    
+    if (successParam === 'true') {
+      setSuccess(true);
+      setLoading(false);
+      return;
+    }
+    
+    if (errorParam) {
+      setError(decodeURIComponent(errorParam));
+      setLoading(false);
+      return;
+    }
+    
     if (token) {
       verifyEmail(token);
     } else {
@@ -96,18 +111,21 @@ function VerifyEmailForm({
         <p className="text-gray-600 mb-4">
           {error || 'The verification link is invalid or has expired.'}
         </p>
+        <p className="text-sm text-gray-500 mb-4">
+          If the link has expired, you can try logging in. If your email is not verified, you'll receive instructions to resend the verification email.
+        </p>
         <div className="space-y-2">
           <button
-            onClick={onOpenRegister}
+            onClick={onOpenLogin}
             className="block w-full bg-[#1F3B29] text-white px-6 py-2 rounded-lg font-semibold hover:bg-[#2a4d3a] transition-colors"
           >
-            Register Again
+            Go to Login
           </button>
           <button
-            onClick={onOpenLogin}
+            onClick={onOpenRegister}
             className="block w-full text-[#C8A15B] font-semibold hover:underline"
           >
-            Go to Login
+            Register Again
           </button>
         </div>
       </div>

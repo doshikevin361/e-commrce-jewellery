@@ -72,7 +72,9 @@ export async function POST(request: NextRequest) {
     // Generate verification token
     const verificationToken = crypto.randomBytes(32).toString('hex');
     const verificationExpires = new Date();
-    verificationExpires.setHours(verificationExpires.getHours() + 24); // 24 hours
+    verificationExpires.setHours(verificationExpires.getHours() + 48); // 48 hours (increased from 24)
+    
+    console.log('[Customer Auth] Registration - Token expires at:', verificationExpires);
 
     // Split name into first and last name
     const nameParts = name.trim().split(' ');
