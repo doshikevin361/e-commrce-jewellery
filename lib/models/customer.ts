@@ -35,6 +35,7 @@ export interface Customer {
   emailVerified?: boolean;
   emailVerificationToken?: string;
   emailVerificationExpires?: Date;
+  lastVerificationEmailSent?: Date;
   // Password reset fields
   passwordResetToken?: string;
   passwordResetExpires?: Date;

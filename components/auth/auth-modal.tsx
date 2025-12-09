@@ -47,12 +47,32 @@ export function AuthModal({ open, onOpenChange, mode, onSwitchMode, onSwitchToFo
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [registerSuccess, setRegisterSuccess] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
+  const [cooldownSeconds, setCooldownSeconds] = useState(0);
 
   useEffect(() => {
     if (showSuccessMessage) {
       setSuccess(showSuccessMessage);
     }
   }, [showSuccessMessage]);
+
+  // Cooldown timer
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (cooldownSeconds > 0) {
+      interval = setInterval(() => {
+        setCooldownSeconds(prev => {
+          if (prev <= 1) {
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [cooldownSeconds]);
 
   // Reset form when modal closes or mode changes
   useEffect(() => {
@@ -229,18 +249,48 @@ export function AuthModal({ open, onOpenChange, mode, onSwitchMode, onSwitchToFo
 
       toast.success('Account created successfully!');
       setRegisterSuccess(true);
-      setTimeout(() => {
-        onOpenChange(false);
-        if (onSwitchMode) {
-          onSwitchMode();
-        }
-      }, 3000);
+      setCooldownSeconds(300); // 5 minutes cooldown
     } catch (err) {
       console.error('Registration error:', err);
       toast.error('Registration failed');
       setError('An error occurred. Please try again.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResendVerification = async () => {
+    if (cooldownSeconds > 0 || !formData.email) return;
+
+    setResendLoading(true);
+    setError('');
+
+    try {
+      const response = await fetch('/api/auth/customer/resend-verification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: formData.email }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        if (response.status === 429 && data.cooldownRemaining) {
+          setCooldownSeconds(data.cooldownRemaining);
+          toast.error(data.error || 'Please wait before requesting another email.');
+        } else {
+          toast.error(data.error || 'Failed to send verification email');
+        }
+        return;
+      }
+
+      setCooldownSeconds(300); // 5 minutes = 300 seconds
+      toast.success('Verification email has been sent! Please check your inbox.');
+    } catch (err) {
+      console.error('Resend verification error:', err);
+      toast.error('An error occurred. Please try again.');
+    } finally {
+      setResendLoading(false);
     }
   };
 
@@ -277,6 +327,23 @@ export function AuthModal({ open, onOpenChange, mode, onSwitchMode, onSwitchToFo
                   We've sent a verification email to <strong className='break-all'>{formData.email}</strong>
                 </p>
                 <p className='text-xs sm:text-sm text-gray-500 mb-4 sm:mb-6'>Please check your inbox and click the verification link to activate your account. You will not be able to login until you verify your email.</p>
+                
+                {/* Resend Verification Button */}
+                <div className='mb-4 sm:mb-6'>
+                  <button
+                    onClick={handleResendVerification}
+                    disabled={resendLoading || cooldownSeconds > 0}
+                    className='w-full bg-[#C8A15B] text-white px-6 py-2.5 sm:py-3 rounded-lg text-sm sm:text-base font-semibold hover:bg-[#b8914a] transition-colors disabled:opacity-50 disabled:cursor-not-allowed mb-3'>
+                    {resendLoading ? (
+                      'Sending...'
+                    ) : cooldownSeconds > 0 ? (
+                      `Resend in ${Math.floor(cooldownSeconds / 60)}:${String(cooldownSeconds % 60).padStart(2, '0')}`
+                    ) : (
+                      'Resend Verification Email'
+                    )}
+                  </button>
+                </div>
+
                 {onSwitchMode && (
                   <button
                     onClick={() => {
@@ -417,7 +484,6 @@ export function AuthModal({ open, onOpenChange, mode, onSwitchMode, onSwitchToFo
                         <button
                           type='button'
                           onClick={() => {
-                            onOpenChange(false);
                             onSwitchMode();
                           }}
                           className='text-[#C8A15B] font-semibold hover:underline'>
@@ -537,7 +603,6 @@ export function AuthModal({ open, onOpenChange, mode, onSwitchMode, onSwitchToFo
                         <button
                           type='button'
                           onClick={() => {
-                            onOpenChange(false);
                             onSwitchMode();
                           }}
                           className='text-[#C8A15B] font-semibold hover:underline'>
