@@ -99,7 +99,7 @@ export function JewelleryPage() {
   // Filter and display states
   const [showFilters, setShowFilters] = useState(false);
   const [sortBy, setSortBy] = useState<string>('default');
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000000]);
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000000]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
   const [selectedAttributes, setSelectedAttributes] = useState<Record<string, string[]>>({});
@@ -456,10 +456,10 @@ export function JewelleryPage() {
     (priceRange[0] > priceBounds[0] || priceRange[1] < priceBounds[1] ? 1 : 0);
 
   return (
-    <div className='min-h-screen bg-[#F5EEE5]'>
+    <div className='min-h-screen'>
       {/* Hero Banner */}
       <div className='relative w-full h-[300px] sm:h-[400px] overflow-hidden bg-gradient-to-r from-[#1F3B29] to-[#3F5C45]'>
-        <div className='absolute inset-0 bg-[url("https://images.unsplash.com/photo-1630019852942-f89202989a59?w=1200&q=85")] bg-cover bg-center opacity-20'></div>
+        <div className='absolute inset-0 bg-[url("https://images.unsplash.com/photo-1601121141461-9d6647bca1ed?w=1200&q=85")] bg-cover bg-center opacity-50'></div>
         <div className='relative z-10 h-full flex flex-col items-center justify-center text-center px-4 sm:px-6 md:px-8'>
           <h1 className='text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-4 sm:mb-6'>Exquisite Jewellery</h1>
           <p className='text-lg sm:text-xl md:text-2xl text-white/90 max-w-2xl'>
