@@ -39,6 +39,7 @@ export function AuthModal({ open, onOpenChange, mode, onSwitchMode, onSwitchToFo
       country: 'India',
     },
   });
+  const [showRegisterPassword, setShowRegisterPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Common state
@@ -78,10 +79,32 @@ export function AuthModal({ open, onOpenChange, mode, onSwitchMode, onSwitchToFo
     }
   }, [open, mode]);
 
+  const validateLoginForm = () => {
+    if (!email || !email.trim()) {
+      return 'Email is required';
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return 'Please enter a valid email address';
+    }
+    if (!password || password.length < 6) {
+      return 'Password must be at least 6 characters long';
+    }
+    return null;
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setSuccess('');
+    
+    // Validate form
+    const validationError = validateLoginForm();
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -135,22 +158,53 @@ export function AuthModal({ open, onOpenChange, mode, onSwitchMode, onSwitchToFo
     }
   };
 
+  const validateRegisterForm = () => {
+    const errors: string[] = [];
+
+    // Name validation
+    if (!formData.name || formData.name.trim().length < 2) {
+      errors.push('Full name must be at least 2 characters long');
+    }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!formData.email || !emailRegex.test(formData.email)) {
+      errors.push('Please enter a valid email address');
+    }
+
+    // Phone validation (Indian phone number format)
+    const phoneRegex = /^[6-9]\d{9}$/;
+    if (!formData.phone || !phoneRegex.test(formData.phone.replace(/\D/g, ''))) {
+      errors.push('Please enter a valid 10-digit phone number');
+    }
+
+    // Password validation
+    if (!formData.password || formData.password.length < 6) {
+      errors.push('Password must be at least 6 characters long');
+    } else if (formData.password.length > 50) {
+      errors.push('Password must be less than 50 characters');
+    }
+
+    // Confirm password validation
+    if (formData.password !== formData.confirmPassword) {
+      errors.push('Passwords do not match');
+    }
+
+    return errors;
+  };
+
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    
+    // Validate form
+    const validationErrors = validateRegisterForm();
+    if (validationErrors.length > 0) {
+      setError(validationErrors[0]); // Show first error
+      return;
+    }
+
     setLoading(true);
-
-    if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
-      setLoading(false);
-      return;
-    }
-
-    if (formData.password.length < 6) {
-      setError('Password must be at least 6 characters long');
-      setLoading(false);
-      return;
-    }
 
     try {
       const response = await fetch('/api/auth/customer/register', {
@@ -195,7 +249,7 @@ export function AuthModal({ open, onOpenChange, mode, onSwitchMode, onSwitchToFo
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className='sm:max-w-4xl p-0 overflow-hidden' showCloseButton={true}>
-          <div className='grid md:grid-cols-2 min-h-[500px]'>
+          <div className='grid md:grid-cols-2'>
             {/* Left side - Image */}
             <div className='hidden md:block relative bg-gradient-to-br from-[#F5EEE5] to-[#E8D5C4]'>
               <div
@@ -203,26 +257,36 @@ export function AuthModal({ open, onOpenChange, mode, onSwitchMode, onSwitchToFo
                 style={{
                   backgroundImage: "url('/login.jpg')",
                 }}></div>
-              <div className='relative h-full flex items-center justify-center p-8'>
+              <div className='relative h-full flex items-center justify-center p-6 lg:p-8'>
                 <div className='text-center text-[#1F3B29]'>
-                  <CheckCircle className='w-20 h-20 mx-auto mb-4 text-[#C8A15B]' />
-                  <h3 className='text-2xl font-bold mb-2'>Welcome to LuxeLoom</h3>
-                  <p className='text-lg'>Your journey to elegance begins here</p>
+                  <CheckCircle className='w-16 h-16 lg:w-20 lg:h-20 mx-auto mb-4 text-[#C8A15B]' />
+                  <h3 className='text-xl lg:text-2xl font-bold mb-2'>Welcome to LuxeLoom</h3>
+                  <p className='text-base lg:text-lg'>Your journey to elegance begins here</p>
                 </div>
               </div>
             </div>
 
             {/* Right side - Success message */}
-            <div className='flex items-center justify-center p-8 md:p-12 bg-white'>
+            <div className='flex items-center justify-center p-6 sm:p-8 md:p-10 lg:p-12 bg-white'>
               <div className='w-full max-w-md text-center'>
-                <div className='w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4'>
-                  <CheckCircle className='w-8 h-8 text-green-600' />
+                <div className='w-14 h-14 sm:w-16 sm:h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4'>
+                  <CheckCircle className='w-7 h-7 sm:w-8 sm:h-8 text-green-600' />
                 </div>
-                <h2 className='text-2xl font-bold text-[#1F3B29] mb-2'>Registration Successful!</h2>
-                <p className='text-gray-600 mb-4'>
-                  We've sent a verification email to <strong>{formData.email}</strong>
+                <h2 className='text-xl sm:text-2xl font-bold text-[#1F3B29] mb-2'>Registration Successful!</h2>
+                <p className='text-sm sm:text-base text-gray-600 mb-3 sm:mb-4'>
+                  We've sent a verification email to <strong className='break-all'>{formData.email}</strong>
                 </p>
-                <p className='text-sm text-gray-500'>Please check your inbox and click the verification link to activate your account.</p>
+                <p className='text-xs sm:text-sm text-gray-500 mb-4 sm:mb-6'>Please check your inbox and click the verification link to activate your account. You will not be able to login until you verify your email.</p>
+                {onSwitchMode && (
+                  <button
+                    onClick={() => {
+                      onOpenChange(false);
+                      onSwitchMode();
+                    }}
+                    className='inline-block bg-[#1F3B29] text-white px-6 py-2.5 sm:py-3 rounded-lg text-sm sm:text-base font-semibold hover:bg-[#2a4d3a] transition-colors'>
+                    Go to Login
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -234,9 +298,9 @@ export function AuthModal({ open, onOpenChange, mode, onSwitchMode, onSwitchToFo
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className='sm:max-w-5xl p-0 overflow-hidden max-h-[90vh] animate-in fade-in-0 zoom-in-95 duration-300'
+        className='sm:max-w-5xl p-0 overflow-hidden animate-in fade-in-0 zoom-in-95 duration-300'
         showCloseButton={true}>
-        <div className='grid md:grid-cols-2 min-h-[600px]'>
+        <div className='grid md:grid-cols-2'>
           {/* Left side - Image */}
           <div className='hidden md:block relative bg-gradient-to-br from-[#F5EEE5] to-[#E8D5C4] overflow-hidden'>
             <div
@@ -257,8 +321,8 @@ export function AuthModal({ open, onOpenChange, mode, onSwitchMode, onSwitchToFo
           </div>
 
           {/* Right side - Form */}
-          <div className='flex items-center justify-center p-6 md:p-12 bg-white overflow-y-auto max-h-[90vh] animate-in slide-in-from-right-5 duration-500'>
-            <div className='w-full max-w-md space-y-6'>
+          <div className='flex items-center justify-center p-4 sm:p-6 md:p-8 lg:p-12 bg-white animate-in slide-in-from-right-5 duration-500'>
+            <div className='w-full max-w-md space-y-4 sm:space-y-5'>
               {/* Mobile header */}
               <div className='md:hidden text-center mb-6'>
                 <h2 className='text-2xl font-bold text-[#1F3B29]'>{mode === 'login' ? 'Welcome Back' : 'Create Account'}</h2>
@@ -277,7 +341,7 @@ export function AuthModal({ open, onOpenChange, mode, onSwitchMode, onSwitchToFo
               {success && <div className='p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm'>{success}</div>}
 
               {mode === 'login' ? (
-                <form onSubmit={handleLogin} className='space-y-4'>
+                <form onSubmit={handleLogin} className='space-y-3 sm:space-y-4'>
                   <div>
                     <label className='block text-sm font-medium text-gray-700 mb-1'>Email Address *</label>
                     <div className='relative'>
@@ -364,104 +428,104 @@ export function AuthModal({ open, onOpenChange, mode, onSwitchMode, onSwitchToFo
                   )}
                 </form>
               ) : (
-                <form onSubmit={handleRegister} className='space-y-4'>
+                <form onSubmit={handleRegister} className='space-y-3 sm:space-y-4'>
                   <div>
-                    <label className='block text-sm font-medium text-gray-700 mb-1'>Full Name *</label>
+                    <label className='block text-xs sm:text-sm font-medium text-gray-700 mb-1'>Full Name *</label>
                     <div className='relative'>
-                      <User className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5' />
+                      <User className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5' />
                       <input
                         type='text'
                         name='name'
                         value={formData.name}
                         onChange={handleRegisterChange}
                         required
-                        className='w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#C8A15B] focus:border-transparent transition-all'
+                        className='w-full pl-9 sm:pl-10 pr-4 py-2.5 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#C8A15B] focus:border-transparent transition-all'
                         placeholder='Enter your full name'
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className='block text-sm font-medium text-gray-700 mb-1'>Email Address *</label>
+                    <label className='block text-xs sm:text-sm font-medium text-gray-700 mb-1'>Email Address *</label>
                     <div className='relative'>
-                      <Mail className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5' />
+                      <Mail className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5' />
                       <input
                         type='email'
                         name='email'
                         value={formData.email}
                         onChange={handleRegisterChange}
                         required
-                        className='w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#C8A15B] focus:border-transparent transition-all'
+                        className='w-full pl-9 sm:pl-10 pr-4 py-2.5 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#C8A15B] focus:border-transparent transition-all'
                         placeholder='Enter your email'
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className='block text-sm font-medium text-gray-700 mb-1'>Phone Number *</label>
+                    <label className='block text-xs sm:text-sm font-medium text-gray-700 mb-1'>Phone Number *</label>
                     <div className='relative'>
-                      <Phone className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5' />
+                      <Phone className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5' />
                       <input
                         type='tel'
                         name='phone'
                         value={formData.phone}
                         onChange={handleRegisterChange}
                         required
-                        className='w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#C8A15B] focus:border-transparent transition-all'
+                        className='w-full pl-9 sm:pl-10 pr-4 py-2.5 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#C8A15B] focus:border-transparent transition-all'
                         placeholder='Enter your phone number'
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className='block text-sm font-medium text-gray-700 mb-1'>Password *</label>
+                    <label className='block text-xs sm:text-sm font-medium text-gray-700 mb-1'>Password *</label>
                     <div className='relative'>
-                      <Lock className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5' />
+                      <Lock className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5' />
                       <input
-                        type={showPassword ? 'text' : 'password'}
+                        type={showRegisterPassword ? 'text' : 'password'}
                         name='password'
                         value={formData.password}
                         onChange={handleRegisterChange}
                         required
-                        className='w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#C8A15B] focus:border-transparent transition-all'
+                        className='w-full pl-9 sm:pl-10 pr-10 sm:pr-12 py-2.5 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#C8A15B] focus:border-transparent transition-all'
                         placeholder='Enter your password'
                       />
                       <button
                         type='button'
-                        onClick={() => setShowPassword(!showPassword)}
+                        onClick={() => setShowRegisterPassword(!showRegisterPassword)}
                         className='absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors'>
-                        {showPassword ? <EyeOff className='w-5 h-5' /> : <Eye className='w-5 h-5' />}
+                        {showRegisterPassword ? <EyeOff className='w-4 h-4 sm:w-5 sm:h-5' /> : <Eye className='w-4 h-4 sm:w-5 sm:h-5' />}
                       </button>
                     </div>
                   </div>
 
                   <div>
-                    <label className='block text-sm font-medium text-gray-700 mb-1'>Confirm Password *</label>
+                    <label className='block text-xs sm:text-sm font-medium text-gray-700 mb-1'>Confirm Password *</label>
                     <div className='relative'>
-                      <Lock className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5' />
+                      <Lock className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5' />
                       <input
                         type={showConfirmPassword ? 'text' : 'password'}
                         name='confirmPassword'
                         value={formData.confirmPassword}
                         onChange={handleRegisterChange}
                         required
-                        className='w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#C8A15B] focus:border-transparent transition-all'
+                        className='w-full pl-9 sm:pl-10 pr-10 sm:pr-12 py-2.5 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#C8A15B] focus:border-transparent transition-all'
                         placeholder='Confirm your password'
                       />
                       <button
                         type='button'
                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                         className='absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors'>
-                        {showConfirmPassword ? <EyeOff className='w-5 h-5' /> : <Eye className='w-5 h-5' />}
+                        {showConfirmPassword ? <EyeOff className='w-4 h-4 sm:w-5 sm:h-5' /> : <Eye className='w-4 h-4 sm:w-5 sm:h-5' />}
                       </button>
                     </div>
                   </div>
 
-                  <div className='pt-2'>
+                  <div className='pt-1 sm:pt-2'>
                     <button
                       type='submit'
                       disabled={loading}
-                      className='w-full bg-[#1F3B29] text-white py-3 rounded-lg font-semibold hover:bg-[#2a4d3a] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg'>
+                      className='w-full bg-[#1F3B29] text-white py-2.5 sm:py-3 rounded-lg text-sm sm:text-base font-semibold hover:bg-[#2a4d3a] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg'>
                       {loading ? 'Creating Account...' : 'Create Account'}
                     </button>
                   </div>
