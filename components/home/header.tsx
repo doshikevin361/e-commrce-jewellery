@@ -157,7 +157,7 @@ export function HomeHeader() {
             className='flex items-center gap-1 sm:gap-1.5 md:gap-2 flex-shrink-0 transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer'>
             <Diamond size={16} className='sm:w-[17px] sm:h-[17px] md:w-[18px] md:h-[18px] text-[#1F3B29]' />
             <span className='text-sm sm:text-base md:text-lg lg:text-xl font-semibold tracking-[0.08em] sm:tracking-[0.1em] md:tracking-[0.15em] lg:tracking-[0.2em] text-[#1F3B29] whitespace-nowrap'>
-              LuxeLoom
+              Jewellery
             </span>
           </Link>
 
@@ -274,25 +274,24 @@ export function HomeHeader() {
               {mobileMenuOpen ? <X size={20} className='text-white' /> : <Menu size={20} className='text-white' />}
             </button>
 
-
-              <ul className='hidden lg:flex items-center gap-1 lg:gap-2 xl:gap-3 text-xs md:text-sm flex-wrap'>
-                {menuLoading ? (
-                  // Skeleton loading for desktop menu
-                  <>
-                    {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
-                      <li key={i} className='relative'>
-                        <div className='flex items-center gap-1 px-3 md:px-4 lg:px-5 py-2 rounded-lg animate-pulse'>
-                          <div className='h-4 w-16 bg-white/20 rounded'></div>
-                        </div>
-                      </li>
-                    ))}
-                  </>
-                ) : (
-                  menuItems.map((item, index) => (
-                    <li key={item.name} className='relative' style={{ animationDelay: `${index * 50}ms` }}>
-                      <Link
-                        href={item.href}
-                        className='
+            <ul className='hidden lg:flex items-center gap-1 lg:gap-2 xl:gap-3 text-xs md:text-sm flex-wrap'>
+              {menuLoading ? (
+                // Skeleton loading for desktop menu
+                <>
+                  {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
+                    <li key={i} className='relative'>
+                      <div className='flex items-center gap-1 px-3 md:px-4 lg:px-5 py-2 rounded-lg animate-pulse'>
+                        <div className='h-4 w-16 bg-white/20 rounded'></div>
+                      </div>
+                    </li>
+                  ))}
+                </>
+              ) : (
+                menuItems.map((item, index) => (
+                  <li key={item.name} className='relative' style={{ animationDelay: `${index * 50}ms` }}>
+                    <Link
+                      href={item.href}
+                      className='
         relative flex items-center gap-1
         px-3 md:px-4 lg:px-5 py-2
         rounded-lg cursor-pointer
@@ -301,11 +300,11 @@ export function HomeHeader() {
         group
         hover:bg-white/10
       '>
-                        <span className='relative z-10'>{item.name}</span>
+                      <span className='relative z-10'>{item.name}</span>
 
-                        {/* White animated underline */}
-                        <span
-                          className='
+                      {/* White animated underline */}
+                      <span
+                        className='
         pointer-events-none
         absolute bottom-0 left-4 right-4 
         h-[2px] bg-white 
@@ -313,13 +312,13 @@ export function HomeHeader() {
         group-hover:scale-x-100 
         transition-transform duration-300
       '
-                        />
-                      </Link>
-                    </li>
-                  ))
-                )}
-              </ul>
-            </div>
+                      />
+                    </Link>
+                  </li>
+                ))
+              )}
+            </ul>
+          </div>
 
           {/* Mobile/Tablet Menu Dropdown */}
           <div

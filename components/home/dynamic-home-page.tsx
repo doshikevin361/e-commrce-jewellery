@@ -548,9 +548,9 @@ export const HomePage = () => {
         </div>
       </div>
       {/* Updates section - Full width */}
-      <div className={SECTION_SPACING}>
+      {/* <div className={SECTION_SPACING}>
         <UpdatesSection newsItems={sectionsData.news} isLoading={isLoading} />
-      </div>
+      </div> */}
       <div className='mt-12 sm:mt-16 lg:mt-20'>
         <Subscribe />
       </div>
@@ -1296,14 +1296,17 @@ const Testimonials = () => {
 
 const Subscribe = () => {
   return (
-    <section
-      className='relative bg-cover bg-center bg-no-repeat py-16 sm:py-24'
-      style={{
-        backgroundImage: "url('https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1200&q=80')",
-      }}>
-      <div className='absolute inset-0 bg-black/30' />
+    <section className='relative w-full py-16 sm:py-24 overflow-hidden'>
+      {/* Background Video */}
+      <video autoPlay loop muted playsInline className='absolute inset-0 w-full h-full object-cover'>
+        <source src='/uploads/vid.mp4' type='video/mp4' />
+      </video>
 
-      <div className='relative mx-auto max-w-4xl w-full text-center text-white'>
+      {/* Dark Overlay */}
+      <div className='absolute inset-0 bg-black/40' />
+
+      {/* Content */}
+      <div className='relative mx-auto max-w-4xl w-full text-center text-white z-10'>
         <h3 className='mb-4 text-xl sm:text-2xl'>Stay Informed with Our</h3>
         <p className='mb-8 text-3xl font-light sm:text-4xl'>Latest News and Updates</p>
 
