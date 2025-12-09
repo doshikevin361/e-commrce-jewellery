@@ -21,7 +21,7 @@ export function WishlistPage() {
       try {
         setLoading(true);
         const response = await fetch('/api/customer/wishlist');
-        
+
         if (response.status === 401) {
           // Not logged in, redirect to login
           router.push('/?login=true');
@@ -66,11 +66,13 @@ export function WishlistPage() {
       }
 
       // Remove from local state
-      setWishlistItems(items => items.filter(item => {
-        const itemId = (item as any)._id || item.id.toString();
-        return itemId !== productId;
-      }));
-      
+      setWishlistItems(items =>
+        items.filter(item => {
+          const itemId = (item as any)._id || item.id.toString();
+          return itemId !== productId;
+        })
+      );
+
       toast({
         title: 'Success',
         description: 'Product removed from wishlist',
@@ -89,7 +91,7 @@ export function WishlistPage() {
   };
 
   if (loading) {
-    return <PageLoader message="Loading wishlist..." className="min-h-screen" />;
+    return <PageLoader message='Loading wishlist...' className='min-h-screen' />;
   }
 
   if (wishlistItems.length === 0) {
@@ -138,8 +140,8 @@ export function WishlistPage() {
           const productSlug = (product as any).urlSlug || productId;
           return (
             <div key={productId} className='group relative'>
-              <ProductCard 
-                product={product} 
+              <ProductCard
+                product={product}
                 onClick={() => router.push(`/products/${productSlug}`)}
                 showDeleteIcon={true}
                 onDelete={() => removeFromWishlist(productId)}
@@ -161,9 +163,6 @@ export function WishlistPage() {
             className='inline-flex items-center gap-2 rounded-full border-2 border-[#1F3B29] px-6 py-3 text-[#1F3B29] font-semibold hover:bg-[#1F3B29] hover:text-white transition-colors'>
             Continue Shopping
           </Link>
-          <button className='inline-flex items-center gap-2 rounded-full bg-[#1F3B29] px-6 py-3 text-white font-semibold hover:bg-[#2a4d3a] transition-colors'>
-            Add All to Cart
-          </button>
         </div>
       </div>
     </div>

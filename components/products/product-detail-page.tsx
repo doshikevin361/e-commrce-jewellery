@@ -19,6 +19,11 @@ import {
   ChevronRight,
   Sparkles,
   Gem,
+  MessageCircle,
+  Facebook,
+  Instagram,
+  Link as LinkIcon,
+  X,
 } from 'lucide-react';
 import { ProductCardData } from '@/components/home/common/product-card';
 import { ProductCard } from '@/components/home/common/product-card';
@@ -131,6 +136,7 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [zoomImage, setZoomImage] = useState<string | null>(null);
   const [zoomPosition, setZoomPosition] = useState({ x: 0, y: 0 });
+  const [shareMenuOpen, setShareMenuOpen] = useState(false);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -289,11 +295,7 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
 
   const handleAddToCart = async () => {
     if (!product?._id) {
-      toast({
-        title: 'Error',
-        description: 'Product information not available',
-        variant: 'destructive',
-      });
+      toast.error('Product information not available');
       return;
     }
 
@@ -302,6 +304,67 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
       await addToCart(product._id.toString(), quantity);
     } finally {
       setCartButtonLoading(false);
+    }
+  };
+
+  // Share functionality
+  const getProductUrl = () => {
+    if (typeof window !== 'undefined') {
+      return `${window.location.origin}/products/${productSlug}`;
+    }
+    return '';
+  };
+
+  const getShareText = () => {
+    if (!product) return '';
+    const price = `₹${product.displayPrice.toLocaleString()}`;
+    return `Check out ${product.name} - ${price}${product.hasDiscount ? ` (${product.discountPercent}% OFF)` : ''}!\n\n${getProductUrl()}`;
+  };
+
+  const handleShare = async (platform: 'whatsapp' | 'facebook' | 'instagram' | 'copy' | 'native') => {
+    const url = getProductUrl();
+    const text = getShareText();
+    const encodedUrl = encodeURIComponent(url);
+    const encodedText = encodeURIComponent(text);
+
+    try {
+      switch (platform) {
+        case 'whatsapp':
+          window.open(`https://wa.me/?text=${encodedText}`, '_blank');
+          break;
+        case 'facebook':
+          window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`, '_blank', 'width=600,height=400');
+          break;
+        case 'instagram':
+          // Instagram doesn't support direct URL sharing, so we'll copy the link
+          await navigator.clipboard.writeText(url);
+          toast.success('Link copied! You can paste it in your Instagram story or post.');
+          break;
+        case 'copy':
+          await navigator.clipboard.writeText(url);
+          toast.success('Link copied to clipboard!');
+          break;
+        case 'native':
+          if (navigator.share) {
+            await navigator.share({
+              title: product?.name || 'Product',
+              text: text,
+              url: url,
+            });
+            toast.success('Shared successfully!');
+          } else {
+            // Fallback to copy
+            await navigator.clipboard.writeText(url);
+            toast.success('Link copied to clipboard!');
+          }
+          break;
+      }
+      setShareMenuOpen(false);
+    } catch (error) {
+      console.error('Error sharing:', error);
+      if (error instanceof Error && error.name !== 'AbortError') {
+        toast.error('Failed to share. Please try again.');
+      }
     }
   };
 
@@ -496,9 +559,56 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
               )}>
               <Heart size={20} className={isInWishlist ? 'fill-red-500' : ''} />
             </button>
-            <button className='flex items-center justify-center gap-2 rounded-xl border-2 border-[#E6D3C2] px-5 py-4 text-[#1F3B29] font-semibold hover:bg-[#F5EEE5] hover:border-[#C8A15B] transition-all duration-200 hover:scale-[1.02] hover:shadow-sm'>
-              <Share2 size={20} />
-            </button>
+            <div className='relative'>
+              <button
+                onClick={() => setShareMenuOpen(!shareMenuOpen)}
+                className='flex items-center justify-center gap-2 rounded-xl border-2 border-[#E6D3C2] px-5 py-4 text-[#1F3B29] font-semibold hover:bg-[#F5EEE5] hover:border-[#C8A15B] transition-all duration-200 hover:scale-[1.02] hover:shadow-sm'>
+                <Share2 size={20} />
+              </button>
+
+              {/* Share Menu Dropdown */}
+              {shareMenuOpen && (
+                <>
+                  {/* Backdrop */}
+                  <div className='fixed inset-0 z-40' onClick={() => setShareMenuOpen(false)} />
+                  {/* Dropdown */}
+                  <div className='absolute right-0 top-full mt-2 z-50 bg-white rounded-xl shadow-xl border border-[#E6D3C2] py-2 min-w-[200px] animate-in fade-in slide-in-from-top-2 duration-200'>
+                    <button
+                      onClick={() => handleShare('native')}
+                      className='w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-[#1F3B29] hover:bg-[#F5EEE5] transition-colors'>
+                      <Share2 size={18} className='text-[#C8A15B]' />
+                      <span>Share via...</span>
+                    </button>
+                    <div className='border-t border-[#E6D3C2] my-1' />
+                    <button
+                      onClick={() => handleShare('whatsapp')}
+                      className='w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-[#1F3B29] hover:bg-[#F5EEE5] transition-colors'>
+                      <MessageCircle size={18} className='text-green-600' />
+                      <span>WhatsApp</span>
+                    </button>
+                    <button
+                      onClick={() => handleShare('facebook')}
+                      className='w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-[#1F3B29] hover:bg-[#F5EEE5] transition-colors'>
+                      <Facebook size={18} className='text-blue-600' />
+                      <span>Facebook</span>
+                    </button>
+                    <button
+                      onClick={() => handleShare('instagram')}
+                      className='w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-[#1F3B29] hover:bg-[#F5EEE5] transition-colors'>
+                      <Instagram size={18} className='text-pink-600' />
+                      <span>Instagram</span>
+                    </button>
+                    <div className='border-t border-[#E6D3C2] my-1' />
+                    <button
+                      onClick={() => handleShare('copy')}
+                      className='w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-[#1F3B29] hover:bg-[#F5EEE5] transition-colors'>
+                      <LinkIcon size={18} className='text-[#C8A15B]' />
+                      <span>Copy Link</span>
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
 
           {/* Trust Badges */}
