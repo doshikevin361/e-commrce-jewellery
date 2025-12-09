@@ -23,9 +23,9 @@ import {
 import { ProductCardData } from '@/components/home/common/product-card';
 import { ProductCard } from '@/components/home/common/product-card';
 import { PageLoader } from '@/components/common/page-loader';
-import { useToast } from '@/hooks/use-toast';
 import { useCart } from '@/contexts/CartContext';
 import { cn } from '@/lib/utils';
+import toast from 'react-hot-toast';
 
 // Dynamic product interface
 interface ProductDetail {
@@ -118,7 +118,6 @@ interface ProductDetail {
 
 export function ProductDetailPage({ productSlug }: { productSlug: string }) {
   const router = useRouter();
-  const { toast } = useToast();
   const { addToCart, cartItems, isLoading: cartLoading } = useCart();
   const [product, setProduct] = useState<ProductDetail | null>(null);
   const [quantity, setQuantity] = useState(1);
@@ -202,11 +201,7 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
     }
 
     if (!product?._id) {
-      toast({
-        title: 'Error',
-        description: 'Product information not available',
-        variant: 'destructive',
-      });
+      toast.error('Product information not available');
       return;
     }
 
@@ -222,11 +217,7 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
 
         if (response.ok) {
           setIsInWishlist(false);
-          toast({
-            title: 'Success',
-            description: 'Product removed from wishlist',
-            variant: 'success',
-          });
+          toast.success('Product removed from wishlist');
         }
       } else {
         const response = await fetch('/api/customer/wishlist', {
@@ -237,20 +228,12 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
 
         if (response.ok) {
           setIsInWishlist(true);
-          toast({
-            title: 'Success',
-            description: 'Product added to wishlist',
-            variant: 'success',
-          });
+          toast.success('Product added to wishlist');
         }
       }
     } catch (error) {
       console.error('Wishlist error:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to update wishlist',
-        variant: 'destructive',
-      });
+      toast.error('PFailed to update wishlist');
     } finally {
       setWishlistLoading(false);
     }
