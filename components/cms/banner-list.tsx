@@ -17,7 +17,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, ArrowUp, ArrowDown } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { DataTableBody } from '@/components/ui/data-table-body';
 import { Spinner } from '@/components/ui/spinner';
@@ -46,6 +46,7 @@ export function BannerList() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [togglingStatusId, setTogglingStatusId] = useState<string | null>(null);
+  const [reorderingId, setReorderingId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchBanners();
@@ -105,6 +106,53 @@ export function BannerList() {
     } finally {
       setDeleteId(null);
       setDeletingId(null);
+    }
+  };
+
+  const handleReorder = async (bannerId: string, direction: 'up' | 'down') => {
+    const currentIndex = banners.findIndex(b => b._id === bannerId);
+    if (currentIndex === -1) return;
+
+    const newIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+    if (newIndex < 0 || newIndex >= banners.length) return;
+
+    // Swap the banners
+    const newBanners = [...banners];
+    [newBanners[currentIndex], newBanners[newIndex]] = [newBanners[newIndex], newBanners[currentIndex]];
+
+    // Update displayOrder for all banners
+    const bannerIds = newBanners.map(b => b._id);
+
+    try {
+      setReorderingId(bannerId);
+      const response = await fetch('/api/admin/cms/banners/reorder', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bannerIds }),
+      });
+
+      if (response.ok) {
+        toast({
+          title: 'Success',
+          description: 'Banner order updated successfully',
+          variant: 'success',
+        });
+        fetchBanners();
+      } else {
+        toast({
+          title: 'Error',
+          description: 'Failed to reorder banners',
+          variant: 'destructive',
+        });
+      }
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'An error occurred',
+        variant: 'destructive',
+      });
+    } finally {
+      setReorderingId(null);
     }
   };
 
@@ -182,13 +230,14 @@ export function BannerList() {
                 <TableHead className='font-semibold text-gray-700 py-4'>Title</TableHead>
                 <TableHead className='font-semibold text-gray-700 py-4'>Order</TableHead>
                 <TableHead className='font-semibold text-gray-700 py-4 text-center'>Status</TableHead>
+                <TableHead className='font-semibold text-gray-700 py-4 text-center'>Reorder</TableHead>
                 <TableHead className='font-semibold text-gray-700 py-4 text-right'>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <DataTableBody
               loading={loading}
               data={banners}
-              columns={5}
+              columns={6}
               loadingText='Loading banners...'
               emptyText='No banners found'>
               {banners.map(banner => (
@@ -213,6 +262,30 @@ export function BannerList() {
                         disabled={togglingStatusId === banner._id}
                       />
                     )}
+                  </TableCell>
+                  <TableCell className='py-4 text-center'>
+                    <div className='flex flex-col gap-1 items-center'>
+                      <button
+                        onClick={() => handleReorder(banner._id, 'up')}
+                        disabled={reorderingId === banner._id || banners.findIndex(b => b._id === banner._id) === 0}
+                        className='p-1 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded disabled:opacity-50 disabled:cursor-not-allowed'
+                        title='Move up'
+                      >
+                        {reorderingId === banner._id ? (
+                          <Spinner className='h-4 w-4' />
+                        ) : (
+                          <ArrowUp className='h-4 w-4' />
+                        )}
+                      </button>
+                      <button
+                        onClick={() => handleReorder(banner._id, 'down')}
+                        disabled={reorderingId === banner._id || banners.findIndex(b => b._id === banner._id) === banners.length - 1}
+                        className='p-1 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded disabled:opacity-50 disabled:cursor-not-allowed'
+                        title='Move down'
+                      >
+                        <ArrowDown className='h-4 w-4' />
+                      </button>
+                    </div>
                   </TableCell>
                   <TableCell className='py-4'>
                     <div className='flex justify-end gap-6'>

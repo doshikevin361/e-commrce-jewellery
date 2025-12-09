@@ -1,12 +1,10 @@
 'use client';
 
-import { Diamond, ShoppingCart, User, Menu, X, ChevronDown, Heart, List, LogOut, Settings } from 'lucide-react';
+import { Diamond, ShoppingCart, User, Menu, X, ChevronDown, Heart, LogOut, Settings } from 'lucide-react';
 import SearchBar from './SearchBar/SearchBar';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import React, { useState, useEffect, useRef, useContext, Suspense } from 'react';
-import { CategoriesContext } from '@/contexts/CategoriesContext';
-import { CategoriesDropdown } from './CategoriesDropdown';
+import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { AuthModal } from '@/components/auth/auth-modal';
 import { ForgotPasswordModal } from '@/components/auth/forgot-password-modal';
 import { ResetPasswordModal } from '@/components/auth/reset-password-modal';
@@ -33,8 +31,6 @@ const Grid2x2CheckIcon = ({ size, className }: { size: number; className?: strin
 import { useMenuItems } from './navigation-menu';
 
 export function HomeHeader() {
-  // Get categories context if available (only on home page)
-  const categoriesContext = useContext(CategoriesContext);
   const router = useRouter();
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -121,15 +117,10 @@ export function HomeHeader() {
       if (window.innerWidth >= 768) {
         setMobileMenuOpen(false);
       }
-      if (window.innerWidth >= 1024) {
-        if (categoriesContext) {
-          categoriesContext.setMobileCategoriesOpen(false);
-        }
-      }
     };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, [categoriesContext, mounted]);
+  }, [mounted]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -137,19 +128,12 @@ export function HomeHeader() {
       if (accountDropdownRef.current && !accountDropdownRef.current.contains(event.target as Node)) {
         setAccountDropdownOpen(false);
       }
-      // Close categories dropdown when clicking outside
-      if (categoriesContext) {
-        const target = event.target as HTMLElement;
-        if (!target.closest('[data-categories-dropdown]') && !target.closest('[data-categories-button]')) {
-          categoriesContext.setSidebarOpen(false);
-        }
-      }
     };
-    if (accountDropdownOpen || (categoriesContext && categoriesContext.sidebarOpen)) {
+    if (accountDropdownOpen) {
       document.addEventListener('mousedown', handleClickOutside);
       return () => document.removeEventListener('mousedown', handleClickOutside);
     }
-  }, [accountDropdownOpen, categoriesContext]);
+  }, [accountDropdownOpen]);
 
   const handleLogout = () => {
     localStorage.removeItem('customerToken');
@@ -290,37 +274,6 @@ export function HomeHeader() {
               {mobileMenuOpen ? <X size={20} className='text-white' /> : <Menu size={20} className='text-white' />}
             </button>
 
-            {/* Desktop Categories Button */}
-            <div className='hidden md:flex items-center gap-2 sm:gap-3 md:gap-4 lg:gap-8 min-w-0 flex-1 relative'>
-              <button
-                data-categories-button
-                onClick={() => {
-                  if (categoriesContext) {
-                    if (isMobile) {
-                      categoriesContext.setMobileCategoriesOpen(!categoriesContext.mobileCategoriesOpen);
-                    } else {
-                      categoriesContext.setSidebarOpen(!categoriesContext.sidebarOpen);
-                    }
-                  }
-                }}
-                className='flex w-auto md:w-[200px] lg:w-[270px] items-center gap-1.5 md:gap-2 cursor-pointer transition-all duration-300 hover:bg-white/10 active:scale-95 px-3 md:px-4 py-2 rounded-lg font-medium flex-shrink-0 group'
-                aria-label='Categories'>
-                <List
-                  size={17}
-                  className='md:w-[17px] md:h-[17px] lg:w-[18px] lg:h-[18px] flex-shrink-0 transition-transform duration-300 group-hover:rotate-90'
-                />
-                <span className='text-xs md:text-sm whitespace-nowrap'>Categories</span>
-              </button>
-              {/* Categories Dropdown */}
-              {/* {categoriesContext && !isMobile && (
-              <div data-categories-dropdown>
-                <CategoriesDropdown
-                  isOpen={categoriesContext.sidebarOpen}
-                  onClose={() => categoriesContext.setSidebarOpen(false)}
-                  position="left"
-                />
-              </div>
-            )} */}
 
               <ul className='hidden lg:flex items-center gap-1 lg:gap-2 xl:gap-3 text-xs md:text-sm flex-wrap'>
                 {menuLoading ? (
@@ -367,24 +320,6 @@ export function HomeHeader() {
                 )}
               </ul>
             </div>
-
-            {/* Mobile/Tablet Categories Button */}
-            <button
-              onClick={() => {
-                if (categoriesContext) {
-                  if (isMobile) {
-                    categoriesContext.setMobileCategoriesOpen(!categoriesContext.mobileCategoriesOpen);
-                  } else {
-                    categoriesContext.setSidebarOpen(!categoriesContext.sidebarOpen);
-                  }
-                }
-              }}
-              className='lg:hidden flex items-center gap-1.5 cursor-pointer transition-all duration-300 hover:bg-white/10 active:scale-95 px-3 py-2 rounded-lg font-medium flex-shrink-0 group'
-              aria-label='Categories'>
-              <Grid2x2CheckIcon size={18} className='flex-shrink-0 transition-transform duration-300 group-hover:rotate-90' />
-              <span className='text-sm whitespace-nowrap hidden sm:inline'>Categories</span>
-            </button>
-          </div>
 
           {/* Mobile/Tablet Menu Dropdown */}
           <div

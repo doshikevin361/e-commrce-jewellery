@@ -255,7 +255,17 @@ export async function GET() {
         type: 'hero',
         order: 1,
         data: {
-          banners: rawBanners.map(serializeBanner),
+          banners: rawBanners.map((banner, index) => ({
+            _id: banner._id.toString(),
+            title: banner.title || 'Discover Timeless Pieces',
+            subtitle: banner.subtitle || '',
+            description: banner.description || '',
+            image: banner.image || DEFAULT_BANNER_IMAGE,
+            link: banner.link || '/products',
+            buttonText: banner.buttonText || 'Shop Now',
+            backgroundColor: banner.backgroundColor || '#f5f5f5',
+            displayOrder: banner.displayOrder ?? index,
+          })),
         },
       },
       {

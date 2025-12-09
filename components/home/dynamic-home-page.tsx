@@ -31,7 +31,7 @@ import { SectionHeader } from '@/components/home/common/section-header';
 import Link from 'next/link';
 import { getActiveHomepageFeatures } from '@/lib/constants/features';
 import { ProductCard, ProductCardData } from './common/product-card';
-import { CategoriesDropdown } from './CategoriesDropdown';
+import { HeroBannerSlider } from './hero-banner-slider';
 
 type HeroSlide = {
   id: string | number;
@@ -101,7 +101,17 @@ type NewsItem = {
 };
 
 type HomepageSectionsState = {
-  hero: HeroSlide[];
+  hero: Array<{
+    _id: string;
+    title: string;
+    subtitle?: string;
+    description?: string;
+    image: string;
+    link?: string;
+    buttonText?: string;
+    backgroundColor?: string;
+    displayOrder?: number;
+  }>;
   categories: CategoryStripItem[];
   newProducts: ProductCardData[];
   featuredProducts: ProductCardData[];
@@ -313,7 +323,7 @@ const mapFeaturesFromApi = (incoming?: any[]): HomepageFeatureItem[] => {
 };
 
 const createDefaultSectionsState = (): HomepageSectionsState => ({
-  hero: [...defaultHeroSlides],
+  hero: [],
   categories: [],
   newProducts: [],
   featuredProducts: [],
@@ -364,9 +374,19 @@ export const HomePage = () => {
 
           switch (type) {
             case 'hero': {
-              const slides = mapBannersToSlides((data as any).banners);
-              if (slides.length > 0) {
-                nextState.hero = slides;
+              const banners = (data as any).banners;
+              if (Array.isArray(banners) && banners.length > 0) {
+                nextState.hero = banners.map((banner: any) => ({
+                  _id: banner._id?.toString() || '',
+                  title: banner.title || '',
+                  subtitle: banner.subtitle || '',
+                  description: banner.description || '',
+                  image: banner.image || '',
+                  link: banner.link || '/products',
+                  buttonText: banner.buttonText || 'Shop Now',
+                  backgroundColor: banner.backgroundColor || '#f5f5f5',
+                  displayOrder: banner.displayOrder || 0,
+                }));
               }
               break;
             }
@@ -497,10 +517,7 @@ export const HomePage = () => {
     <>
       <div className='flex-col gap-0 pt-4 sm:pt-6 md:pt-8 lg:pt-10'>
         <div className={'mx-auto max-w-[1440px] w-full px-4 sm:px-6 md:px-8 lg:px-12'}>
-          <Hero slides={sectionsData.hero} isLoading={isLoading} />
-        </div>
-        <div className={'mx-auto max-w-[1440px] w-full px-4 sm:px-6 md:px-8 lg:px-12'}>
-          <CategoryStrip categoriesData={sectionsData.categories} isLoading={isLoading} />
+          <HeroBannerSlider banners={sectionsData.hero} isLoading={isLoading} />
         </div>
         {errorMessage && (
           <div className='mt-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700'>{errorMessage}</div>
