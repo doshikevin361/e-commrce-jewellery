@@ -73,6 +73,9 @@ export function WishlistPage() {
         })
       );
 
+      // Dispatch event to update wishlist count in header
+      window.dispatchEvent(new Event('wishlistChange'));
+
       toast({
         title: 'Success',
         description: 'Product removed from wishlist',

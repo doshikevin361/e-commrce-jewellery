@@ -110,6 +110,8 @@ export const ProductCard = ({
         if (response.ok) {
           setIsInWishlist(false);
           toast.success('Product removed from wishlist');
+          // Dispatch event to update wishlist count in header
+          window.dispatchEvent(new Event('wishlistChange'));
         }
       } else {
         // Add to wishlist - API will handle slug or ID
@@ -122,6 +124,8 @@ export const ProductCard = ({
         if (response.ok) {
           setIsInWishlist(true);
           toast.success('Product added to wishlist');
+          // Dispatch event to update wishlist count in header
+          window.dispatchEvent(new Event('wishlistChange'));
         }
       }
     } catch (error) {

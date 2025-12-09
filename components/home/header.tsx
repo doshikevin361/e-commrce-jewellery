@@ -9,6 +9,7 @@ import { AuthModal } from '@/components/auth/auth-modal';
 import { ForgotPasswordModal } from '@/components/auth/forgot-password-modal';
 import { ResetPasswordModal } from '@/components/auth/reset-password-modal';
 import { useCart } from '@/contexts/CartContext';
+import { useWishlist } from '@/contexts/WishlistContext';
 import toast from 'react-hot-toast';
 
 // Grid2x2CheckIcon component (same as hero section)
@@ -34,6 +35,7 @@ import { useMenuItems } from './navigation-menu';
 export function HomeHeader() {
   const router = useRouter();
   const { cartCount } = useCart();
+  const { wishlistCount } = useWishlist();
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [accountDropdownOpen, setAccountDropdownOpen] = useState(false);
@@ -172,7 +174,14 @@ export function HomeHeader() {
               href='/wishlist'
               className='hidden sm:flex items-center gap-1 font-semibold px-1 sm:px-1.5 md:px-2 transition-all duration-300 hover:scale-110 active:scale-95 relative'
               aria-label='Wishlist'>
-              <Heart size={15} className='sm:w-[16px] sm:h-[16px] md:w-[18px] md:h-[18px] flex-shrink-0' />
+              <div className='relative flex-shrink-0'>
+                <Heart size={15} className='sm:w-[16px] sm:h-[16px] md:w-[18px] md:h-[18px] text-[#1F3B29]' />
+                {wishlistCount > 0 && (
+                  <span className='absolute -top-1 -right-1 bg-[#C8A15B] text-white text-[9px] sm:text-[10px] font-bold rounded-full w-3.5 h-3.5 sm:w-4 sm:h-4 flex items-center justify-center shadow-sm leading-none'>
+                    {wishlistCount > 99 ? '99+' : wishlistCount}
+                  </span>
+                )}
+              </div>
               <span className='hidden md:inline text-xs sm:text-sm whitespace-nowrap'>Wishlist</span>
             </Link>
             {/* Account Dropdown */}

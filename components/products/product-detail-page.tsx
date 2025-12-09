@@ -224,6 +224,8 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
         if (response.ok) {
           setIsInWishlist(false);
           toast.success('Product removed from wishlist');
+          // Dispatch event to update wishlist count in header
+          window.dispatchEvent(new Event('wishlistChange'));
         }
       } else {
         const response = await fetch('/api/customer/wishlist', {
@@ -235,6 +237,8 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
         if (response.ok) {
           setIsInWishlist(true);
           toast.success('Product added to wishlist');
+          // Dispatch event to update wishlist count in header
+          window.dispatchEvent(new Event('wishlistChange'));
         }
       }
     } catch (error) {

@@ -5,6 +5,7 @@ import { ThemeProvider } from '@/components/theme-provider';
 import { SettingsProvider } from '@/components/settings/settings-provider';
 import { CategoriesProvider } from '@/contexts/CategoriesContext';
 import { CartProvider } from '@/contexts/CartContext';
+import { WishlistProvider } from '@/contexts/WishlistContext';
 import { WebsiteLayout } from '@/components/layout/website-layout';
 import { ScrollToTop } from '@/components/scroll-to-top';
 import './globals.css';
@@ -57,8 +58,10 @@ export default function RootLayout({
           <SettingsProvider>
             <CategoriesProvider>
               <CartProvider>
-                <ScrollToTop />
-                <WebsiteLayout>{children}</WebsiteLayout>
+                <WishlistProvider>
+                  <ScrollToTop />
+                  <WebsiteLayout>{children}</WebsiteLayout>
+                </WishlistProvider>
               </CartProvider>
             </CategoriesProvider>
           </SettingsProvider>
