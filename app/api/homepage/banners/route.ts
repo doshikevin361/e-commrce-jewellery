@@ -1,9 +1,11 @@
 import { connectToDatabase } from '@/lib/mongodb';
 import { NextRequest, NextResponse } from 'next/server';
+import { getAbsoluteImageUrl } from '@/lib/utils';
 
 export async function GET(request: NextRequest) {
   try {
     const { db } = await connectToDatabase();
+    const requestUrl = request.url;
 
     // Fetch only active banners sorted by display order
     const banners = await db
@@ -17,7 +19,7 @@ export async function GET(request: NextRequest) {
         _id: banner._id.toString(),
         title: banner.title,
         description: banner.description,
-        image: banner.image,
+        image: getAbsoluteImageUrl(banner.image, requestUrl),
         link: banner.link,
         buttonText: banner.buttonText,
         displayOrder: banner.displayOrder,

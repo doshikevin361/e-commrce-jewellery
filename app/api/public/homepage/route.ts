@@ -1,6 +1,7 @@
 import { connectToDatabase } from '@/lib/mongodb';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getActiveHomepageFeatures } from '@/lib/constants/features';
+import { getAbsoluteImageUrl } from '@/lib/utils';
 
 const DEFAULT_IMAGE = 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=1200&q=80';
 const DEFAULT_CATEGORY_IMAGE = 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=800&q=80';
@@ -33,7 +34,7 @@ const PRODUCT_PROJECTION = {
   gstAmount: 1,
 };
 
-const serializeProduct = (product: any, fallbackIndex = 0) => {
+const serializeProduct = (product: any, fallbackIndex = 0, requestUrl?: string) => {
   const id = product?._id?.toString() ?? `product-${fallbackIndex}`;
   const sellingPrice = typeof product?.sellingPrice === 'number'
     ? product.sellingPrice
@@ -50,7 +51,7 @@ const serializeProduct = (product: any, fallbackIndex = 0) => {
     category: product?.category ?? 'Jewellery',
     sellingPrice,
     regularPrice,
-    mainImage: product?.mainImage || DEFAULT_IMAGE,
+    mainImage: getAbsoluteImageUrl(product?.mainImage || DEFAULT_IMAGE, requestUrl),
     featured: !!product?.featured,
     trending: !!product?.trending,
     badge: product?.featured ? 'Featured' : product?.trending ? 'Trending' : undefined,
@@ -58,24 +59,24 @@ const serializeProduct = (product: any, fallbackIndex = 0) => {
   };
 };
 
-const serializeBanner = (banner: any, index: number) => ({
+const serializeBanner = (banner: any, index: number, requestUrl?: string) => ({
   _id: banner?._id?.toString() ?? `banner-${index}`,
   title: banner?.title ?? 'Discover Timeless Pieces',
   subtitle: banner?.subtitle ?? '',
   description: banner?.description ?? '',
   buttonText: banner?.buttonText ?? 'Shop Now',
-  image: banner?.image || DEFAULT_BANNER_IMAGE,
+  image: getAbsoluteImageUrl(banner?.image || DEFAULT_BANNER_IMAGE, requestUrl),
   link: banner?.link || '/products',
   backgroundColor: banner?.backgroundColor || '#000000',
   type: banner?.type || 'main',
   displayOrder: typeof banner?.displayOrder === 'number' ? banner.displayOrder : index,
 });
 
-const serializeCategory = (category: any, index: number) => ({
+const serializeCategory = (category: any, index: number, requestUrl?: string) => ({
   _id: category?._id?.toString() ?? `category-${index}`,
   name: category?.name ?? 'Jewellery',
   slug: category?.slug ?? '',
-  image: category?.image || DEFAULT_CATEGORY_IMAGE,
+  image: getAbsoluteImageUrl(category?.image || DEFAULT_CATEGORY_IMAGE, requestUrl),
   featured: !!category?.featured,
   productCount: category?.productCount ?? 0,
 });
@@ -89,9 +90,10 @@ const safeQuery = async <T>(promise: Promise<T>, label: string, fallback: T) => 
   }
 };
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const { db } = await connectToDatabase();
+    const requestUrl = request.url;
 
     const bannersPromise = db
       .collection('homepage_banners')
@@ -216,19 +218,19 @@ export async function GET() {
       description: card?.description || '',
       buttonText: card?.buttonText || 'Explore More',
       buttonLink: card?.buttonLink || '/products',
-      image: card?.image || '',
+      image: getAbsoluteImageUrl(card?.image || '', requestUrl),
     });
 
     const serializeGalleryItem = (item: any, index: number) => ({
       _id: item?._id?.toString() ?? `gallery-${index}`,
-      image: item?.image || '',
+      image: getAbsoluteImageUrl(item?.image || '', requestUrl),
     });
 
     const serializeNewsItem = (item: any, index: number) => ({
       _id: item?._id?.toString() ?? `news-${index}`,
       title: item?.title || 'Untitled',
       excerpt: item?.excerpt || '',
-      image: item?.featuredImage || '',
+      image: getAbsoluteImageUrl(item?.featuredImage || '', requestUrl),
       publishDate: item?.publishedAt ? new Date(item.publishedAt).toISOString() : item?.createdAt ? new Date(item.createdAt).toISOString() : new Date().toISOString(),
       slug: item?.slug || '',
     });
@@ -239,14 +241,14 @@ export async function GET() {
         title: banner.title || 'New Arrivals',
         subtitle: banner.subtitle || banner.badgeText || '💎 500+ New Items',
         description: banner.description || '',
-        backgroundImage: banner.backgroundImage || '',
+        backgroundImage: getAbsoluteImageUrl(banner.backgroundImage || '', requestUrl),
       };
     };
 
     const serializeNewArrivalsCard = (card: any, index: number) => ({
       _id: card?._id?.toString() ?? `new-arrivals-card-${index}`,
       title: card?.title || '',
-      image: card?.image || '',
+      image: getAbsoluteImageUrl(card?.image || '', requestUrl),
       type: card?.type || 'card',
     });
 
@@ -260,7 +262,7 @@ export async function GET() {
             title: banner.title || 'Discover Timeless Pieces',
             subtitle: banner.subtitle || '',
             description: banner.description || '',
-            image: banner.image || DEFAULT_BANNER_IMAGE,
+            image: getAbsoluteImageUrl(banner.image || DEFAULT_BANNER_IMAGE, requestUrl),
             link: banner.link || '/products',
             buttonText: banner.buttonText || 'Shop Now',
             backgroundColor: banner.backgroundColor || '#f5f5f5',
@@ -272,14 +274,14 @@ export async function GET() {
         type: 'categories',
         order: 2,
         data: {
-          categories: rawCategories.map(serializeCategory),
+          categories: rawCategories.map((cat, idx) => serializeCategory(cat, idx, requestUrl)),
         },
       },
       {
         type: 'newProducts',
         order: 3,
         data: {
-          products: rawNew.map(serializeProduct),
+          products: rawNew.map((prod, idx) => serializeProduct(prod, idx, requestUrl)),
         },
       },
       {
@@ -287,7 +289,7 @@ export async function GET() {
         order: 4,
         data: {
           products: rawFeatured.map((product, index) => ({
-            ...serializeProduct(product, index),
+            ...serializeProduct(product, index, requestUrl),
             badge: 'Featured',
           })),
         },
@@ -297,7 +299,7 @@ export async function GET() {
         order: 5,
         data: {
           products: rawTrending.map((product, index) => ({
-            ...serializeProduct(product, index),
+            ...serializeProduct(product, index, requestUrl),
             badge: 'Trending',
           })),
         },
