@@ -574,6 +574,43 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
   const [useCustomCertification, setUseCustomCertification] = useState(false);
   const tagDropdownRef = useRef<HTMLDivElement | null>(null);
 
+  // Generate SKU from product name
+  const generateSKU = (productName: string): string => {
+    if (!productName?.trim()) return '';
+    
+    // Remove special characters and split into words
+    const words = productName
+      .toUpperCase()
+      .replace(/[^A-Z0-9\s]/g, '')
+      .trim()
+      .split(/\s+/);
+    
+    // Create prefix from first letters of each word (max 3 words) or first 3-6 chars if single word
+    let prefix = '';
+    if (words.length === 1) {
+      prefix = words[0].substring(0, Math.min(6, words[0].length));
+    } else {
+      prefix = words.slice(0, 3).map(w => w[0]).join('');
+      // If too short, add more letters from first word
+      if (prefix.length < 3 && words[0].length > 1) {
+        prefix = words[0].substring(0, 4);
+      }
+    }
+    
+    // Generate random 5-digit number
+    const randomNum = Math.floor(10000 + Math.random() * 90000);
+    
+    return `${prefix}-${randomNum}`;
+  };
+
+  // Auto-generate SKU when product name changes
+  useEffect(() => {
+    const newSku = generateSKU(formData.name);
+    if (newSku !== formData.sku) {
+      setFormData(prev => ({ ...prev, sku: newSku }));
+    }
+  }, [formData.name]);
+
   useEffect(() => {
     if (productId) {
       fetchProduct();
@@ -1752,8 +1789,10 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                         required
                         value={formData.sku}
                         onChange={e => handleChange('sku', e.target.value)}
-                        placeholder='Auto-generate or enter SKU'
+                        placeholder='Auto-generated from product name'
                         error={getFilteredErrors().sku}
+                        readOnly
+                        inputClassName='bg-gray-50 dark:bg-gray-800 cursor-not-allowed'
                       />
 
                       <Dropdown
