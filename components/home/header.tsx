@@ -12,6 +12,7 @@ import { useCart } from '@/contexts/CartContext';
 import { useWishlist } from '@/contexts/WishlistContext';
 import toast from 'react-hot-toast';
 import { cn } from '@/lib/utils';
+import { Loader2 } from 'lucide-react';
 
 // Grid2x2CheckIcon component (same as hero section)
 const Grid2x2CheckIcon = ({ size, className }: { size: number; className?: string }) => (
@@ -489,5 +490,31 @@ export function HomeHeader() {
         }}
       />
     </React.Fragment>
+  );
+}
+
+export function HomeHeader() {
+  return (
+    <Suspense
+      fallback={
+        <div className='fixed top-0 left-0 right-0 bg-white z-50 shadow-sm h-[60px] sm:h-[70px] md:h-[80px] lg:h-[90px] flex items-center justify-center'>
+          <Loader2 className='w-6 h-6 text-[#1F3B29] animate-spin' />
+        </div>
+      }>
+      <HomeHeaderContent />
+    </Suspense>
+  );
+}
+
+export function HomeHeader() {
+  return (
+    <Suspense
+      fallback={
+        <div className='fixed top-0 left-0 right-0 bg-white z-50 shadow-sm h-[60px] sm:h-[70px] md:h-[80px] lg:h-[90px] flex items-center justify-center'>
+          <Loader2 className='w-6 h-6 text-[#1F3B29] animate-spin' />
+        </div>
+      }>
+      <HomeHeaderContent />
+    </Suspense>
   );
 }
