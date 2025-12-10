@@ -12,12 +12,15 @@ import { DataTableBody } from '@/components/ui/data-table-body';
 
 interface Order {
   _id: string;
-  orderNumber?: string;
-  createdAt?: string;
-  customerName?: string;
-  total?: number;
-  paymentStatus?: string;
-  paymentMode?: string;
+  orderId: string;
+  createdAt: string;
+  customerName: string;
+  customerEmail: string;
+  total: number;
+  paymentStatus: string;
+  paymentMethod: string;
+  orderStatus: string;
+  items: any[];
 }
 
 export function OrderList() {
@@ -103,19 +106,20 @@ export function OrderList() {
           <Table>
             <TableHeader>
               <TableRow className='bg-gray-50 border-b border-gray-200 hover:bg-gray-50'>
-                <TableHead className='font-semibold text-gray-700 py-4'>Order Number</TableHead>
+                <TableHead className='font-semibold text-gray-700 py-4'>Order ID</TableHead>
                 <TableHead className='font-semibold text-gray-700 py-4'>Order Date</TableHead>
-                <TableHead className='font-semibold text-gray-700 py-4'>Customer Name</TableHead>
-                <TableHead className='font-semibold text-gray-700 py-4'>Total Amount</TableHead>
-                <TableHead className='font-semibold text-gray-700 py-4'>Payment Status</TableHead>
-                <TableHead className='font-semibold text-gray-700 py-4'>Payment Mode</TableHead>
-                <TableHead className='font-semibold text-gray-700 py-4 text-right'>Action</TableHead>
+                <TableHead className='font-semibold text-gray-700 py-4'>Customer</TableHead>
+                <TableHead className='font-semibold text-gray-700 py-4'>Items</TableHead>
+                <TableHead className='font-semibold text-gray-700 py-4'>Total</TableHead>
+                <TableHead className='font-semibold text-gray-700 py-4'>Payment</TableHead>
+                <TableHead className='font-semibold text-gray-700 py-4'>Order Status</TableHead>
+                <TableHead className='font-semibold text-gray-700 py-4 text-right'>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <DataTableBody
               loading={loading}
               data={orders}
-              columns={7}
+              columns={8}
               loadingText='Loading orders...'
               emptyText='No orders found'>
               {orders.map(order => (
@@ -123,24 +127,43 @@ export function OrderList() {
                     key={order._id}
                     className='border-b border-gray-200 hover:bg-green-50 transition-colors duration-150'>
                     <TableCell className='font-semibold text-gray-900 py-4'>
-                      {order.orderNumber || `#${order._id.slice(-6)}`}
+                      {order.orderId}
                     </TableCell>
                     <TableCell className='text-gray-600 py-4'>
-                      {order.createdAt ? formatIndianDate(order.createdAt) : '-'}
+                      {formatIndianDate(order.createdAt)}
                     </TableCell>
-                    <TableCell className='text-gray-600 py-4'>{order.customerName || '-'}</TableCell>
-                    <TableCell className='text-gray-900 py-4'>
-                      {typeof order.total === 'number' ? `$${order.total.toFixed(2)}` : '-'}
+                    <TableCell className='text-gray-600 py-4'>
+                      <div>
+                        <div className='font-medium'>{order.customerName}</div>
+                        <div className='text-xs text-gray-500'>{order.customerEmail}</div>
+                      </div>
+                    </TableCell>
+                    <TableCell className='text-gray-600 py-4'>
+                      {order.items.length} item{order.items.length > 1 ? 's' : ''}
+                    </TableCell>
+                    <TableCell className='text-gray-900 font-semibold py-4'>
+                      ₹{order.total.toLocaleString()}
                     </TableCell>
                     <TableCell className='py-4'>
-                      <Badge variant={getStatusBadgeVariant(order.paymentStatus)} className='px-3'>
-                        {(order.paymentStatus || 'Pending').toUpperCase()}
+                      <div>
+                        <Badge variant={getStatusBadgeVariant(order.paymentStatus)} className='px-3 mb-1'>
+                          {order.paymentStatus.toUpperCase()}
+                        </Badge>
+                        <div className='text-xs text-gray-500 mt-1'>{order.paymentMethod}</div>
+                      </div>
+                    </TableCell>
+                    <TableCell className='py-4'>
+                      <Badge 
+                        variant={order.orderStatus === 'delivered' ? 'default' : order.orderStatus === 'cancelled' ? 'destructive' : 'secondary'} 
+                        className='px-3'>
+                        {order.orderStatus.toUpperCase()}
                       </Badge>
                     </TableCell>
-                    <TableCell className='text-gray-600 py-4 text-sm'>
-                      {order.paymentMode ? order.paymentMode.toUpperCase() : '-'}
+                    <TableCell className='py-4 text-right'>
+                      <Button variant='outline' size='sm' onClick={() => {}}>
+                        View
+                      </Button>
                     </TableCell>
-                    <TableCell className='py-4 text-right text-gray-400 text-xs'>—</TableCell>
                   </TableRow>
                 ))}
             </DataTableBody>
