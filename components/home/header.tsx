@@ -11,6 +11,7 @@ import { ResetPasswordModal } from '@/components/auth/reset-password-modal';
 import { useCart } from '@/contexts/CartContext';
 import { useWishlist } from '@/contexts/WishlistContext';
 import toast from 'react-hot-toast';
+import { cn } from '@/lib/utils';
 
 // Grid2x2CheckIcon component (same as hero section)
 const Grid2x2CheckIcon = ({ size, className }: { size: number; className?: string }) => (
@@ -50,6 +51,9 @@ export function HomeHeader() {
   const [resetToken, setResetToken] = useState<string | undefined>(undefined);
   const { menuItems, menuLoading } = useMenuItems();
   const accountDropdownRef = useRef<HTMLDivElement>(null);
+  const searchParams = useSearchParams();
+  const [categories, setCategories] = useState<Array<{ _id: string; name: string; slug: string }>>([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
 
   useEffect(() => {
     setMounted(true);
@@ -92,6 +96,30 @@ export function HomeHeader() {
       window.removeEventListener('openLoginModal', handleOpenLoginModal);
     };
   }, []);
+
+  // Fetch categories for navbar
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        setCategoriesLoading(true);
+        const response = await fetch('/api/public/categories');
+        if (response.ok) {
+          const data = await response.json();
+          setCategories(data.categories || []);
+        }
+      } catch (error) {
+        console.error('Failed to fetch categories:', error);
+        setCategories([]);
+      } finally {
+        setCategoriesLoading(false);
+      }
+    };
+
+    fetchCategories();
+  }, []);
+
+  // Get active category from URL
+  const activeCategory = searchParams.get('category');
 
   // Check for reset password token in URL (only on home page, not on verify-email page)
   useEffect(() => {
@@ -288,7 +316,7 @@ export function HomeHeader() {
             </button>
 
             <ul className='hidden lg:flex items-center gap-1 lg:gap-2 xl:gap-3 text-xs md:text-sm flex-wrap'>
-              {menuLoading ? (
+              {menuLoading || categoriesLoading ? (
                 // Skeleton loading for desktop menu
                 <>
                   {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
@@ -300,11 +328,35 @@ export function HomeHeader() {
                   ))}
                 </>
               ) : (
-                menuItems.map((item, index) => (
-                  <li key={item.name} className='relative' style={{ animationDelay: `${index * 50}ms` }}>
-                    <Link
-                      href={item.href}
-                      className='
+                <>
+                  {categories.map((category, index) => {
+                    const isActive = activeCategory === category.name;
+                    return (
+                      <li key={category._id} className='relative' style={{ animationDelay: `${(menuItems.length + index) * 50}ms` }}>
+                        <Link
+                          href={`/jewellery?category=${encodeURIComponent(category.name)}`}
+                          className={cn(
+                            'relative flex items-center gap-1 px-3 md:px-4 lg:px-5 py-2 rounded-lg cursor-pointer transition-all duration-300 whitespace-nowrap font-medium group',
+                            isActive && 'bg-white/20'
+                          )}>
+                          <span className='relative z-10'>{category.name}</span>
+
+                          {/* White animated underline - always visible if active */}
+                          <span
+                            className={cn(
+                              'pointer-events-none absolute bottom-0 left-4 right-4 h-[2px] bg-white transition-transform duration-300',
+                              isActive ? 'scale-x-100' : 'scale-x-0 origin-left group-hover:scale-x-100'
+                            )}
+                          />
+                        </Link>
+                      </li>
+                    );
+                  })}
+                  {menuItems.map((item, index) => (
+                    <li key={item.name} className='relative' style={{ animationDelay: `${index * 50}ms` }}>
+                      <Link
+                        href={item.href}
+                        className='
         relative flex items-center gap-1
         px-3 md:px-4 lg:px-5 py-2
         rounded-lg cursor-pointer
@@ -312,11 +364,11 @@ export function HomeHeader() {
         whitespace-nowrap font-medium
         group
       '>
-                      <span className='relative z-10'>{item.name}</span>
+                        <span className='relative z-10'>{item.name}</span>
 
-                      {/* White animated underline */}
-                      <span
-                        className='
+                        {/* White animated underline */}
+                        <span
+                          className='
         pointer-events-none
         absolute bottom-0 left-4 right-4 
         h-[2px] bg-white 
@@ -324,10 +376,12 @@ export function HomeHeader() {
         group-hover:scale-x-100 
         transition-transform duration-300
       '
-                      />
-                    </Link>
-                  </li>
-                ))
+                        />
+                      </Link>
+                    </li>
+                  ))}
+                  {/* Categories */}
+                </>
               )}
             </ul>
           </div>
@@ -339,7 +393,7 @@ export function HomeHeader() {
             }`}>
             <div className='px-4 sm:px-6 py-3 bg-[#1F3B29] border-t border-white/10'>
               <ul className='flex flex-col gap-1'>
-                {menuLoading ? (
+                {menuLoading || categoriesLoading ? (
                   // Skeleton loading for mobile menu
                   <>
                     {[1, 2, 3, 4, 5].map(i => (
@@ -351,16 +405,35 @@ export function HomeHeader() {
                     ))}
                   </>
                 ) : (
-                  menuItems.map(item => (
-                    <li key={item.name}>
-                      <Link
-                        href={item.href}
-                        onClick={() => setMobileMenuOpen(false)}
-                        className='block w-full text-left px-4 py-3 rounded-lg text-sm font-medium transition-all duration-300 hover:bg-white/10 hover:translate-x-2 active:bg-white/15'>
-                        {item.name}
-                      </Link>
-                    </li>
-                  ))
+                  <>
+                    {menuItems.map(item => (
+                      <li key={item.name}>
+                        <Link
+                          href={item.href}
+                          onClick={() => setMobileMenuOpen(false)}
+                          className='block w-full text-left px-4 py-3 rounded-lg text-sm font-medium transition-all duration-300 hover:bg-white/10 hover:translate-x-2 active:bg-white/15'>
+                          {item.name}
+                        </Link>
+                      </li>
+                    ))}
+                    {/* Categories in mobile menu */}
+                    {categories.map(category => {
+                      const isActive = activeCategory === category.name;
+                      return (
+                        <li key={category._id}>
+                          <Link
+                            href={`/jewellery?category=${encodeURIComponent(category.name)}`}
+                            onClick={() => setMobileMenuOpen(false)}
+                            className={cn(
+                              'block w-full text-left px-4 py-3 rounded-lg text-sm font-medium transition-all duration-300 hover:bg-white/10 hover:translate-x-2 active:bg-white/15',
+                              isActive && 'bg-white/20 font-semibold'
+                            )}>
+                            {category.name}
+                          </Link>
+                        </li>
+                      );
+                    })}
+                  </>
                 )}
               </ul>
             </div>

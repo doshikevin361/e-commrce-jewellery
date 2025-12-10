@@ -3,42 +3,18 @@
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 
-// Common jewelry types for submenus
-const jewelryTypes = ['Ring', 'Necklace', 'Earrings', 'Bracelet', 'Bangle', 'Chain', 'Mangalsutra', 'Pendant'];
-
 // Function to generate menu items dynamically based on available product types
 // All items are flat - no dropdowns, all shown separately
 // Only main product types are shown, not jewelry type combinations
 export const generateMenuItems = (
-  availableProductTypes: string[], 
+  availableProductTypes: string[],
   productTypesWithJewelry?: Array<{ productType: string; jewelryTypes: string[] }>
 ) => {
-  const baseMenuItems = [
-    { name: 'Home', href: '/' },
-  ];
-
   // Generate flat menu items - only main product types, no jewelry type combinations
   const flatMenuItems: { name: string; href: string }[] = [];
-  
-  availableProductTypes.forEach(productType => {
-    const typeName = productType === 'Gold' ? 'Gold' : 
-                     productType === 'Silver' ? 'Silver' : 
-                     productType === 'Platinum' ? 'Platinum' : 
-                     productType === 'Diamond' ? 'Diamond' : 
-                     productType === 'Gemstone' ? 'Gemstone' : productType;
-    
-    // Add only main product type link (no jewelry type combinations)
-    flatMenuItems.push({
-      name: typeName,
-      href: `/products?product_type=${productType}`,
-    });
-  });
 
   return [
-    ...baseMenuItems,
-    ...flatMenuItems,
-    { name: 'Blog', href: '/blog' },
-    { name: 'About', href: '/about' },
+    { name: 'Jewellery', href: '/jewellery' },
     { name: 'Contact Us', href: '/contact' },
   ];
 };
@@ -57,7 +33,7 @@ export const useMenuItems = () => {
           const data = await response.json();
           const productTypes = data.productTypes || [];
           const productTypesWithJewelry = data.productTypesWithJewelry || [];
-          
+
           // Only show product types that actually exist in database
           if (productTypes.length > 0) {
             setMenuItems(generateMenuItems(productTypes, productTypesWithJewelry));
@@ -83,4 +59,3 @@ export const useMenuItems = () => {
 
   return { menuItems, menuLoading };
 };
-
