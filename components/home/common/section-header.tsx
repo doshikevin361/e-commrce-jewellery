@@ -37,13 +37,13 @@ export const SectionHeader = ({
             <button
               type='button'
               onClick={onActionClick}
-              className='cursor-pointer inline-flex items-center gap-1 rounded-full border border-[#1F3B29] px-5 py-2 text-xs font-semibold text-[#1F3B29] hover:bg-[#F5EEE5] transition-colors'>
+              className='cursor-pointer inline-flex items-center gap-1 rounded-full border border-[#1F3B29] px-5 sm:px-6 md:px-7 lg:px-8 py-2 sm:py-2.5 md:py-3 text-xs sm:text-sm md:text-base font-semibold text-[#1F3B29] hover:bg-[#F5EEE5] transition-colors whitespace-nowrap'>
               {actionLabel}
             </button>
           ) : (
             <Link
               href='/products'
-              className='inline-flex items-center gap-1 rounded-full border border-[#1F3B29] px-5 py-2 text-xs font-semibold text-[#1F3B29] hover:bg-[#F5EEE5] transition-colors'>
+              className='inline-flex items-center gap-1 rounded-full border border-[#1F3B29] px-5 sm:px-6 md:px-7 lg:px-8 py-2 sm:py-2.5 md:py-3 text-xs sm:text-sm md:text-base font-semibold text-[#1F3B29] hover:bg-[#F5EEE5] transition-colors whitespace-nowrap'>
               {actionLabel}
             </Link>
           )
@@ -53,29 +53,29 @@ export const SectionHeader = ({
   }
 
   return (
-    <div className={cn('flex flex-wrap items-end justify-between gap-3', className)}>
-      <div className='space-y-2'>
+    <div className={cn('flex flex-wrap items-end justify-between gap-3 sm:gap-4', className)}>
+      <div className='space-y-2 flex-1 min-w-0'>
         {eyebrow && <p className='text-xs uppercase tracking-[0.3em] text-[#6B6B6B]'>{eyebrow}</p>}
         <h2 className='text-xl sm:text-2xl md:text-3xl font-semibold text-[#1F3B29]'>{title}</h2>
         {description && <p className='text-sm text-[#4F3A2E]'>{description}</p>}
       </div>
       {rightSlot
-        ? rightSlot
+        ? <div className='flex-shrink-0'>{rightSlot}</div>
         : actionLabel && (
             onActionClick ? (
               <button
                 type='button'
                 onClick={onActionClick}
-                className='cursor-pointer inline-flex items-center gap-1 text-xs font-semibold text-[#1F3B29] hover:text-[#C8A15B] transition-colors'>
+                className='cursor-pointer inline-flex items-center gap-1 text-xs sm:text-sm md:text-base font-semibold text-[#1F3B29] hover:text-[#C8A15B] transition-colors whitespace-nowrap flex-shrink-0'>
                 {actionLabel}
-                <ChevronRight size={16} />
+                <ChevronRight size={14} className='sm:w-4 sm:h-4 md:w-5 md:h-5' />
               </button>
             ) : (
               <Link
                 href='/products'
-                className='inline-flex items-center gap-1 text-xs font-semibold text-[#1F3B29] hover:text-[#C8A15B] transition-colors'>
+                className='inline-flex items-center gap-1 text-xs sm:text-sm md:text-base font-semibold text-[#1F3B29] hover:text-[#C8A15B] transition-colors whitespace-nowrap flex-shrink-0'>
                 {actionLabel}
-                <ChevronRight size={16} />
+                <ChevronRight size={14} className='sm:w-4 sm:h-4 md:w-5 md:h-5' />
               </Link>
             )
           )}

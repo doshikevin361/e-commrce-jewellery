@@ -553,20 +553,20 @@ export function DynamicProductsPage() {
   }
 
   return (
-    <div className='container mx-auto px-4 sm:px-6 lg:px-8 py-8 max-w-[1400px]'>
+    <div className='container mx-auto px-4 sm:px-6 md:px-8 lg:px-12 py-6 sm:py-8 md:py-10 max-w-[1440px]'>
       {/* Header */}
-      <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8'>
+      <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mb-8'>
         <div>
-          <h1 className='text-2xl sm:text-3xl font-bold text-gray-900'>
+          <h1 className='text-xl sm:text-2xl md:text-3xl font-bold text-gray-900'>
             {searchParams.get('category') ? `${searchParams.get('category')} Collection` : 'All Products'}
           </h1>
-          <p className='text-gray-600 mt-1'>{filteredAndSortedProducts.length} products found</p>
+          <p className='text-sm sm:text-base text-gray-600 mt-1'>{filteredAndSortedProducts.length} products found</p>
         </div>
 
-        <div className='flex flex-col sm:flex-row items-stretch sm:items-center gap-3'>
+        <div className='flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3'>
           {/* Sort */}
           <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className='w-full sm:w-48'>
+            <SelectTrigger className='w-full sm:w-48 text-xs sm:text-sm'>
               <SelectValue placeholder='Sort by' />
             </SelectTrigger>
             <SelectContent>
@@ -597,16 +597,28 @@ export function DynamicProductsPage() {
         </div>
       </div>
 
-      <div className='flex flex-col lg:flex-row gap-4 lg:gap-8'>
-        {/* Filters Sidebar */}
+      <div className='flex flex-col lg:flex-row gap-4 sm:gap-6 lg:gap-8'>
+        {/* Filters Sidebar - Mobile: Overlay, Desktop: Sidebar */}
         {showFilters && (
-          <div className='w-full lg:w-80 flex-shrink-0'>
-            <div className='bg-white border border-gray-200 rounded-lg p-4 sm:p-6 sticky top-4 max-h-[calc(100vh-2rem)] overflow-y-auto'>
-              <div className='flex items-center justify-between mb-6'>
-                <h3 className='text-lg font-semibold text-gray-900'>Filters</h3>
-                <Button variant='ghost' size='sm' onClick={clearAllFilters}>
-                  Clear All
-                </Button>
+          <div className='lg:hidden fixed inset-0 z-50 bg-black/50' onClick={() => setShowFilters(false)} />
+        )}
+        {showFilters && (
+          <div className='w-full lg:w-80 flex-shrink-0 fixed lg:relative inset-y-0 left-0 z-50 lg:z-auto bg-white lg:bg-transparent shadow-xl lg:shadow-none'>
+            <div className='bg-white border border-gray-200 rounded-lg lg:rounded-lg p-4 sm:p-5 md:p-6 h-full lg:h-auto lg:sticky top-20 sm:top-24 md:top-28 lg:top-32 max-h-[100vh] lg:max-h-[calc(100vh-6rem)] overflow-y-auto'>
+              <div className='flex items-center justify-between mb-4 sm:mb-5 md:mb-6'>
+                <h3 className='text-base sm:text-lg font-semibold text-gray-900'>Filters</h3>
+                <div className='flex items-center gap-2'>
+                  <Button variant='ghost' size='sm' onClick={clearAllFilters} className='text-xs sm:text-sm'>
+                    Clear All
+                  </Button>
+                  <Button
+                    variant='ghost'
+                    size='sm'
+                    onClick={() => setShowFilters(false)}
+                    className='lg:hidden'>
+                    <X className='w-4 h-4 sm:w-5 sm:h-5' />
+                  </Button>
+                </div>
               </div>
 
               <div className='space-y-6'>
@@ -1266,7 +1278,7 @@ export function DynamicProductsPage() {
           ) : (
             <>
               <div
-                className={`grid gap-6 ${
+                className={`grid gap-3 sm:gap-4 md:gap-5 lg:gap-6 ${
                   viewMode === 'grid' ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' : 'grid-cols-1'
                 }`}>
                 {paginatedProducts.map(product => (

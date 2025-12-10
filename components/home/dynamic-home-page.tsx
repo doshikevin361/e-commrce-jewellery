@@ -136,7 +136,7 @@ type HomepageSectionsState = {
   };
 };
 
-const SECTION_SPACING = 'mt-12 sm:mt-16 lg:mt-20 mx-auto flex w-full max-w-[1440px] px-4 sm:px-6 md:px-8 lg:px-12';
+const SECTION_SPACING = 'mt-8 sm:mt-10 md:mt-12 lg:mt-20 mx-auto flex w-full max-w-[1440px] px-4 sm:px-6 md:px-8 lg:px-12';
 const DEFAULT_CATEGORY_IMAGE = 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=800&q=80';
 const DEFAULT_PRODUCT_IMAGE = 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=1200&q=80';
 
@@ -516,16 +516,16 @@ export const HomePage = () => {
   return (
     <>
       <div className='flex-col gap-0 pt-4 sm:pt-6 md:pt-8 lg:pt-10'>
-        <div className={'mx-auto max-w-[1440px] w-full px-4 sm:px-6 md:px-8 lg:px-12'}>
-          <HeroBannerSlider banners={sectionsData.hero} isLoading={isLoading} />
-        </div>
+      <div className={'mx-auto max-w-[1440px] w-full px-4 sm:px-6 md:px-8 lg:px-12 mb-4 sm:mb-5 md:mb-6'}>
+        <HeroBannerSlider banners={sectionsData.hero} isLoading={isLoading} />
+      </div>
         {errorMessage && (
           <div className='mt-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700'>{errorMessage}</div>
         )}
         <div className={SECTION_SPACING}>
           <FeaturedSlider products={sectionsData.newProducts} isLoading={isLoading} />
         </div>
-        <div className='mt-12 sm:mt-16 lg:mt-20'>
+        <div className='mt-8 sm:mt-10 md:mt-12 lg:mt-20'>
           <NewArrivalsSection banner={sectionsData.newArrivals.banner} cards={sectionsData.newArrivals.cards} isLoading={isLoading} />
         </div>
         <div className={SECTION_SPACING}>
@@ -551,7 +551,7 @@ export const HomePage = () => {
       {/* <div className={SECTION_SPACING}>
         <UpdatesSection newsItems={sectionsData.news} isLoading={isLoading} />
       </div> */}
-      <div className='mt-12 sm:mt-16 lg:mt-20'>
+      <div className='mt-8 sm:mt-10 md:mt-12 lg:mt-20'>
         <Subscribe />
       </div>
     </>
@@ -688,8 +688,8 @@ const Hero = ({ slides = defaultHeroSlides, isLoading = false }: { slides?: Hero
 
         <div className='w-full'>
           {showLoadingState ? (
-            <div className='flex items-center justify-center min-h-80 rounded-2xl bg-gray-100'>
-              <p className='text-gray-500'>Loading banners...</p>
+            <div className='flex items-center justify-center min-h-60 sm:min-h-80 rounded-2xl bg-gray-100'>
+              <p className='text-gray-500 text-sm sm:text-base'>Loading banners...</p>
             </div>
           ) : (
             <Swiper
@@ -710,13 +710,13 @@ const Hero = ({ slides = defaultHeroSlides, isLoading = false }: { slides?: Hero
               className='hero-swiper pb-10!'>
               {slidesToRender.map(slide => (
                 <SwiperSlide key={slide.id}>
-                  <div className='grid w-full grid-cols-1 gap-4 lg:grid-cols-[1.65fr_0.9fr]'>
-                    <div className='relative flex min-h-80 flex-col justify-center overflow-hidden rounded-2xl px-8 py-10 text-white'>
+                  <div className='grid w-full grid-cols-1 gap-3 sm:gap-3 md:grid-cols-2 md:gap-4 lg:grid-cols-[1.65fr_0.9fr]'>
+                    <div className='relative flex min-h-[280px] sm:min-h-[350px] md:min-h-[380px] lg:min-h-80 flex-col justify-center overflow-hidden rounded-2xl px-4 sm:px-6 md:px-10 py-6 sm:py-8 md:py-12 text-white'>
                       <Image
                         src={slide.main.image}
                         alt={slide.main.title}
                         fill
-                        sizes='(max-width: 768px) 100vw, (max-width: 1024px) 70vw, 70vw'
+                        sizes='(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 65vw'
                         className='object-cover'
                       />
                       <div
@@ -725,24 +725,24 @@ const Hero = ({ slides = defaultHeroSlides, isLoading = false }: { slides?: Hero
                           backgroundColor: slide.backgroundColor ? `${slide.backgroundColor}80` : 'rgba(0, 0, 0, 0.4)',
                         }}
                       />
-                      <div className='relative z-10 space-y-4'>
-                        {slide.main.subtitle && <p className='text-xs uppercase tracking-[0.3em] text-white/80'>{slide.main.subtitle}</p>}
-                        <h1 className='text-3xl font-bold text-white sm:text-4xl lg:text-5xl'>{slide.main.title}</h1>
-                        <p className='max-w-lg text-sm text-white/90 sm:text-base'>{slide.main.description}</p>
+                      <div className='relative z-10 space-y-2 sm:space-y-4'>
+                        {slide.main.subtitle && <p className='text-[10px] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.3em] text-white/80'>{slide.main.subtitle}</p>}
+                        <h1 className='text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight'>{slide.main.title}</h1>
+                        <p className='max-w-lg text-xs sm:text-sm md:text-base text-white/90'>{slide.main.description}</p>
                         <Link
                           href={slide.link || '/products'}
-                          className='inline-flex items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-semibold text-[#1F3B29] hover:bg-[#F5EEE5] transition-colors'>
+                          className='inline-flex items-center justify-center rounded-full bg-white px-6 sm:px-7 md:px-9 lg:px-10 py-2.5 sm:py-3 md:py-3.5 text-xs sm:text-sm md:text-base font-semibold text-[#1F3B29] hover:bg-[#F5EEE5] transition-colors whitespace-nowrap'>
                           {slide.main.buttonText}
                         </Link>
                       </div>
                     </div>
 
-                    <div className='relative flex min-h-60 flex-col justify-end overflow-hidden rounded-2xl px-6 py-6 text-white'>
+                    <div className='relative hidden md:flex min-h-[200px] sm:min-h-[250px] md:min-h-[240px] lg:min-h-60 flex-col justify-end overflow-hidden rounded-2xl px-4 sm:px-6 md:px-8 py-4 sm:py-6 md:py-8 text-white'>
                       <Image
                         src={slide.side.image}
                         alt={slide.side.title}
                         fill
-                        sizes='(max-width: 768px) 100vw, (max-width: 1024px) 35vw, 35vw'
+                        sizes='(max-width: 1024px) 50vw, 35vw'
                         className='object-cover'
                       />
                       <div
@@ -751,15 +751,15 @@ const Hero = ({ slides = defaultHeroSlides, isLoading = false }: { slides?: Hero
                           backgroundColor: slide.backgroundColor ? `${slide.backgroundColor}80` : 'rgba(0, 0, 0, 0.4)',
                         }}
                       />
-                      <div className='relative z-10 space-y-2'>
+                      <div className='relative z-10 space-y-1 sm:space-y-2'>
                         {slide.side.subtitle && (
-                          <p className='text-[11px] uppercase tracking-[0.3em] text-white/80'>{slide.side.subtitle}</p>
+                          <p className='text-[10px] sm:text-[11px] uppercase tracking-[0.2em] sm:tracking-[0.3em] text-white/80'>{slide.side.subtitle}</p>
                         )}
-                        <h2 className='text-2xl font-semibold text-white'>{slide.side.title}</h2>
-                        <p className='text-xs text-white/80'>{slide.side.description}</p>
+                        <h2 className='text-lg sm:text-xl md:text-2xl font-semibold text-white'>{slide.side.title}</h2>
+                        <p className='text-[10px] sm:text-xs text-white/80'>{slide.side.description}</p>
                         <Link
                           href={slide.link || '/products'}
-                          className='inline-flex items-center justify-center rounded-full bg-white/20 px-4 py-2 text-xs font-semibold text-white hover:bg-white/30 transition-colors'>
+                          className='inline-flex items-center justify-center rounded-full bg-white/20 px-5 sm:px-6 md:px-7 py-2 sm:py-2.5 md:py-3 text-xs sm:text-sm md:text-base font-semibold text-white hover:bg-white/30 transition-colors whitespace-nowrap'>
                           {slide.side.buttonText}
                         </Link>
                       </div>
@@ -794,7 +794,7 @@ const CategoryStrip = ({ categoriesData, isLoading = false }: { categoriesData?:
         </p>
       </div> */}
 
-      <div className='mb-6 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-6 md:gap-6 pt-8'>
+      <div className='mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 sm:gap-4 md:gap-6 pt-6 sm:pt-8'>
         {showSkeleton
           ? skeletonItems.map((_, index) => (
               <div key={`category-skeleton-${index}`} className='flex flex-col items-center gap-3 rounded-full animate-pulse'>
@@ -815,7 +815,7 @@ const CategoryStrip = ({ categoriesData, isLoading = false }: { categoriesData?:
                   />
                   <div className='absolute inset-0 bg-linear-to-t from-black/20 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100' />
                 </div>
-                <h3 className='text-center text-sm font-semibold tracking-wide text-[#1F3B29] transition-colors duration-300 group-hover:text-[#C8A15B] sm:text-base'>
+                <h3 className='text-center text-xs sm:text-sm font-semibold tracking-wide text-[#1F3B29] transition-colors duration-300 group-hover:text-[#C8A15B] md:text-base'>
                   {item.name}
                 </h3>
               </Link>
@@ -864,34 +864,34 @@ const FeaturedSlider = ({ products, isLoading = false }: { products?: ProductCar
   }, []);
 
   const rightSlot = (
-    <div className='flex items-center gap-6 text-[#1F3B29]'>
-      <div className='flex gap-3'>
+    <div className='flex items-center gap-2 sm:gap-3 md:gap-4 flex-shrink-0'>
+      <div className='flex gap-1.5 sm:gap-2'>
         <button
           ref={prevButtonRef}
           type='button'
           onClick={() => swiperRef.current?.slidePrev()}
-          className='flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-web bg-white hover:bg-[#F5EEE5] transition-colors'>
-          <ChevronLeft size={18} />
+          className='flex h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9 flex-shrink-0 cursor-pointer items-center justify-center rounded-full border border-web bg-white hover:bg-[#F5EEE5] transition-colors'>
+          <ChevronLeft size={16} className='sm:w-[18px] sm:h-[18px] md:w-5 md:h-5' />
         </button>
         <button
           ref={nextButtonRef}
           type='button'
           onClick={() => swiperRef.current?.slideNext()}
-          className='flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-web bg-white hover:bg-[#F5EEE5] transition-colors'>
-          <ChevronRight size={18} />
+          className='flex h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9 flex-shrink-0 cursor-pointer items-center justify-center rounded-full border border-web bg-white hover:bg-[#F5EEE5] transition-colors'>
+          <ChevronRight size={16} className='sm:w-[18px] sm:h-[18px] md:w-5 md:h-5' />
         </button>
       </div>
       <Link
         href='/products'
-        className='cursor-pointer inline-flex items-center gap-1 text-xs font-semibold text-[#1F3B29] hover:text-[#C8A15B] transition-colors'>
+        className='cursor-pointer inline-flex items-center gap-1 text-[10px] sm:text-xs md:text-sm font-semibold text-[#1F3B29] hover:text-[#C8A15B] transition-colors whitespace-nowrap flex-shrink-0'>
         View all
-        <ChevronRight size={16} />
+        <ChevronRight size={14} className='sm:w-4 sm:h-4 md:w-5 md:h-5' />
       </Link>
     </div>
   );
 
   return (
-    <section className='w-full space-y-4 bg-white'>
+    <section className='w-full space-y-4 bg-white overflow-hidden'>
       <div className='border-b border-web pb-3'>
         <SectionHeader title='New Products' rightSlot={rightSlot} />
       </div>
@@ -915,12 +915,26 @@ const FeaturedSlider = ({ products, isLoading = false }: { products?: ProductCar
             }
           }}
           modules={[]}
-          spaceBetween={20}
+          spaceBetween={12}
           slidesPerView='auto'
+          breakpoints={{
+            320: {
+              spaceBetween: 12,
+            },
+            640: {
+              spaceBetween: 14,
+            },
+            768: {
+              spaceBetween: 16,
+            },
+            1024: {
+              spaceBetween: 20,
+            },
+          }}
           className='pb-2'>
           {resolvedProducts.map(product => (
-            <SwiperSlide key={product.id} style={{ width: 'auto' }}>
-              <ProductCard product={product} />
+            <SwiperSlide key={product.id} style={{ width: 'auto', minWidth: '260px', maxWidth: '300px' }}>
+              <ProductCard product={product} className='w-full' />
             </SwiperSlide>
           ))}
         </Swiper>
@@ -934,30 +948,30 @@ const TrendingProducts = ({ products, isLoading = false }: { products?: ProductC
   const showLoading = isLoading && (!products || products.length === 0);
 
   const rightSlot = (
-    <div className='flex items-center gap-3 sm:gap-4 md:gap-6 text-[#1F3B29]'>
-      <div className='flex gap-2 sm:gap-3'>
+    <div className='flex items-center gap-2 sm:gap-3 md:gap-4 flex-shrink-0'>
+      <div className='flex gap-1.5 sm:gap-2'>
         <button
           type='button'
-          className='trending-prev-btn flex h-7 w-7 sm:h-8 sm:w-8 cursor-pointer items-center justify-center rounded-full border border-web bg-white transition-all hover:scale-110 active:scale-95'>
-          <ChevronLeft size={16} className='sm:w-[18px] sm:h-[18px]' />
+          className='trending-prev-btn flex h-6 w-6 sm:h-7 sm:w-7 md:h-9 md:w-9 flex-shrink-0 cursor-pointer items-center justify-center rounded-full border border-web bg-white transition-all hover:scale-110 active:scale-95'>
+          <ChevronLeft size={14} className='sm:w-4 sm:h-4 md:w-5 md:h-5' />
         </button>
         <button
           type='button'
-          className='trending-next-btn flex h-7 w-7 sm:h-8 sm:w-8 cursor-pointer items-center justify-center rounded-full border border-web bg-white transition-all hover:scale-110 active:scale-95'>
-          <ChevronRight size={16} className='sm:w-[18px] sm:h-[18px]' />
+          className='trending-next-btn flex h-6 w-6 sm:h-7 sm:w-7 md:h-9 md:w-9 flex-shrink-0 cursor-pointer items-center justify-center rounded-full border border-web bg-white transition-all hover:scale-110 active:scale-95'>
+          <ChevronRight size={14} className='sm:w-4 sm:h-4 md:w-5 md:h-5' />
         </button>
       </div>
       <Link
         href='/products?trending=true'
-        className='cursor-pointer inline-flex items-center gap-1 text-[10px] sm:text-xs font-semibold text-[#1F3B29] whitespace-nowrap hover:text-[#C8A15B] transition-colors'>
+        className='cursor-pointer inline-flex items-center gap-1 text-[10px] sm:text-xs md:text-sm font-semibold text-[#1F3B29] whitespace-nowrap hover:text-[#C8A15B] transition-colors flex-shrink-0'>
         View all
-        <ChevronRight size={14} className='sm:w-4 sm:h-4' />
+        <ChevronRight size={12} className='sm:w-3.5 sm:h-3.5 md:w-5 md:h-5' />
       </Link>
     </div>
   );
 
   return (
-    <section className='w-full space-y-4 bg-white'>
+    <section className='w-full space-y-4 bg-white overflow-hidden'>
       <div className='border-b border-web pb-3'>
         <SectionHeader title='Trending Products' rightSlot={rightSlot} />
       </div>
@@ -970,9 +984,9 @@ const TrendingProducts = ({ products, isLoading = false }: { products?: ProductC
           <p className='text-gray-500'>No trending products available</p>
         </div>
       ) : (
-        <div className='grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4 pb-2'>
+        <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-4 md:gap-5 lg:gap-6 pb-2'>
           {resolvedProducts.map(product => (
-            <ProductCard key={product.id} product={product} className='min-w-0 w-full' />
+            <ProductCard key={product.id} product={product} className='min-w-0 w-full max-w-none' />
           ))}
         </div>
       )}
@@ -1008,7 +1022,7 @@ const PromoShowcase = () => {
 
           <Link
             href='/products'
-            className='inline-block mt-6 rounded-full bg-[#1F3B29] px-6 py-2 text-sm text-white hover:bg-[#2a4d3a] transition-colors'>
+            className='inline-block mt-6 rounded-full bg-[#1F3B29] px-5 sm:px-6 md:px-8 py-2.5 sm:py-3 text-xs sm:text-sm md:text-base text-white hover:bg-[#2a4d3a] transition-colors whitespace-nowrap'>
             Explore More
           </Link>
         </div>
@@ -1056,32 +1070,32 @@ const CollectionsSection = ({ dazzleData, isLoading = false }: { dazzleData: Daz
         ];
 
   return (
-    <section className='w-full'>
+    <section className='w-full overflow-hidden'>
       <div className='border-b border-web pb-3'>
         <SectionHeader title='Dazzle in Every Moment' actionLabel='View all' onActionClick={() => router.push('/products')} />
       </div>
 
-      <div className='mt-6 grid grid-cols-1 gap-4 md:grid-cols-2'>
+      <div className='mt-4 sm:mt-6 grid grid-cols-1 gap-4 sm:gap-4 md:grid-cols-2 md:gap-6'>
         {cardsToShow.map((card, index) => {
           // First card: image on left, content on right
           if (index === 0) {
             return (
-              <div key={card._id} className='flex flex-col items-center gap-6 rounded-2xl bg-[#F3F5F7] p-6 md:flex-row'>
+              <div key={card._id} className='flex flex-col items-center gap-4 sm:gap-6 rounded-2xl bg-[#F3F5F7] p-4 sm:p-6 md:p-8 md:flex-row'>
                 {card.image && (
                   <img
                     src={card.image}
-                    className='h-64 w-full rounded-xl object-cover md:h-full md:w-1/2'
+                    className='h-48 sm:h-64 md:h-[300px] w-full rounded-xl object-cover md:h-full md:w-1/2'
                     alt={card.subtitle || card.title || 'Collection image'}
                   />
                 )}
 
-                <div className='flex flex-col justify-center'>
-                  {card.subtitle && <h3 className='text-2xl font-semibold text-[#1C1F1A]'>{card.subtitle}</h3>}
-                  {card.description && <p className='mt-3 text-sm text-[#4F3A2E]'>{card.description}</p>}
+                <div className='flex flex-col justify-center w-full md:w-1/2 md:pl-6'>
+                  {card.subtitle && <h3 className='text-xl sm:text-2xl md:text-3xl font-semibold text-[#1C1F1A]'>{card.subtitle}</h3>}
+                  {card.description && <p className='mt-2 sm:mt-3 md:mt-4 text-xs sm:text-sm md:text-base text-[#4F3A2E]'>{card.description}</p>}
 
                   <Link
                     href={card.buttonLink || '/products'}
-                    className='inline-flex mt-5 w-fit items-center gap-2 rounded-full bg-[#1F3B29] px-5 py-2 text-sm text-white hover:bg-[#2a4d3a] transition-colors'>
+                    className='inline-flex mt-4 sm:mt-5 md:mt-6 w-fit items-center gap-2 rounded-full bg-[#1F3B29] px-6 sm:px-7 md:px-9 lg:px-10 py-2.5 sm:py-3 md:py-3.5 text-xs sm:text-sm md:text-base text-white hover:bg-[#2a4d3a] transition-colors whitespace-nowrap'>
                     {card.buttonText || 'Explore more'}
                   </Link>
                 </div>
@@ -1091,20 +1105,20 @@ const CollectionsSection = ({ dazzleData, isLoading = false }: { dazzleData: Daz
 
           // Other cards: content on top, image on bottom
           return (
-            <div key={card._id} className='flex flex-col gap-4 rounded-2xl bg-[#F3F5F7] p-6'>
+            <div key={card._id} className='flex flex-col gap-3 sm:gap-4 md:gap-5 rounded-2xl bg-[#F3F5F7] p-4 sm:p-6 md:p-8'>
               <div>
-                {card.title && <h3 className='text-xl font-semibold text-[#1C1F1A]'>{card.title}</h3>}
-                {card.description && <p className='mt-3 text-sm text-[#4F3A2E]'>{card.description}</p>}
+                {card.title && <h3 className='text-lg sm:text-xl md:text-2xl font-semibold text-[#1C1F1A]'>{card.title}</h3>}
+                {card.description && <p className='mt-2 sm:mt-3 md:mt-4 text-xs sm:text-sm md:text-base text-[#4F3A2E]'>{card.description}</p>}
 
                 <Link
                   href={card.buttonLink || '/products'}
-                  className='inline-flex mt-4 items-center gap-2 rounded-full bg-[#1F3B29] px-5 py-2 text-sm text-white hover:bg-[#2a4d3a] transition-colors'>
+                  className='inline-flex mt-3 sm:mt-4 md:mt-5 items-center gap-2 rounded-full bg-[#1F3B29] px-6 sm:px-7 md:px-9 lg:px-10 py-2.5 sm:py-3 md:py-3.5 text-xs sm:text-sm md:text-base text-white hover:bg-[#2a4d3a] transition-colors whitespace-nowrap'>
                   {card.buttonText || 'Shop now'}
                 </Link>
               </div>
 
               {card.image && (
-                <img src={card.image} className='h-[330px] w-full rounded-xl object-cover' alt={card.title || 'Collection image'} />
+                <img src={card.image} className='h-48 sm:h-64 md:h-[280px] lg:h-[330px] w-full rounded-xl object-cover' alt={card.title || 'Collection image'} />
               )}
             </div>
           );
@@ -1185,13 +1199,13 @@ const GallerySection = ({ galleryItems, isLoading = false }: { galleryItems: Gal
   const itemsToShow = galleryItems.length > 0 ? galleryItems : [];
 
   return (
-    <section className='w-full'>
+    <section className='w-full overflow-hidden'>
       <SectionHeader title='Gallery' align='center' description='A glimpse into our recent shoots and studio moments.' />
 
-      <div className='mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4'>
+      <div className='mt-6 sm:mt-8 grid grid-cols-2 gap-3 sm:gap-4 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 md:gap-5'>
         {itemsToShow.map(item => (
           <div key={`gallery-image-${item._id}`} className='overflow-hidden rounded-xl shadow-sm hover:shadow-md transition-shadow'>
-            <img src={item.image} className='h-40 w-full object-cover sm:h-56 lg:h-64' alt='Gallery image' />
+            <img src={item.image} className='h-32 sm:h-40 md:h-56 w-full object-cover lg:h-64' alt='Gallery image' />
           </div>
         ))}
       </div>
@@ -1204,27 +1218,27 @@ const WhyChooseUs = ({ features, isLoading = false }: { features?: HomepageFeatu
   const isPending = isLoading && (!features || features.length === 0);
 
   return (
-    <section className='w-full'>
+    <section className='w-full overflow-hidden'>
       <SectionHeader
         title='Why Choose Us'
         description='Experience the difference with our premium services and commitment to excellence.'
         align='center'
       />
 
-      <div className='mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-6'>
+      <div className='mt-6 sm:mt-8 grid grid-cols-2 gap-3 sm:gap-4 sm:grid-cols-3 md:grid-cols-4 md:gap-5 lg:grid-cols-6'>
         {resolvedFeatures.map(feature => {
           const IconComponent: LucideIcon = FEATURE_ICON_COMPONENTS[feature.icon] || Sparkles;
           return (
             <div
               key={`${feature.title}-${feature.icon}`}
-              className={`flex flex-col items-center rounded-2xl border border-web/50 bg-white p-5 text-center ${
+              className={`flex flex-col items-center rounded-2xl border border-web/50 bg-white p-3 sm:p-4 md:p-5 text-center ${
                 isPending ? 'animate-pulse' : ''
               }`}>
-              <div className='mb-3 rounded-full bg-[#F5EEE5] p-4 text-[#1F3B29]'>
-                <IconComponent size={28} />
+              <div className='mb-2 sm:mb-3 rounded-full bg-[#F5EEE5] p-3 sm:p-4 text-[#1F3B29]'>
+                <IconComponent size={20} className='sm:w-6 sm:h-6 md:w-7 md:h-7' />
               </div>
-              <h3 className='text-sm font-semibold text-[#1F3B29]'>{feature.title}</h3>
-              <p className='mt-2 text-xs text-[#4F3A2E]'>{feature.description}</p>
+              <h3 className='text-xs sm:text-sm font-semibold text-[#1F3B29]'>{feature.title}</h3>
+              <p className='mt-1 sm:mt-2 text-[10px] sm:text-xs text-[#4F3A2E]'>{feature.description}</p>
             </div>
           );
         })}
@@ -1238,7 +1252,7 @@ const BestSellers = ({ products, isLoading = false }: { products?: ProductCardDa
   const showLoading = isLoading && (!products || products.length === 0);
 
   return (
-    <section className='w-full space-y-6'>
+    <section className='w-full space-y-6 overflow-hidden'>
       <div className='border-b border-web pb-3'>
         <SectionHeader
           title='Best Sellers'
@@ -1252,9 +1266,9 @@ const BestSellers = ({ products, isLoading = false }: { products?: ProductCardDa
           <p className='text-gray-500'>Loading featured products...</p>
         </div>
       ) : (
-        <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4'>
+        <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-4 md:gap-5 lg:gap-6'>
           {items.map(product => (
-            <ProductCard key={product.id} product={product} />
+            <ProductCard key={product.id} product={product} className='w-full max-w-none' />
           ))}
         </div>
       )}
@@ -1271,20 +1285,20 @@ const Testimonials = () => {
         align='center'
       />
 
-      <div className='mt-8 grid grid-cols-1 gap-6 md:grid-cols-3'>
+      <div className='mt-6 grid grid-cols-1 gap-4 sm:gap-6 sm:grid-cols-2 md:grid-cols-3'>
         {testimonials.map(testimonial => (
-          <div key={testimonial.id} className='rounded-2xl border border-web/50 bg-white p-6 shadow-sm'>
-            <div className='mb-4 flex items-center gap-1'>
+          <div key={testimonial.id} className='rounded-2xl border border-web/50 bg-white p-4 sm:p-6 shadow-sm'>
+            <div className='mb-3 sm:mb-4 flex items-center gap-1'>
               {[...Array(5)].map((_, i) => (
-                <Star key={i} size={16} className='text-[#C8A15B]' />
+                <Star key={i} size={14} className='sm:w-4 sm:h-4 text-[#C8A15B]' />
               ))}
             </div>
-            <p className='mb-6 text-sm text-[#4F3A2E] italic'>&ldquo;{testimonial.comment}&rdquo;</p>
-            <div className='flex items-center gap-4'>
-              <img src={testimonial.image} alt={testimonial.name} className='h-14 w-14 rounded-full object-cover' />
+            <p className='mb-4 sm:mb-6 text-xs sm:text-sm text-[#4F3A2E] italic'>&ldquo;{testimonial.comment}&rdquo;</p>
+            <div className='flex items-center gap-3 sm:gap-4'>
+              <img src={testimonial.image} alt={testimonial.name} className='h-12 w-12 sm:h-14 sm:w-14 rounded-full object-cover' />
               <div>
-                <h4 className='text-sm font-semibold text-[#1F3B29]'>{testimonial.name}</h4>
-                <p className='text-xs text-[#4F3A2E]'>{testimonial.role}</p>
+                <h4 className='text-xs sm:text-sm font-semibold text-[#1F3B29]'>{testimonial.name}</h4>
+                <p className='text-[10px] sm:text-xs text-[#4F3A2E]'>{testimonial.role}</p>
               </div>
             </div>
           </div>
@@ -1296,7 +1310,7 @@ const Testimonials = () => {
 
 const Subscribe = () => {
   return (
-    <section className='relative w-full py-16 sm:py-24 overflow-hidden'>
+    <section className='relative w-full py-12 sm:py-16 md:py-20 lg:py-24 overflow-hidden'>
       {/* Background Video */}
       <video autoPlay loop muted playsInline className='absolute inset-0 w-full h-full object-cover'>
         <source src='/uploads/vid.mp4' type='video/mp4' />
@@ -1306,18 +1320,18 @@ const Subscribe = () => {
       <div className='absolute inset-0 bg-black/40' />
 
       {/* Content */}
-      <div className='relative mx-auto max-w-4xl w-full text-center text-white z-10'>
-        <h3 className='mb-4 text-xl sm:text-2xl'>Stay Informed with Our</h3>
-        <p className='mb-8 text-3xl font-light sm:text-4xl'>Latest News and Updates</p>
+      <div className='relative mx-auto max-w-[1440px] w-full px-4 sm:px-6 md:px-8 lg:px-12 text-center text-white z-10'>
+        <h3 className='mb-3 sm:mb-4 md:mb-5 text-lg sm:text-xl md:text-2xl'>Stay Informed with Our</h3>
+        <p className='mb-6 sm:mb-8 md:mb-10 text-2xl sm:text-3xl md:text-4xl font-light'>Latest News and Updates</p>
 
-        <div className='flex w-full flex-col items-stretch gap-2 rounded-full border border-white/50 bg-white/90 px-3 py-2 text-left sm:flex-row sm:items-center sm:px-4'>
+        <div className='flex w-full max-w-2xl mx-auto flex-col items-stretch gap-2 sm:gap-3 rounded-full border border-white/50 bg-white/90 px-3 sm:px-4 md:px-5 py-2 sm:py-2.5 text-left sm:flex-row sm:items-center'>
           <input
             type='text'
             placeholder='Enter Your Email'
-            className='flex-1 rounded-full bg-transparent px-2 py-2 text-sm text-[#1F3B29] placeholder:text-[#4F3A2E] focus:outline-none'
+            className='flex-1 rounded-full bg-transparent px-3 sm:px-4 md:px-5 py-2 sm:py-2.5 text-xs sm:text-sm md:text-base text-[#1F3B29] placeholder:text-[#4F3A2E] focus:outline-none'
           />
 
-          <button type='button' className='cursor-pointer rounded-full bg-[#1F3B29] px-6 py-2 text-sm font-semibold text-white'>
+          <button type='button' className='cursor-pointer rounded-full bg-[#1F3B29] px-6 sm:px-7 md:px-9 lg:px-10 py-2.5 sm:py-3 md:py-3.5 lg:py-4 text-xs sm:text-sm md:text-base font-semibold text-white whitespace-nowrap transition-colors hover:bg-[#2a4d3a]'>
             Subscribe
           </button>
         </div>
@@ -1385,34 +1399,34 @@ const NewArrivalsSection = ({
   return (
     <section className='relative w-full'>
       {/* Background Banner */}
-      <div className='relative h-[380px] md:h-[420px] w-full'>
+      <div className='relative h-[280px] sm:h-[320px] md:h-[380px] lg:h-[420px] w-full'>
         <Image src={bannerData.backgroundImage} alt='New Arrivals Banner' fill className='object-cover' />
 
         <div className='absolute inset-0 bg-black/20'></div>
 
-        <div className='absolute inset-0 flex flex-col justify-center px-6 md:px-20 text-white'>
-          <h2 className='text-4xl md:text-5xl font-semibold'>{bannerData.title}</h2>
+        <div className='absolute inset-0 flex flex-col justify-center px-4 sm:px-6 md:px-8 lg:px-12 text-white'>
+          <h2 className='text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-semibold'>{bannerData.title}</h2>
 
           {bannerData.subtitle && (
-            <div className='mt-3 bg-white/30 text-white px-4 py-1 rounded-full w-fit backdrop-blur-md text-sm'>{bannerData.subtitle}</div>
+            <div className='mt-2 sm:mt-3 md:mt-4 bg-white/30 text-white px-3 sm:px-4 md:px-5 py-1 md:py-1.5 rounded-full w-fit backdrop-blur-md text-xs sm:text-sm md:text-base'>{bannerData.subtitle}</div>
           )}
 
           {bannerData.description && (
-            <p className='mt-4 text-lg md:text-xl max-w-[600px] leading-relaxed whitespace-pre-line'>{bannerData.description}</p>
+            <p className='mt-3 sm:mt-4 md:mt-5 text-sm sm:text-base md:text-lg lg:text-xl max-w-[600px] leading-relaxed whitespace-pre-line'>{bannerData.description}</p>
           )}
         </div>
       </div>
 
       {/* White Floating Cards */}
       {displayCards.length > 0 && (
-        <div className='max-w-[1300px] mx-auto px-4 md:px-10 -mt-20 md:-mt-24 relative z-10'>
-          <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+        <div className='max-w-[1440px] mx-auto px-4 sm:px-6 md:px-8 lg:px-12 -mt-16 sm:-mt-20 md:-mt-24 relative z-10'>
+          <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 md:gap-6'>
             {displayCards.map(card => (
               <div key={card._id} className='bg-white rounded-xl overflow-hidden shadow-lg'>
-                <div className='relative h-[300px] md:h-[350px]'>
+                <div className='relative h-[240px] sm:h-[280px] md:h-[320px] lg:h-[350px]'>
                   <Image src={card.image} alt={card.title} fill className='object-cover' />
                 </div>
-                <p className='px-6 py-4 text-lg font-medium'>{card.title}</p>
+                <p className='px-4 sm:px-6 md:px-8 py-3 sm:py-4 md:py-5 text-base sm:text-lg md:text-xl font-medium'>{card.title}</p>
               </div>
             ))}
           </div>

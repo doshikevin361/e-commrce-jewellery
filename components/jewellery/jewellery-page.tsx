@@ -458,28 +458,28 @@ export function JewelleryPage() {
   return (
     <div className='min-h-screen'>
       {/* Hero Banner */}
-      <div className='relative w-full h-[300px] sm:h-[400px] overflow-hidden bg-gradient-to-r from-[#1F3B29] to-[#3F5C45]'>
+      <div className='relative w-full h-[280px] sm:h-[350px] md:h-[400px] lg:h-[450px] overflow-hidden bg-gradient-to-r from-[#1F3B29] to-[#3F5C45]'>
         <div className='absolute inset-0 bg-[url("https://images.unsplash.com/photo-1601121141461-9d6647bca1ed?w=1200&q=85")] bg-cover bg-center opacity-50'></div>
-        <div className='relative z-10 h-full flex flex-col items-center justify-center text-center px-4 sm:px-6 md:px-8'>
-          <h1 className='text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-4 sm:mb-6'>Exquisite Jewellery</h1>
-          <p className='text-lg sm:text-xl md:text-2xl text-white/90 max-w-2xl'>
+        <div className='relative z-10 h-full flex flex-col items-center justify-center text-center px-4 sm:px-6 md:px-8 lg:px-12'>
+          <h1 className='text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-white mb-3 sm:mb-4 md:mb-6'>Exquisite Jewellery</h1>
+          <p className='text-base sm:text-lg md:text-xl lg:text-2xl text-white/90 max-w-2xl px-4'>
             Discover our stunning collection of handcrafted jewellery pieces
           </p>
         </div>
       </div>
 
-      <div className='container mx-auto px-4 sm:px-6 lg:px-8 py-8 max-w-[1440px]'>
+      <div className='container mx-auto px-4 sm:px-6 md:px-8 lg:px-12 py-6 sm:py-8 md:py-10 max-w-[1440px]'>
         {/* Header */}
         <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mb-8'>
           <div>
-            <h2 className='text-2xl sm:text-3xl font-bold text-[#1F3B29]'>All Jewellery</h2>
-            <p className='text-[#4F3A2E] mt-1'>{filteredAndSortedProducts.length} products found</p>
+            <h2 className='text-xl sm:text-2xl md:text-3xl font-bold text-[#1F3B29]'>All Jewellery</h2>
+            <p className='text-sm sm:text-base text-[#4F3A2E] mt-1'>{filteredAndSortedProducts.length} products found</p>
           </div>
 
-          <div className='flex items-center gap-3 flex-wrap'>
+          <div className='flex items-center gap-2 sm:gap-3 flex-wrap'>
             {/* Sort */}
             <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className='w-[140px] sm:w-48 border-[#E6D3C2]'>
+              <SelectTrigger className='w-[140px] sm:w-48 border-[#E6D3C2] text-xs sm:text-sm'>
                 <SelectValue placeholder='Sort by' />
               </SelectTrigger>
               <SelectContent>
@@ -571,15 +571,24 @@ export function JewelleryPage() {
           </div>
         )}
 
-        <div className='flex gap-6 lg:gap-8'>
-          {/* Filters Sidebar */}
-          <aside className={cn('w-full lg:w-80 flex-shrink-0 transition-all duration-300', 'lg:block', showFilters ? 'block' : 'hidden')}>
-            <div className='bg-white border border-[#E6D3C2] rounded-xl p-4 sm:p-6 sticky top-36'>
-              <div className='flex items-center justify-between mb-6'>
-                <h3 className='text-lg font-semibold text-[#1F3B29]'>Filters</h3>
+        <div className='flex flex-col lg:flex-row gap-4 sm:gap-6 lg:gap-8'>
+          {/* Filters Sidebar - Mobile: Overlay, Desktop: Sidebar */}
+          {showFilters && (
+            <div className='lg:hidden fixed inset-0 z-50 bg-black/50' onClick={() => setShowFilters(false)} />
+          )}
+          <aside className={cn(
+            'w-full lg:w-80 flex-shrink-0 transition-all duration-300',
+            'lg:block',
+            showFilters 
+              ? 'fixed lg:relative inset-y-0 left-0 z-50 lg:z-auto bg-white lg:bg-transparent shadow-xl lg:shadow-none' 
+              : 'hidden lg:block'
+          )}>
+            <div className='bg-white border border-[#E6D3C2] rounded-xl lg:rounded-xl p-4 sm:p-5 md:p-6 h-full lg:h-auto lg:sticky top-24 sm:top-28 md:top-32 lg:top-36 max-h-[100vh] lg:max-h-[calc(100vh-8rem)] overflow-y-auto'>
+              <div className='flex items-center justify-between mb-4 sm:mb-5 md:mb-6'>
+                <h3 className='text-base sm:text-lg font-semibold text-[#1F3B29]'>Filters</h3>
                 <div className='flex items-center gap-2'>
                   {activeFiltersCount > 0 && (
-                    <Button variant='ghost' size='sm' onClick={clearAllFilters} className='text-xs text-[#4F3A2E] hover:text-[#1F3B29]'>
+                    <Button variant='ghost' size='sm' onClick={clearAllFilters} className='text-xs sm:text-sm text-[#4F3A2E] hover:text-[#1F3B29]'>
                       Clear All
                     </Button>
                   )}
@@ -588,7 +597,7 @@ export function JewelleryPage() {
                     size='sm'
                     onClick={() => setShowFilters(false)}
                     className='lg:hidden text-[#4F3A2E] hover:text-[#1F3B29]'>
-                    <X className='w-4 h-4' />
+                    <X className='w-4 h-4 sm:w-5 sm:h-5' />
                   </Button>
                 </div>
               </div>
@@ -789,7 +798,7 @@ export function JewelleryPage() {
               </div>
             ) : (
               <>
-                <div className='grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3'>
+                <div className='grid gap-3 sm:gap-4 md:gap-5 lg:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3'>
                   {paginatedProducts.map(product => (
                     <ProductCard key={product._id} product={convertToProductCard(product)} onClick={() => handleProductClick(product)} />
                   ))}

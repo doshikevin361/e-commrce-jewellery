@@ -48,7 +48,7 @@ export function HeroBannerSlider({ banners = [], isLoading = false }: HeroBanner
 
   if (isLoading && activeBanners.length === 0) {
     return (
-      <div className='w-full  h-[400px] md:h-[450px] rounded-2xl bg-gray-100 flex items-center justify-center'>
+      <div className='w-full h-[280px] sm:h-[350px] md:h-[400px] lg:h-[450px] rounded-2xl bg-gray-100 flex items-center justify-center'>
         {/* <p className='text-gray-500'>Loading banners...</p> */}
       </div>
     );
@@ -80,7 +80,7 @@ export function HeroBannerSlider({ banners = [], isLoading = false }: HeroBanner
         }}
         onSwiper={setSwiper}
         onSlideChange={swiper => setActiveIndex(swiper.realIndex)}
-        className='hero-banner-swiper w-full h-[400px] md:h-[450px]'>
+        className='hero-banner-swiper w-full h-[280px] sm:h-[350px] md:h-[400px] lg:h-[450px]'>
         {activeBanners.map(banner => (
           <SwiperSlide key={banner._id}>
             <div className='relative w-full h-full'>
@@ -98,21 +98,21 @@ export function HeroBannerSlider({ banners = [], isLoading = false }: HeroBanner
               <div className='absolute inset-0 bg-gradient-to-r from-black/60 via-black/40 to-transparent' />
 
               {/* Right Side - Text Content Overlay */}
-              <div className='relative h-full flex flex-col justify-center items-end px-6 md:px-12 lg:px-16 xl:px-20 py-8 md:py-12'>
-                <div className='w-full sm:pl-10 flex flex-col justify-center text-right md:text-left'>
+              <div className='relative h-full flex flex-col justify-center items-center sm:items-end px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 py-6 sm:py-8 md:py-12'>
+                <div className='w-full max-w-2xl sm:pl-10 flex flex-col justify-center text-center sm:text-right md:text-left'>
                   {/* Brand/Logo Area - Optional */}
                   {banner.subtitle && (
-                    <p className='text-xs md:text-sm font-semibold text-white/90 mb-2 uppercase tracking-wider'>{banner.subtitle}</p>
+                    <p className='text-[10px] sm:text-xs md:text-sm font-semibold text-white/90 mb-1 sm:mb-2 md:mb-3 uppercase tracking-wider'>{banner.subtitle}</p>
                   )}
 
                   {/* Main Title */}
-                  <h1 className='text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold text-white mb-4 md:mb-6 leading-tight drop-shadow-lg'>
+                  <h1 className='text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold text-white mb-3 sm:mb-4 md:mb-6 leading-tight drop-shadow-lg'>
                     {banner.title}
                   </h1>
 
                   {/* Description */}
                   {banner.description && (
-                    <p className='text-sm md:text-base lg:text-lg text-white/90 mb-6 md:mb-8 max-w-2xl drop-shadow-md'>
+                    <p className='text-xs sm:text-sm md:text-base lg:text-lg text-white/90 mb-4 sm:mb-6 md:mb-8 max-w-2xl drop-shadow-md'>
                       {banner.description}
                     </p>
                   )}
@@ -121,7 +121,7 @@ export function HeroBannerSlider({ banners = [], isLoading = false }: HeroBanner
                   {banner.buttonText && (
                     <Link
                       href={banner.link || '/products'}
-                      className='inline-flex items-center justify-center bg-white text-web px-6 md:px-8 lg:px-10 py-3  rounded-full font-semibold text-sm md:text-base  transition-colors duration-200 w-fit shadow-lg'>
+                      className='inline-flex items-center justify-center bg-white text-web px-6 sm:px-7 md:px-9 lg:px-10 py-2.5 sm:py-3 md:py-3.5 lg:py-4 rounded-full font-semibold text-xs sm:text-sm md:text-base transition-colors duration-200 w-fit mx-auto sm:mx-0 shadow-lg whitespace-nowrap hover:bg-[#F5EEE5]'>
                       {banner.buttonText}
                     </Link>
                   )}
@@ -137,15 +137,15 @@ export function HeroBannerSlider({ banners = [], isLoading = false }: HeroBanner
         <>
           <button
             ref={prevButtonRef}
-            className='cursor-pointer absolute left-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 md:w-12 md:h-12 rounded-full bg-white/90 backdrop-blur-sm border border-gray-200 flex items-center justify-center hover:bg-white hover:border-[#1F3B29] transition-all shadow-lg'
+            className='cursor-pointer absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-10 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full bg-white/90 backdrop-blur-sm border border-gray-200 flex items-center justify-center hover:bg-white hover:border-[#1F3B29] transition-all shadow-lg'
             aria-label='Previous slide'>
-            <ChevronLeft className='w-5 h-5 md:w-6 md:h-6 text-[#1F3B29]' />
+            <ChevronLeft className='w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-[#1F3B29]' />
           </button>
           <button
             ref={nextButtonRef}
-            className='cursour-pointer absolute right-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 md:w-12 md:h-12 rounded-full bg-white/90 backdrop-blur-sm border border-gray-200 flex items-center justify-center hover:bg-white hover:border-[#1F3B29] transition-all shadow-lg'
+            className='cursor-pointer absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-10 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full bg-white/90 backdrop-blur-sm border border-gray-200 flex items-center justify-center hover:bg-white hover:border-[#1F3B29] transition-all shadow-lg'
             aria-label='Next slide'>
-            <ChevronRight className='w-5 h-5 md:w-6 md:h-6 text-[#1F3B29]' />
+            <ChevronRight className='w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-[#1F3B29]' />
           </button>
         </>
       )}

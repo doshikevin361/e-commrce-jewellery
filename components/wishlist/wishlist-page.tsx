@@ -99,19 +99,19 @@ export function WishlistPage() {
 
   if (wishlistItems.length === 0) {
     return (
-      <div className='mx-auto w-full max-w-[1400px] px-4 sm:px-6 md:px-8 lg:px-12 py-12 sm:py-16 md:py-20'>
+      <div className='mx-auto w-full max-w-[1440px] px-4 sm:px-6 md:px-8 lg:px-12 py-12 sm:py-16 md:py-20'>
         <div className='text-center'>
-          <div className='w-20 h-20 rounded-full bg-[#F5EEE5] flex items-center justify-center mx-auto mb-6'>
-            <Heart size={40} className='text-[#C8A15B]' />
+          <div className='w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-[#F5EEE5] flex items-center justify-center mx-auto mb-4 sm:mb-6'>
+            <Heart size={32} className='sm:w-10 sm:h-10 text-[#C8A15B]' />
           </div>
-          <h1 className='text-2xl sm:text-3xl font-bold text-[#1F3B29] mb-4'>Your Wishlist is Empty</h1>
-          <p className='text-sm sm:text-base text-[#4F3A2E] mb-8 max-w-md mx-auto'>
+          <h1 className='text-xl sm:text-2xl md:text-3xl font-bold text-[#1F3B29] mb-3 sm:mb-4'>Your Wishlist is Empty</h1>
+          <p className='text-xs sm:text-sm md:text-base text-[#4F3A2E] mb-6 sm:mb-8 max-w-md mx-auto px-4'>
             Start adding items you love to your wishlist. They'll be saved here for you to purchase later.
           </p>
           <Link
             href='/products'
-            className='inline-flex items-center gap-2 rounded-full bg-[#1F3B29] px-6 py-3 text-white font-semibold hover:bg-[#2a4d3a] transition-colors'>
-            <ArrowRight size={18} />
+            className='inline-flex items-center gap-2 rounded-full bg-[#1F3B29] px-5 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base text-white font-semibold hover:bg-[#2a4d3a] transition-colors'>
+            <ArrowRight size={16} className='sm:w-[18px] sm:h-[18px]' />
             Start Shopping
           </Link>
         </div>
@@ -120,16 +120,16 @@ export function WishlistPage() {
   }
 
   return (
-    <div className='mx-auto w-full max-w-[1400px] px-4 sm:px-6 md:px-8 lg:px-12 py-6 sm:py-8 md:py-10'>
+    <div className='mx-auto w-full max-w-[1440px] px-4 sm:px-6 md:px-8 lg:px-12 py-6 sm:py-8 md:py-10'>
       {/* Header */}
-      <div className='mb-8 sm:mb-12'>
-        <div className='flex items-center gap-3 mb-4'>
-          <div className='w-12 h-12 rounded-full bg-[#F5EEE5] flex items-center justify-center'>
-            <Heart size={24} className='text-[#C8A15B] fill-[#C8A15B]' />
+      <div className='mb-6 sm:mb-8 md:mb-12'>
+        <div className='flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4'>
+          <div className='w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#F5EEE5] flex items-center justify-center'>
+            <Heart size={20} className='sm:w-6 sm:h-6 text-[#C8A15B] fill-[#C8A15B]' />
           </div>
           <div>
-            <h1 className='text-2xl sm:text-3xl md:text-4xl font-bold text-[#1F3B29]'>My Wishlist</h1>
-            <p className='text-sm sm:text-base text-[#4F3A2E]'>
+            <h1 className='text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-[#1F3B29]'>My Wishlist</h1>
+            <p className='text-xs sm:text-sm md:text-base text-[#4F3A2E]'>
               {wishlistItems.length} {wishlistItems.length === 1 ? 'item' : 'items'} saved
             </p>
           </div>
@@ -137,7 +137,7 @@ export function WishlistPage() {
       </div>
 
       {/* Wishlist Items */}
-      <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6'>
+      <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6'>
         {wishlistItems.map(product => {
           const productId = (product as any)._id || product.id.toString();
           const productSlug = (product as any).urlSlug || productId;
@@ -155,15 +155,15 @@ export function WishlistPage() {
       </div>
 
       {/* Actions */}
-      <div className='mt-12 flex flex-col sm:flex-row gap-4 justify-between items-center bg-[#F5EEE5] rounded-xl p-6'>
+      <div className='mt-8 sm:mt-10 md:mt-12 flex flex-col sm:flex-row gap-4 sm:gap-6 justify-between items-center bg-[#F5EEE5] rounded-xl p-4 sm:p-5 md:p-6'>
         <div>
-          <p className='text-sm text-[#4F3A2E] mb-1'>Total Items</p>
-          <p className='text-2xl font-bold text-[#1F3B29]'>{wishlistItems.length}</p>
+          <p className='text-xs sm:text-sm text-[#4F3A2E] mb-1'>Total Items</p>
+          <p className='text-xl sm:text-2xl font-bold text-[#1F3B29]'>{wishlistItems.length}</p>
         </div>
-        <div className='flex gap-3'>
+        <div className='flex gap-2 sm:gap-3 w-full sm:w-auto'>
           <Link
             href='/products'
-            className='inline-flex items-center gap-2 rounded-full border-2 border-[#1F3B29] px-6 py-3 text-[#1F3B29] font-semibold hover:bg-[#1F3B29] hover:text-white transition-colors'>
+            className='inline-flex items-center justify-center gap-2 rounded-full border-2 border-[#1F3B29] px-4 sm:px-5 md:px-6 py-2 sm:py-2.5 md:py-3 text-xs sm:text-sm md:text-base text-[#1F3B29] font-semibold hover:bg-[#1F3B29] hover:text-white transition-colors w-full sm:w-auto'>
             Continue Shopping
           </Link>
         </div>

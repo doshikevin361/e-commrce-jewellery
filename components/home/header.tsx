@@ -146,7 +146,7 @@ export function HomeHeader() {
     const handleResize = () => {
       const mobile = window.innerWidth < 1024;
       setIsMobile(mobile);
-      if (window.innerWidth >= 768) {
+      if (window.innerWidth >= 1024) {
         setMobileMenuOpen(false);
       }
     };
@@ -183,7 +183,17 @@ export function HomeHeader() {
     <React.Fragment>
       {/* Top bar with logo, search, and account/cart - Fixed Sticky */}
       <div className='fixed top-0 left-0 right-0 bg-white z-50 shadow-sm'>
-        <div className='mx-auto mb-2 sm:mb-3 md:mb-4 flex w-full max-w-[1440px] items-center justify-between gap-2 sm:gap-3 md:gap-4 px-4 sm:px-6 md:px-8 lg:px-12 py-2 sm:py-2.5 md:py-3 pt-3 sm:pt-4 md:pt-6 lg:pt-8'>
+        <div className='mx-auto flex w-full max-w-[1440px] items-center justify-between gap-2 sm:gap-3 md:gap-4 px-4 sm:px-6 md:px-8 lg:px-12 py-2 sm:py-2.5 md:py-3 pt-3 sm:pt-4 md:pt-5 lg:pt-6'>
+          {/* Mobile Menu Button - In top bar for better visibility, hidden on desktop (1024px+) */}
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className='flex lg:hidden items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-lg transition-all duration-300 hover:bg-[#1F3B29]/10 active:scale-95 bg-[#1F3B29] text-white shadow-lg flex-shrink-0 mr-2 sm:mr-3'
+            aria-label='Menu'
+            type='button'>
+            {mobileMenuOpen ? <X size={24} className='sm:w-7 sm:h-7 text-white flex-shrink-0 font-bold stroke-[2.5]' /> : <Menu size={24} className='sm:w-7 sm:h-7 text-white flex-shrink-0 font-bold stroke-[2.5]' />}
+          </button>
+
+          {/* Logo */}
           <Link
             href='/'
             className='flex items-center gap-1 sm:gap-1.5 md:gap-2 flex-shrink-0 transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer'>
@@ -193,11 +203,14 @@ export function HomeHeader() {
             </span>
           </Link>
 
+          {/* Search Bar - Hidden on mobile, shown on tablet+ */}
           <div className='hidden sm:flex mx-2 sm:mx-3 md:mx-4 lg:mx-5 flex-1 max-w-xs sm:max-w-sm md:max-w-lg lg:max-w-2xl'>
             <SearchBar />
           </div>
 
-          <div className='flex items-center gap-1.5 sm:gap-2 md:gap-4 lg:gap-6 text-xs sm:text-sm text-[#1F3B29]'>
+          {/* Right Side Icons */}
+          <div className='flex items-center gap-1 sm:gap-1.5 md:gap-3 lg:gap-4 text-xs sm:text-sm text-[#1F3B29]'>
+            {/* Wishlist - Hidden on mobile, icon only on tablet, full on desktop */}
             <Link
               href='/wishlist'
               className='hidden sm:flex items-center gap-1 font-semibold px-1 sm:px-1.5 md:px-2 transition-all duration-300 hover:scale-110 active:scale-95 relative'
@@ -210,7 +223,7 @@ export function HomeHeader() {
                   </span>
                 )}
               </div>
-              <span className='hidden md:inline text-xs sm:text-sm whitespace-nowrap'>Wishlist</span>
+              <span className='hidden lg:inline text-xs sm:text-sm whitespace-nowrap'>Wishlist</span>
             </Link>
             {/* Account Dropdown */}
             <div className='relative' ref={accountDropdownRef}>
@@ -221,8 +234,8 @@ export function HomeHeader() {
                     className='flex items-center gap-0.5 sm:gap-1 font-semibold px-1 sm:px-1.5 md:px-2 transition-all duration-300 hover:scale-110 active:scale-95 whitespace-nowrap'
                     aria-label='Account'>
                     <User size={15} className='sm:w-[16px] sm:h-[16px] md:w-[18px] md:h-[18px] flex-shrink-0' />
-                    <span className='hidden sm:inline text-xs sm:text-sm whitespace-nowrap'>{customerName || 'My Account'}</span>
-                    <ChevronDown size={12} className={`transition-transform duration-300 ${accountDropdownOpen ? 'rotate-180' : ''}`} />
+                    <span className='hidden sm:inline text-xs sm:text-sm whitespace-nowrap truncate max-w-[80px] sm:max-w-[100px] md:max-w-none'>{customerName || 'My Account'}</span>
+                    <ChevronDown size={12} className={`hidden sm:block transition-transform duration-300 ${accountDropdownOpen ? 'rotate-180' : ''}`} />
                   </button>
                   {accountDropdownOpen && (
                     <div className='absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-100 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200'>
@@ -250,7 +263,7 @@ export function HomeHeader() {
                     aria-label='Login'>
                     <User size={15} className='sm:w-[16px] sm:h-[16px] md:w-[18px] md:h-[18px] flex-shrink-0' />
                     <span className='hidden sm:inline text-xs sm:text-sm whitespace-nowrap'>Login</span>
-                    <ChevronDown size={12} className={`transition-transform duration-300 ${accountDropdownOpen ? 'rotate-180' : ''}`} />
+                    <ChevronDown size={12} className={`hidden sm:block transition-transform duration-300 ${accountDropdownOpen ? 'rotate-180' : ''}`} />
                   </button>
                   {accountDropdownOpen && (
                     <div className='absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-100 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200'>
@@ -277,6 +290,7 @@ export function HomeHeader() {
                 </>
               )}
             </div>
+            {/* Cart */}
             <Link
               href='/cart'
               className='flex items-center gap-1 sm:gap-1.5 font-semibold px-1 sm:px-1.5 md:px-2 transition-all duration-300 hover:scale-110 active:scale-95 relative'
@@ -289,33 +303,83 @@ export function HomeHeader() {
                   </span>
                 )}
               </div>
-              <span className='hidden sm:inline text-xs sm:text-sm whitespace-nowrap text-[#1F3B29]'>Your Cart</span>
+              <span className='hidden lg:inline text-xs sm:text-sm whitespace-nowrap text-[#1F3B29]'>Your Cart</span>
             </Link>
           </div>
-          {/* Mobile Search Bar */}
-          <div className='sm:hidden px-4 sm:px-6 pb-2 sm:pb-3'>
-            <SearchBar />
-          </div>
         </div>
+        {/* Mobile Search Bar - Below main bar */}
+        <div className='sm:hidden border-t border-gray-100 px-4 py-2'>
+          <SearchBar />
+        </div>
+
+        {/* Mobile/Tablet Menu Dropdown - Positioned from top bar, hidden on desktop (1024px+) */}
+        {mobileMenuOpen && (
+          <div className='lg:hidden fixed top-[60px] sm:top-[70px] left-0 right-0 w-full bg-[#1F3B29] border-t-2 border-white/20 shadow-2xl z-50 max-h-[75vh] overflow-y-auto'>
+            <div className='px-4 sm:px-6 md:px-8 py-4 sm:py-5'>
+              <ul className='flex flex-col gap-1 sm:gap-2'>
+                {menuLoading || categoriesLoading ? (
+                  // Skeleton loading for mobile menu
+                  <>
+                    {[1, 2, 3, 4, 5, 6].map(i => (
+                      <li key={i} className='mb-1 sm:mb-2'>
+                        <div className='block w-full text-left px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg animate-pulse'>
+                          <div className='h-4 sm:h-5 w-24 sm:w-32 bg-white/20 rounded'></div>
+                        </div>
+                      </li>
+                    ))}
+                  </>
+                ) : (
+                  <>
+                    {menuItems.map(item => (
+                      <li key={item.name}>
+                        <Link
+                          href={item.href}
+                          onClick={() => setMobileMenuOpen(false)}
+                          className='block w-full text-left px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg text-sm sm:text-base font-medium transition-all duration-300 hover:bg-white/10 hover:translate-x-2 active:bg-white/15'>
+                          {item.name}
+                        </Link>
+                      </li>
+                    ))}
+                    {/* Categories in mobile menu */}
+                    {categories.length > 0 && (
+                      <li className='pt-2 sm:pt-3 border-t border-white/10 mt-2 sm:mt-3'>
+                        <p className='px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold text-white/70 uppercase tracking-wider'>Categories</p>
+                      </li>
+                    )}
+                    {categories.map(category => {
+                      const isActive = activeCategory === category.name;
+                      return (
+                        <li key={category._id}>
+                          <Link
+                            href={`/jewellery?category=${encodeURIComponent(category.name)}`}
+                            onClick={() => setMobileMenuOpen(false)}
+                            className={cn(
+                              'block w-full text-left px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg text-sm sm:text-base font-medium transition-all duration-300 hover:bg-white/10 hover:translate-x-2 active:bg-white/15',
+                              isActive && 'bg-white/20 font-semibold'
+                            )}>
+                            {category.name}
+                          </Link>
+                        </li>
+                      );
+                    })}
+                  </>
+                )}
+              </ul>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Main Header with Navigation */}
       <header className='bg-white'>
         {/* Spacer to account for fixed header */}
-        <div className='h-[80px] sm:h-[90px] md:h-[100px] lg:h-[110px]' />
+        <div className='h-[60px] sm:h-[70px] md:h-[80px] lg:h-[90px]' />
 
-        {/* Navigation Menu Bar - Not sticky */}
-        <nav className='w-full bg-[#1F3B29] text-white duration-700 relative'>
-          <div className='mx-auto flex w-full max-w-[1440px] items-center justify-between px-4 sm:px-6 md:px-8  py-2 sm:py-2.5 md:py-3 lg:py-4'>
-            {/* Mobile Menu Button */}
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className='md:hidden flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-300 hover:bg-white/10 active:scale-95'
-              aria-label='Menu'>
-              {mobileMenuOpen ? <X size={20} className='text-white' /> : <Menu size={20} className='text-white' />}
-            </button>
-
-            <ul className='hidden lg:flex items-center gap-1 lg:gap-2 xl:gap-3 text-xs md:text-sm flex-wrap'>
+        {/* Navigation Menu Bar - Hidden on mobile/tablet, shown on desktop */}
+        <nav className='hidden lg:block w-full bg-[#1F3B29] text-white duration-700 relative z-40 min-h-[56px]'>
+          <div className='mx-auto flex w-full max-w-[1440px] items-center justify-between px-4 sm:px-6 md:px-8 lg:px-12 py-3 sm:py-3.5 md:py-4 lg:py-4'>
+            {/* Desktop Navigation */}
+            <ul className='flex items-center gap-1 lg:gap-2 xl:gap-3 text-xs md:text-sm flex-wrap'>
               {menuLoading || categoriesLoading ? (
                 // Skeleton loading for desktop menu
                 <>
@@ -384,59 +448,6 @@ export function HomeHeader() {
                 </>
               )}
             </ul>
-          </div>
-
-          {/* Mobile/Tablet Menu Dropdown */}
-          <div
-            className={`lg:hidden overflow-hidden transition-all duration-300 ease-in-out ${
-              mobileMenuOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
-            }`}>
-            <div className='px-4 sm:px-6 py-3 bg-[#1F3B29] border-t border-white/10'>
-              <ul className='flex flex-col gap-1'>
-                {menuLoading || categoriesLoading ? (
-                  // Skeleton loading for mobile menu
-                  <>
-                    {[1, 2, 3, 4, 5].map(i => (
-                      <li key={i} className='mb-2'>
-                        <div className='block w-full text-left px-4 py-3 rounded-lg animate-pulse'>
-                          <div className='h-5 w-24 bg-white/20 rounded'></div>
-                        </div>
-                      </li>
-                    ))}
-                  </>
-                ) : (
-                  <>
-                    {menuItems.map(item => (
-                      <li key={item.name}>
-                        <Link
-                          href={item.href}
-                          onClick={() => setMobileMenuOpen(false)}
-                          className='block w-full text-left px-4 py-3 rounded-lg text-sm font-medium transition-all duration-300 hover:bg-white/10 hover:translate-x-2 active:bg-white/15'>
-                          {item.name}
-                        </Link>
-                      </li>
-                    ))}
-                    {/* Categories in mobile menu */}
-                    {categories.map(category => {
-                      const isActive = activeCategory === category.name;
-                      return (
-                        <li key={category._id}>
-                          <Link
-                            href={`/jewellery?category=${encodeURIComponent(category.name)}`}
-                            onClick={() => setMobileMenuOpen(false)}
-                            className={cn(
-                              'block w-full text-left px-4 py-3 rounded-lg text-sm font-medium transition-all duration-300 hover:bg-white/10 hover:translate-x-2 active:bg-white/15',
-                              isActive && 'bg-white/20 font-semibold'
-                            )}>
-                            {category.name}
-                          </Link>
-                        </li>
-                      );
-                    })}
-                  </>
-                )}
-              </ul>
-            </div>
           </div>
         </nav>
       </header>

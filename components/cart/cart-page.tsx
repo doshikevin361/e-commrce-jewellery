@@ -88,44 +88,44 @@ export function CartPage() {
         </p>
       </div>
 
-      <div className='grid grid-cols-1 lg:grid-cols-3 gap-8'>
+      <div className='grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8'>
         {/* Cart Items */}
-        <div className='lg:col-span-2 space-y-4'>
+        <div className='lg:col-span-2 space-y-3 sm:space-y-4'>
           {cartItems.map(item => (
             <div
               key={item._id}
-              className='bg-white border-2 border-[#E6D3C2] rounded-xl p-4 sm:p-6 flex flex-col sm:flex-row gap-4 hover:border-[#C8A15B] transition-all'>
-              <Link href={`/products/${item.urlSlug || item._id}`} className='relative w-full sm:w-32 h-32 rounded-lg overflow-hidden bg-[#F5EEE5] flex-shrink-0'>
+              className='bg-white border-2 border-[#E6D3C2] rounded-xl p-3 sm:p-4 md:p-6 flex flex-col sm:flex-row gap-3 sm:gap-4 hover:border-[#C8A15B] transition-all'>
+              <Link href={`/products/${item.urlSlug || item._id}`} className='relative w-full sm:w-28 md:w-32 h-28 md:h-32 rounded-lg overflow-hidden bg-[#F5EEE5] flex-shrink-0'>
                 <Image src={item.image} alt={item.title} fill sizes='128px' className='object-cover' />
               </Link>
-              <div className='flex-1 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4'>
-                <div className='flex-1'>
+              <div className='flex-1 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4'>
+                <div className='flex-1 min-w-0'>
                   <Link href={`/products/${item.urlSlug || item._id}`}>
-                    <h3 className='text-lg font-semibold text-[#1F3B29] mb-1 hover:text-[#C8A15B] transition-colors'>
+                    <h3 className='text-base sm:text-lg font-semibold text-[#1F3B29] mb-1 hover:text-[#C8A15B] transition-colors truncate'>
                       {item.title}
                     </h3>
                   </Link>
-                  <p className='text-sm text-[#4F3A2E] mb-2'>{item.category}</p>
-                  <p className='text-xl font-bold text-[#1F3B29]'>
+                  <p className='text-xs sm:text-sm text-[#4F3A2E] mb-2'>{item.category}</p>
+                  <p className='text-lg sm:text-xl font-bold text-[#1F3B29]'>
                     ₹{item.displayPrice.toLocaleString()}
                     {item.originalPriceNum && item.originalPriceNum > item.displayPrice && (
-                      <span className='text-base text-[#4F3A2E]/50 line-through ml-2'>
+                      <span className='text-sm sm:text-base text-[#4F3A2E]/50 line-through ml-2'>
                         ₹{item.originalPriceNum.toLocaleString()}
                       </span>
                     )}
                   </p>
                 </div>
-                <div className='flex items-center gap-4'>
+                <div className='flex items-center gap-3 sm:gap-4'>
                   <div className='flex items-center border border-[#E6D3C2] rounded-lg relative'>
                     <button
                       onClick={() => handleUpdateQuantity(item._id, -1)}
                       disabled={item.quantity <= 1 || updatingItems.has(item._id)}
-                      className='p-2 hover:bg-[#F5EEE5] transition-colors disabled:opacity-50 disabled:cursor-not-allowed'>
-                      <Minus size={18} />
+                      className='p-1.5 sm:p-2 hover:bg-[#F5EEE5] transition-colors disabled:opacity-50 disabled:cursor-not-allowed'>
+                      <Minus size={16} className='sm:w-[18px] sm:h-[18px]' />
                     </button>
-                    <span className='px-4 py-2 text-[#1F3B29] font-semibold min-w-[3rem] text-center relative'>
+                    <span className='px-3 sm:px-4 py-1.5 sm:py-2 text-sm sm:text-base text-[#1F3B29] font-semibold min-w-[2.5rem] sm:min-w-[3rem] text-center relative'>
                       {updatingItems.has(item._id) ? (
-                        <Loader2 size={16} className='animate-spin mx-auto' />
+                        <Loader2 size={14} className='sm:w-4 sm:h-4 animate-spin mx-auto' />
                       ) : (
                         item.quantity
                       )}
@@ -133,15 +133,15 @@ export function CartPage() {
                     <button
                       onClick={() => handleUpdateQuantity(item._id, 1)}
                       disabled={item.quantity >= item.stock || updatingItems.has(item._id)}
-                      className='p-2 hover:bg-[#F5EEE5] transition-colors disabled:opacity-50 disabled:cursor-not-allowed'>
-                      <Plus size={18} />
+                      className='p-1.5 sm:p-2 hover:bg-[#F5EEE5] transition-colors disabled:opacity-50 disabled:cursor-not-allowed'>
+                      <Plus size={16} className='sm:w-[18px] sm:h-[18px]' />
                     </button>
                   </div>
                   <button
                     onClick={() => handleRemoveItem(item._id)}
-                    className='p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors'
+                    className='p-1.5 sm:p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors'
                     aria-label='Remove item'>
-                    <Trash2 size={18} />
+                    <Trash2 size={16} className='sm:w-[18px] sm:h-[18px]' />
                   </button>
                 </div>
               </div>
@@ -158,33 +158,33 @@ export function CartPage() {
 
         {/* Order Summary */}
         <div className='lg:col-span-1'>
-          <div className='bg-white border-2 border-[#E6D3C2] rounded-xl p-6 sticky top-24'>
-            <h2 className='text-xl font-bold text-[#1F3B29] mb-6'>Order Summary</h2>
-            <div className='space-y-4 mb-6'>
-              <div className='flex justify-between text-sm text-[#4F3A2E]'>
+          <div className='bg-white border-2 border-[#E6D3C2] rounded-xl p-4 sm:p-5 md:p-6 sticky top-20 sm:top-24'>
+            <h2 className='text-lg sm:text-xl font-bold text-[#1F3B29] mb-4 sm:mb-5 md:mb-6'>Order Summary</h2>
+            <div className='space-y-3 sm:space-y-4 mb-4 sm:mb-5 md:mb-6'>
+              <div className='flex justify-between text-xs sm:text-sm text-[#4F3A2E]'>
                 <span>Subtotal</span>
                 <span className='font-semibold'>₹{subtotal.toLocaleString()}</span>
               </div>
-              <div className='flex justify-between text-sm text-[#4F3A2E]'>
+              <div className='flex justify-between text-xs sm:text-sm text-[#4F3A2E]'>
                 <span>Shipping</span>
                 <span className='font-semibold'>{shipping === 0 ? 'Free' : `₹${shipping.toLocaleString()}`}</span>
               </div>
               {subtotal < 5000 && (
-                <p className='text-xs text-[#C8A15B]'>
+                <p className='text-[10px] sm:text-xs text-[#C8A15B]'>
                   Add ₹{(5000 - subtotal).toLocaleString()} more for free shipping!
                 </p>
               )}
-              <div className='border-t border-[#E6D3C2] pt-4 flex justify-between text-lg font-bold text-[#1F3B29]'>
+              <div className='border-t border-[#E6D3C2] pt-3 sm:pt-4 flex justify-between text-base sm:text-lg font-bold text-[#1F3B29]'>
                 <span>Total</span>
                 <span>₹{total.toLocaleString()}</span>
               </div>
             </div>
-            <button className='w-full rounded-full bg-[#1F3B29] px-6 py-4 text-white font-semibold hover:bg-[#2a4d3a] transition-colors mb-4'>
+            <button className='w-full rounded-full bg-[#1F3B29] px-4 sm:px-5 md:px-6 py-2.5 sm:py-3 md:py-4 text-sm sm:text-base text-white font-semibold hover:bg-[#2a4d3a] transition-colors mb-3 sm:mb-4'>
               Proceed to Checkout
             </button>
             <Link
               href='/wishlist'
-              className='w-full flex items-center justify-center gap-2 rounded-full border-2 border-[#1F3B29] px-6 py-3 text-[#1F3B29] font-semibold hover:bg-[#F5EEE5] transition-colors'>
+              className='w-full flex items-center justify-center gap-2 rounded-full border-2 border-[#1F3B29] px-4 sm:px-5 md:px-6 py-2 sm:py-2.5 md:py-3 text-sm sm:text-base text-[#1F3B29] font-semibold hover:bg-[#F5EEE5] transition-colors'>
               View Wishlist
             </Link>
           </div>

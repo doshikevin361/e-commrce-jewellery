@@ -172,9 +172,9 @@ export const ProductCard = ({
   };
 
   return (
-    <article className={cn('flex flex-col rounded-xl border border-[#E6D3C2]/70 bg-white p-3 sm:p-4 group w-[320px] h-full', className)}>
+    <article className={cn('flex flex-col rounded-xl border border-[#E6D3C2]/70 bg-white p-3 sm:p-4 group w-full h-full min-w-0', className)}>
       <div onClick={handleProductClick} className='block cursor-pointer w-full'>
-        <div className='relative overflow-hidden rounded-xl bg-[#F5EEE5] h-48 sm:h-56 w-full'>
+        <div className='relative overflow-hidden rounded-xl bg-[#F5EEE5] h-40 sm:h-48 md:h-56 w-full'>
           {product.badge && (
             <span className='absolute left-3 top-3 z-10 rounded-full bg-[#C8A15B] px-3 py-1 text-[11px] font-semibold text-white'>
               {product.badge}
@@ -208,7 +208,7 @@ export const ProductCard = ({
           <img
             src={product.image}
             alt={product.title}
-            className='w-full h-80 object-cover transition-transform duration-300 group-hover:scale-110'
+            className='w-full h-full object-cover transition-transform duration-300 group-hover:scale-110'
           />
         </div>
       </div>
@@ -230,23 +230,24 @@ export const ProductCard = ({
         </div>
 
         {/* Price + Button */}
-        <div className='mt-auto flex items-center justify-between'>
-          <div className='flex flex-col gap-1'>
-            <span className='text-lg font-semibold text-[#1F3B29]'>{product.price}</span>
-            {product.originalPrice && <span className='text-sm text-[#4F3A2E] line-through'>{product.originalPrice}</span>}
+        <div className='mt-auto flex items-center justify-between gap-2 sm:gap-3'>
+          <div className='flex flex-col gap-1 flex-1 min-w-0'>
+            <span className='text-base sm:text-lg font-semibold text-[#1F3B29] truncate'>{product.price}</span>
+            {product.originalPrice && <span className='text-xs sm:text-sm text-[#4F3A2E] line-through truncate'>{product.originalPrice}</span>}
           </div>
 
           <button
             onClick={handleAddToCart}
             disabled={cartLoading || isInCart}
             className={cn(
-              'cursor-pointer inline-flex items-center justify-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed',
+              'cursor-pointer inline-flex items-center justify-center gap-1 sm:gap-1.5 rounded-full border px-3 sm:px-4 md:px-5 py-1.5 sm:py-2 md:py-2.5 text-[10px] sm:text-xs md:text-sm font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap flex-shrink-0',
               isInCart
                 ? 'border-[#C8A15B] bg-[#C8A15B] text-white'
                 : 'border-[#1F3B29] text-[#1F3B29] hover:bg-[#1F3B29] hover:text-white'
             )}>
-            <ShoppingCart size={16} />
-            <span>{cartLoading ? 'Adding...' : isInCart ? 'In Cart' : actionLabel}</span>
+            <ShoppingCart size={12} className='sm:w-3.5 sm:h-3.5 md:w-4 md:h-4 flex-shrink-0' />
+            <span className='hidden sm:inline'>{cartLoading ? 'Adding...' : isInCart ? 'In Cart' : actionLabel}</span>
+            <span className='sm:hidden'>{cartLoading ? '...' : isInCart ? '✓' : '+'}</span>
           </button>
         </div>
       </div>
