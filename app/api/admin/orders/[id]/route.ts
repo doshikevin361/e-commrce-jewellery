@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { connectDB } from '@/lib/mongodb';
+import { connectDB, connectToDatabase } from '@/lib/mongodb';
 import Order from '@/lib/models/Order';
 import { getUserFromRequest, isAdmin } from '@/lib/auth';
+import { ObjectId } from 'mongodb';
 
 export async function GET(
   request: NextRequest,
@@ -16,24 +17,41 @@ export async function GET(
     await connectDB();
     const { id } = await params;
 
-    const order = await Order.findById(id)
-      .populate('customer', 'name email phone')
-      .lean();
+    const order = await Order.findById(id).lean();
 
     if (!order) {
       return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+    }
+
+    // Try to enrich with customer data from MongoDB
+    let customerData = null;
+    if (order.customer) {
+      try {
+        const { db } = await connectToDatabase();
+        const customerId = typeof order.customer === 'string' 
+          ? new ObjectId(order.customer) 
+          : order.customer;
+        const customer = await db.collection('customers').findOne({ _id: customerId });
+        if (customer) {
+          customerData = {
+            _id: customer._id.toString(),
+            name: customer.name,
+            email: customer.email,
+            phone: customer.phone,
+          };
+        }
+      } catch (err) {
+        console.error('[Order API] Error fetching customer:', err);
+      }
     }
 
     // Serialize the order
     const serializedOrder = {
       ...order,
       _id: order._id?.toString(),
-      customer: order.customer
-        ? {
-            ...order.customer,
-            _id: order.customer._id?.toString(),
-          }
-        : null,
+      customer: customerData || (order.customer ? {
+        _id: typeof order.customer === 'string' ? order.customer : order.customer.toString(),
+      } : null),
     };
 
     return NextResponse.json({ order: serializedOrder });
@@ -98,24 +116,41 @@ export async function PUT(
       id,
       { $set: updateData },
       { new: true, runValidators: true }
-    )
-      .populate('customer', 'name email phone')
-      .lean();
+    ).lean();
 
     if (!order) {
       return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+    }
+
+    // Try to enrich with customer data from MongoDB
+    let customerData = null;
+    if (order.customer) {
+      try {
+        const { db } = await connectToDatabase();
+        const customerId = typeof order.customer === 'string' 
+          ? new ObjectId(order.customer) 
+          : order.customer;
+        const customer = await db.collection('customers').findOne({ _id: customerId });
+        if (customer) {
+          customerData = {
+            _id: customer._id.toString(),
+            name: customer.name,
+            email: customer.email,
+            phone: customer.phone,
+          };
+        }
+      } catch (err) {
+        console.error('[Order API] Error fetching customer:', err);
+      }
     }
 
     // Serialize the order
     const serializedOrder = {
       ...order,
       _id: order._id?.toString(),
-      customer: order.customer
-        ? {
-            ...order.customer,
-            _id: order.customer._id?.toString(),
-          }
-        : null,
+      customer: customerData || (order.customer ? {
+        _id: typeof order.customer === 'string' ? order.customer : order.customer.toString(),
+      } : null),
     };
 
     return NextResponse.json({

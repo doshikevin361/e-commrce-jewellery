@@ -11,7 +11,7 @@ import { formatIndianDate } from '@/app/utils/helper';
 import { Spinner } from '@/components/ui/spinner';
 import { Eye, Search, Package } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
-import { OrderDetail } from './order-detail';
+import { useRouter } from 'next/navigation';
 
 interface Order {
   _id: string;
@@ -29,14 +29,12 @@ interface Order {
 }
 
 export function OrderList() {
+  const router = useRouter();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled'>('all');
   const [paymentStatusFilter, setPaymentStatusFilter] = useState<'all' | 'pending' | 'paid' | 'failed' | 'refunded'>('all');
-  const [viewOrderId, setViewOrderId] = useState<string | null>(null);
-  const [orderDetails, setOrderDetails] = useState<Order | null>(null);
-  const [loadingDetails, setLoadingDetails] = useState(false);
 
   useEffect(() => {
     fetchOrders();
@@ -86,32 +84,8 @@ export function OrderList() {
     }
   };
 
-  const handleViewOrder = async (orderId: string) => {
-    try {
-      setLoadingDetails(true);
-      const res = await fetch(`/api/admin/orders/${orderId}`);
-      if (res.ok) {
-        const data = await res.json();
-        setOrderDetails(data.order);
-        setViewOrderId(orderId);
-      } else {
-        const errorData = await res.json().catch(() => ({}));
-        toast({
-          title: 'Error',
-          description: errorData.error || 'Failed to load order details',
-          variant: 'destructive',
-        });
-      }
-    } catch (error) {
-      console.error('[v0] Failed to fetch order details:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to load order details',
-        variant: 'destructive',
-      });
-    } finally {
-      setLoadingDetails(false);
-    }
+  const handleViewOrder = (orderId: string) => {
+    router.push(`/admin/orders/${orderId}`);
   };
 
   const getPaymentStatusBadge = (status: string) => {
@@ -226,8 +200,7 @@ export function OrderList() {
                       <Button
                         variant='ghost'
                         size='sm'
-                        onClick={() => handleViewOrder(order._id)}
-                        disabled={loadingDetails}>
+                        onClick={() => handleViewOrder(order._id)}>
                         <Eye className='w-4 h-4 mr-2' />
                         View
                       </Button>
@@ -239,21 +212,6 @@ export function OrderList() {
           </div>
         )}
       </Card>
-
-      {/* Order Detail Dialog */}
-      {viewOrderId && orderDetails && (
-        <OrderDetail
-          order={orderDetails}
-          open={!!viewOrderId}
-          onOpenChange={open => {
-            if (!open) {
-              setViewOrderId(null);
-              setOrderDetails(null);
-            }
-          }}
-          onUpdate={fetchOrders}
-        />
-      )}
     </div>
   );
 }
