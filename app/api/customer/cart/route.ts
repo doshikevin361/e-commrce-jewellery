@@ -249,7 +249,7 @@ export async function PUT(request: NextRequest) {
   }
 }
 
-// Remove product from cart
+// Remove product from cart or clear entire cart
 export async function DELETE(request: NextRequest) {
   try {
     const customer = getCustomerFromRequest(request);
@@ -260,12 +260,29 @@ export async function DELETE(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const productId = searchParams.get('productId');
+    const clearAll = searchParams.get('clearAll') === 'true';
 
+    const { db } = await connectToDatabase();
+
+    // If clearAll is true, clear the entire cart
+    if (clearAll) {
+      console.log('[Cart] Clearing entire cart for customer:', customer.id);
+      await db.collection('customers').updateOne(
+        { _id: new ObjectId(customer.id) },
+        { 
+          $set: { 
+            cart: [],
+            updatedAt: new Date()
+          } 
+        }
+      );
+      return NextResponse.json({ message: 'Cart cleared successfully', cleared: true });
+    }
+
+    // Otherwise, remove specific product
     if (!productId) {
       return NextResponse.json({ error: 'Product ID is required' }, { status: 400 });
     }
-
-    const { db } = await connectToDatabase();
     
     // Get current cart
     const customerData = await db.collection('customers').findOne(

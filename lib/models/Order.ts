@@ -111,4 +111,7 @@ OrderSchema.index({ orderId: 1 });
 OrderSchema.index({ orderStatus: 1 });
 OrderSchema.index({ paymentStatus: 1 });
 
+// Explicitly set collection name to ensure consistency
+OrderSchema.set('collection', 'orders');
+
 export default mongoose.models.Order || mongoose.model<IOrder>('Order', OrderSchema);

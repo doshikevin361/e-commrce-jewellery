@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { Loader2, MapPin, CreditCard, Check, AlertCircle } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
 import { PageLoader } from '@/components/common/page-loader';
+import toast from 'react-hot-toast';
 
 declare global {
   interface Window {
@@ -124,8 +125,13 @@ export function CheckoutPage() {
   };
 
   const handlePayment = async () => {
-    if (!validateForm()) return;
+    if (!validateForm()) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+
     if (!razorpayLoaded) {
+      toast.error('Payment gateway is loading. Please wait...');
       setError('Payment gateway is loading. Please wait...');
       return;
     }
@@ -134,6 +140,8 @@ export function CheckoutPage() {
     setError('');
 
     try {
+      toast.loading('Creating payment order...', { id: 'payment-order' });
+
       // Create Razorpay order
       const orderResponse = await fetch('/api/payment/create-order', {
         method: 'POST',
@@ -142,14 +150,22 @@ export function CheckoutPage() {
           amount: total,
           currency: 'INR',
           receipt: `receipt_${Date.now()}`,
+          notes: {
+            customer_email: customerEmail,
+            customer_name: shippingAddress.fullName,
+          },
         }),
       });
 
       const orderData = await orderResponse.json();
 
       if (!orderResponse.ok || !orderData.success) {
-        throw new Error(orderData.error || 'Failed to create order');
+        const errorMsg = orderData.details || orderData.error || 'Failed to create payment order';
+        toast.error(errorMsg, { id: 'payment-order' });
+        throw new Error(errorMsg);
       }
+
+      toast.success('Payment gateway ready', { id: 'payment-order' });
 
       // Prepare order data for after payment
       const fullOrderData = {
@@ -176,10 +192,12 @@ export function CheckoutPage() {
         amount: orderData.amount,
         currency: orderData.currency,
         name: 'Jewellery Store',
-        description: 'Order Payment',
+        description: `Order Payment - ₹${total.toLocaleString()}`,
         order_id: orderData.orderId,
         handler: async function (response: any) {
           try {
+            toast.loading('Verifying payment...', { id: 'payment-verify' });
+
             // Verify payment
             const verifyResponse = await fetch('/api/payment/verify', {
               method: 'POST',
@@ -195,17 +213,33 @@ export function CheckoutPage() {
             const verifyData = await verifyResponse.json();
 
             if (verifyResponse.ok && verifyData.success) {
-              // Clear cart
-              await clearCart();
-              // Redirect to success page
-              router.push(`/order-success?orderId=${verifyData.orderId}`);
+              toast.success('Payment successful! Order placed.', { id: 'payment-verify' });
+              
+              // Clear cart from database and local state
+              try {
+                await clearCart();
+                console.log('[Checkout] Cart cleared after successful payment');
+              } catch (cartError) {
+                console.error('[Checkout] Error clearing cart:', cartError);
+                // Don't block redirect if cart clearing fails
+              }
+              
+              // Small delay for better UX
+              setTimeout(() => {
+                // Redirect to success page
+                router.push(`/order-success?orderId=${verifyData.orderId}`);
+              }, 500);
             } else {
-              setError(verifyData.error || 'Payment verification failed');
+              const errorMsg = verifyData.error || verifyData.details || 'Payment verification failed';
+              toast.error(errorMsg, { id: 'payment-verify' });
+              setError(errorMsg);
               setIsProcessing(false);
             }
           } catch (err: any) {
             console.error('Payment verification error:', err);
-            setError('Payment verification failed. Please contact support.');
+            const errorMsg = err.message || 'Payment verification failed. Please contact support.';
+            toast.error(errorMsg, { id: 'payment-verify' });
+            setError(errorMsg);
             setIsProcessing(false);
           }
         },
@@ -222,16 +256,28 @@ export function CheckoutPage() {
         },
         modal: {
           ondismiss: function () {
+            toast.dismiss('payment-order');
+            toast.dismiss('payment-verify');
             setIsProcessing(false);
           },
         },
       };
 
       const razorpay = new window.Razorpay(options);
+      razorpay.on('payment.failed', function (response: any) {
+        console.error('Payment failed:', response);
+        const errorMsg = response.error?.description || 'Payment failed. Please try again.';
+        toast.error(errorMsg);
+        setError(errorMsg);
+        setIsProcessing(false);
+      });
+      
       razorpay.open();
     } catch (err: any) {
       console.error('Payment error:', err);
-      setError(err.message || 'Failed to process payment. Please try again.');
+      const errorMsg = err.message || 'Failed to process payment. Please try again.';
+      toast.error(errorMsg);
+      setError(errorMsg);
       setIsProcessing(false);
     }
   };

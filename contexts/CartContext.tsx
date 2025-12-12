@@ -26,7 +26,7 @@ interface CartContextType {
   removeFromCart: (productId: string) => Promise<void>;
   updateQuantity: (productId: string, quantity: number) => Promise<void>;
   fetchCart: () => Promise<void>;
-  clearCart: () => void;
+  clearCart: () => Promise<void>;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -196,8 +196,30 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const clearCart = () => {
-    setCartItems([]);
+  const clearCart = async () => {
+    if (!isLoggedIn) {
+      setCartItems([]);
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/customer/cart?clearAll=true', {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        setCartItems([]);
+        console.log('[Cart] Cart cleared successfully');
+      } else {
+        console.error('[Cart] Failed to clear cart from server');
+        // Still clear locally even if server call fails
+        setCartItems([]);
+      }
+    } catch (error) {
+      console.error('[Cart] Error clearing cart:', error);
+      // Still clear locally even if server call fails
+      setCartItems([]);
+    }
   };
 
   const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
