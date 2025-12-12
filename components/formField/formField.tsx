@@ -54,7 +54,7 @@ export default function FormField({
     defaultValue,
     inputMode,
     pattern,
-    type: _typeIgnored,
+    type,
     ...inputProps
   } = rest;
 
@@ -121,7 +121,7 @@ export default function FormField({
           ></textarea>
         ) : (
           <input
-            type="text"
+            type={type || "text"}
             inputMode={numericOnly ? inputMode || 'numeric' : inputMode}
             pattern={numericOnly ? pattern || '[0-9]*' : pattern}
             onChange={handleChange}
