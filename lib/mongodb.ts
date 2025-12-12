@@ -1,4 +1,5 @@
 import { MongoClient, Db } from 'mongodb';
+import mongoose from 'mongoose';
 
 let cachedClient: MongoClient | null = null;
 let cachedDb: Db | null = null;
@@ -33,6 +34,34 @@ export async function connectToDatabase() {
 
   console.log('[v0] MongoDB connection successful');
   return { client, db };
+}
+
+// Mongoose connection for models
+let isConnected = false;
+
+export async function connectDB() {
+  if (isConnected) {
+    console.log('Using existing MongoDB connection');
+    return;
+  }
+
+  const uri = process.env.MONGODB_URI || 'mongodb+srv://kevin:kevin@cluster0.3eo8tjf.mongodb.net';
+
+  if (!uri) {
+    throw new Error('MONGODB_URI environment variable is not defined');
+  }
+
+  try {
+    const db = await mongoose.connect(uri, {
+      dbName: 'admin_panel',
+    });
+
+    isConnected = db.connections[0].readyState === 1;
+    console.log('MongoDB connected successfully');
+  } catch (error) {
+    console.error('MongoDB connection error:', error);
+    throw error;
+  }
 }
 
 export default clientPromise;

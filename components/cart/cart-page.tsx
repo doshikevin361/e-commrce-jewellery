@@ -179,9 +179,11 @@ export function CartPage() {
                 <span>₹{total.toLocaleString()}</span>
               </div>
             </div>
-            <button className='w-full rounded-full bg-[#1F3B29] px-4 sm:px-5 md:px-6 py-2.5 sm:py-3 md:py-4 text-sm sm:text-base text-white font-semibold hover:bg-[#2a4d3a] transition-colors mb-3 sm:mb-4'>
+            <Link
+              href='/checkout'
+              className='w-full flex items-center justify-center rounded-full bg-[#1F3B29] px-4 sm:px-5 md:px-6 py-2.5 sm:py-3 md:py-4 text-sm sm:text-base text-white font-semibold hover:bg-[#2a4d3a] transition-colors mb-3 sm:mb-4'>
               Proceed to Checkout
-            </button>
+            </Link>
             <Link
               href='/wishlist'
               className='w-full flex items-center justify-center gap-2 rounded-full border-2 border-[#1F3B29] px-4 sm:px-5 md:px-6 py-2 sm:py-2.5 md:py-3 text-sm sm:text-base text-[#1F3B29] font-semibold hover:bg-[#F5EEE5] transition-colors'>
