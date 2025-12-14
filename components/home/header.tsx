@@ -1,6 +1,6 @@
 'use client';
 
-import { Diamond, ShoppingCart, User, Menu, X, ChevronDown, Heart, LogOut, Settings } from 'lucide-react';
+import { Diamond, ShoppingCart, User, Menu, X, ChevronDown, Heart, LogOut, Settings, ShoppingBag } from 'lucide-react';
 import SearchBar from './SearchBar/SearchBar';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -246,6 +246,13 @@ function HomeHeaderContent() {
                         className='flex items-center gap-2 px-4 py-2.5 text-sm text-[#1F3B29] hover:bg-[#F5EEE5]/60 transition-colors duration-200 font-medium'>
                         <Settings size={16} />
                         My Profile
+                      </Link>
+                      <Link
+                        href='/my-orders'
+                        onClick={() => setAccountDropdownOpen(false)}
+                        className='flex items-center gap-2 px-4 py-2.5 text-sm text-[#1F3B29] hover:bg-[#F5EEE5]/60 transition-colors duration-200 font-medium'>
+                        <ShoppingBag size={16} />
+                        My Orders
                       </Link>
                       <button
                         onClick={handleLogout}
