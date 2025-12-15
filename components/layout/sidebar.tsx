@@ -236,6 +236,10 @@ export function Sidebar() {
       label: 'Category',
       href: '/admin/categories',
     },
+    {
+      label: 'Subcategory',
+      href: '/admin/subcategories',
+    },
     // {
     //   label: 'Brand',
     //   href: '/admin/brands',

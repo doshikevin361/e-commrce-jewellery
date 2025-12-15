@@ -180,31 +180,6 @@ export function CategoryForm({
               </div>
 
               <div>
-                <Label htmlFor="parentId">Parent Category</Label>
-                <Select
-                  value={formData.parentId || "none"}
-                  onValueChange={(val) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      parentId: val === "none" ? null : val,
-                    }))
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">None (Main Category)</SelectItem>
-                    {parentCategories.map((cat) => (
-                      <SelectItem key={cat._id} value={cat._id || ""}>
-                        {cat.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
                 <Label htmlFor="description">Category Description</Label>
                 <Textarea
                   id="description"
