@@ -6,7 +6,6 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { 
   Search, 
-  RefreshCw, 
   Download, 
   Package, 
   ArrowLeft,
@@ -48,6 +47,7 @@ export default function MyOrdersPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<string[]>([]);
   const [filterTime, setFilterTime] = useState<string[]>([]);
+  const [isFilterFlipped, setIsFilterFlipped] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem('customerToken');
@@ -222,100 +222,203 @@ export default function MyOrdersPage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Search and Refresh */}
+        {/* Search */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-              <input
-                type="text"
-                placeholder="Search by product name, order ID, or brand..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F3B29] focus:border-transparent"
-              />
-            </div>
-            <button
-              onClick={fetchOrders}
-              className="flex items-center justify-center gap-2 px-6 py-2.5 bg-[#1F3B29] text-white rounded-lg hover:bg-[#1F3B29]/90 transition-colors font-medium"
-            >
-              <RefreshCw size={18} />
-              Refresh
-            </button>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+            <input
+              type="text"
+              placeholder="Search by product name, order ID, or brand..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F3B29] focus:border-transparent"
+            />
           </div>
         </div>
 
         <div className="flex flex-col lg:flex-row gap-6">
-          {/* Filters Sidebar */}
+          {/* Filters Sidebar - Flip Card Style */}
           <div className="lg:w-72 flex-shrink-0">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sticky top-4">
-              <div className="flex items-center gap-2 mb-4">
-                <Package className="text-[#1F3B29]" size={20} />
-                <h2 className="font-semibold text-lg">Filters</h2>
-              </div>
-
-              {/* Order Status Filter */}
-              <div className="mb-6">
-                <h3 className="font-semibold text-sm mb-3 text-gray-900 uppercase tracking-wide">
-                  Order Status
-                </h3>
-                <div className="space-y-2">
-                  {['Processing', 'Confirmed', 'Shipped', 'Delivered', 'Cancelled'].map(status => (
-                    <label key={status} className="flex items-center gap-2 cursor-pointer group">
-                      <input
-                        type="checkbox"
-                        checked={filterStatus.includes(status.toLowerCase())}
-                        onChange={() => toggleFilter('status', status.toLowerCase())}
-                        className="w-4 h-4 rounded border-gray-300 text-[#1F3B29] focus:ring-[#1F3B29] cursor-pointer"
-                      />
-                      <span className="text-sm text-gray-700 group-hover:text-[#1F3B29] transition-colors">
-                        {status}
-                      </span>
-                      <span className="ml-auto text-xs text-gray-400">
-                        {orders.filter(o => o.orderStatus.toLowerCase() === status.toLowerCase()).length}
-                      </span>
-                    </label>
-                  ))}
+            <div className="relative h-[600px]" style={{ perspective: '1000px' }}>
+              <div 
+                className={`relative w-full h-full transition-transform duration-700`}
+                style={{ 
+                  transformStyle: 'preserve-3d',
+                  transform: isFilterFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)'
+                }}
+              >
+                {/* Front of Card */}
+                <div 
+                  className="absolute inset-0 bg-gradient-to-br from-[#1F3B29] to-[#2d4a3a] rounded-2xl shadow-2xl p-6 text-white"
+                  style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}
+                >
+                  <div className="flex flex-col h-full">
+                    <div className="flex items-center gap-3 mb-6">
+                      <div className="p-2 bg-white/20 rounded-lg">
+                        <Package className="text-white" size={24} />
+                      </div>
+                      <h2 className="font-bold text-xl">Filters</h2>
+                    </div>
+                    
+                    <div className="flex-1 flex flex-col justify-center">
+                      <p className="text-white/80 text-sm mb-4 text-center">Click to view filter options</p>
+                      <div className="flex items-center justify-center">
+                        <div className="w-16 h-16 border-2 border-white/30 rounded-full flex items-center justify-center">
+                          <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <button
+                      onClick={() => setIsFilterFlipped(true)}
+                      className="mt-4 w-full py-3 bg-white/20 hover:bg-white/30 rounded-lg font-medium transition-all backdrop-blur-sm border border-white/30"
+                    >
+                      View Filters
+                    </button>
+                  </div>
                 </div>
-              </div>
 
-              {/* Order Time Filter */}
-              <div>
-                <h3 className="font-semibold text-sm mb-3 text-gray-900 uppercase tracking-wide">
-                  Order Time
-                </h3>
-                <div className="space-y-2">
-                  <label className="flex items-center gap-2 cursor-pointer group">
-                    <input
-                      type="checkbox"
-                      checked={filterTime.includes('last30days')}
-                      onChange={() => toggleFilter('time', 'last30days')}
-                      className="w-4 h-4 rounded border-gray-300 text-[#1F3B29] focus:ring-[#1F3B29] cursor-pointer"
-                    />
-                    <span className="text-sm text-gray-700 group-hover:text-[#1F3B29] transition-colors">
-                      Last 30 days
-                    </span>
-                    <span className="ml-auto text-xs text-gray-400">
-                      {orders.filter(o => {
-                        const diffDays = Math.floor((new Date().getTime() - new Date(o.createdAt).getTime()) / (1000 * 60 * 60 * 24));
-                        return diffDays <= 30;
-                      }).length}
-                    </span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer group">
-                    <input
-                      type="checkbox"
-                      checked={filterTime.includes('2025')}
-                      onChange={() => toggleFilter('time', '2025')}
-                      className="w-4 h-4 rounded border-gray-300 text-[#1F3B29] focus:ring-[#1F3B29] cursor-pointer"
-                    />
-                    <span className="text-sm text-gray-700 group-hover:text-[#1F3B29] transition-colors">
-                      2025
-                    </span>
-                    <span className="ml-auto text-xs text-gray-400">
-                      {orders.filter(o => new Date(o.createdAt).getFullYear() === 2025).length}
-                    </span>
-                  </label>
+                {/* Back of Card - Filters */}
+                <div 
+                  className="absolute inset-0 bg-white rounded-2xl shadow-2xl p-6 overflow-hidden"
+                  style={{ 
+                    backfaceVisibility: 'hidden', 
+                    WebkitBackfaceVisibility: 'hidden',
+                    transform: 'rotateY(180deg)'
+                  }}
+                >
+                  <div className="flex flex-col h-full overflow-hidden">
+                    <div className="flex items-center justify-between mb-4 flex-shrink-0">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-[#1F3B29]/10 rounded-lg">
+                          <Package className="text-[#1F3B29]" size={24} />
+                        </div>
+                        <h2 className="font-bold text-lg text-gray-900">Filters</h2>
+                      </div>
+                      <button
+                        onClick={() => setIsFilterFlipped(false)}
+                        className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                        title="Close Filters"
+                      >
+                        <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+
+                    <div 
+                      className="flex-1 overflow-y-auto pr-2 filter-scroll"
+                      style={{ 
+                        WebkitOverflowScrolling: 'touch'
+                      }}
+                    >
+                      {/* Order Status Filter */}
+                      <div className="mb-6">
+                        <h3 className="font-bold text-sm mb-4 text-gray-900 uppercase tracking-wider flex items-center gap-2">
+                          <div className="w-1 h-4 bg-[#1F3B29] rounded"></div>
+                          Order Status
+                        </h3>
+                        <div className="space-y-2">
+                          {['Processing', 'Confirmed', 'Shipped', 'Delivered', 'Cancelled'].map(status => {
+                            const count = orders.filter(o => o.orderStatus.toLowerCase() === status.toLowerCase()).length;
+                            const isSelected = filterStatus.includes(status.toLowerCase());
+                            return (
+                              <label 
+                                key={status} 
+                                className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all ${
+                                  isSelected 
+                                    ? 'bg-[#1F3B29]/10 border-2 border-[#1F3B29]' 
+                                    : 'bg-gray-50 border-2 border-transparent hover:bg-gray-100'
+                                }`}
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={isSelected}
+                                  onChange={() => toggleFilter('status', status.toLowerCase())}
+                                  className="w-5 h-5 rounded border-gray-300 text-[#1F3B29] focus:ring-[#1F3B29] cursor-pointer"
+                                />
+                                <span className={`text-sm font-medium flex-1 ${
+                                  isSelected ? 'text-[#1F3B29]' : 'text-gray-700'
+                                }`}>
+                                  {status}
+                                </span>
+                                <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
+                                  isSelected 
+                                    ? 'bg-[#1F3B29] text-white' 
+                                    : 'bg-gray-200 text-gray-600'
+                                }`}>
+                                  {count}
+                                </span>
+                              </label>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Order Time Filter */}
+                      <div>
+                        <h3 className="font-bold text-sm mb-4 text-gray-900 uppercase tracking-wider flex items-center gap-2">
+                          <div className="w-1 h-4 bg-[#1F3B29] rounded"></div>
+                          Order Time
+                        </h3>
+                        <div className="space-y-2">
+                          <label className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all ${
+                            filterTime.includes('last30days')
+                              ? 'bg-[#1F3B29]/10 border-2 border-[#1F3B29]'
+                              : 'bg-gray-50 border-2 border-transparent hover:bg-gray-100'
+                          }`}>
+                            <input
+                              type="checkbox"
+                              checked={filterTime.includes('last30days')}
+                              onChange={() => toggleFilter('time', 'last30days')}
+                              className="w-5 h-5 rounded border-gray-300 text-[#1F3B29] focus:ring-[#1F3B29] cursor-pointer"
+                            />
+                            <span className={`text-sm font-medium flex-1 ${
+                              filterTime.includes('last30days') ? 'text-[#1F3B29]' : 'text-gray-700'
+                            }`}>
+                              Last 30 days
+                            </span>
+                            <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
+                              filterTime.includes('last30days')
+                                ? 'bg-[#1F3B29] text-white'
+                                : 'bg-gray-200 text-gray-600'
+                            }`}>
+                              {orders.filter(o => {
+                                const diffDays = Math.floor((new Date().getTime() - new Date(o.createdAt).getTime()) / (1000 * 60 * 60 * 24));
+                                return diffDays <= 30;
+                              }).length}
+                            </span>
+                          </label>
+                          <label className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all ${
+                            filterTime.includes('2025')
+                              ? 'bg-[#1F3B29]/10 border-2 border-[#1F3B29]'
+                              : 'bg-gray-50 border-2 border-transparent hover:bg-gray-100'
+                          }`}>
+                            <input
+                              type="checkbox"
+                              checked={filterTime.includes('2025')}
+                              onChange={() => toggleFilter('time', '2025')}
+                              className="w-5 h-5 rounded border-gray-300 text-[#1F3B29] focus:ring-[#1F3B29] cursor-pointer"
+                            />
+                            <span className={`text-sm font-medium flex-1 ${
+                              filterTime.includes('2025') ? 'text-[#1F3B29]' : 'text-gray-700'
+                            }`}>
+                              2025
+                            </span>
+                            <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
+                              filterTime.includes('2025')
+                                ? 'bg-[#1F3B29] text-white'
+                                : 'bg-gray-200 text-gray-600'
+                            }`}>
+                              {orders.filter(o => new Date(o.createdAt).getFullYear() === 2025).length}
+                            </span>
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

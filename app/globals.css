@@ -214,3 +214,22 @@
 .swiper-pagination-bullet-active {
   background: #1f3b29 !important; /* active bullet color (gold) */
 }
+
+/* Custom scrollbar for filter card */
+.filter-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.filter-scroll::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 10px;
+}
+
+.filter-scroll::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
+}
+
+.filter-scroll::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}

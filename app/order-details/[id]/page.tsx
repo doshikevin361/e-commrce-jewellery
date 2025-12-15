@@ -69,6 +69,7 @@ export default function OrderDetailsPage() {
   
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [rating, setRating] = useState(0);
   const [showOffers, setShowOffers] = useState(false);
 
@@ -84,8 +85,23 @@ export default function OrderDetailsPage() {
     }
   }, [orderId, router]);
 
-  const fetchOrderDetails = async () => {
-    setLoading(true);
+  // Auto-refresh order status every 30 seconds
+  useEffect(() => {
+    if (!orderId) return;
+
+    const interval = setInterval(() => {
+      fetchOrderDetails(true); // Silent refresh
+    }, 30000); // 30 seconds
+
+    return () => clearInterval(interval);
+  }, [orderId]);
+
+  const fetchOrderDetails = async (silent = false) => {
+    if (!silent) {
+      setLoading(true);
+    } else {
+      setRefreshing(true);
+    }
     try {
       const token = localStorage.getItem('customerToken');
       if (!token) {
@@ -109,17 +125,31 @@ export default function OrderDetailsPage() {
 
       const data = await response.json();
       if (data.order) {
+        const previousStatus = order?.orderStatus;
         setOrder(data.order);
+        
+        // Show notification if status changed
+        if (silent && previousStatus && data.order.orderStatus !== previousStatus) {
+          toast.success(`Order status updated to: ${data.order.orderStatus}`);
+        }
       } else {
         throw new Error('Order data not found in response');
       }
     } catch (error: any) {
       console.error('Error fetching order:', error);
-      toast.error(error.message || 'Failed to load order details');
-      setTimeout(() => router.push('/my-orders'), 2000);
+      if (!silent) {
+        toast.error(error.message || 'Failed to load order details');
+        setTimeout(() => router.push('/my-orders'), 2000);
+      }
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
+  };
+
+  const handleRefresh = () => {
+    fetchOrderDetails(false);
+    toast.info('Refreshing order details...');
   };
 
   const copyOrderId = () => {
@@ -141,8 +171,47 @@ export default function OrderDetailsPage() {
     toast.info('Reorder functionality coming soon!');
   };
 
-  const handleDownloadInvoice = () => {
-    toast.info('Invoice download coming soon!');
+  const handleDownloadInvoice = async () => {
+    try {
+      const token = localStorage.getItem('customerToken');
+      if (!token) {
+        toast.error('Please login to download invoice');
+        return;
+      }
+
+      toast.info('Generating invoice...');
+      
+      const response = await fetch(`/api/customer/orders/${orderId}/invoice`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to generate invoice');
+      }
+
+      // Get the blob from response
+      const blob = await response.blob();
+      
+      // Create a download link
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Invoice_${order?.orderId || orderId}.png`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      toast.success('Invoice downloaded successfully!');
+    } catch (error: any) {
+      console.error('Error downloading invoice:', error);
+      toast.error(error.message || 'Failed to download invoice');
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -183,10 +252,58 @@ export default function OrderDetailsPage() {
     );
   }
 
-  const statusHistory = [
-    { label: 'Order Confirmed', date: order.createdAt, completed: ['confirmed', 'processing', 'shipped', 'delivered'].includes(order.orderStatus.toLowerCase()) },
-    { label: 'Processing', date: order.createdAt, completed: ['processing', 'shipped', 'delivered'].includes(order.orderStatus.toLowerCase()) }
-  ];
+  const getStatusHistory = () => {
+    const status = order.orderStatus.toLowerCase();
+    
+    // If order is cancelled, show cancelled status
+    if (status === 'cancelled') {
+      return [
+        { 
+          label: 'Order Confirmed', 
+          date: order.createdAt, 
+          completed: true,
+          status: 'confirmed'
+        },
+        { 
+          label: 'Cancelled', 
+          date: order.updatedAt || order.createdAt, 
+          completed: true,
+          status: 'cancelled',
+          isCancelled: true
+        }
+      ];
+    }
+    
+    const history = [
+      { 
+        label: 'Order Confirmed', 
+        date: order.createdAt, 
+        completed: ['confirmed', 'processing', 'shipped', 'delivered'].includes(status),
+        status: 'confirmed'
+      },
+      { 
+        label: 'Processing', 
+        date: order.updatedAt || order.createdAt, 
+        completed: ['processing', 'shipped', 'delivered'].includes(status),
+        status: 'processing'
+      },
+      { 
+        label: 'Shipped', 
+        date: order.updatedAt || order.createdAt, 
+        completed: ['shipped', 'delivered'].includes(status),
+        status: 'shipped'
+      },
+      { 
+        label: 'Delivered', 
+        date: order.updatedAt || order.createdAt, 
+        completed: status === 'delivered',
+        status: 'delivered'
+      }
+    ];
+    return history;
+  };
+
+  const statusHistory = getStatusHistory();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#F5EEE5] to-white">
@@ -214,6 +331,15 @@ export default function OrderDetailsPage() {
                 </button>
               </div>
             </div>
+            <button
+              onClick={handleRefresh}
+              disabled={refreshing}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-[#1F3B29] text-white rounded-lg hover:bg-[#1F3B29]/90 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Refresh order status"
+            >
+              <RefreshCw size={18} className={refreshing ? 'animate-spin' : ''} />
+              {refreshing ? 'Refreshing...' : 'Refresh'}
+            </button>
           </div>
         </div>
 
@@ -264,7 +390,26 @@ export default function OrderDetailsPage() {
 
             {/* Order Status */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-6">Order Status</h2>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-bold text-gray-900">Order Status</h2>
+                <div className="flex items-center gap-2">
+                  <span className={`px-3 py-1 rounded-full text-sm font-semibold uppercase ${
+                    order.orderStatus === 'delivered' 
+                      ? 'bg-green-100 text-green-700'
+                      : order.orderStatus === 'shipped'
+                      ? 'bg-blue-100 text-blue-700'
+                      : order.orderStatus === 'processing'
+                      ? 'bg-yellow-100 text-yellow-700'
+                      : order.orderStatus === 'confirmed'
+                      ? 'bg-purple-100 text-purple-700'
+                      : order.orderStatus === 'cancelled'
+                      ? 'bg-red-100 text-red-700'
+                      : 'bg-gray-100 text-gray-700'
+                  }`}>
+                    {order.orderStatus}
+                  </span>
+                </div>
+              </div>
               <div className="space-y-6">
                 {statusHistory.map((status, index) => (
                   <div key={index} className="flex gap-4">
@@ -272,14 +417,18 @@ export default function OrderDetailsPage() {
                       <div
                         className={`w-10 h-10 rounded-full flex items-center justify-center ${
                           status.completed
-                            ? 'bg-green-500 text-white'
+                            ? status.isCancelled
+                              ? 'bg-red-500 text-white'
+                              : 'bg-green-500 text-white'
                             : 'bg-gray-200 text-gray-400'
                         }`}
                       >
-                        <CheckCircle size={20} />
+                        {status.isCancelled ? <XCircle size={20} /> : <CheckCircle size={20} />}
                       </div>
                       {index < statusHistory.length - 1 && (
-                        <div className="absolute top-10 left-5 w-0.5 h-12 bg-green-500" />
+                        <div className={`absolute top-10 left-5 w-0.5 h-12 ${
+                          status.isCancelled ? 'bg-red-500' : 'bg-green-500'
+                        }`} />
                       )}
                     </div>
                     <div className="flex-1 pt-2">
@@ -439,13 +588,15 @@ export default function OrderDetailsPage() {
                   Reorder All Items
                 </button>
 
-                <button
-                  onClick={handleDownloadInvoice}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-[#1F3B29] text-white rounded-lg hover:bg-[#1F3B29]/90 transition-colors font-medium"
-                >
-                  <Download size={18} />
-                  Download Invoice
-                </button>
+                {order.orderStatus.toLowerCase() === 'delivered' && (
+                  <button
+                    onClick={handleDownloadInvoice}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-[#1F3B29] text-white rounded-lg hover:bg-[#1F3B29]/90 transition-colors font-medium"
+                  >
+                    <Download size={18} />
+                    Download Invoice
+                  </button>
+                )}
 
                 <button
                   onClick={() => setShowOffers(!showOffers)}
