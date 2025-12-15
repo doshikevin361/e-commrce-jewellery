@@ -17,6 +17,7 @@ const geist = Geist({
   fallback: ['system-ui', 'arial'],
 });
 
+
 const geistMono = Geist_Mono({
   subsets: ['latin'],
   display: 'swap',
