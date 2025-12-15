@@ -166,6 +166,19 @@ export async function PUT(
           html: emailTemplate.html,
         });
         console.log('[Order API] Order status update email sent to:', customerData.email);
+
+        // If order is delivered, send invoice email
+        if (orderStatus === 'delivered') {
+          try {
+            // Import invoice generation function
+            const { generateAndSendInvoice } = await import('@/lib/invoice');
+            await generateAndSendInvoice(order._id.toString(), order, customerData);
+            console.log('[Order API] Invoice email sent to:', customerData.email);
+          } catch (invoiceError) {
+            console.error('[Order API] Failed to send invoice email:', invoiceError);
+            // Don't fail the update if invoice email fails
+          }
+        }
       } catch (emailError) {
         console.error('[Order API] Failed to send order status update email:', emailError);
         // Don't fail the update if email fails

@@ -88,8 +88,44 @@ export default function MyOrdersPage() {
     toast.info('Reorder functionality coming soon!');
   };
 
-  const handleInvoice = (orderId: string) => {
-    toast.info('Invoice download coming soon!');
+  const handleInvoice = async (orderId: string) => {
+    try {
+      const token = localStorage.getItem('customerToken');
+      if (!token) {
+        toast.error('Please login to download invoice');
+        return;
+      }
+
+      toast.info('Generating invoice...', { autoClose: 2000 });
+      
+      const response = await fetch(`/api/customer/orders/${orderId}/invoice`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to generate invoice');
+      }
+
+      // Get the image blob
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `invoice-${orderId}.png`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      toast.success('Invoice downloaded successfully!');
+    } catch (error: any) {
+      console.error('Error downloading invoice:', error);
+      toast.error(error.message || 'Failed to download invoice');
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -395,13 +431,15 @@ export default function MyOrdersPage() {
                                 >
                                   Reorder
                                 </button>
-                                <button
-                                  onClick={() => handleInvoice(order._id)}
-                                  className="flex items-center gap-2 px-5 py-2 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium text-sm"
-                                >
-                                  <Download size={16} />
-                                  Invoice
-                                </button>
+                                {order.orderStatus.toLowerCase() === 'delivered' && (
+                                  <button
+                                    onClick={() => handleInvoice(order._id)}
+                                    className="flex items-center gap-2 px-5 py-2 border-2 border-[#C8A15B] text-[#C8A15B] rounded-lg hover:bg-[#C8A15B] hover:text-white transition-colors font-medium text-sm"
+                                  >
+                                    <Download size={16} />
+                                    Download Invoice
+                                  </button>
+                                )}
                               </div>
                             )}
                           </div>
