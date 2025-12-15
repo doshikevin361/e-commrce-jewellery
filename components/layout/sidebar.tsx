@@ -228,18 +228,18 @@ export function Sidebar() {
       label: 'All Products',
       href: '/admin/products',
     },
-    {
-      label: 'Attributes',
-      href: '/admin/attributes',
-    },
+    // {
+    //   label: 'Attributes',
+    //   href: '/admin/attributes',
+    // },
     {
       label: 'Category',
       href: '/admin/categories',
     },
-    {
-      label: 'Brand',
-      href: '/admin/brands',
-    },
+    // {
+    //   label: 'Brand',
+    //   href: '/admin/brands',
+    // },
     {
       label: 'Tag',
       href: '/admin/tags',
