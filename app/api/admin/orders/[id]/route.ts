@@ -3,6 +3,7 @@ import { connectDB, connectToDatabase } from '@/lib/mongodb';
 import Order from '@/lib/models/Order';
 import { getUserFromRequest, isAdmin } from '@/lib/auth';
 import { ObjectId } from 'mongodb';
+import { sendEmail, emailTemplates } from '@/lib/email';
 
 export async function GET(
   request: NextRequest,
@@ -141,6 +142,33 @@ export async function PUT(
         }
       } catch (err) {
         console.error('[Order API] Error fetching customer:', err);
+      }
+    }
+
+    // Send email notification to customer if order status was updated
+    if (orderStatus && customerData?.email) {
+      try {
+        const emailTemplate = emailTemplates.orderStatusUpdate({
+          orderId: order.orderId,
+          customerName: order.customerName,
+          orderStatus: order.orderStatus,
+          trackingNumber: order.trackingNumber,
+          items: order.items.map(item => ({
+            productName: item.productName,
+            quantity: item.quantity,
+          })),
+          total: order.total,
+        });
+
+        await sendEmail({
+          to: customerData.email,
+          subject: emailTemplate.subject,
+          html: emailTemplate.html,
+        });
+        console.log('[Order API] Order status update email sent to:', customerData.email);
+      } catch (emailError) {
+        console.error('[Order API] Failed to send order status update email:', emailError);
+        // Don't fail the update if email fails
       }
     }
 

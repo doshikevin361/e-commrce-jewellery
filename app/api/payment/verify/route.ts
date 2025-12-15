@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
-import { connectDB } from '@/lib/mongodb';
+import { connectDB, connectToDatabase } from '@/lib/mongodb';
 import Order from '@/lib/models/Order';
 import { getCustomerFromRequest } from '@/lib/auth';
+import { sendEmail, emailTemplates } from '@/lib/email';
 
 export async function POST(req: NextRequest) {
   try {
@@ -206,6 +207,55 @@ export async function POST(req: NextRequest) {
       console.error('[Payment Verify] Order not found by orderId:', savedOrder.orderId);
     } else {
       console.log('[Payment Verify] Order found by orderId:', orderByOrderId._id?.toString());
+    }
+
+    // Send order confirmation email to customer
+    try {
+      const emailTemplate = emailTemplates.orderConfirmation({
+        orderId: order.orderId,
+        customerName: order.customerName,
+        items: order.items.map(item => ({
+          productName: item.productName,
+          quantity: item.quantity,
+          price: item.price,
+          subtotal: item.subtotal,
+        })),
+        subtotal: order.subtotal,
+        shippingCharges: order.shippingCharges,
+        tax: order.tax,
+        total: order.total,
+        shippingAddress: order.shippingAddress,
+        orderStatus: order.orderStatus,
+        createdAt: order.createdAt.toISOString(),
+      });
+
+      await sendEmail({
+        to: order.customerEmail,
+        subject: emailTemplate.subject,
+        html: emailTemplate.html,
+      });
+      console.log('[Payment Verify] Order confirmation email sent to:', order.customerEmail);
+    } catch (emailError) {
+      console.error('[Payment Verify] Failed to send order confirmation email:', emailError);
+      // Don't fail the order creation if email fails
+    }
+
+    // Create admin notification for new order
+    try {
+      const { db } = await connectToDatabase();
+      await db.collection('notifications').insertOne({
+        type: 'new_order',
+        title: 'New Order Received',
+        message: `New order ${order.orderId} placed by ${order.customerName} for ₹${order.total.toLocaleString()}`,
+        orderId: order._id?.toString(),
+        orderNumber: order.orderId,
+        read: false,
+        createdAt: new Date(),
+      });
+      console.log('[Payment Verify] Admin notification created for order:', order.orderId);
+    } catch (notifError) {
+      console.error('[Payment Verify] Failed to create admin notification:', notifError);
+      // Don't fail the order creation if notification fails
     }
 
     return NextResponse.json({

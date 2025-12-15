@@ -15,9 +15,14 @@ import {
   HelpCircle,
   FileText,
   Bell,
-  Settings
+  Settings,
+  Package,
+  X,
+  CheckCheck
 } from 'lucide-react';
 import { useSettings } from '@/components/settings/settings-provider';
+import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 export function TopBar() {
   const pathname = usePathname();
@@ -26,6 +31,18 @@ export function TopBar() {
 
   const [userData, setUserData] = useState<{ name: string; email: string } | null>(null);
   const [mounted, setMounted] = useState(false);
+  const [notifications, setNotifications] = useState<Array<{
+    _id: string;
+    type: string;
+    title: string;
+    message: string;
+    orderId?: string;
+    orderNumber?: string;
+    read: boolean;
+    createdAt: string;
+  }>>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
 
   const primaryColor = settings.primaryColor || '#16a34a';
   const accentColor = settings.accentColor || '#0f172a';
