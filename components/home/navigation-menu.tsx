@@ -14,7 +14,7 @@ export const generateMenuItems = (
   const flatMenuItems: { name: string; href: string }[] = [];
 
   return [
-    { name: 'Jewellery', href: '/jewellery' },
+    { name: 'All Jewellery', href: '/jewellery' },
     { name: 'Custom Jewellery', href: '/custom-jewellery' },
     { name: 'Contact Us', href: '/contact' },
   ];
