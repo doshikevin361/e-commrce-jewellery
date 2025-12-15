@@ -1,5 +1,5 @@
 import { MongoClient, Db } from 'mongodb';
-// import mongoose from 'mongoose'; // Removed to fix "Cannot find module 'mongoose'" lint error
+import mongoose from 'mongoose';
 
 let cachedClient: MongoClient | null = null;
 let cachedDb: Db | null = null;

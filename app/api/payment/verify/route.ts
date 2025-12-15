@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
+import mongoose from 'mongoose';
 import { connectDB, connectToDatabase } from '@/lib/mongodb';
 import Order from '@/lib/models/Order';
 import { getCustomerFromRequest } from '@/lib/auth';
@@ -130,7 +131,6 @@ export async function POST(req: NextRequest) {
     }
 
     // Convert customer ID to ObjectId if needed
-    const mongoose = await import('mongoose');
     let customerObjectId: mongoose.Types.ObjectId;
     
     try {
