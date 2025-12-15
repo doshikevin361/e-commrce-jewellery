@@ -34,7 +34,9 @@ export function OrderList() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled'>(
+    'all'
+  );
   const [paymentStatusFilter, setPaymentStatusFilter] = useState<'all' | 'pending' | 'paid' | 'failed' | 'refunded'>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -64,7 +66,7 @@ export function OrderList() {
 
       const res = await fetch(`/api/admin/orders?${params.toString()}`);
       const data = await res.json();
-      
+
       if (res.ok) {
         console.log('[OrderList] Orders received:', {
           count: data.orders?.length || 0,
@@ -220,15 +222,14 @@ export function OrderList() {
                         <div className='text-xs text-gray-500'>{order.customerEmail}</div>
                       </div>
                     </TableCell>
-                    <TableCell>{order.items.length} item{order.items.length > 1 ? 's' : ''}</TableCell>
+                    <TableCell>
+                      {order.items.length} item{order.items.length > 1 ? 's' : ''}
+                    </TableCell>
                     <TableCell className='font-semibold'>₹{order.total.toLocaleString()}</TableCell>
                     <TableCell>{getPaymentStatusBadge(order.paymentStatus)}</TableCell>
                     <TableCell>{getOrderStatusBadge(order.orderStatus)}</TableCell>
                     <TableCell className='text-right'>
-                      <Button
-                        variant='ghost'
-                        size='sm'
-                        onClick={() => handleViewOrder(order._id)}>
+                      <Button variant='ghost' size='sm' onClick={() => handleViewOrder(order._id)}>
                         <Eye className='w-4 h-4 mr-2' />
                         View
                       </Button>

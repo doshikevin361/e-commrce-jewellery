@@ -89,12 +89,12 @@ export function OrderDetailPage({ params }: OrderDetailPageProps) {
 
   const fetchOrder = async () => {
     if (!orderId) return;
-    
+
     try {
       setLoading(true);
       const res = await fetch(`/api/admin/orders/${orderId}`);
       const data = await res.json();
-      
+
       if (res.ok && data.order) {
         setOrder(data.order);
         setOrderStatus(data.order.orderStatus);
@@ -123,7 +123,7 @@ export function OrderDetailPage({ params }: OrderDetailPageProps) {
 
   const handleSave = async () => {
     if (!orderId) return;
-    
+
     try {
       setSaving(true);
       const response = await fetch(`/api/admin/orders/${orderId}`, {
@@ -218,11 +218,7 @@ export function OrderDetailPage({ params }: OrderDetailPageProps) {
       {/* Header */}
       <div className='flex items-center justify-between'>
         <div className='flex items-center gap-3'>
-          <Button
-            variant='ghost'
-            size='sm'
-            onClick={() => router.push('/admin/orders')}
-            className='-ml-2'>
+          <Button variant='ghost' size='sm' onClick={() => router.push('/admin/orders')} className='-ml-2'>
             <ArrowLeft className='w-4 h-4 mr-2' />
             Back
           </Button>
@@ -393,7 +389,7 @@ export function OrderDetailPage({ params }: OrderDetailPageProps) {
                 <Label htmlFor='orderStatus' className='text-sm font-semibold'>
                   Order Status
                 </Label>
-                <Select value={orderStatus} onValueChange={(value) => setOrderStatus(value as Order['orderStatus'])}>
+                <Select value={orderStatus} onValueChange={value => setOrderStatus(value as Order['orderStatus'])}>
                   <SelectTrigger id='orderStatus' className='mt-1'>
                     <SelectValue />
                   </SelectTrigger>
@@ -436,10 +432,7 @@ export function OrderDetailPage({ params }: OrderDetailPageProps) {
                 />
               </div>
 
-              <Button 
-                onClick={handleSave} 
-                disabled={saving}
-                className='w-full'>
+              <Button onClick={handleSave} disabled={saving} className='w-full'>
                 {saving ? (
                   <>
                     <Loader2 className='w-4 h-4 mr-2 animate-spin' />
@@ -459,4 +452,3 @@ export function OrderDetailPage({ params }: OrderDetailPageProps) {
     </div>
   );
 }
-
