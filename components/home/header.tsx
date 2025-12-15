@@ -1,6 +1,6 @@
 'use client';
 
-import { Diamond, ShoppingCart, User, Menu, X, ChevronDown, Heart, LogOut, Settings, ShoppingBag } from 'lucide-react';
+import { Diamond, ShoppingCart, User, Menu, X, ChevronDown, ChevronRight, Heart, LogOut, Settings, ShoppingBag } from 'lucide-react';
 import SearchBar from './SearchBar/SearchBar';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -53,8 +53,10 @@ function HomeHeaderContent() {
   const { menuItems, menuLoading } = useMenuItems();
   const accountDropdownRef = useRef<HTMLDivElement>(null);
   const searchParams = useSearchParams();
-  const [categories, setCategories] = useState<Array<{ _id: string; name: string; slug: string }>>([]);
+  const [categories, setCategories] = useState<Array<{ _id: string; name: string; slug: string; children?: Array<{ _id: string; name: string; slug: string }> }>>([]);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
+  const [openCategoryDropdown, setOpenCategoryDropdown] = useState<string | null>(null);
+  const [expandedMobileCategories, setExpandedMobileCategories] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     setMounted(true);
@@ -167,6 +169,19 @@ function HomeHeaderContent() {
       return () => document.removeEventListener('mousedown', handleClickOutside);
     }
   }, [accountDropdownOpen]);
+
+  // Toggle mobile category expansion
+  const toggleMobileCategory = (categoryId: string) => {
+    setExpandedMobileCategories(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(categoryId)) {
+        newSet.delete(categoryId);
+      } else {
+        newSet.add(categoryId);
+      }
+      return newSet;
+    });
+  };
 
   const handleLogout = () => {
     localStorage.removeItem('customerToken');
@@ -356,17 +371,60 @@ function HomeHeaderContent() {
                     )}
                     {categories.map(category => {
                       const isActive = activeCategory === category.name;
+                      const hasSubcategories = category.children && category.children.length > 0;
+                      const isExpanded = expandedMobileCategories.has(category._id);
                       return (
                         <li key={category._id}>
-                          <Link
-                            href={`/jewellery?category=${encodeURIComponent(category.name)}`}
-                            onClick={() => setMobileMenuOpen(false)}
-                            className={cn(
-                              'block w-full text-left px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg text-sm sm:text-base font-medium transition-all duration-300 hover:bg-white/10 hover:translate-x-2 active:bg-white/15',
-                              isActive && 'bg-white/20 font-semibold'
-                            )}>
-                            {category.name}
-                          </Link>
+                          <div className='flex items-center'>
+                            <Link
+                              href={`/jewellery?category=${encodeURIComponent(category.name)}`}
+                              onClick={() => {
+                                if (!hasSubcategories) {
+                                  setMobileMenuOpen(false);
+                                }
+                              }}
+                              className={cn(
+                                'flex-1 block w-full text-left px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg text-sm sm:text-base font-medium transition-all duration-300 hover:bg-white/15 hover:translate-x-2 active:bg-white/20',
+                                isActive && 'bg-white/25 font-semibold shadow-sm',
+                                hasSubcategories && isExpanded && 'bg-white/15'
+                              )}>
+                              {category.name}
+                            </Link>
+                            {hasSubcategories && (
+                              <button
+                                onClick={() => toggleMobileCategory(category._id)}
+                                className='px-2 sm:px-3 py-2.5 sm:py-3 flex items-center justify-center transition-all duration-300 hover:bg-white/15 active:bg-white/20 rounded-lg'
+                                aria-label='Toggle subcategories'>
+                                {isExpanded ? (
+                                  <ChevronDown size={18} className='sm:w-5 sm:h-5 text-white transition-transform duration-300' />
+                                ) : (
+                                  <ChevronRight size={18} className='sm:w-5 sm:h-5 text-white/80 transition-transform duration-300' />
+                                )}
+                              </button>
+                            )}
+                          </div>
+                          {hasSubcategories && isExpanded && (
+                            <ul className='ml-3 sm:ml-4 mt-2 mb-2 space-y-1.5 border-l-2 border-[#C8A15B]/40 pl-3 sm:pl-4 animate-in slide-in-from-top-2 duration-300'>
+                              {category.children?.map(subcategory => {
+                                const isSubActive = activeCategory === subcategory.name;
+                                return (
+                                  <li key={subcategory._id} className='animate-in fade-in slide-in-from-left-2 duration-300'>
+                                    <Link
+                                      href={`/jewellery?category=${encodeURIComponent(subcategory.name)}`}
+                                      onClick={() => setMobileMenuOpen(false)}
+                                      className={cn(
+                                        'group/sub-mobile flex items-center gap-2 w-full text-left px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg text-xs sm:text-sm font-medium transition-all duration-300 hover:bg-white/15 hover:translate-x-2 active:bg-white/20 relative',
+                                        isSubActive && 'bg-white/25 font-semibold shadow-sm'
+                                      )}>
+                                      <span className='w-1.5 h-1.5 rounded-full bg-[#C8A15B] opacity-60 group-hover/sub-mobile:opacity-100 transition-opacity duration-200 flex-shrink-0'></span>
+                                      <span className='flex-1'>{subcategory.name}</span>
+                                      <ChevronRight size={14} className='text-white/60 group-hover/sub-mobile:text-white opacity-0 group-hover/sub-mobile:opacity-100 -translate-x-1 group-hover/sub-mobile:translate-x-0 transition-all duration-200' />
+                                    </Link>
+                                  </li>
+                                );
+                              })}
+                            </ul>
+                          )}
                         </li>
                       );
                     })}
@@ -403,15 +461,32 @@ function HomeHeaderContent() {
                 <>
                   {categories.map((category, index) => {
                     const isActive = activeCategory === category.name;
+                    const hasSubcategories = category.children && category.children.length > 0;
+                    const isDropdownOpen = openCategoryDropdown === category._id;
                     return (
-                      <li key={category._id} className='relative' style={{ animationDelay: `${(menuItems.length + index) * 50}ms` }}>
+                      <li
+                        key={category._id}
+                        className='relative'
+                        style={{ animationDelay: `${(menuItems.length + index) * 50}ms` }}
+                        onMouseEnter={() => hasSubcategories && setOpenCategoryDropdown(category._id)}
+                        onMouseLeave={() => setOpenCategoryDropdown(null)}>
                         <Link
                           href={`/jewellery?category=${encodeURIComponent(category.name)}`}
                           className={cn(
-                            'relative flex items-center gap-1 px-3 md:px-4 lg:px-5 py-2 rounded-lg cursor-pointer transition-all duration-300 whitespace-nowrap font-medium group',
-                            isActive && 'bg-white/20'
+                            'relative flex items-center gap-1.5 px-3 md:px-4 lg:px-5 py-2 rounded-lg cursor-pointer transition-all duration-300 whitespace-nowrap font-medium group',
+                            isActive && 'bg-white/20 shadow-sm',
+                            hasSubcategories && isDropdownOpen && 'bg-white/15'
                           )}>
                           <span className='relative z-10'>{category.name}</span>
+                          {hasSubcategories && (
+                            <ChevronDown
+                              size={14}
+                              className={cn(
+                                'transition-all duration-300 text-white/70 group-hover:text-white',
+                                isDropdownOpen && 'rotate-180 text-white'
+                              )}
+                            />
+                          )}
 
                           {/* White animated underline - always visible if active */}
                           <span
@@ -421,6 +496,39 @@ function HomeHeaderContent() {
                             )}
                           />
                         </Link>
+                        {hasSubcategories && isDropdownOpen && (
+                          <div className='absolute top-full left-0 mt-2 bg-white rounded-xl shadow-2xl border border-gray-200/60 py-2.5 z-50 min-w-[240px] max-w-[340px] backdrop-blur-sm bg-white/99 animate-in fade-in slide-in-from-top-3 duration-300'>
+                            {/* Arrow pointer */}
+                            <div className='absolute -top-2 left-6 w-4 h-4 bg-white border-l border-t border-gray-200/60 rotate-45'></div>
+                            {/* Header */}
+                            <div className='px-4 py-2 border-b border-gray-100'>
+                              <p className='text-xs font-semibold text-[#1F3B29]/60 uppercase tracking-wider'>{category.name}</p>
+                            </div>
+                            {/* Subcategories */}
+                            <ul className='flex flex-col py-1.5'>
+                              {category.children?.map((subcategory, subIndex) => {
+                                const isSubActive = activeCategory === subcategory.name;
+                                return (
+                                  <li
+                                    key={subcategory._id}
+                                    style={{ animationDelay: `${subIndex * 30}ms` }}
+                                    className='animate-in fade-in slide-in-from-left-2 duration-300'>
+                                    <Link
+                                      href={`/jewellery?category=${encodeURIComponent(subcategory.name)}`}
+                                      className={cn(
+                                        'group/sub flex items-center gap-3 px-4 py-2.5 mx-1.5 rounded-lg text-sm text-[#1F3B29] hover:bg-gradient-to-r hover:from-[#F5EEE5] hover:to-[#F5EEE5]/70 transition-all duration-200 font-medium relative',
+                                        isSubActive && 'bg-gradient-to-r from-[#F5EEE5] to-[#F5EEE5]/70 font-semibold shadow-sm'
+                                      )}>
+                                      <span className='w-2 h-2 rounded-full bg-[#C8A15B] opacity-0 group-hover/sub:opacity-100 transition-opacity duration-200 flex-shrink-0'></span>
+                                      <span className='flex-1'>{subcategory.name}</span>
+                                      <ChevronRight size={14} className='text-[#C8A15B] opacity-0 group-hover/sub:opacity-100 -translate-x-2 group-hover/sub:translate-x-0 transition-all duration-200 flex-shrink-0' />
+                                    </Link>
+                                  </li>
+                                );
+                              })}
+                            </ul>
+                          </div>
+                        )}
                       </li>
                     );
                   })}

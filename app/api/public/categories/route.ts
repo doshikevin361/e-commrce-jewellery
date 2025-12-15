@@ -6,7 +6,7 @@ export async function GET() {
     const { db } = await connectToDatabase();
     
     // Fetch only active/published categories for public use
-    const categories = await db
+    const allCategories = await db
       .collection("categories")
       .aggregate([
         { 
@@ -40,20 +40,72 @@ export async function GET() {
             icon: 1,
             featured: 1,
             productCount: 1,
+            parentId: 1,
+            displayOrder: 1,
             createdAt: 1,
           },
         },
-        { $sort: { featured: -1, createdAt: -1 } }, // Featured first, then newest
-        { $limit: 20 }, // Limit for homepage performance
+        { $sort: { displayOrder: 1, featured: -1, createdAt: -1 } }, // Sort by displayOrder, then featured, then newest
       ])
       .toArray();
 
-    return NextResponse.json({
-      categories: categories.map((cat) => ({
+    // Convert to array with string IDs
+    const categoriesWithStringIds = allCategories.map((cat) => ({
+      ...cat,
+      _id: cat._id.toString(),
+      parentId: cat.parentId ? cat.parentId.toString() : null,
+    }));
+
+    // Build tree structure
+    const categoryMap = new Map<string, any>();
+    const rootCategories: any[] = [];
+
+    // First pass: create map
+    categoriesWithStringIds.forEach((cat: any) => {
+      categoryMap.set(cat._id, {
         ...cat,
-        _id: cat._id.toString(),
-      })),
-      total: categories.length,
+        children: [],
+      });
+    });
+
+    // Second pass: build tree
+    categoryMap.forEach((category) => {
+      if (!category.parentId) {
+        rootCategories.push(category);
+      } else {
+        const parent = categoryMap.get(category.parentId);
+        if (parent) {
+          if (!parent.children) parent.children = [];
+          parent.children.push(category);
+        } else {
+          // Parent not found or inactive, treat as root
+          rootCategories.push(category);
+        }
+      }
+    });
+
+    // Sort children within each category
+    const sortCategories = (cats: any[]) => {
+      return cats.sort((a, b) => {
+        if (a.displayOrder !== b.displayOrder) {
+          return (a.displayOrder || 999) - (b.displayOrder || 999);
+        }
+        if (a.featured !== b.featured) {
+          return a.featured ? -1 : 1;
+        }
+        return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+      });
+    };
+
+    rootCategories.forEach((cat) => {
+      if (cat.children && cat.children.length > 0) {
+        cat.children = sortCategories(cat.children);
+      }
+    });
+
+    return NextResponse.json({
+      categories: sortCategories(rootCategories),
+      total: rootCategories.length,
     });
   } catch (error) {
     console.error("[v0] Failed to fetch public categories:", error);
