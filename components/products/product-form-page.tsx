@@ -108,11 +108,46 @@ const DIAMOND_SHAPE_OPTIONS = [
   { label: 'Princess', value: 'Princess' },
   { label: 'Emerald', value: 'Emerald' },
   { label: 'Oval', value: 'Oval' },
+  { label: 'Asscher', value: 'Asscher' },
+  { label: 'Radiant', value: 'Radiant' },
+  { label: 'Cushion', value: 'Cushion' },
+  { label: 'Marquise', value: 'Marquise' },
+  { label: 'Pear', value: 'Pear' },
+  { label: 'Heart', value: 'Heart' },
+] as const;
+
+const DIAMOND_COLOR_OPTIONS = [
+  { label: 'Select Color', value: '' },
+  { label: 'D (Colorless)', value: 'D' },
+  { label: 'E (Colorless)', value: 'E' },
+  { label: 'F (Colorless)', value: 'F' },
+  { label: 'G (Near Colorless)', value: 'G' },
+  { label: 'H (Near Colorless)', value: 'H' },
+  { label: 'I (Near Colorless)', value: 'I' },
+  { label: 'J (Near Colorless)', value: 'J' },
+  { label: 'K (Faint Yellow)', value: 'K' },
+  { label: 'L (Faint Yellow)', value: 'L' },
+  { label: 'M (Faint Yellow)', value: 'M' },
+  { label: 'N (Very Light Yellow)', value: 'N' },
 ] as const;
 
 type ProductType = (typeof PRODUCT_TYPE_OPTIONS)[number]['value'] | '';
 type WholesalePriceType = (typeof WHOLESALE_PRICE_TYPE_OPTIONS)[number]['value'];
 type JewelleryPurity = (typeof JEWELLERY_PURITY_OPTIONS)[number]['value'];
+
+// Stone/Diamond entry interface
+interface Stone {
+  id: string; // Unique identifier for each stone entry
+  stoneType: 'Diamond' | 'Ruby' | 'Emerald' | 'Sapphire' | 'Pearl' | 'Amethyst' | 'Topaz' | ''; // Type of stone
+  shape: 'Round' | 'Princess' | 'Emerald' | 'Asscher' | 'Oval' | 'Radiant' | 'Cushion' | 'Marquise' | 'Pear' | 'Heart' | ''; // Stone shape
+  weight: number; // Weight in carats
+  clarity: 'IF' | 'VVS1' | 'VVS2' | 'VS1' | 'VS2' | 'SI1' | 'SI2' | 'I1' | 'I2' | ''; // Clarity grade
+  color: 'D' | 'E' | 'F' | 'G' | 'H' | 'I' | 'J' | 'K' | 'L' | 'M' | 'N' | ''; // Color grade
+  cut: 'Excellent' | 'Very Good' | 'Good' | 'Fair' | 'Poor' | ''; // Cut grade
+  price: number; // Price for this specific stone
+  certification?: string; // Certification (GIA, IGI, etc.)
+  certificationNumber?: string; // Certification number
+}
 
 interface Product {
   _id?: string;
@@ -158,6 +193,8 @@ interface Product {
   diamondCarat: number; // Total diamond carat weight
   diamondRatePerCarat: number; // Diamond rate per carat
   numberOfStones: number; // Number of diamonds used
+  // Multiple stones/diamonds array
+  stones?: Stone[]; // Array of individual stone/diamond entries
 
   // Legacy fields for backward compatibility (deprecated - use new fields above)
   metalType: 'Gold' | 'Silver' | 'Platinum' | 'Rose Gold' | 'White Gold' | '';
@@ -437,6 +474,8 @@ const INITIAL_PRODUCT: Product = {
   diamondCarat: 0,
   diamondRatePerCarat: 0,
   numberOfStones: 0,
+  // Multiple stones/diamonds array
+  stones: [],
   // Legacy fields for backward compatibility
   metalType: '',
   metalPurity: '',
@@ -1133,6 +1172,14 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
         const data = await response.json();
         console.log('[v0] Fetched product data:', data);
 
+        // Ensure stones have unique IDs if they exist
+        const processedStones = Array.isArray(data.stones)
+          ? data.stones.map((stone: any) => ({
+              ...stone,
+              id: stone.id || `stone-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            }))
+          : [];
+
         const safeData = {
           ...INITIAL_PRODUCT,
           ...data,
@@ -1153,6 +1200,7 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
             : typeof data.specifications === 'string' && data.specifications.trim()
             ? [] // If old string format exists, convert to empty array (user can re-add)
             : [],
+          stones: processedStones,
         };
 
         console.log('[v0] Safe product data:', safeData);
@@ -1402,14 +1450,31 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
 
       // Diamond validation - if Diamond is selected
       if (formData.hasDiamond) {
-        if (!formData.diamondCarat || formData.diamondCarat <= 0) {
-          newErrors.diamondCarat = 'Diamond carat is required and must be greater than 0';
+        // Validate individual stone entries if they exist
+        if (formData.stones && formData.stones.length > 0) {
+          formData.stones.forEach((stone, index) => {
+            if (!stone.stoneType?.trim()) {
+              newErrors[`stone-${stone.id}-stoneType`] = `Stone type is required for stone #${index + 1}`;
+            }
+            if (!stone.weight || stone.weight <= 0) {
+              newErrors[`stone-${stone.id}-weight`] = `Weight is required and must be greater than 0 for stone #${index + 1}`;
+            }
+            if (!stone.price || stone.price <= 0) {
+              newErrors[`stone-${stone.id}-price`] = `Price is required and must be greater than 0 for stone #${index + 1}`;
+            }
+          });
         }
-        if (!formData.numberOfStones || formData.numberOfStones <= 0) {
-          newErrors.numberOfStones = 'Number of stones is required and must be greater than 0';
-        }
-        if (!formData.diamondRatePerCarat || formData.diamondRatePerCarat <= 0) {
-          newErrors.diamondRatePerCarat = 'Diamond rate per carat is required and must be greater than 0';
+        // Legacy diamond fields validation (only if no individual stones are added)
+        if (!formData.stones || formData.stones.length === 0) {
+          if (!formData.diamondCarat || formData.diamondCarat <= 0) {
+            newErrors.diamondCarat = 'Diamond carat is required and must be greater than 0 (or add individual stone entries)';
+          }
+          if (!formData.numberOfStones || formData.numberOfStones <= 0) {
+            newErrors.numberOfStones = 'Number of stones is required and must be greater than 0 (or add individual stone entries)';
+          }
+          if (!formData.diamondRatePerCarat || formData.diamondRatePerCarat <= 0) {
+            newErrors.diamondRatePerCarat = 'Diamond rate per carat is required and must be greater than 0 (or add individual stone entries)';
+          }
         }
       }
 
@@ -1538,6 +1603,61 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
         // Update tabs with errors when field error is cleared
         const updatedTabsWithErrors = getTabsWithErrors(newErrors);
         setTabsWithErrors(updatedTabsWithErrors);
+        return newErrors;
+      });
+    }
+  };
+
+  // Stone management handlers
+  const addStone = () => {
+    const newStone: Stone = {
+      id: `stone-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      stoneType: '',
+      shape: '',
+      weight: 0,
+      clarity: '',
+      color: '',
+      cut: '',
+      price: 0,
+      certification: '',
+      certificationNumber: '',
+    };
+    setFormData(prev => ({
+      ...prev,
+      stones: [...(prev.stones || []), newStone],
+    }));
+  };
+
+  const removeStone = (stoneId: string) => {
+    setFormData(prev => ({
+      ...prev,
+      stones: (prev.stones || []).filter(stone => stone.id !== stoneId),
+    }));
+    // Clear any errors related to this stone
+    setErrors(prev => {
+      const newErrors = { ...prev };
+      Object.keys(newErrors).forEach(key => {
+        if (key.startsWith(`stone-${stoneId}-`)) {
+          delete newErrors[key];
+        }
+      });
+      return newErrors;
+    });
+  };
+
+  const updateStone = (stoneId: string, field: keyof Stone, value: any) => {
+    setFormData(prev => ({
+      ...prev,
+      stones: (prev.stones || []).map(stone =>
+        stone.id === stoneId ? { ...stone, [field]: value } : stone
+      ),
+    }));
+    // Clear error for this field
+    const errorKey = `stone-${stoneId}-${field}`;
+    if (errors[errorKey]) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[errorKey];
         return newErrors;
       });
     }
@@ -2208,69 +2328,172 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                           </div>
                         )}
 
-                        {/* Diamond Details */}
+                        {/* Diamond/Stone Details - Dynamic Multiple Entries */}
                         {formData.hasDiamond && (
                           <div className='mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800'>
-                            <h5 className='text-md font-semibold text-blue-900 dark:text-blue-100 mb-3'>Diamond Details</h5>
-                            <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4 mb-4'>
-                              <FormField
-                                label='Diamond Carat '
-                                required
-                                error={isFieldInActiveTab('diamondCarat') ? errors.diamondCarat : undefined}
-                                placeholder='Enter carats'
-                                value={formData.diamondCarat}
-                                numericOnly
-                                onChange={e => handleChange('diamondCarat', e.target.value ? Number(e.target.value) : 0)}
-                                helperText='Total carat weight'
-                              />
-                              <FormField
-                                label='Number of Stones '
-                                required
-                                type='number'
-                                min='1'
-                                value={formData.numberOfStones}
-                                onChange={e => handleChange('numberOfStones', parseInt(e.target.value) || 1)}
-                                placeholder='Enter number of diamonds'
-                                error={errors.numberOfStones}
-                                helperText='Total count of diamonds'
-                              />
-                              <FormField
-                                label='Diamond Rate per Carat (₹) '
-                                required
-                                type='number'
-                                step='0.01'
-                                placeholder='Enter rate per carat'
-                                value={formData.diamondRatePerCarat}
-                                onChange={e => handleChange('diamondRatePerCarat', parseFloat(e.target.value) || 0)}
-                                helperText='Rate per carat in ₹'
-                                error={isFieldInActiveTab('diamondRatePerCarat') ? errors.diamondRatePerCarat : undefined}
-                              />
-                              <Dropdown
-                                labelMain='Diamond Clarity'
-                                options={DIAMOND_CLARITY_OPTIONS}
-                                placeholder='Select Clarity'
-                                value={formData.stoneClarity}
-                                onChange={option => handleChange('stoneClarity', option.value as Product['stoneClarity'])}
-                                error={isFieldInActiveTab('stoneClarity') ? errors.stoneClarity : undefined}
-                              />
+                            <div className='flex items-center justify-between mb-4'>
+                              <h5 className='text-md font-semibold text-blue-900 dark:text-blue-100'>Stone/Diamond Details</h5>
+                              <Button
+                                type='button'
+                                onClick={addStone}
+                                variant='outline'
+                                size='sm'
+                                className='flex items-center gap-2'>
+                                <Plus className='h-4 w-4' />
+                                Add Stone
+                              </Button>
                             </div>
-                            <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-                              <Dropdown
-                                labelMain='Diamond Cut'
-                                options={DIAMOND_CUT_OPTIONS}
-                                placeholder='Select Cut Grade'
-                                value={formData.diamondCut}
-                                onChange={option => handleChange('diamondCut', option.value as Product['diamondCut'])}
-                                error={isFieldInActiveTab('diamondCut') ? errors.diamondCut : undefined}
-                              />
-                              <Dropdown
-                                labelMain='Diamond Shape'
-                                options={DIAMOND_SHAPE_OPTIONS}
-                                placeholder='Select Shape'
-                                value={formData.diamondShape}
-                                onChange={option => handleChange('diamondShape', option.value as Product['diamondShape'])}
-                                error={isFieldInActiveTab('diamondShape') ? errors.diamondShape : undefined}
-                              />
+
+                            {/* Legacy single diamond fields (for backward compatibility) */}
+                            <div className='mb-4 p-3 bg-white dark:bg-slate-800 rounded border border-blue-200 dark:border-blue-700'>
+                              <p className='text-xs text-slate-600 dark:text-slate-400 mb-2'>Quick Entry (Optional - Use individual stone entries below for detailed tracking)</p>
+                              <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3'>
+                                <FormField
+                                  label='Total Diamond Carat'
+                                  placeholder='Enter total carats'
+                                  value={formData.diamondCarat}
+                                  numericOnly
+                                  onChange={e => handleChange('diamondCarat', e.target.value ? Number(e.target.value) : 0)}
+                                  helperText='Total carat weight (legacy)'
+                                />
+                                <FormField
+                                  label='Number of Stones'
+                                  type='number'
+                                  min='1'
+                                  value={formData.numberOfStones}
+                                  onChange={e => handleChange('numberOfStones', parseInt(e.target.value) || 1)}
+                                  placeholder='Enter number of diamonds'
+                                  helperText='Total count (legacy)'
+                                />
+                                <FormField
+                                  label='Diamond Rate per Carat (₹)'
+                                  type='number'
+                                  step='0.01'
+                                  placeholder='Enter rate per carat'
+                                  value={formData.diamondRatePerCarat}
+                                  onChange={e => handleChange('diamondRatePerCarat', parseFloat(e.target.value) || 0)}
+                                  helperText='Rate per carat in ₹ (legacy)'
+                                />
+                              </div>
+                            </div>
+
+                            {/* Dynamic Stone Entries */}
+                            <div className='space-y-4'>
+                              {(formData.stones || []).length === 0 ? (
+                                <div className='text-center py-8 text-slate-500 dark:text-slate-400'>
+                                  <p className='text-sm'>No stones added yet. Click "Add Stone" to add diamond/stone details.</p>
+                                </div>
+                              ) : (
+                                (formData.stones || []).map((stone, index) => (
+                                  <div
+                                    key={stone.id}
+                                    className='p-4 bg-white dark:bg-slate-800 rounded-lg border border-blue-300 dark:border-blue-700 shadow-sm'>
+                                    <div className='flex items-center justify-between mb-4'>
+                                      <h6 className='text-sm font-semibold text-slate-700 dark:text-slate-300'>
+                                        Stone #{index + 1}
+                                      </h6>
+                                      <Button
+                                        type='button'
+                                        onClick={() => removeStone(stone.id)}
+                                        variant='ghost'
+                                        size='sm'
+                                        className='text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20'>
+                                        <X className='h-4 w-4' />
+                                      </Button>
+                                    </div>
+
+                                    <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
+                                      <Dropdown
+                                        labelMain='Stone Type'
+                                        options={STONE_TYPE_OPTIONS}
+                                        placeholder='Select Stone Type'
+                                        value={stone.stoneType}
+                                        onChange={option => updateStone(stone.id, 'stoneType', option.value)}
+                                        error={errors[`stone-${stone.id}-stoneType`]}
+                                      />
+                                      <Dropdown
+                                        labelMain='Shape'
+                                        options={DIAMOND_SHAPE_OPTIONS}
+                                        placeholder='Select Shape'
+                                        value={stone.shape}
+                                        onChange={option => updateStone(stone.id, 'shape', option.value)}
+                                        error={errors[`stone-${stone.id}-shape`]}
+                                      />
+                                      <FormField
+                                        label='Weight (Carats)'
+                                        required
+                                        type='number'
+                                        step='0.01'
+                                        min='0'
+                                        placeholder='Enter weight'
+                                        value={stone.weight}
+                                        onChange={e => updateStone(stone.id, 'weight', parseFloat(e.target.value) || 0)}
+                                        error={errors[`stone-${stone.id}-weight`]}
+                                        helperText='Weight in carats'
+                                      />
+                                      <Dropdown
+                                        labelMain='Clarity'
+                                        options={DIAMOND_CLARITY_OPTIONS}
+                                        placeholder='Select Clarity'
+                                        value={stone.clarity}
+                                        onChange={option => updateStone(stone.id, 'clarity', option.value)}
+                                        error={errors[`stone-${stone.id}-clarity`]}
+                                      />
+                                      <Dropdown
+                                        labelMain='Color'
+                                        options={DIAMOND_COLOR_OPTIONS}
+                                        placeholder='Select Color'
+                                        value={stone.color}
+                                        onChange={option => updateStone(stone.id, 'color', option.value)}
+                                        error={errors[`stone-${stone.id}-color`]}
+                                      />
+                                      <Dropdown
+                                        labelMain='Cut'
+                                        options={DIAMOND_CUT_OPTIONS}
+                                        placeholder='Select Cut Grade'
+                                        value={stone.cut}
+                                        onChange={option => updateStone(stone.id, 'cut', option.value)}
+                                        error={errors[`stone-${stone.id}-cut`]}
+                                      />
+                                      <FormField
+                                        label='Price (₹)'
+                                        required
+                                        type='number'
+                                        step='0.01'
+                                        min='0'
+                                        placeholder='Enter price'
+                                        value={stone.price}
+                                        onChange={e => updateStone(stone.id, 'price', parseFloat(e.target.value) || 0)}
+                                        error={errors[`stone-${stone.id}-price`]}
+                                        helperText='Price for this stone'
+                                      />
+                                      <Dropdown
+                                        labelMain='Certification'
+                                        options={CERTIFICATION_OPTIONS}
+                                        placeholder='Select Certification'
+                                        value={stone.certification || ''}
+                                        onChange={option => {
+                                          if (option.value === '__custom__') {
+                                            const customCert = prompt('Enter custom certification:');
+                                            if (customCert) {
+                                              updateStone(stone.id, 'certification', customCert);
+                                            }
+                                          } else {
+                                            updateStone(stone.id, 'certification', option.value);
+                                          }
+                                        }}
+                                      />
+                                      <FormField
+                                        label='Certification Number'
+                                        placeholder='Enter certification number'
+                                        value={stone.certificationNumber || ''}
+                                        onChange={e => updateStone(stone.id, 'certificationNumber', e.target.value)}
+                                        helperText='Certification number (if applicable)'
+                                      />
+                                    </div>
+                                  </div>
+                                ))
+                              )}
                             </div>
                           </div>
                         )}

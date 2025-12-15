@@ -76,6 +76,19 @@ interface ProductDetail {
   diamondShape?: string;
   stoneClarity?: string;
   stoneColor?: string;
+  // Multiple stones array
+  stones?: Array<{
+    id: string;
+    stoneType?: string;
+    shape?: string;
+    weight?: number;
+    clarity?: string;
+    color?: string;
+    cut?: string;
+    price?: number;
+    certification?: string;
+    certificationNumber?: string;
+  }>;
   // Jewelry specifications
   jewelryType?: string;
   jewelrySubType?: string;
@@ -798,48 +811,146 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
                     )}
                     {product.hasDiamond && (
                       <>
-                        {product.diamondCarat && (
-                          <div>
-                            <span className='text-[11px] uppercase tracking-wide text-[#4F3A2E]/70 font-medium block mb-2'>
-                              Diamond Carat
-                            </span>
-                            <p className='font-semibold text-[#1F3B29] text-base'>{product.diamondCarat}ct</p>
-                          </div>
+                        {/* Legacy single diamond fields (if no individual stones) */}
+                        {(!product.stones || product.stones.length === 0) && (
+                          <>
+                            {product.diamondCarat && (
+                              <div>
+                                <span className='text-[11px] uppercase tracking-wide text-[#4F3A2E]/70 font-medium block mb-2'>
+                                  Diamond Carat
+                                </span>
+                                <p className='font-semibold text-[#1F3B29] text-base'>{product.diamondCarat}ct</p>
+                              </div>
+                            )}
+                            {product.numberOfStones && (
+                              <div>
+                                <span className='text-[11px] uppercase tracking-wide text-[#4F3A2E]/70 font-medium block mb-2'>
+                                  Number of Stones
+                                </span>
+                                <p className='font-semibold text-[#1F3B29] text-base'>{product.numberOfStones}</p>
+                              </div>
+                            )}
+                            {product.diamondCut && (
+                              <div>
+                                <span className='text-[11px] uppercase tracking-wide text-[#4F3A2E]/70 font-medium block mb-2'>
+                                  Diamond Cut
+                                </span>
+                                <p className='font-semibold text-[#1F3B29] text-base'>{product.diamondCut}</p>
+                              </div>
+                            )}
+                            {product.diamondShape && (
+                              <div>
+                                <span className='text-[11px] uppercase tracking-wide text-[#4F3A2E]/70 font-medium block mb-2'>
+                                  Diamond Shape
+                                </span>
+                                <p className='font-semibold text-[#1F3B29] text-base'>{product.diamondShape}</p>
+                              </div>
+                            )}
+                            {product.stoneClarity && (
+                              <div>
+                                <span className='text-[11px] uppercase tracking-wide text-[#4F3A2E]/70 font-medium block mb-2'>Clarity</span>
+                                <p className='font-semibold text-[#1F3B29] text-base'>{product.stoneClarity}</p>
+                              </div>
+                            )}
+                            {product.stoneColor && (
+                              <div>
+                                <span className='text-[11px] uppercase tracking-wide text-[#4F3A2E]/70 font-medium block mb-2'>Color</span>
+                                <p className='font-semibold text-[#1F3B29] text-base'>{product.stoneColor}</p>
+                              </div>
+                            )}
+                          </>
                         )}
-                        {product.numberOfStones && (
-                          <div>
-                            <span className='text-[11px] uppercase tracking-wide text-[#4F3A2E]/70 font-medium block mb-2'>
-                              Number of Stones
-                            </span>
-                            <p className='font-semibold text-[#1F3B29] text-base'>{product.numberOfStones}</p>
-                          </div>
-                        )}
-                        {product.diamondCut && (
-                          <div>
-                            <span className='text-[11px] uppercase tracking-wide text-[#4F3A2E]/70 font-medium block mb-2'>
-                              Diamond Cut
-                            </span>
-                            <p className='font-semibold text-[#1F3B29] text-base'>{product.diamondCut}</p>
-                          </div>
-                        )}
-                        {product.diamondShape && (
-                          <div>
-                            <span className='text-[11px] uppercase tracking-wide text-[#4F3A2E]/70 font-medium block mb-2'>
-                              Diamond Shape
-                            </span>
-                            <p className='font-semibold text-[#1F3B29] text-base'>{product.diamondShape}</p>
-                          </div>
-                        )}
-                        {product.stoneClarity && (
-                          <div>
-                            <span className='text-[11px] uppercase tracking-wide text-[#4F3A2E]/70 font-medium block mb-2'>Clarity</span>
-                            <p className='font-semibold text-[#1F3B29] text-base'>{product.stoneClarity}</p>
-                          </div>
-                        )}
-                        {product.stoneColor && (
-                          <div>
-                            <span className='text-[11px] uppercase tracking-wide text-[#4F3A2E]/70 font-medium block mb-2'>Color</span>
-                            <p className='font-semibold text-[#1F3B29] text-base'>{product.stoneColor}</p>
+
+                        {/* Multiple Stone Details - Expandable Section */}
+                        {product.stones && product.stones.length > 0 && (
+                          <div className='col-span-full mt-4'>
+                            <div className='border-t border-[#E6D3C2]/50 pt-5'>
+                              <h3 className='text-sm font-semibold text-[#1F3B29] mb-4 flex items-center gap-2'>
+                                <Gem className='h-4 w-4' />
+                                Stone Details ({product.stones.length} {product.stones.length === 1 ? 'Stone' : 'Stones'})
+                              </h3>
+                              <div className='space-y-4'>
+                                {product.stones.map((stone, index) => (
+                                  <div
+                                    key={stone.id || index}
+                                    className='p-4 bg-[#FAF7F4] rounded-lg border border-[#E6D3C2]/50'>
+                                    <div className='flex items-center justify-between mb-3'>
+                                      <h4 className='text-sm font-semibold text-[#4F3A2E]'>
+                                        Stone #{index + 1} {stone.stoneType && `- ${stone.stoneType}`}
+                                      </h4>
+                                    </div>
+                                    <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4'>
+                                      {stone.shape && (
+                                        <div>
+                                          <span className='text-[10px] uppercase tracking-wide text-[#4F3A2E]/70 font-medium block mb-1'>
+                                            Shape
+                                          </span>
+                                          <p className='font-semibold text-[#1F3B29] text-sm'>{stone.shape}</p>
+                                        </div>
+                                      )}
+                                      {stone.weight && (
+                                        <div>
+                                          <span className='text-[10px] uppercase tracking-wide text-[#4F3A2E]/70 font-medium block mb-1'>
+                                            Weight
+                                          </span>
+                                          <p className='font-semibold text-[#1F3B29] text-sm'>{stone.weight}ct</p>
+                                        </div>
+                                      )}
+                                      {stone.clarity && (
+                                        <div>
+                                          <span className='text-[10px] uppercase tracking-wide text-[#4F3A2E]/70 font-medium block mb-1'>
+                                            Clarity
+                                          </span>
+                                          <p className='font-semibold text-[#1F3B29] text-sm'>{stone.clarity}</p>
+                                        </div>
+                                      )}
+                                      {stone.color && (
+                                        <div>
+                                          <span className='text-[10px] uppercase tracking-wide text-[#4F3A2E]/70 font-medium block mb-1'>
+                                            Color
+                                          </span>
+                                          <p className='font-semibold text-[#1F3B29] text-sm'>{stone.color}</p>
+                                        </div>
+                                      )}
+                                      {stone.cut && (
+                                        <div>
+                                          <span className='text-[10px] uppercase tracking-wide text-[#4F3A2E]/70 font-medium block mb-1'>
+                                            Cut
+                                          </span>
+                                          <p className='font-semibold text-[#1F3B29] text-sm'>{stone.cut}</p>
+                                        </div>
+                                      )}
+                                      {stone.price && (
+                                        <div>
+                                          <span className='text-[10px] uppercase tracking-wide text-[#4F3A2E]/70 font-medium block mb-1'>
+                                            Price
+                                          </span>
+                                          <p className='font-semibold text-[#1F3B29] text-sm'>
+                                            ₹{stone.price.toLocaleString('en-IN')}
+                                          </p>
+                                        </div>
+                                      )}
+                                      {stone.certification && (
+                                        <div>
+                                          <span className='text-[10px] uppercase tracking-wide text-[#4F3A2E]/70 font-medium block mb-1'>
+                                            Certification
+                                          </span>
+                                          <p className='font-semibold text-[#1F3B29] text-sm'>{stone.certification}</p>
+                                        </div>
+                                      )}
+                                      {stone.certificationNumber && (
+                                        <div>
+                                          <span className='text-[10px] uppercase tracking-wide text-[#4F3A2E]/70 font-medium block mb-1'>
+                                            Cert. Number
+                                          </span>
+                                          <p className='font-semibold text-[#1F3B29] text-sm'>{stone.certificationNumber}</p>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
                           </div>
                         )}
                       </>
