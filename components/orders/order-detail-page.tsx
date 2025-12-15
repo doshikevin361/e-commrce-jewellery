@@ -144,7 +144,7 @@ export function OrderDetailPage({ params }: OrderDetailPageProps) {
         toast({
           title: 'Success',
           description: 'Order updated successfully',
-          variant: 'default',
+          variant: 'success',
         });
         // Update local order state
         if (data.order) {
