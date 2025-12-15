@@ -24,6 +24,7 @@ import { Switch } from '@/components/ui/switch';
 import { CommonDialog } from '../dialog/dialog';
 import { formatIndianDate } from '@/app/utils/helper';
 import { Spinner } from '@/components/ui/spinner';
+import { AdminPagination } from '@/components/ui/admin-pagination';
 
 interface Customer {
   _id: string;
@@ -64,10 +65,23 @@ export function CustomerList() {
   const [viewCustomerId, setViewCustomerId] = useState<string | null>(null);
   const [customerDetails, setCustomerDetails] = useState<CustomerDetails | null>(null);
   const [loadingCustomerDetails, setLoadingCustomerDetails] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   useEffect(() => {
     fetchCustomers();
   }, [searchTerm, statusFilter]);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter]);
+
+  // Pagination calculations
+  const totalPages = Math.ceil(customers.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedCustomers = customers.slice(startIndex, endIndex);
 
   const fetchCustomers = async () => {
     try {
@@ -208,21 +222,34 @@ export function CustomerList() {
       </div>
 
       <Card className='p-4'>
-        <div className='flex flex-row flex-wrap gap-2'>
-          <Input
-            placeholder='Search by name, email, or phone...'
-            value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
-            className='md:col-span-2 max-w-[300px]'
-          />
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger>
-              <SelectValue placeholder='Filter by status' />
+        <div className='flex flex-row flex-wrap gap-2 justify-between items-center'>
+          <div className='flex flex-row gap-2'>
+            <Input
+              placeholder='Search by name, email, or phone...'
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              className='md:col-span-2 max-w-[300px]'
+            />
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder='Filter by status' />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value='all'>All Statuses</SelectItem>
+                <SelectItem value='active'>Active</SelectItem>
+                <SelectItem value='blocked'>Blocked</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <Select value={itemsPerPage.toString()} onValueChange={v => setItemsPerPage(Number(v))}>
+            <SelectTrigger className='w-[120px]'>
+              <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value='all'>All Statuses</SelectItem>
-              <SelectItem value='active'>Active</SelectItem>
-              <SelectItem value='blocked'>Blocked</SelectItem>
+              <SelectItem value='10'>10 per page</SelectItem>
+              <SelectItem value='25'>25 per page</SelectItem>
+              <SelectItem value='50'>50 per page</SelectItem>
+              <SelectItem value='100'>100 per page</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -252,7 +279,7 @@ export function CustomerList() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  customers.map(customer => (
+                  paginatedCustomers.map(customer => (
                     <TableRow key={customer._id} className='border-b border-gray-200 hover:bg-green-50 transition-colors duration-150'>
                       <TableCell className='font-semibold text-gray-900 py-4'>{customer.name}</TableCell>
                       <TableCell className='text-gray-600 py-4'>{customer.email}</TableCell>
@@ -307,6 +334,15 @@ export function CustomerList() {
               </TableBody>
             </Table>
           </div>
+        )}
+        {customers.length > 0 && (
+          <AdminPagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+            itemsPerPage={itemsPerPage}
+            totalItems={customers.length}
+          />
         )}
       </Card>
 

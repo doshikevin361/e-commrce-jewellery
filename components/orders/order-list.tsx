@@ -12,6 +12,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { Eye, Search, Package } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
+import { AdminPagination } from '@/components/ui/admin-pagination';
 
 interface Order {
   _id: string;
@@ -35,10 +36,23 @@ export function OrderList() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled'>('all');
   const [paymentStatusFilter, setPaymentStatusFilter] = useState<'all' | 'pending' | 'paid' | 'failed' | 'refunded'>('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   useEffect(() => {
     fetchOrders();
   }, [search, statusFilter, paymentStatusFilter]);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, statusFilter, paymentStatusFilter]);
+
+  // Pagination calculations
+  const totalPages = Math.ceil(orders.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedOrders = orders.slice(startIndex, endIndex);
 
   const fetchOrders = async () => {
     try {
@@ -122,6 +136,20 @@ export function OrderList() {
       </div>
 
       <Card className='p-6'>
+        <div className='flex items-center justify-between mb-6'>
+          <div className='flex-1' />
+          <Select value={itemsPerPage.toString()} onValueChange={v => setItemsPerPage(Number(v))}>
+            <SelectTrigger className='w-[120px]'>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value='10'>10 per page</SelectItem>
+              <SelectItem value='25'>25 per page</SelectItem>
+              <SelectItem value='50'>50 per page</SelectItem>
+              <SelectItem value='100'>100 per page</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
         <div className='flex flex-col sm:flex-row gap-4 mb-6'>
           <div className='flex-1 relative max-w-[400px]'>
             <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4' />
@@ -182,7 +210,7 @@ export function OrderList() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {orders.map(order => (
+                {paginatedOrders.map(order => (
                   <TableRow key={order._id}>
                     <TableCell className='font-medium'>{order.orderId}</TableCell>
                     <TableCell>{formatIndianDate(order.createdAt)}</TableCell>
@@ -210,6 +238,15 @@ export function OrderList() {
               </TableBody>
             </Table>
           </div>
+        )}
+        {orders.length > 0 && (
+          <AdminPagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+            itemsPerPage={itemsPerPage}
+            totalItems={orders.length}
+          />
         )}
       </Card>
     </div>

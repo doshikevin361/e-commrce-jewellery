@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
   AlertDialog,
@@ -21,6 +22,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Spinner } from '@/components/ui/spinner';
+import { AdminPagination } from '@/components/ui/admin-pagination';
 
 interface Tag {
   _id: string;
@@ -37,12 +39,25 @@ export function TagList() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [togglingStatusId, setTogglingStatusId] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
   const router = useRouter();
   const { toast } = useToast();
 
   useEffect(() => {
     fetchTags();
   }, [search]);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search]);
+
+  // Pagination calculations
+  const totalPages = Math.ceil(tags.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedTags = tags.slice(startIndex, endIndex);
 
   const fetchTags = async () => {
     try {
@@ -148,13 +163,24 @@ export function TagList() {
       </div>
 
       <Card className='p-6'>
-        <div className='mb-4'>
+        <div className='flex items-center justify-between mb-4'>
           <Input
             placeholder='Search tags...'
             value={search}
             onChange={e => setSearch(e.target.value)}
             className='max-w-sm'
           />
+          <Select value={itemsPerPage.toString()} onValueChange={v => setItemsPerPage(Number(v))}>
+            <SelectTrigger className='w-[120px]'>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value='10'>10 per page</SelectItem>
+              <SelectItem value='25'>25 per page</SelectItem>
+              <SelectItem value='50'>50 per page</SelectItem>
+              <SelectItem value='100'>100 per page</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         <Table>
@@ -168,11 +194,11 @@ export function TagList() {
           </TableHeader>
           <DataTableBody
             loading={loading}
-            data={tags}
+            data={paginatedTags}
             columns={4}
             loadingText='Loading tags...'
             emptyText='No tags found'>
-            {tags.map(tag => (
+            {paginatedTags.map(tag => (
               <TableRow key={tag._id}>
                 <TableCell className='font-medium py-4'>{tag.name}</TableCell>
                 <TableCell className='text-sm text-muted-foreground'>
@@ -206,6 +232,15 @@ export function TagList() {
             ))}
           </DataTableBody>
         </Table>
+        {tags.length > 0 && (
+          <AdminPagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+            itemsPerPage={itemsPerPage}
+            totalItems={tags.length}
+          />
+        )}
       </Card>
 
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
