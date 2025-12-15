@@ -23,6 +23,7 @@ import { Download, Search, Filter, Plus, Trash2, Pencil, Eye } from 'lucide-reac
 import { CommonDialog } from '../dialog/dialog';
 import { Switch } from '@/components/ui/switch';
 import { formatIndianDate } from '@/app/utils/helper';
+import { AdminPagination } from '@/components/ui/admin-pagination';
 
 interface Product {
   _id?: string;
@@ -90,6 +91,8 @@ export function ProductList() {
   const [viewProductId, setViewProductId] = useState<string | null>(null);
   const [viewProductData, setViewProductData] = useState<ProductDetails | null>(null);
   const [loadingProductDetails, setLoadingProductDetails] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   // useEffect(() => {
   //   toast({
@@ -167,6 +170,17 @@ export function ProductList() {
 
     return matchesSearch && matchesCategory && matchesVendor && matchesStatus && matchesStock;
   });
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedProducts = filteredProducts.slice(startIndex, endIndex);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, categoryFilter, vendorFilter, statusFilter, stockFilter]);
 
   const handleAddProduct = () => {
     router.push('/admin/products/add');
@@ -365,6 +379,17 @@ export function ProductList() {
                 <Filter className='w-5 h-5' />
                 Filters
               </h3>
+              <Select value={itemsPerPage.toString()} onValueChange={v => setItemsPerPage(Number(v))}>
+                <SelectTrigger className='w-[120px] bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600'>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value='10'>10 per page</SelectItem>
+                  <SelectItem value='25'>25 per page</SelectItem>
+                  <SelectItem value='50'>50 per page</SelectItem>
+                  <SelectItem value='100'>100 per page</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <div className='flex flex-row flex-wrap gap-2'>
@@ -458,7 +483,7 @@ export function ProductList() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredProducts.map(product => (
+                    {paginatedProducts.map(product => (
                       <TableRow
                         key={product._id || product.id}
                         className='border-b border-slate-100 dark:border-slate-700 hover:bg-green-50 dark:hover:bg-slate-700/50 transition-colors duration-150'>
@@ -534,6 +559,15 @@ export function ProductList() {
               </div>
             )}
           </div>
+          {filteredProducts.length > 0 && (
+            <AdminPagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+              itemsPerPage={itemsPerPage}
+              totalItems={filteredProducts.length}
+            />
+          )}
         </Card>
       </div>
 

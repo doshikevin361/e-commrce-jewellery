@@ -25,6 +25,8 @@ import { CommonDialog } from '../dialog/dialog';
 import { formatIndianDate } from '@/app/utils/helper';
 import { DataTableBody } from '@/components/ui/data-table-body';
 import { Spinner } from '@/components/ui/spinner';
+import { AdminPagination } from '@/components/ui/admin-pagination';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface Admin {
   _id: string;
@@ -53,12 +55,25 @@ export function UserList() {
   const [loadingAdminDetails, setLoadingAdminDetails] = useState(false);
   const [togglingStatusId, setTogglingStatusId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
   const router = useRouter();
   const { toast } = useToast();
 
   useEffect(() => {
     fetchAdmins();
   }, [searchTerm]);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
+  // Pagination calculations
+  const totalPages = Math.ceil(admins.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedAdmins = admins.slice(startIndex, endIndex);
 
   const fetchAdmins = async () => {
     try {
@@ -220,7 +235,7 @@ export function UserList() {
 
       <Card className='p-6 shadow-md'>
         <div className='space-y-4'>
-          <div className='flex flex-row flex-wrap gap-2'>
+          <div className='flex flex-row flex-wrap gap-2 justify-between items-center'>
             <div className='flex relative'>
               <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground' />
               <Input
@@ -230,6 +245,17 @@ export function UserList() {
                 className='pl-10 max-w-[300px]'
               />
             </div>
+            <Select value={itemsPerPage.toString()} onValueChange={v => setItemsPerPage(Number(v))}>
+              <SelectTrigger className='w-[120px]'>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value='10'>10 per page</SelectItem>
+                <SelectItem value='25'>25 per page</SelectItem>
+                <SelectItem value='50'>50 per page</SelectItem>
+                <SelectItem value='100'>100 per page</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <div className='overflow-x-auto'>
@@ -244,8 +270,8 @@ export function UserList() {
                   <TableHead className='font-semibold text-gray-700 py-4 text-right'>Action</TableHead>
                 </TableRow>
               </TableHeader>
-              <DataTableBody loading={loading} data={admins} columns={6} loadingText='Loading users...' emptyText='No users found'>
-                {admins.map(admin => (
+              <DataTableBody loading={loading} data={paginatedAdmins} columns={6} loadingText='Loading users...' emptyText='No users found'>
+                {paginatedAdmins.map(admin => (
                   <TableRow key={admin._id} className='border-b border-gray-200 hover:bg-green-50 transition-colors duration-150'>
                     <TableCell className='font-semibold text-gray-900 py-4'>{admin.name}</TableCell>
                     <TableCell className='text-gray-600 py-4'>{admin.email}</TableCell>
@@ -310,6 +336,15 @@ export function UserList() {
               </DataTableBody>
             </Table>
           </div>
+          {admins.length > 0 && (
+            <AdminPagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+              itemsPerPage={itemsPerPage}
+              totalItems={admins.length}
+            />
+          )}
         </div>
       </Card>
       <CommonDialog

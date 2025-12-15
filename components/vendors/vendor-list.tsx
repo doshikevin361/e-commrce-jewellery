@@ -24,6 +24,7 @@ import { Download, Edit, Eye, Plus, Search, Trash2, Store, Clock, CheckCircle2, 
 import { CommonDialog } from '../dialog/dialog';
 import { formatIndianDate } from '@/app/utils/helper';
 import { Spinner } from '@/components/ui/spinner';
+import { AdminPagination } from '@/components/ui/admin-pagination';
 
 interface Vendor {
   _id: string;
@@ -104,6 +105,8 @@ export function VendorList({ initialStatus }: VendorListProps) {
   const [viewVendorId, setViewVendorId] = useState<string | null>(null);
   const [vendorDetails, setVendorDetails] = useState<VendorDetails | null>(null);
   const [loadingVendorDetails, setLoadingVendorDetails] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -117,6 +120,17 @@ export function VendorList({ initialStatus }: VendorListProps) {
   useEffect(() => {
     fetchVendors();
   }, [searchTerm, statusFilter]);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter]);
+
+  // Pagination calculations
+  const totalPages = Math.ceil(vendors.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedVendors = vendors.slice(startIndex, endIndex);
 
   const fetchVendors = async () => {
     try {
@@ -321,26 +335,39 @@ export function VendorList({ initialStatus }: VendorListProps) {
 
       <Card className='p-6 bg-white border border-gray-200 shadow-md'>
         <div className='space-y-4'>
-          <div className='flex flex-row flex-wrap gap-2'>
-            <div className='flex relative'>
-              <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground' />
-              <Input
-                placeholder='Search by name, email, or phone...'
-                value={searchTerm}
-                onChange={e => setSearchTerm(e.target.value)}
-                className='pl-10 max-w-[300px]'
-              />
+          <div className='flex flex-row flex-wrap gap-2 justify-between items-center w-full'>
+            <div className='flex flex-row gap-2'>
+              <div className='flex relative'>
+                <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground' />
+                <Input
+                  placeholder='Search by name, email, or phone...'
+                  value={searchTerm}
+                  onChange={e => setSearchTerm(e.target.value)}
+                  className='pl-10 max-w-[300px]'
+                />
+              </div>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className='w-full md:w-[200px]'>
+                  <SelectValue placeholder='Filter by status' />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value='all'>All Statuses</SelectItem>
+                  <SelectItem value='approved'>Approved</SelectItem>
+                  <SelectItem value='pending'>Pending</SelectItem>
+                  <SelectItem value='rejected'>Rejected</SelectItem>
+                  <SelectItem value='suspended'>Suspended</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className='w-full md:w-[200px]'>
-                <SelectValue placeholder='Filter by status' />
+            <Select value={itemsPerPage.toString()} onValueChange={v => setItemsPerPage(Number(v))}>
+              <SelectTrigger className='w-[120px]'>
+                <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value='all'>All Statuses</SelectItem>
-                <SelectItem value='approved'>Approved</SelectItem>
-                <SelectItem value='pending'>Pending</SelectItem>
-                <SelectItem value='rejected'>Rejected</SelectItem>
-                <SelectItem value='suspended'>Suspended</SelectItem>
+                <SelectItem value='10'>10 per page</SelectItem>
+                <SelectItem value='25'>25 per page</SelectItem>
+                <SelectItem value='50'>50 per page</SelectItem>
+                <SelectItem value='100'>100 per page</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -369,7 +396,7 @@ export function VendorList({ initialStatus }: VendorListProps) {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {vendors.map(vendor => (
+                  {paginatedVendors.map(vendor => (
                     <TableRow key={vendor._id} className='border-b border-gray-200 hover:bg-green-50 transition-colors duration-150'>
                       <TableCell className='font-semibold text-gray-900 py-4'>{vendor.storeName}</TableCell>
                       <TableCell className='text-gray-600 py-4'>{vendor.email}</TableCell>
@@ -447,6 +474,15 @@ export function VendorList({ initialStatus }: VendorListProps) {
                 </TableBody>
               </Table>
             </div>
+          )}
+          {vendors.length > 0 && (
+            <AdminPagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+              itemsPerPage={itemsPerPage}
+              totalItems={vendors.length}
+            />
           )}
         </div>
       </Card>

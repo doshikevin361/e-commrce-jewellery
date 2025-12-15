@@ -25,6 +25,7 @@ import { formatIndianDate } from '@/app/utils/helper';
 import { CommonDialog } from '../dialog/dialog';
 import { DataTableBody } from '@/components/ui/data-table-body';
 import { Spinner } from '@/components/ui/spinner';
+import { AdminPagination } from '@/components/ui/admin-pagination';
 
 interface Category {
   _id: string;
@@ -64,12 +65,25 @@ export function CategoryList() {
   const [detailsId, setDetailsId] = useState<string | null>(null);
   const [detailsData, setDetailsData] = useState<Category | null>(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   console.log(detailsData);
 
   useEffect(() => {
     fetchCategories();
   }, [searchTerm, statusFilter, featuredFilter]);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter, featuredFilter]);
+
+  // Pagination calculations
+  const totalPages = Math.ceil(categories.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedCategories = categories.slice(startIndex, endIndex);
 
   const fetchCategories = async () => {
     try {
@@ -233,7 +247,8 @@ export function CategoryList() {
 
       {/* Table */}
       <Card className='shadow-md border border-gray-200 overflow-hidden'>
-        <div className='flex flex-row gap-2 flex-wrap px-5'>
+        <div className='flex flex-row gap-2 flex-wrap px-5 justify-between items-center'>
+          <div className='flex flex-row gap-2 flex-wrap'>
           <Input
             placeholder='Search categories...'
             value={searchTerm}
@@ -262,6 +277,18 @@ export function CategoryList() {
               <SelectItem value='false'>Non-Featured</SelectItem>
             </SelectContent>
           </Select>
+          </div>
+          <Select value={itemsPerPage.toString()} onValueChange={v => setItemsPerPage(Number(v))}>
+            <SelectTrigger className='w-[120px] border-gray-300'>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value='10'>10 per page</SelectItem>
+              <SelectItem value='25'>25 per page</SelectItem>
+              <SelectItem value='50'>50 per page</SelectItem>
+              <SelectItem value='100'>100 per page</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
           <div className='overflow-x-auto px-5'>
             <Table>
@@ -279,11 +306,11 @@ export function CategoryList() {
               </TableHeader>
             <DataTableBody
               loading={loading}
-              data={categories}
+              data={paginatedCategories}
               columns={5}
               loadingText='Loading categories...'
               emptyText='No categories found'>
-                {categories.map(category => (
+                {paginatedCategories.map(category => (
                   <TableRow key={category._id} className='border-b border-gray-200 hover:bg-green-50 transition-colors duration-150'>
                     <TableCell className='font-semibold text-gray-900 py-4'>{category.name}</TableCell>
                     <TableCell className='text-sm text-gray-600 py-4'>{category.slug}</TableCell>
@@ -343,6 +370,15 @@ export function CategoryList() {
             </DataTableBody>
             </Table>
           </div>
+          {categories.length > 0 && (
+            <AdminPagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+              itemsPerPage={itemsPerPage}
+              totalItems={categories.length}
+            />
+          )}
       </Card>
 
       {/* Delete Confirmation Dialog */}
