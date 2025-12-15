@@ -29,6 +29,7 @@ import { ProductCardData } from '@/components/home/common/product-card';
 import { ProductCard } from '@/components/home/common/product-card';
 import { PageLoader } from '@/components/common/page-loader';
 import { useCart } from '@/contexts/CartContext';
+import { useWishlist } from '@/contexts/WishlistContext';
 import { cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
 
@@ -124,19 +125,22 @@ interface ProductDetail {
 export function ProductDetailPage({ productSlug }: { productSlug: string }) {
   const router = useRouter();
   const { addToCart, cartItems, isLoading: cartLoading } = useCart();
+  const { isProductInWishlist } = useWishlist();
   const [product, setProduct] = useState<ProductDetail | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('description');
-  const [isInWishlist, setIsInWishlist] = useState(false);
   const [wishlistLoading, setWishlistLoading] = useState(false);
   const [cartButtonLoading, setCartButtonLoading] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [zoomImage, setZoomImage] = useState<string | null>(null);
   const [zoomPosition, setZoomPosition] = useState({ x: 0, y: 0 });
   const [shareMenuOpen, setShareMenuOpen] = useState(false);
+  
+  // Check if product is in wishlist using context (no API call needed)
+  const isInWishlist = product?._id ? isProductInWishlist(product._id.toString()) : false;
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -168,7 +172,7 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
     }
   }, [productSlug]);
 
-  // Check authentication and wishlist status
+  // Check authentication status
   useEffect(() => {
     const checkAuth = () => {
       const token = typeof window !== 'undefined' ? localStorage.getItem('customerToken') : null;
@@ -178,26 +182,6 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
     window.addEventListener('authChange', checkAuth);
     return () => window.removeEventListener('authChange', checkAuth);
   }, []);
-
-  useEffect(() => {
-    if (isLoggedIn && product?._id) {
-      checkWishlistStatus();
-    }
-  }, [isLoggedIn, product?._id]);
-
-  const checkWishlistStatus = async () => {
-    if (!product?._id) return;
-    try {
-      const response = await fetch('/api/customer/wishlist');
-      if (response.ok) {
-        const data = await response.json();
-        const productIds = data.products?.map((p: any) => (p._id || p.id).toString()) || [];
-        setIsInWishlist(productIds.includes(product._id.toString()));
-      }
-    } catch (error) {
-      // Silent fail
-    }
-  };
 
   const handleWishlistToggle = async () => {
     if (!isLoggedIn) {
@@ -222,9 +206,8 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
         });
 
         if (response.ok) {
-          setIsInWishlist(false);
           toast.success('Product removed from wishlist');
-          // Dispatch event to update wishlist count in header
+          // Dispatch event to update wishlist count in header and refresh context
           window.dispatchEvent(new Event('wishlistChange'));
         }
       } else {
@@ -235,9 +218,8 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
         });
 
         if (response.ok) {
-          setIsInWishlist(true);
           toast.success('Product added to wishlist');
-          // Dispatch event to update wishlist count in header
+          // Dispatch event to update wishlist count in header and refresh context
           window.dispatchEvent(new Event('wishlistChange'));
         }
       }
