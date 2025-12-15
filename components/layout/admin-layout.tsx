@@ -5,6 +5,8 @@ import { useEffect, useState } from 'react';
 import { Sidebar } from './sidebar';
 import { TopBar } from './top-bar';
 import { ThemeProvider } from '@/components/theme-provider';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 export function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -47,6 +49,18 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
           </main>
         </div>
       </div>
+      <ToastContainer
+        position="top-center"
+        autoClose={3000}
+        hideProgressBar
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss={false}
+        draggable={false}
+        pauseOnHover={false}
+        theme="colored"
+      />
     </ThemeProvider>
   );
 }
