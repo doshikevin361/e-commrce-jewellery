@@ -1117,8 +1117,8 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
             onChange={option => updateField('productType', option.value)}
             options={[...PRODUCT_TYPE_OPTIONS]}
             placeholder='Select Product Type (e.g., Gold, Silver, Diamonds)'
+            error={errors.productType}
           />
-          {errors.productType && <p className='text-xs text-red-600 mt-1'>{errors.productType}</p>}
         </Card>
 
         {/* Category Selection */}
@@ -1134,8 +1134,8 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
             options={categoryOptions}
             placeholder='Select Category or Subcategory (e.g., Earring, Bracelet, Necklace)'
             withSearch={categoryOptions.length > 10}
+            error={errors.category}
           />
-          {errors.category && <p className='text-xs text-red-600 mt-1'>{errors.category}</p>}
         </Card>
 
         {/* Design Type, Karat, Purity, Metal Color Fields */}
@@ -1152,8 +1152,8 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
               options={designTypes}
               placeholder='Select Design Type'
               withSearch={designTypes.length > 10}
+              error={errors.designType}
             />
-            {errors.designType && <p className='text-xs text-red-600 mt-1'>{errors.designType}</p>}
 
             <Dropdown
               labelMain='Karat'
@@ -1171,8 +1171,8 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
               options={purities}
               placeholder={formData.productType ? `Select ${formData.productType} Purity` : 'Select Purity'}
               withSearch={purities.length > 10}
+              error={errors.silverPurity}
             />
-            {errors.silverPurity && <p className='text-xs text-red-600 mt-1 col-span-2'>{errors.silverPurity}</p>}
 
             <Dropdown
               labelMain='Metal Colour'
@@ -1190,8 +1190,8 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
               type='number'
               placeholder='Example: 10'
               required
+              error={errors.weight}
             />
-            {errors.weight && <p className='text-xs text-red-600 mt-1 col-span-2'>{errors.weight}</p>}
           </div>
         </Card>
 
@@ -1209,8 +1209,8 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
               onChange={e => handleNameChange(e.target.value)}
               type='text'
               placeholder='Example: 22K Gold Diamond Ring'
+              error={errors.name}
             />
-            {errors.name && <p className='text-xs text-red-600 mt-1'>{errors.name}</p>}
             <div className='flex flex-col gap-2'>
               <FormField
                 label='SKU'
@@ -1219,13 +1219,13 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                 type='text'
                 placeholder='Auto-generate or enter manually'
                 required
+                error={errors.sku}
               />
               <div>
                 <Button type='button' variant='outline' size='sm' onClick={generateSku}>
                   Auto Generate SKU
                 </Button>
               </div>
-              {errors.sku && <p className='text-xs text-red-600 mt-1'>{errors.sku}</p>}
             </div>
             <FormField
               label='HSN Code'
@@ -1234,8 +1234,8 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
               type='text'
               placeholder='Example: 7113 for Jewellery'
               required
+              error={errors.hsnCode}
             />
-            {errors.hsnCode && <p className='text-xs text-red-600 mt-1'>{errors.hsnCode}</p>}
             <div className='flex flex-col gap-2'>
               <FormField
                 label='URL Slug'
@@ -1244,26 +1244,25 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                 type='text'
                 placeholder='auto-from-name'
                 required
+                error={errors.urlSlug}
               />
               <div className='text-xs text-gray-500'>Slug updates automatically when name changes.</div>
-              {errors.urlSlug && <p className='text-xs text-red-600 mt-1'>{errors.urlSlug}</p>}
             </div>
           </div>
 
           <div className='mt-4 grid grid-cols-1 md:grid-cols-2 gap-4'>
-            <div className='flex flex-col gap-2'>
-              <label className='text-sm font-medium'>
-                Short Description <span className='text-red-500'>*</span>
-              </label>
-              <textarea
-                className='w-full border border-gray-200 rounded-md p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1F3B29]'
-                rows={3}
-                value={formData.shortDescription}
-                onChange={e => updateField('shortDescription', e.target.value)}
-                placeholder='A brief summary for listing cards (ideal 160-200 chars)'
-              />
-              {errors.description && <p className='text-xs text-red-600'>{errors.description}</p>}
-            </div>
+            <FormField
+              label='Short Description'
+              required
+              textarea
+              rows={3}
+              value={formData.shortDescription}
+              onChange={e => updateField('shortDescription', e.target.value)}
+              placeholder='A brief summary for listing cards (ideal 160-200 chars)'
+              containerClassName='flex flex-col gap-2'
+              inputClassName='border-gray-200 focus:ring-[#1F3B29]'
+              error={errors.description}
+            />
             <div className='flex flex-col gap-2'>
               <label className='text-sm font-medium'>Specifications (table)</label>
               <div className='space-y-2'>
@@ -1302,8 +1301,8 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
               value={formData.description}
               onChange={value => updateField('description', value)}
               placeholder='Detailed product description for PDP'
+              error={errors.description}
             />
-            {errors.description && <p className='text-xs text-red-600 mt-1'>{errors.description}</p>}
           </div>
         </Card>
 
@@ -2105,8 +2104,8 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
               onChange={e => updateField('seoTitle', e.target.value)}
               type='text'
               placeholder='Best 22K Gold Diamond Ring | Brand'
+              error={errors.seoTitle}
             />
-            {errors.seoTitle && <p className='text-xs text-red-600 mt-1'>{errors.seoTitle}</p>}
             <FormField
               label='SEO Tags (comma separated)'
               required
@@ -2114,21 +2113,22 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
               onChange={e => updateField('seoTags', e.target.value)}
               type='text'
               placeholder='gold ring, diamond jewelry, 22k'
+              error={errors.seoTags}
             />
-            {errors.seoTags && <p className='text-xs text-red-600 mt-1'>{errors.seoTags}</p>}
           </div>
           <div className='mt-4'>
-            <label className='block text-sm font-medium mb-2'>
-              SEO Description <span className='text-red-500'>*</span>
-            </label>
-            <textarea
-              className='w-full border border-gray-200 rounded-md p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1F3B29]'
+            <FormField
+              label='SEO Description'
+              required
+              textarea
               rows={3}
               value={formData.seoDescription}
               onChange={e => updateField('seoDescription', e.target.value)}
               placeholder='Meta description for search and social previews'
+              containerClassName='flex flex-col gap-2'
+              inputClassName='border-gray-200 focus:ring-[#1F3B29]'
+              error={errors.seoDescription}
             />
-            {errors.seoDescription && <p className='text-xs text-red-600 mt-1'>{errors.seoDescription}</p>}
           </div>
         </Card>
 
