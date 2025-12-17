@@ -1,8 +1,14 @@
 import { connectToDatabase } from "@/lib/mongodb";
 import { NextResponse } from "next/server";
+import { getUserFromRequest, isAdmin } from '@/lib/auth';
 
 export async function GET(request: Request) {
   try {
+    const user = getUserFromRequest(request as any);
+    if (!user || !isAdmin(user)) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { db } = await connectToDatabase();
     const { searchParams } = new URL(request.url);
     const search = searchParams.get("search");
@@ -40,6 +46,11 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
+    const user = getUserFromRequest(request as any);
+    if (!user || !isAdmin(user)) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { db } = await connectToDatabase();
     const body = await request.json();
 

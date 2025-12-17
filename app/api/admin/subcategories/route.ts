@@ -1,10 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
+import { getUserFromRequest, isAdmin } from '@/lib/auth';
 
 // GET - Fetch all subcategories
 export async function GET(request: NextRequest) {
   try {
+    const user = getUserFromRequest(request);
+    if (!user || !isAdmin(user)) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { db } = await connectToDatabase();
 
     const { searchParams } = new URL(request.url);
