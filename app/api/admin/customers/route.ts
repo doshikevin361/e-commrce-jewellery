@@ -41,8 +41,8 @@ export async function GET(request: Request) {
       .toArray();
 
     const formattedCustomers = customers.map(customer => ({
-      _id: customer._id.toString(),
       ...customer,
+      _id: customer._id.toString(),
     }));
 
     return Response.json({

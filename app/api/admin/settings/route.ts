@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
+import { getUserFromRequest, isAdmin } from '@/lib/auth';
 
 const DEFAULT_SETTINGS = {
   siteName: 'Grocify Admin',
@@ -29,6 +30,11 @@ function normalizeSettings(doc: any = {}) {
 
 export async function GET(request: NextRequest) {
   try {
+    const user = getUserFromRequest(request);
+    if (!user || !isAdmin(user)) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { db } = await connectToDatabase();
     const settings = await db.collection('settings').findOne({});
 
@@ -41,6 +47,11 @@ export async function GET(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
+    const user = getUserFromRequest(request);
+    if (!user || !isAdmin(user)) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { db } = await connectToDatabase();
     const body = await request.json();
 
