@@ -976,6 +976,13 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
         sku: computedSku,
       }));
 
+      // API expects these normalized jewellery fields even when we capture per-gram inputs
+      const goldWeight = ['Gold', 'Platinum'].includes(formData.productType)
+        ? formData.weight || formData.goldWeight || 0
+        : 0;
+      const goldRatePerGram = metalLiveRate || (formData as any).goldRatePerGram || 0;
+      const makingCharges = formData.makingChargePerGram || (formData as any).makingCharges || 0;
+
       const payload = {
         ...formData,
         product_type: formData.productType,
@@ -998,6 +1005,9 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
         regularPrice: 0,
         sellingPrice: 0,
         costPrice: 0,
+        goldWeight,
+        goldRatePerGram,
+        makingCharges,
       };
 
       const url = productId ? `/api/admin/products/${productId}` : '/api/admin/products';
