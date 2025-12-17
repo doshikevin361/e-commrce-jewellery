@@ -34,7 +34,7 @@ export function generateUserToken(user: Partial<User>) {
   return jwt.sign(
     { id: user._id, email: user.email, role: user.role },
     JWT_SECRET,
-    { expiresIn: '24h' }
+    { expiresIn: '7d' }
   );
 }
 
