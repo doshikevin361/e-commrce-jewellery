@@ -517,8 +517,8 @@ export const HomePage = () => {
     <>
       <div className='flex-col gap-0 pt-4 sm:pt-6 md:pt-8 lg:pt-10'>
       <div className={'mx-auto max-w-[1440px] w-full px-4 sm:px-6 md:px-8 lg:px-12 mb-4 sm:mb-5 md:mb-6'}>
-        <HeroBannerSlider banners={sectionsData.hero} isLoading={isLoading} />
-      </div>
+          <HeroBannerSlider banners={sectionsData.hero} isLoading={isLoading} />
+        </div>
         {errorMessage && (
           <div className='mt-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700'>{errorMessage}</div>
         )}

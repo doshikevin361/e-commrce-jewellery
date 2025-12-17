@@ -48,7 +48,17 @@ export function Sidebar() {
       pathname.startsWith('/admin/attributes') ||
       pathname.startsWith('/admin/categories') ||
       pathname.startsWith('/admin/brands') ||
-      pathname.startsWith('/admin/tags')
+      pathname.startsWith('/admin/tags') ||
+      pathname.startsWith('/admin/design-types') ||
+      pathname.startsWith('/admin/diamond-types') ||
+      pathname.startsWith('/admin/karats') ||
+      pathname.startsWith('/admin/purities') ||
+      pathname.startsWith('/admin/metal-colors') ||
+      pathname.startsWith('/admin/clarities') ||
+      pathname.startsWith('/admin/diamond-colors') ||
+      pathname.startsWith('/admin/diamond-shapes') ||
+      pathname.startsWith('/admin/setting-types') ||
+      pathname.startsWith('/admin/certified-labs')
   );
   const [cmsOpen, setCmsOpen] = useState(
     pathname.startsWith('/admin/cms') ||
@@ -247,6 +257,46 @@ export function Sidebar() {
     {
       label: 'Tag',
       href: '/admin/tags',
+    },
+    {
+      label: 'Design Type',
+      href: '/admin/design-types',
+    },
+    {
+      label: 'Diamond Type',
+      href: '/admin/diamond-types',
+    },
+    {
+      label: 'Karat',
+      href: '/admin/karats',
+    },
+    {
+      label: 'Purity',
+      href: '/admin/purities',
+    },
+    {
+      label: 'Metal Color',
+      href: '/admin/metal-colors',
+    },
+    {
+      label: 'Clarity',
+      href: '/admin/clarities',
+    },
+    {
+      label: 'Diamond Color',
+      href: '/admin/diamond-colors',
+    },
+    {
+      label: 'Diamond Shape',
+      href: '/admin/diamond-shapes',
+    },
+    {
+      label: 'Setting Type',
+      href: '/admin/setting-types',
+    },
+    {
+      label: 'Certified Labs',
+      href: '/admin/certified-labs',
     },
   ];
 
