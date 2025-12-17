@@ -1298,9 +1298,9 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
           </div>
 
           <div className="mt-4">
-            <label className="block text-sm font-medium mb-2">
+            {/* <label className="block text-sm font-medium mb-2">
               Description <span className="text-red-500">*</span>
-            </label>
+            </label> */}
             <RichTextEditor
               label="Description"
               value={formData.description}
