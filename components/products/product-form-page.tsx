@@ -977,11 +977,12 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
       }));
 
       // API expects these normalized jewellery fields even when we capture per-gram inputs
-      const goldWeight = ['Gold', 'Platinum'].includes(formData.productType)
-        ? formData.weight || formData.goldWeight || 0
-        : 0;
-      const goldRatePerGram = metalLiveRate || (formData as any).goldRatePerGram || 0;
-      const makingCharges = formData.makingChargePerGram || (formData as any).makingCharges || 0;
+      const weightInput = formData.weight || formData.goldWeight || 0;
+      const goldWeight = ['Gold', 'Platinum'].includes(formData.productType) ? weightInput : 0;
+      const silverWeight = formData.productType === 'Silver' ? weightInput : 0;
+      const goldRatePerGram = purityMetalRate || metalLiveRate || (formData as any).goldRatePerGram || 0;
+      const silverRatePerGram = purityMetalRate || metalLiveRate || (formData as any).silverRatePerGram || 0;
+      const makingCharges = Math.max(0, (formData.makingChargePerGram || 0) * (goldWeight || silverWeight));
 
       const payload = {
         ...formData,
@@ -1007,6 +1008,8 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
         costPrice: 0,
         goldWeight,
         goldRatePerGram,
+        silverWeight,
+        silverRatePerGram,
         makingCharges,
       };
 
@@ -1023,6 +1026,7 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
         toast({
           title: 'Success',
           description: productId ? 'Product updated successfully' : 'Product created successfully',
+          variant: 'success',
         });
         router.push('/admin/products');
       } else {
