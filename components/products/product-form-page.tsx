@@ -153,43 +153,40 @@ const PURITY_MAP: Record<string, number> = {
 };
 
 const formatINR = (value: number) =>
-  new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(
-    isFinite(value) ? value : 0
-  );
+  new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(isFinite(value) ? value : 0);
 
-  const getOptionLabel = (options: { label: string; value: string }[], value: string | undefined) =>
-    options.find((o) => o.value === value)?.label || value || '—';
+const getOptionLabel = (options: { label: string; value: string }[], value: string | undefined) =>
+  options.find(o => o.value === value)?.label || value || '—';
 
-  const parsePurityPercent = (purity: string) => {
-    if (!purity) return 1;
-    const lower = purity.toLowerCase().trim();
-    if (PURITY_MAP[lower] !== undefined) return PURITY_MAP[lower];
-    const numeric = parseFloat(purity);
-    if (isFinite(numeric)) {
-      // If user enters a percentage (e.g., 92), treat >24 as percent/100.
-      if (numeric > 24) return Math.min(numeric / 100, 1);
-      // If user enters karat (e.g., 22), convert to 24k scale.
-      if (numeric > 1.5) return Math.min(numeric / 24, 1);
-      // If already in 0-1 range, use directly.
-      return Math.min(numeric, 1);
-    }
-    return 1;
-  };
+const parsePurityPercent = (purity: string) => {
+  if (!purity) return 1;
+  const lower = purity.toLowerCase().trim();
+  if (PURITY_MAP[lower] !== undefined) return PURITY_MAP[lower];
+  const numeric = parseFloat(purity);
+  if (isFinite(numeric)) {
+    // If user enters a percentage (e.g., 92), treat >24 as percent/100.
+    if (numeric > 24) return Math.min(numeric / 100, 1);
+    // If user enters karat (e.g., 22), convert to 24k scale.
+    if (numeric > 1.5) return Math.min(numeric / 24, 1);
+    // If already in 0-1 range, use directly.
+    return Math.min(numeric, 1);
+  }
+  return 1;
+};
 
-  const slugify = (value: string) =>
-    value
-      .toLowerCase()
-      .trim()
-      .replace(/[^a-z0-9\s-]/g, '')
-      .replace(/\s+/g, '-')
-      .replace(/-+/g, '-');
+const slugify = (value: string) =>
+  value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-');
 
-  const generateSkuValue = (productType?: string) => {
-    const prefix = (productType || 'PRD').slice(0, 3).toUpperCase();
-    const timePart = Date.now().toString().slice(-6);
-    return `${prefix}-${timePart}`;
-  };
-
+const generateSkuValue = (productType?: string) => {
+  const prefix = (productType || 'PRD').slice(0, 3).toUpperCase();
+  const timePart = Date.now().toString().slice(-6);
+  return `${prefix}-${timePart}`;
+};
 
 const GST_OPTIONS = [
   { label: '0%', value: '0' },
@@ -256,7 +253,7 @@ interface Diamond {
 interface ProductFormData {
   // Product Type
   productType: string;
-  
+
   // Gold Fields
   category: string;
   sku: string;
@@ -274,7 +271,7 @@ interface ProductFormData {
   pincode: string;
   huidHallmarkNo: string;
   hsnCode: string;
-  
+
   // Diamonds Fields (for single diamond - legacy)
   diamondsType: string;
   noOfDiamonds: number;
@@ -290,10 +287,10 @@ interface ProductFormData {
   certifiedLabs: string;
   certificateNo: string;
   makingChargesDiscount: number;
-  
+
   // Multiple Diamonds
   diamonds: Diamond[];
-  
+
   // General Fields
   occasion: string;
   dimension: string;
@@ -310,7 +307,7 @@ interface ProductFormData {
   seoTitle: string;
   seoDescription: string;
   seoTags: string;
-  
+
   // Gemstone Fields
   gemstoneName: string;
   reportNo: string;
@@ -326,18 +323,18 @@ interface ProductFormData {
   magnification: number;
   remarks: string;
   gemstoneDescription: string;
-  
+
   // Images
   mainImage: string;
   certificateImages: string[];
   gemstonePhoto: string;
   gemstoneCertificate: string;
-  
+
   // Basic Product Info
   name: string;
   urlSlug: string;
   weight: number;
-  
+
   // Pricing & charges
   vendorCommissionRate: number; // %
   platformCommissionRate: number; // %
@@ -374,7 +371,14 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
   const [settingTypes, setSettingTypes] = useState<{ label: string; value: string }[]>([]);
   const [certifiedLabs, setCertifiedLabs] = useState<{ label: string; value: string }[]>([]);
   const [uploadingDiamondId, setUploadingDiamondId] = useState<string | null>(null);
-  const [livePrices, setLivePrices] = useState<{ gold: number; silver?: number; platinum?: number; source?: string; timestamp?: string; error?: string } | null>(null);
+  const [livePrices, setLivePrices] = useState<{
+    gold: number;
+    silver?: number;
+    platinum?: number;
+    source?: string;
+    timestamp?: string;
+    error?: string;
+  } | null>(null);
   const [uploadingProductImages, setUploadingProductImages] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -395,7 +399,7 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
   };
 
   const handleNameChange = (value: string) => {
-    setFormData((prev) => {
+    setFormData(prev => {
       const prevSlugFromName = slugify(prev.name || '');
       const shouldUpdateSlug = !prev.urlSlug || prev.urlSlug === prevSlugFromName;
       const nextSlug = shouldUpdateSlug ? slugify(value) : prev.urlSlug;
@@ -420,7 +424,7 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
         }
       }
       if (uploadedUrls.length) {
-        setFormData((prev) => ({ ...prev, images: [...(prev.images || []), ...uploadedUrls] }));
+        setFormData(prev => ({ ...prev, images: [...(prev.images || []), ...uploadedUrls] }));
       }
     } catch (error) {
       console.error('Failed to upload product images:', error);
@@ -435,18 +439,18 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
   };
 
   const removeProductImage = (url: string) => {
-    setFormData((prev) => ({ ...prev, images: (prev.images || []).filter((img) => img !== url) }));
+    setFormData(prev => ({ ...prev, images: (prev.images || []).filter(img => img !== url) }));
   };
 
   const addSpecificationRow = () => {
-    setFormData((prev) => ({
+    setFormData(prev => ({
       ...prev,
       specifications: [...(prev.specifications || []), { key: '', value: '' }],
     }));
   };
 
   const updateSpecificationRow = (index: number, field: 'key' | 'value', value: string) => {
-    setFormData((prev) => {
+    setFormData(prev => {
       const specs = [...(prev.specifications || [])];
       specs[index] = { ...specs[index], [field]: value };
       return { ...prev, specifications: specs };
@@ -454,28 +458,28 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
   };
 
   const removeSpecificationRow = (index: number) => {
-    setFormData((prev) => {
+    setFormData(prev => {
       const specs = [...(prev.specifications || [])];
       specs.splice(index, 1);
       return { ...prev, specifications: specs.length ? specs : [{ key: '', value: '' }] };
     });
   };
-  
+
   const [formData, setFormData] = useState<ProductFormData>({
     productType: '',
-  category: '',
+    category: '',
     sku: '',
     hsnCode: '',
     designType: '',
-  goldPurity: '',
-  silverPurity: '',
+    goldPurity: '',
+    silverPurity: '',
     metalColour: '',
     goldWeight: 0,
     lessDiamondWeight: 0,
     lessStoneWeight: 0,
     netGoldWeight: 0,
-  size: '',
-  gender: '',
+    size: '',
+    gender: '',
     itemsPair: 1,
     pincode: '',
     huidHallmarkNo: '',
@@ -523,7 +527,7 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
     magnification: 0,
     remarks: '',
     gemstoneDescription: '',
-  mainImage: '',
+    mainImage: '',
     certificateImages: [],
     gemstonePhoto: '',
     gemstoneCertificate: '',
@@ -575,11 +579,11 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
         const data = await response.json();
         const allCategories = Array.isArray(data.categories) ? data.categories : [];
         setCategories(allCategories);
-        
+
         // Build tree structure and flatten for dropdown
         const categoryMap = new Map<string, any>();
         const rootCategories: any[] = [];
-        
+
         // First pass: create map
         allCategories.forEach((cat: any) => {
           categoryMap.set(cat._id, {
@@ -587,12 +591,12 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
             children: [],
           });
         });
-        
+
         // Second pass: build tree
-        categoryMap.forEach((category) => {
+        categoryMap.forEach(category => {
           if (!category.parentId) {
             rootCategories.push(category);
-    } else {
+          } else {
             const parent = categoryMap.get(category.parentId);
             if (parent) {
               if (!parent.children) parent.children = [];
@@ -602,11 +606,11 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
             }
           }
         });
-        
+
         // Flatten tree for dropdown (include both parent and children)
         const flattenCategories = (cats: any[], prefix = ''): { label: string; value: string }[] => {
           const result: { label: string; value: string }[] = [];
-          cats.forEach((cat) => {
+          cats.forEach(cat => {
             const label = prefix ? `${prefix} > ${cat.name}` : cat.name;
             result.push({ label, value: cat._id || cat.name });
             if (cat.children && cat.children.length > 0) {
@@ -615,7 +619,7 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
           });
           return result;
         };
-        
+
         setCategoryOptions(flattenCategories(rootCategories));
       }
     } catch (error) {
@@ -820,12 +824,10 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
       }
 
       if (uploadedUrls.length) {
-        setFormData((prev) => ({
+        setFormData(prev => ({
           ...prev,
-          diamonds: prev.diamonds.map((d) =>
-            d.id === diamondId
-              ? { ...d, certificateImages: [...(d.certificateImages || []), ...uploadedUrls] }
-              : d
+          diamonds: prev.diamonds.map(d =>
+            d.id === diamondId ? { ...d, certificateImages: [...(d.certificateImages || []), ...uploadedUrls] } : d
           ),
         }));
       }
@@ -956,8 +958,7 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
       if (!formData.hsnCode?.trim()) nextErrors.hsnCode = 'This field is required';
       if (!selectedPurityValue) nextErrors.silverPurity = 'This field is required';
       if (!formData.weight || formData.weight <= 0) nextErrors.weight = 'This field is required';
-      if (!formData.shortDescription?.trim() && !formData.description?.trim())
-        nextErrors.description = 'Description is required';
+      if (!formData.shortDescription?.trim() && !formData.description?.trim()) nextErrors.description = 'Description is required';
       if (!formData.seoTitle?.trim()) nextErrors.seoTitle = 'This field is required';
       if (!formData.seoDescription?.trim()) nextErrors.seoDescription = 'This field is required';
       if (!formData.seoTags?.trim()) nextErrors.seoTags = 'This field is required';
@@ -969,7 +970,7 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
       }
 
       setErrors({});
-      setFormData((prev) => ({
+      setFormData(prev => ({
         ...prev,
         urlSlug: computedSlug,
         sku: computedSku,
@@ -1030,9 +1031,9 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
   };
 
   const updateField = (field: keyof ProductFormData, value: any) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+    setFormData(prev => ({ ...prev, [field]: value }));
     if (errors[field]) {
-      setErrors((prev) => {
+      setErrors(prev => {
         const next = { ...prev };
         delete next[field];
         return next;
@@ -1061,17 +1062,10 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
   const vendorCommissionValue = netGoldWeight * (formData.vendorCommissionRate / 100) * metalLiveRate;
   const makingChargesValue = netGoldWeight * formData.makingChargePerGram;
   const diamondValueAuto = formData.diamonds.reduce((sum, d) => sum + (d.diamondPrice || 0), 0);
-  const platformCommissionBase =
-    goldValue + vendorCommissionValue + makingChargesValue + diamondValueAuto;
+  const platformCommissionBase = goldValue + vendorCommissionValue + makingChargesValue + diamondValueAuto;
   const platformCommissionValue = platformCommissionBase * (formData.platformCommissionRate / 100);
   const extraCharges = formData.otherCharges ?? 0;
-  const subTotal =
-    goldValue +
-    vendorCommissionValue +
-    makingChargesValue +
-    diamondValueAuto +
-    platformCommissionValue +
-    extraCharges;
+  const subTotal = goldValue + vendorCommissionValue + makingChargesValue + diamondValueAuto + platformCommissionValue + extraCharges;
   const gst = subTotal * ((formData.gstRate || 0) / 100);
   const totalAmount = subTotal + gst;
 
@@ -1081,248 +1075,239 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
 
   if (loading && productId) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="w-8 h-8 animate-spin text-[#1F3B29]" />
+      <div className='flex items-center justify-center min-h-screen'>
+        <Loader2 className='w-8 h-8 animate-spin text-[#1F3B29]' />
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-7xl">
-      <div className="mb-6 flex items-center gap-4">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => router.back()}
-          className="hover:bg-gray-100"
-        >
-          <ArrowLeft className="w-5 h-5" />
+    <div className='container mx-auto px-4 py-4 max-w-7xl'>
+      <div className='mb-6 flex items-center gap-4'>
+        <Button variant='outline' size='icon' onClick={() => router.back()} className=''>
+          <ArrowLeft className='w-5 h-5' />
         </Button>
-        <h1 className="text-3xl font-bold text-gray-900">
-          {productId ? 'Edit Product' : 'Add Product'}
-            </h1>
-        </div>
+        <h1 className='text-3xl font-bold text-gray-900'>{productId ? 'Edit Product' : 'Add Product'}</h1>
+      </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className='space-y-6'>
         {/* Product Type Selection */}
-        <Card className="p-6">
-          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-            <Package className="w-5 h-5" />
+        <Card className='p-6'>
+          <h2 className='text-xl font-semibold mb-4 flex items-center gap-2'>
+            <Package className='w-5 h-5' />
             Product Type
           </h2>
-            <Dropdown
-              labelMain="Product Type *"
-              value={formData.productType}
-              onChange={(option) => updateField('productType', option.value)}
-              options={[...PRODUCT_TYPE_OPTIONS]}
-              placeholder="Select Product Type (e.g., Gold, Silver, Diamonds)"
-            />
-            {errors.productType && <p className="text-xs text-red-600 mt-1">{errors.productType}</p>}
+          <Dropdown
+            labelMain='Product Type *'
+            value={formData.productType}
+            onChange={option => updateField('productType', option.value)}
+            options={[...PRODUCT_TYPE_OPTIONS]}
+            placeholder='Select Product Type (e.g., Gold, Silver, Diamonds)'
+          />
+          {errors.productType && <p className='text-xs text-red-600 mt-1'>{errors.productType}</p>}
         </Card>
 
         {/* Category Selection */}
-        <Card className="p-6">
-          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-            <Package className="w-5 h-5" />
+        <Card className='p-6'>
+          <h2 className='text-xl font-semibold mb-4 flex items-center gap-2'>
+            <Package className='w-5 h-5' />
             Category
           </h2>
-            <Dropdown
-              labelMain="Category *"
-              value={formData.category}
-              onChange={(option) => updateField('category', option.value)}
-              options={categoryOptions}
-              placeholder="Select Category or Subcategory (e.g., Earring, Bracelet, Necklace)"
-              withSearch={categoryOptions.length > 10}
-            />
-            {errors.category && <p className="text-xs text-red-600 mt-1">{errors.category}</p>}
+          <Dropdown
+            labelMain='Category *'
+            value={formData.category}
+            onChange={option => updateField('category', option.value)}
+            options={categoryOptions}
+            placeholder='Select Category or Subcategory (e.g., Earring, Bracelet, Necklace)'
+            withSearch={categoryOptions.length > 10}
+          />
+          {errors.category && <p className='text-xs text-red-600 mt-1'>{errors.category}</p>}
         </Card>
 
         {/* Design Type, Karat, Purity, Metal Color Fields */}
-        <Card className="p-6">
-          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-            <Package className="w-5 h-5" />
+        <Card className='p-6'>
+          <h2 className='text-xl font-semibold mb-4 flex items-center gap-2'>
+            <Package className='w-5 h-5' />
             Product Details
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4'>
             <Dropdown
-              labelMain="Design Type *"
+              labelMain='Design Type *'
               value={formData.designType}
-              onChange={(option) => updateField('designType', option.value)}
+              onChange={option => updateField('designType', option.value)}
               options={designTypes}
-              placeholder="Select Design Type"
+              placeholder='Select Design Type'
               withSearch={designTypes.length > 10}
             />
-            {errors.designType && <p className="text-xs text-red-600 mt-1">{errors.designType}</p>}
-            
+            {errors.designType && <p className='text-xs text-red-600 mt-1'>{errors.designType}</p>}
+
             <Dropdown
-              labelMain="Karat"
+              labelMain='Karat'
               value={formData.goldPurity}
-              onChange={(option) => updateField('goldPurity', option.value)}
+              onChange={option => updateField('goldPurity', option.value)}
               options={karats}
-              placeholder="Select Karat"
+              placeholder='Select Karat'
               withSearch={karats.length > 10}
             />
-            
+
             <Dropdown
               labelMain={formData.productType ? `${formData.productType} Purity *` : 'Purity *'}
               value={formData.silverPurity}
-              onChange={(option) => updateField('silverPurity', option.value)}
+              onChange={option => updateField('silverPurity', option.value)}
               options={purities}
               placeholder={formData.productType ? `Select ${formData.productType} Purity` : 'Select Purity'}
               withSearch={purities.length > 10}
             />
-            {errors.silverPurity && <p className="text-xs text-red-600 mt-1 col-span-2">{errors.silverPurity}</p>}
-            
+            {errors.silverPurity && <p className='text-xs text-red-600 mt-1 col-span-2'>{errors.silverPurity}</p>}
+
             <Dropdown
-              labelMain="Metal Colour"
+              labelMain='Metal Colour'
               value={formData.metalColour}
-              onChange={(option) => updateField('metalColour', option.value)}
+              onChange={option => updateField('metalColour', option.value)}
               options={metalColors}
-              placeholder="Select Metal Colour"
+              placeholder='Select Metal Colour'
               withSearch={metalColors.length > 10}
             />
-            
+
             <FormField
               label={formData.productType ? `${formData.productType} Weight (Gram)` : 'Weight (Gram)'}
               value={formData.weight}
-              onChange={(e) => updateField('weight', parseFloat(e.target.value) || 0)}
-              type="number"
-              placeholder="Example: 10"
+              onChange={e => updateField('weight', parseFloat(e.target.value) || 0)}
+              type='number'
+              placeholder='Example: 10'
               required
             />
-            {errors.weight && <p className="text-xs text-red-600 mt-1 col-span-2">{errors.weight}</p>}
+            {errors.weight && <p className='text-xs text-red-600 mt-1 col-span-2'>{errors.weight}</p>}
           </div>
         </Card>
 
         {/* Basic Product Info */}
-        <Card className="p-6">
-          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-            <Package className="w-5 h-5" />
+        <Card className='p-6'>
+          <h2 className='text-xl font-semibold mb-4 flex items-center gap-2'>
+            <Package className='w-5 h-5' />
             Product Content & Basics
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
             <FormField
-              label="Product Name"
+              label='Product Name'
               required
               value={formData.name}
-              onChange={(e) => handleNameChange(e.target.value)}
-              type="text"
-              placeholder="Example: 22K Gold Diamond Ring"
+              onChange={e => handleNameChange(e.target.value)}
+              type='text'
+              placeholder='Example: 22K Gold Diamond Ring'
             />
-            {errors.name && <p className="text-xs text-red-600 mt-1">{errors.name}</p>}
-            <div className="flex flex-col gap-2">
+            {errors.name && <p className='text-xs text-red-600 mt-1'>{errors.name}</p>}
+            <div className='flex flex-col gap-2'>
               <FormField
-                label="SKU"
+                label='SKU'
                 value={formData.sku}
-                onChange={(e) => updateField('sku', e.target.value)}
-                type="text"
-                placeholder="Auto-generate or enter manually"
+                onChange={e => updateField('sku', e.target.value)}
+                type='text'
+                placeholder='Auto-generate or enter manually'
                 required
               />
               <div>
-                <Button type="button" variant="outline" size="sm" onClick={generateSku}>
+                <Button type='button' variant='outline' size='sm' onClick={generateSku}>
                   Auto Generate SKU
                 </Button>
               </div>
-              {errors.sku && <p className="text-xs text-red-600 mt-1">{errors.sku}</p>}
+              {errors.sku && <p className='text-xs text-red-600 mt-1'>{errors.sku}</p>}
             </div>
             <FormField
-              label="HSN Code"
+              label='HSN Code'
               value={formData.hsnCode}
-              onChange={(e) => updateField('hsnCode', e.target.value)}
-              type="text"
-              placeholder="Example: 7113 for Jewellery"
+              onChange={e => updateField('hsnCode', e.target.value)}
+              type='text'
+              placeholder='Example: 7113 for Jewellery'
               required
             />
-            {errors.hsnCode && <p className="text-xs text-red-600 mt-1">{errors.hsnCode}</p>}
-            <div className="flex flex-col gap-2">
+            {errors.hsnCode && <p className='text-xs text-red-600 mt-1'>{errors.hsnCode}</p>}
+            <div className='flex flex-col gap-2'>
               <FormField
-                label="URL Slug"
+                label='URL Slug'
                 value={formData.urlSlug}
-                onChange={(e) => updateField('urlSlug', slugify(e.target.value))}
-                type="text"
-                placeholder="auto-from-name"
+                onChange={e => updateField('urlSlug', slugify(e.target.value))}
+                type='text'
+                placeholder='auto-from-name'
                 required
               />
-              <div className="text-xs text-gray-500">Slug updates automatically when name changes.</div>
-              {errors.urlSlug && <p className="text-xs text-red-600 mt-1">{errors.urlSlug}</p>}
+              <div className='text-xs text-gray-500'>Slug updates automatically when name changes.</div>
+              {errors.urlSlug && <p className='text-xs text-red-600 mt-1'>{errors.urlSlug}</p>}
             </div>
           </div>
 
-          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium">
-                Short Description <span className="text-red-500">*</span>
+          <div className='mt-4 grid grid-cols-1 md:grid-cols-2 gap-4'>
+            <div className='flex flex-col gap-2'>
+              <label className='text-sm font-medium'>
+                Short Description <span className='text-red-500'>*</span>
               </label>
               <textarea
-                className="w-full border border-gray-200 rounded-md p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1F3B29]"
+                className='w-full border border-gray-200 rounded-md p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1F3B29]'
                 rows={3}
                 value={formData.shortDescription}
-                onChange={(e) => updateField('shortDescription', e.target.value)}
-                placeholder="A brief summary for listing cards (ideal 160-200 chars)"
+                onChange={e => updateField('shortDescription', e.target.value)}
+                placeholder='A brief summary for listing cards (ideal 160-200 chars)'
               />
-              {errors.description && <p className="text-xs text-red-600">{errors.description}</p>}
+              {errors.description && <p className='text-xs text-red-600'>{errors.description}</p>}
             </div>
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium">Specifications (table)</label>
-              <div className="space-y-2">
+            <div className='flex flex-col gap-2'>
+              <label className='text-sm font-medium'>Specifications (table)</label>
+              <div className='space-y-2'>
                 {(formData.specifications || []).map((spec, idx) => (
-                  <div key={idx} className="grid grid-cols-5 gap-2 items-center">
+                  <div key={idx} className='grid grid-cols-5 gap-2 items-center'>
                     <Input
-                      className="col-span-2"
-                      placeholder="Label (e.g., Metal)"
+                      className='col-span-2'
+                      placeholder='Label (e.g., Metal)'
                       value={spec.key}
-                      onChange={(e) => updateSpecificationRow(idx, 'key', e.target.value)}
+                      onChange={e => updateSpecificationRow(idx, 'key', e.target.value)}
                     />
                     <Input
-                      className="col-span-2"
-                      placeholder="Value (e.g., 22K Gold)"
+                      className='col-span-2'
+                      placeholder='Value (e.g., 22K Gold)'
                       value={spec.value}
-                      onChange={(e) => updateSpecificationRow(idx, 'value', e.target.value)}
+                      onChange={e => updateSpecificationRow(idx, 'value', e.target.value)}
                     />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => removeSpecificationRow(idx)}
-                    >
-                      <Trash2 className="w-4 h-4" />
+                    <Button type='button' variant='ghost' size='icon' onClick={() => removeSpecificationRow(idx)}>
+                      <Trash2 className='w-4 h-4' />
                     </Button>
                   </div>
                 ))}
-                <Button type="button" variant="outline" size="sm" onClick={addSpecificationRow} className="mt-1">
+                <Button type='button' variant='outline' size='sm' onClick={addSpecificationRow} className='mt-1'>
                   Add Specification
                 </Button>
               </div>
             </div>
           </div>
 
-          <div className="mt-4">
+          <div className='mt-4'>
             {/* <label className="block text-sm font-medium mb-2">
               Description <span className="text-red-500">*</span>
             </label> */}
             <RichTextEditor
-              label="Description"
+              label='Description'
               value={formData.description}
-              onChange={(value) => updateField('description', value)}
-              placeholder="Detailed product description for PDP"
+              onChange={value => updateField('description', value)}
+              placeholder='Detailed product description for PDP'
             />
-            {errors.description && <p className="text-xs text-red-600 mt-1">{errors.description}</p>}
+            {errors.description && <p className='text-xs text-red-600 mt-1'>{errors.description}</p>}
           </div>
         </Card>
 
         {/* Diamonds Fields Section */}
-        {(formData.productType === 'Diamonds' || formData.productType === 'Gold' || formData.productType === 'Silver' || formData.productType === 'Platinum') && (
-          <Card className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold flex items-center gap-2">
-                <Package className="w-5 h-5" />
+        {(formData.productType === 'Diamonds' ||
+          formData.productType === 'Gold' ||
+          formData.productType === 'Silver' ||
+          formData.productType === 'Platinum') && (
+          <Card className='p-6'>
+            <div className='flex items-center justify-between mb-4'>
+              <h2 className='text-xl font-semibold flex items-center gap-2'>
+                <Package className='w-5 h-5' />
                 Diamonds Field Details
               </h2>
               <Button
-                type="button"
+                type='button'
                 onClick={() => {
-                  const hasIncomplete = formData.diamonds.some((d) => !isDiamondComplete(d));
+                  const hasIncomplete = formData.diamonds.some(d => !isDiamondComplete(d));
                   if (hasIncomplete) {
                     toast({
                       title: 'Please complete current diamond first',
@@ -1363,298 +1348,292 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                     diamonds: [...prev.diamonds, newDiamond],
                   }));
                 }}
-                className="bg-[#1F3B29] hover:bg-[#2d4a3a] text-white"
-              >
-                <Plus className="w-4 h-4 mr-2" />
+                className='bg-[#1F3B29] hover:bg-[#2d4a3a] text-white'>
+                <Plus className='w-4 h-4 mr-2' />
                 Add Diamond
               </Button>
             </div>
 
             {formData.diamonds.length === 0 ? (
-              <p className="text-gray-500 text-center py-8">No diamonds added. Click "Add Diamond" to add one.</p>
+              <p className='text-gray-500 text-center py-8'>No diamonds added. Click "Add Diamond" to add one.</p>
             ) : (
-              <div className="space-y-6">
+              <div className='space-y-6'>
                 {formData.diamonds.map((diamond, index) => (
-                  <Card key={diamond.id} className="p-4 border-2 border-gray-200">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="font-semibold text-lg">Diamond {index + 1}</h3>
+                  <Card key={diamond.id} className='p-4 border-2 border-gray-200'>
+                    <div className='flex items-center justify-between mb-4'>
+                      <h3 className='font-semibold text-lg'>Diamond {index + 1}</h3>
                       <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
+                        type='button'
+                        variant='ghost'
+                        size='icon'
                         onClick={() => {
                           setFormData(prev => ({
                             ...prev,
                             diamonds: prev.diamonds.filter(d => d.id !== diamond.id),
                           }));
                         }}
-                        className="text-red-600 hover:text-red-700"
-                      >
-                        <Trash2 className="w-4 h-4" />
+                        className='text-red-600 hover:text-red-700'>
+                        <Trash2 className='w-4 h-4' />
                       </Button>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
                       <Dropdown
-                        labelMain="Diamonds Type"
+                        labelMain='Diamonds Type'
                         value={diamond.diamondsType}
-                        onChange={(option) => {
+                        onChange={option => {
                           const updatedDiamonds = formData.diamonds.map(d =>
                             d.id === diamond.id ? { ...d, diamondsType: option.value } : d
                           );
                           setFormData(prev => ({ ...prev, diamonds: updatedDiamonds }));
                         }}
                         options={diamondTypes.length ? diamondTypes : [...DEFAULT_DIAMONDS_TYPE_OPTIONS]}
-                        placeholder="Select Diamonds Type"
+                        placeholder='Select Diamonds Type'
                         withSearch={diamondTypes.length > 10}
                       />
 
                       <FormField
-                        label="Diamond Weight (ct)"
+                        label='Diamond Weight (ct)'
                         value={diamond.diamondWeight}
-                        onChange={(e) => {
+                        onChange={e => {
                           const updatedDiamonds = formData.diamonds.map(d =>
                             d.id === diamond.id ? { ...d, diamondWeight: parseFloat(e.target.value) || 0 } : d
                           );
                           setFormData(prev => ({ ...prev, diamonds: updatedDiamonds }));
                         }}
-                        type="number"
-                        placeholder="Example: 0.50"
+                        type='number'
+                        placeholder='Example: 0.50'
                       />
 
                       <FormField
-                        label="Diamond Price (₹)"
+                        label='Diamond Price (₹)'
                         value={diamond.diamondPrice || 0}
-                        onChange={(e) => {
+                        onChange={e => {
                           const updatedDiamonds = formData.diamonds.map(d =>
                             d.id === diamond.id ? { ...d, diamondPrice: parseFloat(e.target.value) || 0 } : d
                           );
                           setFormData(prev => ({ ...prev, diamonds: updatedDiamonds }));
                         }}
-                        type="number"
-                        placeholder="Example: 20000"
+                        type='number'
+                        placeholder='Example: 20000'
                       />
 
                       <FormField
-                        label="Diamond Size"
+                        label='Diamond Size'
                         value={diamond.diamondSize}
-                        onChange={(e) => {
+                        onChange={e => {
                           const updatedDiamonds = formData.diamonds.map(d =>
                             d.id === diamond.id ? { ...d, diamondSize: e.target.value } : d
                           );
                           setFormData(prev => ({ ...prev, diamonds: updatedDiamonds }));
                         }}
-                        type="text"
-                        placeholder="Example: 2mm, 3mm"
+                        type='text'
+                        placeholder='Example: 2mm, 3mm'
                       />
 
                       <Dropdown
-                        labelMain="Setting Type"
+                        labelMain='Setting Type'
                         value={diamond.settingType}
-                        onChange={(option) => {
+                        onChange={option => {
                           const updatedDiamonds = formData.diamonds.map(d =>
                             d.id === diamond.id ? { ...d, settingType: option.value } : d
                           );
                           setFormData(prev => ({ ...prev, diamonds: updatedDiamonds }));
                         }}
                         options={settingTypes}
-                        placeholder="Select Setting Type"
+                        placeholder='Select Setting Type'
                         withSearch={settingTypes.length > 10}
                       />
 
                       <Dropdown
-                        labelMain="Clarity"
+                        labelMain='Clarity'
                         value={diamond.clarity}
-                        onChange={(option) => {
-                          const updatedDiamonds = formData.diamonds.map(d =>
-                            d.id === diamond.id ? { ...d, clarity: option.value } : d
-                          );
+                        onChange={option => {
+                          const updatedDiamonds = formData.diamonds.map(d => (d.id === diamond.id ? { ...d, clarity: option.value } : d));
                           setFormData(prev => ({ ...prev, diamonds: updatedDiamonds }));
                         }}
                         options={clarities}
-                        placeholder="Select Clarity"
+                        placeholder='Select Clarity'
                         withSearch={clarities.length > 10}
                       />
 
                       <Dropdown
-                        labelMain="Diamonds Colour"
+                        labelMain='Diamonds Colour'
                         value={diamond.diamondsColour}
-                        onChange={(option) => {
+                        onChange={option => {
                           const updatedDiamonds = formData.diamonds.map(d =>
                             d.id === diamond.id ? { ...d, diamondsColour: option.value } : d
                           );
                           setFormData(prev => ({ ...prev, diamonds: updatedDiamonds }));
                         }}
                         options={diamondColors}
-                        placeholder="Select Diamonds Colour"
+                        placeholder='Select Diamonds Colour'
                         withSearch={diamondColors.length > 10}
                       />
 
                       <Dropdown
-                        labelMain="Diamonds Shape"
+                        labelMain='Diamonds Shape'
                         value={diamond.diamondsShape}
-                        onChange={(option) => {
+                        onChange={option => {
                           const updatedDiamonds = formData.diamonds.map(d =>
                             d.id === diamond.id ? { ...d, diamondsShape: option.value } : d
                           );
                           setFormData(prev => ({ ...prev, diamonds: updatedDiamonds }));
                         }}
                         options={diamondShapes}
-                        placeholder="Select Diamonds Shape"
+                        placeholder='Select Diamonds Shape'
                         withSearch={diamondShapes.length > 10}
                       />
 
                       <FormField
-                        label="Diamond Setting"
+                        label='Diamond Setting'
                         value={diamond.diamondSetting}
-                        onChange={(e) => {
+                        onChange={e => {
                           const updatedDiamonds = formData.diamonds.map(d =>
                             d.id === diamond.id ? { ...d, diamondSetting: e.target.value } : d
                           );
                           setFormData(prev => ({ ...prev, diamonds: updatedDiamonds }));
                         }}
-                        type="text"
-                        placeholder="Example: Solitaire, Three Stone"
+                        type='text'
+                        placeholder='Example: Solitaire, Three Stone'
                       />
 
                       <Dropdown
-                        labelMain="Certified Labs"
+                        labelMain='Certified Labs'
                         value={diamond.certifiedLabs}
-                        onChange={(option) => {
+                        onChange={option => {
                           const updatedDiamonds = formData.diamonds.map(d =>
                             d.id === diamond.id ? { ...d, certifiedLabs: option.value } : d
                           );
                           setFormData(prev => ({ ...prev, diamonds: updatedDiamonds }));
                         }}
                         options={certifiedLabs}
-                        placeholder="Select Certified Labs"
+                        placeholder='Select Certified Labs'
                         withSearch={certifiedLabs.length > 10}
                       />
 
                       <FormField
-                        label="Certificate No."
+                        label='Certificate No.'
                         value={diamond.certificateNo}
-                        onChange={(e) => {
+                        onChange={e => {
                           const updatedDiamonds = formData.diamonds.map(d =>
                             d.id === diamond.id ? { ...d, certificateNo: e.target.value } : d
                           );
                           setFormData(prev => ({ ...prev, diamonds: updatedDiamonds }));
                         }}
-                        type="text"
-                        placeholder="Example: CERT123456"
+                        type='text'
+                        placeholder='Example: CERT123456'
                       />
 
                       <FormField
-                        label="Occasion"
+                        label='Occasion'
                         value={diamond.occasion || ''}
-                        onChange={(e) => {
+                        onChange={e => {
                           const updatedDiamonds = formData.diamonds.map(d =>
                             d.id === diamond.id ? { ...d, occasion: e.target.value } : d
                           );
                           setFormData(prev => ({ ...prev, diamonds: updatedDiamonds }));
                         }}
-                        type="text"
-                        placeholder="Example: Wedding, Party"
+                        type='text'
+                        placeholder='Example: Wedding, Party'
                       />
 
                       <FormField
-                        label="Dimension"
+                        label='Dimension'
                         value={diamond.dimension || ''}
-                        onChange={(e) => {
+                        onChange={e => {
                           const updatedDiamonds = formData.diamonds.map(d =>
                             d.id === diamond.id ? { ...d, dimension: e.target.value } : d
                           );
                           setFormData(prev => ({ ...prev, diamonds: updatedDiamonds }));
                         }}
-                        type="text"
-                        placeholder="Example: 5x4x3 mm"
+                        type='text'
+                        placeholder='Example: 5x4x3 mm'
                       />
 
                       <FormField
-                        label="Height"
+                        label='Height'
                         value={diamond.height || 0}
-                        onChange={(e) => {
+                        onChange={e => {
                           const updatedDiamonds = formData.diamonds.map(d =>
                             d.id === diamond.id ? { ...d, height: parseFloat(e.target.value) || 0 } : d
                           );
                           setFormData(prev => ({ ...prev, diamonds: updatedDiamonds }));
                         }}
-                        type="number"
-                        placeholder="Example: 2.5"
+                        type='number'
+                        placeholder='Example: 2.5'
                       />
 
                       <FormField
-                        label="Width"
+                        label='Width'
                         value={diamond.width || 0}
-                        onChange={(e) => {
+                        onChange={e => {
                           const updatedDiamonds = formData.diamonds.map(d =>
                             d.id === diamond.id ? { ...d, width: parseFloat(e.target.value) || 0 } : d
                           );
                           setFormData(prev => ({ ...prev, diamonds: updatedDiamonds }));
                         }}
-                        type="number"
-                        placeholder="Example: 3.0"
+                        type='number'
+                        placeholder='Example: 3.0'
                       />
 
                       <FormField
-                        label="Length"
+                        label='Length'
                         value={diamond.length || 0}
-                        onChange={(e) => {
+                        onChange={e => {
                           const updatedDiamonds = formData.diamonds.map(d =>
                             d.id === diamond.id ? { ...d, length: parseFloat(e.target.value) || 0 } : d
                           );
                           setFormData(prev => ({ ...prev, diamonds: updatedDiamonds }));
                         }}
-                        type="number"
-                        placeholder="Example: 1.0"
+                        type='number'
+                        placeholder='Example: 1.0'
                       />
 
                       <FormField
-                        label="Brand"
+                        label='Brand'
                         value={diamond.brand || ''}
-                        onChange={(e) => {
-                          const updatedDiamonds = formData.diamonds.map(d =>
-                            d.id === diamond.id ? { ...d, brand: e.target.value } : d
-                          );
+                        onChange={e => {
+                          const updatedDiamonds = formData.diamonds.map(d => (d.id === diamond.id ? { ...d, brand: e.target.value } : d));
                           setFormData(prev => ({ ...prev, diamonds: updatedDiamonds }));
                         }}
-                        type="text"
-                        placeholder="Example: Brand Name"
+                        type='text'
+                        placeholder='Example: Brand Name'
                       />
 
                       <FormField
-                        label="Collection"
+                        label='Collection'
                         value={diamond.collection || ''}
-                        onChange={(e) => {
+                        onChange={e => {
                           const updatedDiamonds = formData.diamonds.map(d =>
                             d.id === diamond.id ? { ...d, collection: e.target.value } : d
                           );
                           setFormData(prev => ({ ...prev, diamonds: updatedDiamonds }));
                         }}
-                        type="text"
-                        placeholder="Example: Classic, Modern"
+                        type='text'
+                        placeholder='Example: Classic, Modern'
                       />
 
                       <FormField
-                        label="Thickness"
+                        label='Thickness'
                         value={diamond.thickness || 0}
-                        onChange={(e) => {
+                        onChange={e => {
                           const updatedDiamonds = formData.diamonds.map(d =>
                             d.id === diamond.id ? { ...d, thickness: parseFloat(e.target.value) || 0 } : d
                           );
                           setFormData(prev => ({ ...prev, diamonds: updatedDiamonds }));
                         }}
-                        type="number"
-                        placeholder="Example: 1.5"
+                        type='number'
+                        placeholder='Example: 1.5'
                       />
 
-                      <div className="md:col-span-3 space-y-3">
-                        <div className="flex items-center justify-between">
-                          <label className="block text-sm font-medium">Specification (table)</label>
+                      <div className='md:col-span-3 space-y-3'>
+                        <div className='flex items-center justify-between'>
+                          <label className='block text-sm font-medium'>Specification (table)</label>
                           <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
+                            type='button'
+                            variant='outline'
+                            size='sm'
                             onClick={() => {
                               const updatedDiamonds = formData.diamonds.map(d =>
                                 d.id === diamond.id
@@ -1665,24 +1644,23 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                                   : d
                               );
                               setFormData(prev => ({ ...prev, diamonds: updatedDiamonds }));
-                            }}
-                          >
-                            <Plus className="w-4 h-4 mr-1" />
+                            }}>
+                            <Plus className='w-4 h-4 mr-1' />
                             Add Row
                           </Button>
                         </div>
 
-                        <div className="space-y-2">
+                        <div className='space-y-2'>
                           {(diamond.specifications && diamond.specifications.length > 0
                             ? diamond.specifications
                             : [{ key: '', value: '' }]
                           ).map((row, idx) => (
-                            <div key={`${diamond.id}-spec-${idx}`} className="grid grid-cols-1 md:grid-cols-5 gap-2 items-center">
-                              <div className="md:col-span-2">
+                            <div key={`${diamond.id}-spec-${idx}`} className='grid grid-cols-1 md:grid-cols-5 gap-2 items-center'>
+                              <div className='md:col-span-2'>
                                 <Input
-                                  placeholder="Label"
+                                  placeholder='Label'
                                   value={row.key}
-                                  onChange={(e) => {
+                                  onChange={e => {
                                     const updatedRows = [...(diamond.specifications || [])];
                                     updatedRows[idx] = { ...updatedRows[idx], key: e.target.value };
                                     const updatedDiamonds = formData.diamonds.map(d =>
@@ -1692,11 +1670,11 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                                   }}
                                 />
                               </div>
-                              <div className="md:col-span-2">
+                              <div className='md:col-span-2'>
                                 <Input
-                                  placeholder="Value"
+                                  placeholder='Value'
                                   value={row.value}
-                                  onChange={(e) => {
+                                  onChange={e => {
                                     const updatedRows = [...(diamond.specifications || [])];
                                     updatedRows[idx] = { ...updatedRows[idx], value: e.target.value };
                                     const updatedDiamonds = formData.diamonds.map(d =>
@@ -1706,11 +1684,11 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                                   }}
                                 />
                               </div>
-                              <div className="md:col-span-1 flex justify-end">
+                              <div className='md:col-span-1 flex justify-end'>
                                 <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="icon"
+                                  type='button'
+                                  variant='ghost'
+                                  size='icon'
                                   onClick={() => {
                                     const updatedRows = (diamond.specifications || []).filter((_, i) => i !== idx);
                                     const updatedDiamonds = formData.diamonds.map(d =>
@@ -1718,10 +1696,9 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                                     );
                                     setFormData(prev => ({ ...prev, diamonds: updatedDiamonds }));
                                   }}
-                                  className="text-red-600 hover:text-red-700"
-                                  aria-label="Remove row"
-                                >
-                                  <Trash2 className="w-4 h-4" />
+                                  className='text-red-600 hover:text-red-700'
+                                  aria-label='Remove row'>
+                                  <Trash2 className='w-4 h-4' />
                                 </Button>
                               </div>
                             </div>
@@ -1729,52 +1706,47 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                         </div>
                       </div>
 
-                      <div className="md:col-span-3">
-                        <label className="block text-sm font-medium mb-2">Description</label>
+                      <div className='md:col-span-3'>
+                        <label className='block text-sm font-medium mb-2'>Description</label>
                         <RichTextEditor
-                          label="Diamond Description"
+                          label='Diamond Description'
                           value={diamond.description || ''}
-                          onChange={(value) => {
-                            const updatedDiamonds = formData.diamonds.map(d =>
-                              d.id === diamond.id ? { ...d, description: value } : d
-                            );
+                          onChange={value => {
+                            const updatedDiamonds = formData.diamonds.map(d => (d.id === diamond.id ? { ...d, description: value } : d));
                             setFormData(prev => ({ ...prev, diamonds: updatedDiamonds }));
                           }}
-                          placeholder="Enter description for this diamond"
+                          placeholder='Enter description for this diamond'
                         />
                       </div>
 
-                      <div className="md:col-span-3">
-                        <label className="block text-sm font-medium mb-2">Certificate Images</label>
+                      <div className='md:col-span-3'>
+                        <label className='block text-sm font-medium mb-2'>Certificate Images</label>
                         <Input
-                          type="file"
+                          type='file'
                           multiple
-                          accept="image/*"
-                          onChange={(e) => uploadCertificateImages(diamond.id, e.target.files)}
-                          className="cursor-pointer"
+                          accept='image/*'
+                          onChange={e => uploadCertificateImages(diamond.id, e.target.files)}
+                          className='cursor-pointer'
                         />
-                        <p className="text-xs text-gray-500 mt-1">Upload certificate images (e.g., IGI, SGI certificates)</p>
-                        {uploadingDiamondId === diamond.id && (
-                          <p className="text-xs text-blue-600 mt-1">Uploading...</p>
-                        )}
+                        <p className='text-xs text-gray-500 mt-1'>Upload certificate images (e.g., IGI, SGI certificates)</p>
+                        {uploadingDiamondId === diamond.id && <p className='text-xs text-blue-600 mt-1'>Uploading...</p>}
 
                         {diamond.certificateImages && diamond.certificateImages.length > 0 && (
-                          <div className="flex flex-wrap gap-3 mt-3">
+                          <div className='flex flex-wrap gap-3 mt-3'>
                             {diamond.certificateImages.map((url, idx) => (
-                              <div key={`${diamond.id}-cert-${idx}`} className="relative w-24 h-24 rounded border overflow-hidden">
-                                <img src={url} alt="Certificate" className="w-full h-full object-cover" />
+                              <div key={`${diamond.id}-cert-${idx}`} className='relative w-24 h-24 rounded border overflow-hidden'>
+                                <img src={url} alt='Certificate' className='w-full h-full object-cover' />
                                 <button
-                                  type="button"
+                                  type='button'
                                   onClick={() => {
                                     const updatedImages = (diamond.certificateImages || []).filter((_, i) => i !== idx);
-                                    const updatedDiamonds = formData.diamonds.map((d) =>
+                                    const updatedDiamonds = formData.diamonds.map(d =>
                                       d.id === diamond.id ? { ...d, certificateImages: updatedImages } : d
                                     );
-                                    setFormData((prev) => ({ ...prev, diamonds: updatedDiamonds }));
+                                    setFormData(prev => ({ ...prev, diamonds: updatedDiamonds }));
                                   }}
-                                  className="absolute top-1 right-1 bg-black/60 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs"
-                                  aria-label="Remove image"
-                                >
+                                  className='absolute top-1 right-1 bg-black/60 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs'
+                                  aria-label='Remove image'>
                                   ×
                                 </button>
                               </div>
@@ -1790,18 +1762,16 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
 
             {/* Total Diamonds Summary - Automatic Calculation */}
             {formData.diamonds.length > 0 && (
-              <div className="mt-6 p-4 bg-gray-50 rounded-lg border-2 border-gray-200">
-                <h3 className="text-lg font-semibold mb-4">Total Summary</h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="bg-white p-3 rounded-lg">
-                    <p className="text-sm text-gray-600 mb-1">Total No. of Diamonds</p>
-                    <p className="text-2xl font-bold text-[#1F3B29]">
-                      {formData.diamonds.length}
-                    </p>
+              <div className='mt-6 p-4 bg-gray-50 rounded-lg border-2 border-gray-200'>
+                <h3 className='text-lg font-semibold mb-4'>Total Summary</h3>
+                <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
+                  <div className='bg-white p-3 rounded-lg'>
+                    <p className='text-sm text-gray-600 mb-1'>Total No. of Diamonds</p>
+                    <p className='text-2xl font-bold text-[#1F3B29]'>{formData.diamonds.length}</p>
                   </div>
-                  <div className="bg-white p-3 rounded-lg">
-                    <p className="text-sm text-gray-600 mb-1">Total Diamonds Weight (ct)</p>
-                    <p className="text-2xl font-bold text-[#1F3B29]">
+                  <div className='bg-white p-3 rounded-lg'>
+                    <p className='text-sm text-gray-600 mb-1'>Total Diamonds Weight (ct)</p>
+                    <p className='text-2xl font-bold text-[#1F3B29]'>
                       {formData.diamonds.reduce((sum, d) => sum + (d.diamondWeight || 0), 0).toFixed(2)}
                     </p>
                   </div>
@@ -1810,13 +1780,13 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
             )}
 
             {/* Making Charges Discount */}
-            <div className="mt-4">
+            <div className='mt-4'>
               <FormField
-                label="Making Charges Discount (%)"
+                label='Making Charges Discount (%)'
                 value={formData.makingChargesDiscount}
-                onChange={(e) => updateField('makingChargesDiscount', parseFloat(e.target.value) || 0)}
-                type="number"
-                placeholder="Example: 5"
+                onChange={e => updateField('makingChargesDiscount', parseFloat(e.target.value) || 0)}
+                type='number'
+                placeholder='Example: 5'
               />
             </div>
           </Card>
@@ -1824,291 +1794,284 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
 
         {/* General Fields - Will be added later */}
         {false && (
-        <Card className="p-6">
-          <h2 className="text-xl font-semibold mb-4">General Fields</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <FormField
-              label="Product Name *"
-              required
-              value={formData.name}
-              onChange={(e) => updateField('name', e.target.value)}
-              type="text"
-              placeholder="Example: 22K Gold Diamond Earring"
-            />
-            
-                            <FormField
-              label="Occasion"
-              value={formData.occasion}
-              onChange={(e) => updateField('occasion', e.target.value)}
-              type="text"
-              placeholder="Example: Wedding, Party, Daily Wear"
-            />
-            
-                            <FormField
-              label="Dimension"
-              value={formData.dimension}
-              onChange={(e) => updateField('dimension', e.target.value)}
-              type="text"
-              placeholder="Example: 2x3x1 cm"
-            />
-            
-                            <FormField
-              label="Height (cm)"
-              value={formData.height}
-              onChange={(e) => updateField('height', parseFloat(e.target.value) || 0)}
-              type="number"
-              placeholder="Example: 2.5"
-            />
-            
-            <FormField
-              label="Width (cm)"
-              value={formData.width}
-              onChange={(e) => updateField('width', parseFloat(e.target.value) || 0)}
-              type="number"
-              placeholder="Example: 3.0"
-            />
-            
-                            <FormField
-              label="Length (cm)"
-              value={formData.length}
-              onChange={(e) => updateField('length', parseFloat(e.target.value) || 0)}
-              type="number"
-              placeholder="Example: 1.0"
-            />
-            
-                              <FormField
-              label="Brand"
-              value={formData.brand}
-              onChange={(e) => updateField('brand', e.target.value)}
-              type="text"
-              placeholder="Example: Tanishq, Kalyan Jewellers"
-            />
-            
-            <FormField
-              label="Collection"
-              value={formData.collection}
-              onChange={(e) => updateField('collection', e.target.value)}
-              type="text"
-              placeholder="Example: Classic, Modern, Traditional"
-            />
-            
-            <FormField
-              label="Thickness (mm)"
-              value={formData.thickness}
-              onChange={(e) => updateField('thickness', parseFloat(e.target.value) || 0)}
-              type="number"
-              placeholder="Example: 1.5"
-            />
-            
-                            <FormField
-              label="URL Slug *"
-              required
-              value={formData.urlSlug}
-              onChange={(e) => updateField('urlSlug', e.target.value)}
-              type="text"
-              placeholder="Example: 22k-gold-diamond-earring"
-            />
-                        </div>
+          <Card className='p-6'>
+            <h2 className='text-xl font-semibold mb-4'>General Fields</h2>
+            <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+              <FormField
+                label='Product Name *'
+                required
+                value={formData.name}
+                onChange={e => updateField('name', e.target.value)}
+                type='text'
+                placeholder='Example: 22K Gold Diamond Earring'
+              />
 
-          <div className="mt-4">
-            <label className="block text-sm font-medium mb-2">Description/Specification *</label>
-            <RichTextEditor
-              label="Description/Specification"
-              value={formData.description}
-              onChange={(value) => updateField('description', value)}
-              placeholder="Enter detailed product description and specifications..."
-            />
-                          </div>
-        </Card>
+              <FormField
+                label='Occasion'
+                value={formData.occasion}
+                onChange={e => updateField('occasion', e.target.value)}
+                type='text'
+                placeholder='Example: Wedding, Party, Daily Wear'
+              />
+
+              <FormField
+                label='Dimension'
+                value={formData.dimension}
+                onChange={e => updateField('dimension', e.target.value)}
+                type='text'
+                placeholder='Example: 2x3x1 cm'
+              />
+
+              <FormField
+                label='Height (cm)'
+                value={formData.height}
+                onChange={e => updateField('height', parseFloat(e.target.value) || 0)}
+                type='number'
+                placeholder='Example: 2.5'
+              />
+
+              <FormField
+                label='Width (cm)'
+                value={formData.width}
+                onChange={e => updateField('width', parseFloat(e.target.value) || 0)}
+                type='number'
+                placeholder='Example: 3.0'
+              />
+
+              <FormField
+                label='Length (cm)'
+                value={formData.length}
+                onChange={e => updateField('length', parseFloat(e.target.value) || 0)}
+                type='number'
+                placeholder='Example: 1.0'
+              />
+
+              <FormField
+                label='Brand'
+                value={formData.brand}
+                onChange={e => updateField('brand', e.target.value)}
+                type='text'
+                placeholder='Example: Tanishq, Kalyan Jewellers'
+              />
+
+              <FormField
+                label='Collection'
+                value={formData.collection}
+                onChange={e => updateField('collection', e.target.value)}
+                type='text'
+                placeholder='Example: Classic, Modern, Traditional'
+              />
+
+              <FormField
+                label='Thickness (mm)'
+                value={formData.thickness}
+                onChange={e => updateField('thickness', parseFloat(e.target.value) || 0)}
+                type='number'
+                placeholder='Example: 1.5'
+              />
+
+              <FormField
+                label='URL Slug *'
+                required
+                value={formData.urlSlug}
+                onChange={e => updateField('urlSlug', e.target.value)}
+                type='text'
+                placeholder='Example: 22k-gold-diamond-earring'
+              />
+            </div>
+
+            <div className='mt-4'>
+              <label className='block text-sm font-medium mb-2'>Description/Specification *</label>
+              <RichTextEditor
+                label='Description/Specification'
+                value={formData.description}
+                onChange={value => updateField('description', value)}
+                placeholder='Enter detailed product description and specifications...'
+              />
+            </div>
+          </Card>
         )}
 
         {/* Gemstone Fields - Will be added later */}
         {false && showGemstoneFields && (
-          <Card className="p-6">
-            <h2 className="text-xl font-semibold mb-4">Gemstone Field</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Card className='p-6'>
+            <h2 className='text-xl font-semibold mb-4'>Gemstone Field</h2>
+            <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
               <Dropdown
-                labelMain="Gemstone Name"
+                labelMain='Gemstone Name'
                 value={formData.gemstoneName}
-                onChange={(option) => updateField('gemstoneName', option.value)}
+                onChange={option => updateField('gemstoneName', option.value)}
                 options={[...GEMSTONE_NAME_OPTIONS]}
-                placeholder="Example: Ruby (Manik), Emerald (Panna)"
+                placeholder='Example: Ruby (Manik), Emerald (Panna)'
               />
-              
-                              <FormField
-                label="Report No."
+
+              <FormField
+                label='Report No.'
                 value={formData.reportNo}
-                onChange={(e) => updateField('reportNo', e.target.value)}
-                type="text"
-                placeholder="Example: RPT123456"
-                              />
+                onChange={e => updateField('reportNo', e.target.value)}
+                type='text'
+                placeholder='Example: RPT123456'
+              />
 
-                              <FormField
-                label="Certified Laboratory"
+              <FormField
+                label='Certified Laboratory'
                 value={formData.gemstoneCertificateLab}
-                onChange={(e) => updateField('gemstoneCertificateLab', e.target.value)}
-                type="text"
-                placeholder="Example: GIA, IGI, SGL"
-                          />
+                onChange={e => updateField('gemstoneCertificateLab', e.target.value)}
+                type='text'
+                placeholder='Example: GIA, IGI, SGL'
+              />
 
-                          <FormField
-                label="Colour"
+              <FormField
+                label='Colour'
                 value={formData.gemstoneColour}
-                onChange={(e) => updateField('gemstoneColour', e.target.value)}
-                type="text"
-                placeholder="Example: Red, Blue, Green"
-                          />
+                onChange={e => updateField('gemstoneColour', e.target.value)}
+                type='text'
+                placeholder='Example: Red, Blue, Green'
+              />
 
-                          <FormField
-                label="Shape/Cut"
+              <FormField
+                label='Shape/Cut'
                 value={formData.gemstoneShape}
-                onChange={(e) => updateField('gemstoneShape', e.target.value)}
-                type="text"
-                placeholder="Example: Round, Oval, Cushion"
+                onChange={e => updateField('gemstoneShape', e.target.value)}
+                type='text'
+                placeholder='Example: Round, Oval, Cushion'
               />
 
-                      <FormField
-                label="Dimension"
+              <FormField
+                label='Dimension'
                 value={formData.dimension}
-                onChange={(e) => updateField('dimension', e.target.value)}
-                type="text"
-                placeholder="Example: 5x4x3 mm"
-                      />
+                onChange={e => updateField('dimension', e.target.value)}
+                type='text'
+                placeholder='Example: 5x4x3 mm'
+              />
 
-                      <FormField
-                label="Gemstone Weight (Cts)"
+              <FormField
+                label='Gemstone Weight (Cts)'
                 value={formData.gemstoneWeight}
-                onChange={(e) => updateField('gemstoneWeight', parseFloat(e.target.value) || 0)}
-                type="number"
-                placeholder="Example: 2.5"
+                onChange={e => updateField('gemstoneWeight', parseFloat(e.target.value) || 0)}
+                type='number'
+                placeholder='Example: 2.5'
               />
 
-                      <FormField
-                label="Price (₹)"
+              <FormField
+                label='Price (₹)'
                 value={formData.gemstonePrice}
-                onChange={(e) => updateField('gemstonePrice', parseFloat(e.target.value) || 0)}
-                type="number"
-                placeholder="Example: 50000"
+                onChange={e => updateField('gemstonePrice', parseFloat(e.target.value) || 0)}
+                type='number'
+                placeholder='Example: 50000'
               />
 
-                        <FormField
-                label="Ratti"
+              <FormField
+                label='Ratti'
                 value={formData.ratti}
-                onChange={(e) => updateField('ratti', parseFloat(e.target.value) || 0)}
-                type="number"
-                placeholder="Example: 3.5"
+                onChange={e => updateField('ratti', parseFloat(e.target.value) || 0)}
+                type='number'
+                placeholder='Example: 3.5'
               />
-              
-                          <FormField
-                label="Specific Gravity"
+
+              <FormField
+                label='Specific Gravity'
                 value={formData.specificGravity}
-                onChange={(e) => updateField('specificGravity', parseFloat(e.target.value) || 0)}
-                type="number"
-                placeholder="Example: 4.0"
+                onChange={e => updateField('specificGravity', parseFloat(e.target.value) || 0)}
+                type='number'
+                placeholder='Example: 4.0'
               />
 
-                      <FormField
-                label="Hardness"
+              <FormField
+                label='Hardness'
                 value={formData.hardness}
-                onChange={(e) => updateField('hardness', parseFloat(e.target.value) || 0)}
-                type="number"
-                placeholder="Example: 9.0"
-                      />
-
-                      <FormField
-                label="Refractive Index"
-                value={formData.refractiveIndex}
-                onChange={(e) => updateField('refractiveIndex', parseFloat(e.target.value) || 0)}
-                type="number"
-                placeholder="Example: 1.76"
-                      />
-
-                      <FormField
-                label="Magnification"
-                value={formData.magnification}
-                onChange={(e) => updateField('magnification', parseFloat(e.target.value) || 0)}
-                type="number"
-                placeholder="Example: 10x"
+                onChange={e => updateField('hardness', parseFloat(e.target.value) || 0)}
+                type='number'
+                placeholder='Example: 9.0'
               />
-              
-              <div className="md:col-span-2">
-                        <FormField
-                  label="Remarks"
+
+              <FormField
+                label='Refractive Index'
+                value={formData.refractiveIndex}
+                onChange={e => updateField('refractiveIndex', parseFloat(e.target.value) || 0)}
+                type='number'
+                placeholder='Example: 1.76'
+              />
+
+              <FormField
+                label='Magnification'
+                value={formData.magnification}
+                onChange={e => updateField('magnification', parseFloat(e.target.value) || 0)}
+                type='number'
+                placeholder='Example: 10x'
+              />
+
+              <div className='md:col-span-2'>
+                <FormField
+                  label='Remarks'
                   value={formData.remarks}
-                  onChange={(e) => updateField('remarks', e.target.value)}
-                  type="text"
-                  placeholder="Example: Natural untreated gemstone"
-                        />
-                      </div>
+                  onChange={e => updateField('remarks', e.target.value)}
+                  type='text'
+                  placeholder='Example: Natural untreated gemstone'
+                />
+              </div>
 
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium mb-2">Description</label>
+              <div className='md:col-span-2'>
+                <label className='block text-sm font-medium mb-2'>Description</label>
                 <RichTextEditor
-                  label="Gemstone Description"
+                  label='Gemstone Description'
                   value={formData.gemstoneDescription}
-                  onChange={(value) => updateField('gemstoneDescription', value)}
-                  placeholder="Enter gemstone description..."
-                          />
-                        </div>
-                        </div>
+                  onChange={value => updateField('gemstoneDescription', value)}
+                  placeholder='Enter gemstone description...'
+                />
+              </div>
+            </div>
 
-            <div className="mt-4 space-y-4">
-                          <div>
-                <label className="block text-sm font-medium mb-2">Gemstone Photo</label>
+            <div className='mt-4 space-y-4'>
+              <div>
+                <label className='block text-sm font-medium mb-2'>Gemstone Photo</label>
                 <Input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => {
+                  type='file'
+                  accept='image/*'
+                  onChange={e => {
                     // Handle file upload
                   }}
-                  className="cursor-pointer"
+                  className='cursor-pointer'
                 />
-                <p className="text-xs text-gray-500 mt-1">Upload gemstone photo</p>
-                        </div>
+                <p className='text-xs text-gray-500 mt-1'>Upload gemstone photo</p>
+              </div>
 
-                          <div>
-                <label className="block text-sm font-medium mb-2">Gemstone Certificate (Photo)</label>
+              <div>
+                <label className='block text-sm font-medium mb-2'>Gemstone Certificate (Photo)</label>
                 <Input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => {
+                  type='file'
+                  accept='image/*'
+                  onChange={e => {
                     // Handle file upload
                   }}
-                  className="cursor-pointer"
+                  className='cursor-pointer'
                 />
-                <p className="text-xs text-gray-500 mt-1">Upload gemstone certificate image</p>
-                                </div>
-                                </div>
+                <p className='text-xs text-gray-500 mt-1'>Upload gemstone certificate image</p>
+              </div>
+            </div>
           </Card>
         )}
 
         {/* Product Images */}
-        <Card className="p-6">
-          <h2 className="text-xl font-semibold mb-4">Product Images</h2>
-          <div className="space-y-3">
+        <Card className='p-6'>
+          <h2 className='text-xl font-semibold mb-4'>Product Images</h2>
+          <div className='space-y-3'>
             <div>
-              <label className="block text-sm font-medium mb-2">Upload Images (multiple)</label>
-              <Input
-                type="file"
-                accept="image/*"
-                multiple
-                onChange={(e) => uploadProductImages(e.target.files)}
-                className="cursor-pointer"
-              />
-              <p className="text-xs text-gray-500 mt-1">JPEG/PNG preferred. Multiple selections allowed.</p>
+              <label className='block text-sm font-medium mb-2'>Upload Images (multiple)</label>
+              <Input type='file' accept='image/*' multiple onChange={e => uploadProductImages(e.target.files)} className='cursor-pointer' />
+              <p className='text-xs text-gray-500 mt-1'>JPEG/PNG preferred. Multiple selections allowed.</p>
             </div>
-            {uploadingProductImages && <p className="text-xs text-gray-500">Uploading...</p>}
+            {uploadingProductImages && <p className='text-xs text-gray-500'>Uploading...</p>}
             {formData.images && formData.images.length > 0 && (
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                {formData.images.map((img) => (
-                  <div key={img} className="relative border rounded overflow-hidden">
-                    <img src={img} alt="Product" className="w-full h-32 object-cover" />
+              <div className='grid grid-cols-2 md:grid-cols-4 gap-3'>
+                {formData.images.map(img => (
+                  <div key={img} className='relative border rounded overflow-hidden'>
+                    <img src={img} alt='Product' className='w-full h-32 object-cover' />
                     <button
-                      type="button"
+                      type='button'
                       onClick={() => removeProductImage(img)}
-                      className="absolute top-2 right-2 bg-white/80 rounded-full p-1 shadow"
-                    >
-                      <Trash2 className="w-4 h-4 text-red-600" />
+                      className='absolute top-2 right-2 bg-white/80 rounded-full p-1 shadow'>
+                      <Trash2 className='w-4 h-4 text-red-600' />
                     </button>
                   </div>
                 ))}
@@ -2118,222 +2081,215 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
         </Card>
 
         {/* SEO */}
-        <Card className="p-6">
-          <h2 className="text-xl font-semibold mb-4">SEO</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Card className='p-6'>
+          <h2 className='text-xl font-semibold mb-4'>SEO</h2>
+          <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
             <FormField
-              label="SEO Title"
+              label='SEO Title'
               required
               value={formData.seoTitle}
-              onChange={(e) => updateField('seoTitle', e.target.value)}
-              type="text"
-              placeholder="Best 22K Gold Diamond Ring | Brand"
+              onChange={e => updateField('seoTitle', e.target.value)}
+              type='text'
+              placeholder='Best 22K Gold Diamond Ring | Brand'
             />
-            {errors.seoTitle && <p className="text-xs text-red-600 mt-1">{errors.seoTitle}</p>}
+            {errors.seoTitle && <p className='text-xs text-red-600 mt-1'>{errors.seoTitle}</p>}
             <FormField
-              label="SEO Tags (comma separated)"
+              label='SEO Tags (comma separated)'
               required
               value={formData.seoTags}
-              onChange={(e) => updateField('seoTags', e.target.value)}
-              type="text"
-              placeholder="gold ring, diamond jewelry, 22k"
+              onChange={e => updateField('seoTags', e.target.value)}
+              type='text'
+              placeholder='gold ring, diamond jewelry, 22k'
             />
-            {errors.seoTags && <p className="text-xs text-red-600 mt-1">{errors.seoTags}</p>}
+            {errors.seoTags && <p className='text-xs text-red-600 mt-1'>{errors.seoTags}</p>}
           </div>
-          <div className="mt-4">
-            <label className="block text-sm font-medium mb-2">
-              SEO Description <span className="text-red-500">*</span>
+          <div className='mt-4'>
+            <label className='block text-sm font-medium mb-2'>
+              SEO Description <span className='text-red-500'>*</span>
             </label>
             <textarea
-              className="w-full border border-gray-200 rounded-md p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1F3B29]"
+              className='w-full border border-gray-200 rounded-md p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1F3B29]'
               rows={3}
               value={formData.seoDescription}
-              onChange={(e) => updateField('seoDescription', e.target.value)}
-              placeholder="Meta description for search and social previews"
+              onChange={e => updateField('seoDescription', e.target.value)}
+              placeholder='Meta description for search and social previews'
             />
-            {errors.seoDescription && <p className="text-xs text-red-600 mt-1">{errors.seoDescription}</p>}
+            {errors.seoDescription && <p className='text-xs text-red-600 mt-1'>{errors.seoDescription}</p>}
           </div>
         </Card>
 
         {/* Metal Calculation (Live) */}
         {showGoldFields && (
-        <Card className="p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold flex items-center gap-2">
-              <Package className="w-5 h-5" />
-              {formData.productType === 'Silver' ? 'Silver Details (Live Calculation)' : formData.productType === 'Platinum' ? 'Platinum Details (Live Calculation)' : 'Gold Details (Live Calculation)'}
-            </h2>
-            <div className="text-xs text-gray-500">
-              {livePrices?.source ? `Source: ${livePrices.source}` : 'Using live rates'}
-              {livePrices?.timestamp ? ` · ${new Date(livePrices.timestamp).toLocaleTimeString()}` : ''}
+          <Card className='p-6'>
+            <div className='flex items-center justify-between mb-4'>
+              <h2 className='text-xl font-semibold flex items-center gap-2'>
+                <Package className='w-5 h-5' />
+                {formData.productType === 'Silver'
+                  ? 'Silver Details (Live Calculation)'
+                  : formData.productType === 'Platinum'
+                  ? 'Platinum Details (Live Calculation)'
+                  : 'Gold Details (Live Calculation)'}
+              </h2>
+              <div className='text-xs text-gray-500'>
+                {livePrices?.source ? `Source: ${livePrices.source}` : 'Using live rates'}
+                {livePrices?.timestamp ? ` · ${new Date(livePrices.timestamp).toLocaleTimeString()}` : ''}
+              </div>
             </div>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="p-3 bg-gray-50 rounded border">
-              <p className="text-sm text-gray-600">Live Rate (24K) per gram</p>
-              <p className="text-2xl font-semibold text-[#1F3B29]">
-                {metalLiveRate ? formatINR(metalLiveRate) : 'Loading...'}
-              </p>
+            <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4'>
+              <div className='p-3 bg-gray-50 rounded border'>
+                <p className='text-sm text-gray-600'>Live Rate (24K) per gram</p>
+                <p className='text-2xl font-semibold text-[#1F3B29]'>{metalLiveRate ? formatINR(metalLiveRate) : 'Loading...'}</p>
+              </div>
+              <div className='p-3 bg-gray-50 rounded border'>
+                <p className='text-sm text-gray-600'>Selected Purity</p>
+                <p className='text-lg font-semibold'>{selectedPurityLabel}</p>
+                <p className='text-xs text-gray-500'>{(purityPercent * 100).toFixed(1)}%</p>
+              </div>
+              <div className='p-3 bg-gray-50 rounded border'>
+                <p className='text-sm text-gray-600'>Purity Rate</p>
+                <p className='text-2xl font-semibold text-[#1F3B29]'>{formatINR(purityMetalRate)}</p>
+              </div>
+              <div className='p-3 bg-gray-50 rounded border'>
+                <p className='text-sm text-gray-600'>Gold Weight (Gram)</p>
+                <p className='text-2xl font-semibold text-[#1F3B29]'>{goldWeightGram || 0}</p>
+              </div>
             </div>
-            <div className="p-3 bg-gray-50 rounded border">
-              <p className="text-sm text-gray-600">Selected Purity</p>
-              <p className="text-lg font-semibold">
-                {selectedPurityLabel}
-              </p>
-              <p className="text-xs text-gray-500">{(purityPercent * 100).toFixed(1)}%</p>
-            </div>
-            <div className="p-3 bg-gray-50 rounded border">
-              <p className="text-sm text-gray-600">Purity Rate</p>
-              <p className="text-2xl font-semibold text-[#1F3B29]">{formatINR(purityMetalRate)}</p>
-            </div>
-            <div className="p-3 bg-gray-50 rounded border">
-              <p className="text-sm text-gray-600">Gold Weight (Gram)</p>
-              <p className="text-2xl font-semibold text-[#1F3B29]">{goldWeightGram || 0}</p>
-            </div>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
-            <div className="p-3 bg-white rounded border">
-              <p className="text-sm text-gray-600">Less Diamond Weight (ct)</p>
-              <p className="text-lg font-semibold text-[#1F3B29]">{totalDiamondWeightCt.toFixed(2)}</p>
+            <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4'>
+              <div className='p-3 bg-white rounded border'>
+                <p className='text-sm text-gray-600'>Less Diamond Weight (ct)</p>
+                <p className='text-lg font-semibold text-[#1F3B29]'>{totalDiamondWeightCt.toFixed(2)}</p>
+              </div>
+              <div className='p-3 bg-white rounded border'>
+                <p className='text-sm text-gray-600'>Net Gold Weight (Gram)</p>
+                <p className='text-lg font-semibold text-[#1F3B29]'>{netGoldWeight.toFixed(2)}</p>
+              </div>
+              <div className='p-3 bg-white rounded border'>
+                <p className='text-sm text-gray-600'>Metal Value</p>
+                <p className='text-lg font-semibold text-[#1F3B29]'>{formatINR(goldValue)}</p>
+              </div>
+              <div className='p-3 bg-white rounded border'>
+                <p className='text-sm text-gray-600'>Vendor Wastage / Commission (%)</p>
+                <FormField
+                  label=''
+                  value={formData.vendorCommissionRate}
+                  onChange={e => updateField('vendorCommissionRate', parseFloat(e.target.value) || 0)}
+                  type='number'
+                  placeholder='5'
+                />
+                <p className='text-xs text-gray-500 mt-1'>Value: {formatINR(vendorCommissionValue)}</p>
+              </div>
+              <div className='p-3 bg-white rounded border'>
+                <p className='text-sm text-gray-600'>Making Charges per gram</p>
+                <FormField
+                  label=''
+                  value={formData.makingChargePerGram}
+                  onChange={e => updateField('makingChargePerGram', parseFloat(e.target.value) || 0)}
+                  type='number'
+                  placeholder='500'
+                />
+                <p className='text-xs text-gray-500 mt-1'>Value: {formatINR(makingChargesValue)}</p>
+              </div>
+              <div className='p-3 bg-white rounded border'>
+                <p className='text-sm text-gray-600'>Diamonds Value (auto)</p>
+                <p className='text-lg font-semibold text-[#1F3B29]'>{formatINR(diamondValueAuto)}</p>
+              </div>
             </div>
-            <div className="p-3 bg-white rounded border">
-              <p className="text-sm text-gray-600">Net Gold Weight (Gram)</p>
-              <p className="text-lg font-semibold text-[#1F3B29]">{netGoldWeight.toFixed(2)}</p>
-            </div>
-            <div className="p-3 bg-white rounded border">
-              <p className="text-sm text-gray-600">Metal Value</p>
-              <p className="text-lg font-semibold text-[#1F3B29]">{formatINR(goldValue)}</p>
-            </div>
-            <div className="p-3 bg-white rounded border">
-              <p className="text-sm text-gray-600">Vendor Wastage / Commission (%)</p>
-              <FormField
-                label=""
-                value={formData.vendorCommissionRate}
-                onChange={(e) => updateField('vendorCommissionRate', parseFloat(e.target.value) || 0)}
-                type="number"
-                placeholder="5"
-              />
-              <p className="text-xs text-gray-500 mt-1">Value: {formatINR(vendorCommissionValue)}</p>
-            </div>
-            <div className="p-3 bg-white rounded border">
-              <p className="text-sm text-gray-600">Making Charges per gram</p>
-              <FormField
-                label=""
-                value={formData.makingChargePerGram}
-                onChange={(e) => updateField('makingChargePerGram', parseFloat(e.target.value) || 0)}
-                type="number"
-                placeholder="500"
-              />
-              <p className="text-xs text-gray-500 mt-1">Value: {formatINR(makingChargesValue)}</p>
-            </div>
-            <div className="p-3 bg-white rounded border">
-              <p className="text-sm text-gray-600">Diamonds Value (auto)</p>
-              <p className="text-lg font-semibold text-[#1F3B29]">{formatINR(diamondValueAuto)}</p>
-            </div>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
-            <div className="p-3 bg-white rounded border">
-              <p className="text-sm text-gray-600">Platform Commission (%)</p>
-              <FormField
-                label=""
-                value={formData.platformCommissionRate}
-                onChange={(e) => updateField('platformCommissionRate', parseFloat(e.target.value) || 0)}
-                type="number"
-                placeholder="2"
-              />
-              <p className="text-xs text-gray-500 mt-1">Value: {formatINR(platformCommissionValue)}</p>
+            <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4'>
+              <div className='p-3 bg-white rounded border'>
+                <p className='text-sm text-gray-600'>Platform Commission (%)</p>
+                <FormField
+                  label=''
+                  value={formData.platformCommissionRate}
+                  onChange={e => updateField('platformCommissionRate', parseFloat(e.target.value) || 0)}
+                  type='number'
+                  placeholder='2'
+                />
+                <p className='text-xs text-gray-500 mt-1'>Value: {formatINR(platformCommissionValue)}</p>
+              </div>
+              <div className='p-3 bg-white rounded border'>
+                <p className='text-sm text-gray-600'>Other Charges (₹)</p>
+                <FormField
+                  label=''
+                  value={formData.otherCharges}
+                  onChange={e => updateField('otherCharges', parseFloat(e.target.value) || 0)}
+                  type='number'
+                  placeholder='0'
+                />
+              </div>
+              <div className='p-3 bg-white rounded border'>
+                <p className='text-sm text-gray-600'>GST Rate</p>
+                <Dropdown
+                  labelMain='GST'
+                  value={String(formData.gstRate)}
+                  onChange={option => updateField('gstRate', parseFloat(option.value) || 0)}
+                  options={GST_OPTIONS}
+                  placeholder='Select GST'
+                />
+              </div>
+              <div className='p-3 bg-gray-50 rounded border space-y-2'>
+                <div className='flex justify-between text-sm text-gray-700'>
+                  <span>Metal Value</span>
+                  <span>{formatINR(goldValue)}</span>
+                </div>
+                <div className='flex justify-between text-sm text-gray-700'>
+                  <span>Vendor Commission</span>
+                  <span>{formatINR(vendorCommissionValue)}</span>
+                </div>
+                <div className='flex justify-between text-sm text-gray-700'>
+                  <span>Making Charges</span>
+                  <span>{formatINR(makingChargesValue)}</span>
+                </div>
+                <div className='flex justify-between text-sm text-gray-700'>
+                  <span>Diamonds Value</span>
+                  <span>{formatINR(diamondValueAuto)}</span>
+                </div>
+                <div className='flex justify-between text-sm text-gray-700'>
+                  <span>Platform Commission</span>
+                  <span>{formatINR(platformCommissionValue)}</span>
+                </div>
+                <div className='flex justify-between text-sm text-gray-700'>
+                  <span>Other Charges</span>
+                  <span>{formatINR(extraCharges)}</span>
+                </div>
+                <div className='flex justify-between font-semibold text-gray-900'>
+                  <span>Sub Total</span>
+                  <span>{formatINR(subTotal)}</span>
+                </div>
+                <div className='flex justify-between text-sm text-gray-700'>
+                  <span>GST ({formData.gstRate || 0}%)</span>
+                  <span>{formatINR(gst)}</span>
+                </div>
+                <div className='flex justify-between text-lg font-bold text-[#1F3B29]'>
+                  <span>Total Amount</span>
+                  <span>{formatINR(totalAmount)}</span>
+                </div>
+              </div>
             </div>
-            <div className="p-3 bg-white rounded border">
-              <p className="text-sm text-gray-600">Other Charges (₹)</p>
-              <FormField
-                label=""
-                value={formData.otherCharges}
-                onChange={(e) => updateField('otherCharges', parseFloat(e.target.value) || 0)}
-                type="number"
-                placeholder="0"
-              />
-            </div>
-            <div className="p-3 bg-white rounded border">
-              <p className="text-sm text-gray-600">GST Rate</p>
-              <Dropdown
-                labelMain="GST"
-                value={String(formData.gstRate)}
-                onChange={(option) => updateField('gstRate', parseFloat(option.value) || 0)}
-                options={GST_OPTIONS}
-                placeholder="Select GST"
-              />
-            </div>
-            <div className="p-3 bg-gray-50 rounded border space-y-2">
-              <div className="flex justify-between text-sm text-gray-700">
-                <span>Metal Value</span>
-                <span>{formatINR(goldValue)}</span>
-              </div>
-              <div className="flex justify-between text-sm text-gray-700">
-                <span>Vendor Commission</span>
-                <span>{formatINR(vendorCommissionValue)}</span>
-              </div>
-              <div className="flex justify-between text-sm text-gray-700">
-                <span>Making Charges</span>
-                <span>{formatINR(makingChargesValue)}</span>
-              </div>
-              <div className="flex justify-between text-sm text-gray-700">
-                <span>Diamonds Value</span>
-                <span>{formatINR(diamondValueAuto)}</span>
-              </div>
-              <div className="flex justify-between text-sm text-gray-700">
-                <span>Platform Commission</span>
-                <span>{formatINR(platformCommissionValue)}</span>
-              </div>
-              <div className="flex justify-between text-sm text-gray-700">
-                <span>Other Charges</span>
-                <span>{formatINR(extraCharges)}</span>
-              </div>
-              <div className="flex justify-between font-semibold text-gray-900">
-                <span>Sub Total</span>
-                <span>{formatINR(subTotal)}</span>
-              </div>
-              <div className="flex justify-between text-sm text-gray-700">
-                <span>GST ({formData.gstRate || 0}%)</span>
-                <span>{formatINR(gst)}</span>
-              </div>
-              <div className="flex justify-between text-lg font-bold text-[#1F3B29]">
-                <span>Total Amount</span>
-                <span>{formatINR(totalAmount)}</span>
-              </div>
-            </div>
-          </div>
-        </Card>
+          </Card>
         )}
 
         {/* Submit Button */}
-        <div className="flex justify-end gap-4">
-                <Button
-            type="button"
-            variant="outline"
-            onClick={() => router.back()}
-            disabled={loading}
-          >
-                  Cancel
-                </Button>
-                <Button
-            type="submit"
-                  disabled={loading}
-            className="bg-[#1F3B29] hover:bg-[#2d4a3a] text-white"
-          >
+        <div className='flex justify-end gap-4'>
+          <Button type='button' variant='outline' onClick={() => router.back()} disabled={loading}>
+            Cancel
+          </Button>
+          <Button type='submit' disabled={loading} className=' text-white'>
             {loading ? (
               <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                <Loader2 className='w-4 h-4 mr-2 animate-spin' />
                 {productId ? 'Updating...' : 'Creating...'}
               </>
+            ) : productId ? (
+              'Update Product'
             ) : (
-              productId ? 'Update Product' : 'Create Product'
+              'Create Product'
             )}
-                </Button>
-          </div>
-        </form>
+          </Button>
+        </div>
+      </form>
     </div>
   );
 }
