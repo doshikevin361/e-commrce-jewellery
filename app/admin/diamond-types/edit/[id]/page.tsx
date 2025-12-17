@@ -1,4 +1,10 @@
+import { AdminLayout } from '@/components/layout/admin-layout';
 import { DiamondTypeFormPage } from '@/components/diamond-types/diamond-type-form-page';
+
+export const metadata = {
+  title: 'Edit Diamond Type | Admin',
+  description: 'Edit diamond type',
+};
 
 export default async function EditDiamondTypePage({
   params,
@@ -6,7 +12,10 @@ export default async function EditDiamondTypePage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  return <DiamondTypeFormPage diamondTypeId={id} />;
+  return (
+    <AdminLayout>
+      <DiamondTypeFormPage diamondTypeId={id} />
+    </AdminLayout>
+  );
 }
-
 
