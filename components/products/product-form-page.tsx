@@ -9,7 +9,6 @@ import { ArrowLeft, Loader2, Package, Upload, Plus, Trash2 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast';
 import FormField from '../formField/formField';
 import Dropdown from '../customDropdown/customDropdown';
-import { MainImageUpload } from '@/components/media/main-image-upload';
 import { RichTextEditor } from '@/components/ui/rich-text-editor';
 
 // Product Type Options
@@ -158,7 +157,39 @@ const formatINR = (value: number) =>
     isFinite(value) ? value : 0
   );
 
-const getPurityPercent = (purity: string) => PURITY_MAP[purity] ?? 1;
+  const getOptionLabel = (options: { label: string; value: string }[], value: string | undefined) =>
+    options.find((o) => o.value === value)?.label || value || '—';
+
+  const parsePurityPercent = (purity: string) => {
+    if (!purity) return 1;
+    const lower = purity.toLowerCase().trim();
+    if (PURITY_MAP[lower] !== undefined) return PURITY_MAP[lower];
+    const numeric = parseFloat(purity);
+    if (isFinite(numeric)) {
+      // If user enters a percentage (e.g., 92), treat >24 as percent/100.
+      if (numeric > 24) return Math.min(numeric / 100, 1);
+      // If user enters karat (e.g., 22), convert to 24k scale.
+      if (numeric > 1.5) return Math.min(numeric / 24, 1);
+      // If already in 0-1 range, use directly.
+      return Math.min(numeric, 1);
+    }
+    return 1;
+  };
+
+  const slugify = (value: string) =>
+    value
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-');
+
+  const generateSkuValue = (productType?: string) => {
+    const prefix = (productType || 'PRD').slice(0, 3).toUpperCase();
+    const timePart = Date.now().toString().slice(-6);
+    return `${prefix}-${timePart}`;
+  };
+
 
 const GST_OPTIONS = [
   { label: '0%', value: '0' },
@@ -242,6 +273,7 @@ interface ProductFormData {
   itemsPair: number;
   pincode: string;
   huidHallmarkNo: string;
+  hsnCode: string;
   
   // Diamonds Fields (for single diamond - legacy)
   diamondsType: string;
@@ -272,6 +304,12 @@ interface ProductFormData {
   collection: string;
   thickness: number;
   description: string;
+  shortDescription: string;
+  specifications: { key: string; value: string }[];
+  images: string[];
+  seoTitle: string;
+  seoDescription: string;
+  seoTags: string;
   
   // Gemstone Fields
   gemstoneName: string;
@@ -337,6 +375,8 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
   const [certifiedLabs, setCertifiedLabs] = useState<{ label: string; value: string }[]>([]);
   const [uploadingDiamondId, setUploadingDiamondId] = useState<string | null>(null);
   const [livePrices, setLivePrices] = useState<{ gold: number; silver?: number; platinum?: number; source?: string; timestamp?: string; error?: string } | null>(null);
+  const [uploadingProductImages, setUploadingProductImages] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const isDiamondComplete = (d: Diamond) =>
     !!(
@@ -349,11 +389,83 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
       d.certifiedLabs &&
       d.certificateNo
     );
+
+  const generateSku = () => {
+    updateField('sku', generateSkuValue(formData.productType));
+  };
+
+  const handleNameChange = (value: string) => {
+    setFormData((prev) => {
+      const prevSlugFromName = slugify(prev.name || '');
+      const shouldUpdateSlug = !prev.urlSlug || prev.urlSlug === prevSlugFromName;
+      const nextSlug = shouldUpdateSlug ? slugify(value) : prev.urlSlug;
+      return { ...prev, name: value, urlSlug: nextSlug };
+    });
+  };
+
+  const uploadProductImages = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    setUploadingProductImages(true);
+    const uploadedUrls: string[] = [];
+    try {
+      for (const file of Array.from(files)) {
+        const formDataUpload = new FormData();
+        formDataUpload.append('file', file);
+        const res = await fetch('/api/upload', { method: 'POST', body: formDataUpload });
+        if (res.ok) {
+          const data = await res.json();
+          if (data?.url) uploadedUrls.push(data.url);
+        } else {
+          throw new Error('Upload failed');
+        }
+      }
+      if (uploadedUrls.length) {
+        setFormData((prev) => ({ ...prev, images: [...(prev.images || []), ...uploadedUrls] }));
+      }
+    } catch (error) {
+      console.error('Failed to upload product images:', error);
+      toast({
+        title: 'Upload failed',
+        description: 'Could not upload one or more images.',
+        variant: 'destructive',
+      });
+    } finally {
+      setUploadingProductImages(false);
+    }
+  };
+
+  const removeProductImage = (url: string) => {
+    setFormData((prev) => ({ ...prev, images: (prev.images || []).filter((img) => img !== url) }));
+  };
+
+  const addSpecificationRow = () => {
+    setFormData((prev) => ({
+      ...prev,
+      specifications: [...(prev.specifications || []), { key: '', value: '' }],
+    }));
+  };
+
+  const updateSpecificationRow = (index: number, field: 'key' | 'value', value: string) => {
+    setFormData((prev) => {
+      const specs = [...(prev.specifications || [])];
+      specs[index] = { ...specs[index], [field]: value };
+      return { ...prev, specifications: specs };
+    });
+  };
+
+  const removeSpecificationRow = (index: number) => {
+    setFormData((prev) => {
+      const specs = [...(prev.specifications || [])];
+      specs.splice(index, 1);
+      return { ...prev, specifications: specs.length ? specs : [{ key: '', value: '' }] };
+    });
+  };
   
   const [formData, setFormData] = useState<ProductFormData>({
     productType: '',
   category: '',
     sku: '',
+    hsnCode: '',
     designType: '',
   goldPurity: '',
   silverPurity: '',
@@ -391,6 +503,12 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
     collection: '',
     thickness: 0,
     description: '',
+    shortDescription: '',
+    specifications: [{ key: '', value: '' }],
+    images: [],
+    seoTitle: '',
+    seoDescription: '',
+    seoTags: '',
     gemstoneName: '',
     reportNo: '',
     gemstoneCertificateLab: '',
@@ -528,7 +646,7 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
         const data = await response.json();
         const options = (data.karats || []).map((item: any) => ({
           label: item.name,
-          value: item._id || item.name,
+          value: item.name,
         }));
         setKarats(options);
       }
@@ -544,7 +662,7 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
         const data = await response.json();
         const options = (data.purities || []).map((item: any) => ({
           label: item.name,
-          value: item._id || item.name,
+          value: item.name,
         }));
         setPurities(options);
       }
@@ -742,6 +860,7 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
           itemsPair: product.itemsPair || 1,
           pincode: product.pincode || '',
           huidHallmarkNo: product.huidHallmarkNo || '',
+          hsnCode: product.hsnCode || product.hsn || '',
           diamondsType: product.diamondsType || '',
           noOfDiamonds: product.noOfDiamonds || 0,
           totalNoOfDiamonds: product.totalNoOfDiamonds || 0,
@@ -764,7 +883,13 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
           brand: product.brand || '',
           collection: product.collection || '',
           thickness: product.thickness || 0,
-          description: product.longDescription || '',
+          description: product.longDescription || product.description || '',
+          shortDescription: product.shortDescription || '',
+          specifications: product.specifications || [{ key: '', value: '' }],
+          images: product.images || [],
+          seoTitle: product.seoTitle || '',
+          seoDescription: product.seoDescription || '',
+          seoTags: product.seoTags || '',
           gemstoneName: product.gemstoneName || '',
           reportNo: product.reportNo || '',
           gemstoneCertificateLab: product.gemstoneCertificateLab || '',
@@ -818,11 +943,51 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
     setLoading(true);
 
     try {
+      const computedSlug = formData.urlSlug?.trim() || slugify(formData.name || '');
+      const computedSku = formData.sku?.trim() || generateSkuValue(formData.productType);
+      const selectedPurityValue = formData.silverPurity || formData.goldPurity;
+      const nextErrors: Record<string, string> = {};
+      if (!formData.productType) nextErrors.productType = 'This field is required';
+      if (!formData.category) nextErrors.category = 'This field is required';
+      if (!formData.designType) nextErrors.designType = 'This field is required';
+      if (!formData.name?.trim()) nextErrors.name = 'This field is required';
+      if (!computedSlug) nextErrors.urlSlug = 'This field is required';
+      if (!computedSku) nextErrors.sku = 'This field is required';
+      if (!formData.hsnCode?.trim()) nextErrors.hsnCode = 'This field is required';
+      if (!selectedPurityValue) nextErrors.silverPurity = 'This field is required';
+      if (!formData.weight || formData.weight <= 0) nextErrors.weight = 'This field is required';
+      if (!formData.shortDescription?.trim() && !formData.description?.trim())
+        nextErrors.description = 'Description is required';
+      if (!formData.seoTitle?.trim()) nextErrors.seoTitle = 'This field is required';
+      if (!formData.seoDescription?.trim()) nextErrors.seoDescription = 'This field is required';
+      if (!formData.seoTags?.trim()) nextErrors.seoTags = 'This field is required';
+
+      if (Object.keys(nextErrors).length) {
+        setErrors(nextErrors);
+        setLoading(false);
+        return;
+      }
+
+      setErrors({});
+      setFormData((prev) => ({
+        ...prev,
+        urlSlug: computedSlug,
+        sku: computedSku,
+      }));
+
       const payload = {
         ...formData,
         product_type: formData.productType,
-        shortDescription: formData.description.substring(0, 200),
+        sku: computedSku,
+        urlSlug: computedSlug,
+        shortDescription: formData.shortDescription || formData.description.substring(0, 200),
         longDescription: formData.description,
+        specifications: formData.specifications,
+        images: formData.images,
+        seoTitle: formData.seoTitle,
+        seoDescription: formData.seoDescription,
+        seoTags: formData.seoTags,
+        hsnCode: formData.hsnCode,
         isB2C: true,
         hasGold: ['Gold', 'Platinum'].includes(formData.productType),
         hasSilver: formData.productType === 'Silver',
@@ -865,7 +1030,14 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
   };
 
   const updateField = (field: keyof ProductFormData, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    if (errors[field]) {
+      setErrors((prev) => {
+        const next = { ...prev };
+        delete next[field];
+        return next;
+      });
+    }
   };
 
   const metalLiveRate =
@@ -874,10 +1046,13 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
       : formData.productType === 'Platinum'
       ? livePrices?.platinum ?? 0
       : livePrices?.gold ?? 0;
-  const purityPercent =
-    formData.productType === 'Silver'
-      ? getPurityPercent(formData.silverPurity || '24kt')
-      : getPurityPercent(formData.goldPurity || '24kt');
+  // Prefer the explicit Purity dropdown value; fallback to karat if not set.
+  const selectedPurityValue = formData.silverPurity || formData.goldPurity;
+
+  // Show the label from purity options first, then karat options as fallback.
+  const selectedPurityLabel = getOptionLabel([...purities, ...karats], selectedPurityValue);
+
+  const purityPercent = parsePurityPercent(selectedPurityValue || '24kt');
   const purityMetalRate = metalLiveRate * purityPercent;
   const goldWeightGram = formData.weight || 0;
   const totalDiamondWeightCt = formData.diamonds.reduce((sum, d) => sum + (d.diamondWeight || 0), 0);
@@ -935,13 +1110,14 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
             <Package className="w-5 h-5" />
             Product Type
           </h2>
-                      <Dropdown
-            labelMain="Product Type *"
-            value={formData.productType}
-            onChange={(option) => updateField('productType', option.value)}
-            options={[...PRODUCT_TYPE_OPTIONS]}
-            placeholder="Select Product Type (e.g., Gold, Silver, Diamonds)"
-          />
+            <Dropdown
+              labelMain="Product Type *"
+              value={formData.productType}
+              onChange={(option) => updateField('productType', option.value)}
+              options={[...PRODUCT_TYPE_OPTIONS]}
+              placeholder="Select Product Type (e.g., Gold, Silver, Diamonds)"
+            />
+            {errors.productType && <p className="text-xs text-red-600 mt-1">{errors.productType}</p>}
         </Card>
 
         {/* Category Selection */}
@@ -950,14 +1126,15 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
             <Package className="w-5 h-5" />
             Category
           </h2>
-                        <Dropdown
-            labelMain="Category *"
-            value={formData.category}
-            onChange={(option) => updateField('category', option.value)}
-            options={categoryOptions}
-            placeholder="Select Category or Subcategory (e.g., Earring, Bracelet, Necklace)"
-            withSearch={categoryOptions.length > 10}
-          />
+            <Dropdown
+              labelMain="Category *"
+              value={formData.category}
+              onChange={(option) => updateField('category', option.value)}
+              options={categoryOptions}
+              placeholder="Select Category or Subcategory (e.g., Earring, Bracelet, Necklace)"
+              withSearch={categoryOptions.length > 10}
+            />
+            {errors.category && <p className="text-xs text-red-600 mt-1">{errors.category}</p>}
         </Card>
 
         {/* Design Type, Karat, Purity, Metal Color Fields */}
@@ -968,13 +1145,14 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <Dropdown
-              labelMain="Design Type"
+              labelMain="Design Type *"
               value={formData.designType}
               onChange={(option) => updateField('designType', option.value)}
               options={designTypes}
               placeholder="Select Design Type"
               withSearch={designTypes.length > 10}
             />
+            {errors.designType && <p className="text-xs text-red-600 mt-1">{errors.designType}</p>}
             
             <Dropdown
               labelMain="Karat"
@@ -986,13 +1164,14 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
             />
             
             <Dropdown
-              labelMain={formData.productType ? `${formData.productType} Purity` : 'Purity'}
+              labelMain={formData.productType ? `${formData.productType} Purity *` : 'Purity *'}
               value={formData.silverPurity}
               onChange={(option) => updateField('silverPurity', option.value)}
               options={purities}
               placeholder={formData.productType ? `Select ${formData.productType} Purity` : 'Select Purity'}
               withSearch={purities.length > 10}
             />
+            {errors.silverPurity && <p className="text-xs text-red-600 mt-1 col-span-2">{errors.silverPurity}</p>}
             
             <Dropdown
               labelMain="Metal Colour"
@@ -1009,7 +1188,126 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
               onChange={(e) => updateField('weight', parseFloat(e.target.value) || 0)}
               type="number"
               placeholder="Example: 10"
+              required
             />
+            {errors.weight && <p className="text-xs text-red-600 mt-1 col-span-2">{errors.weight}</p>}
+          </div>
+        </Card>
+
+        {/* Basic Product Info */}
+        <Card className="p-6">
+          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+            <Package className="w-5 h-5" />
+            Product Content & Basics
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              label="Product Name"
+              required
+              value={formData.name}
+              onChange={(e) => handleNameChange(e.target.value)}
+              type="text"
+              placeholder="Example: 22K Gold Diamond Ring"
+            />
+            {errors.name && <p className="text-xs text-red-600 mt-1">{errors.name}</p>}
+            <div className="flex flex-col gap-2">
+              <FormField
+                label="SKU"
+                value={formData.sku}
+                onChange={(e) => updateField('sku', e.target.value)}
+                type="text"
+                placeholder="Auto-generate or enter manually"
+                required
+              />
+              <div>
+                <Button type="button" variant="outline" size="sm" onClick={generateSku}>
+                  Auto Generate SKU
+                </Button>
+              </div>
+              {errors.sku && <p className="text-xs text-red-600 mt-1">{errors.sku}</p>}
+            </div>
+            <FormField
+              label="HSN Code"
+              value={formData.hsnCode}
+              onChange={(e) => updateField('hsnCode', e.target.value)}
+              type="text"
+              placeholder="Example: 7113 for Jewellery"
+              required
+            />
+            {errors.hsnCode && <p className="text-xs text-red-600 mt-1">{errors.hsnCode}</p>}
+            <div className="flex flex-col gap-2">
+              <FormField
+                label="URL Slug"
+                value={formData.urlSlug}
+                onChange={(e) => updateField('urlSlug', slugify(e.target.value))}
+                type="text"
+                placeholder="auto-from-name"
+                required
+              />
+              <div className="text-xs text-gray-500">Slug updates automatically when name changes.</div>
+              {errors.urlSlug && <p className="text-xs text-red-600 mt-1">{errors.urlSlug}</p>}
+            </div>
+          </div>
+
+          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-medium">
+                Short Description <span className="text-red-500">*</span>
+              </label>
+              <textarea
+                className="w-full border border-gray-200 rounded-md p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1F3B29]"
+                rows={3}
+                value={formData.shortDescription}
+                onChange={(e) => updateField('shortDescription', e.target.value)}
+                placeholder="A brief summary for listing cards (ideal 160-200 chars)"
+              />
+              {errors.description && <p className="text-xs text-red-600">{errors.description}</p>}
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-medium">Specifications (table)</label>
+              <div className="space-y-2">
+                {(formData.specifications || []).map((spec, idx) => (
+                  <div key={idx} className="grid grid-cols-5 gap-2 items-center">
+                    <Input
+                      className="col-span-2"
+                      placeholder="Label (e.g., Metal)"
+                      value={spec.key}
+                      onChange={(e) => updateSpecificationRow(idx, 'key', e.target.value)}
+                    />
+                    <Input
+                      className="col-span-2"
+                      placeholder="Value (e.g., 22K Gold)"
+                      value={spec.value}
+                      onChange={(e) => updateSpecificationRow(idx, 'value', e.target.value)}
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => removeSpecificationRow(idx)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ))}
+                <Button type="button" variant="outline" size="sm" onClick={addSpecificationRow} className="mt-1">
+                  Add Specification
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-4">
+            <label className="block text-sm font-medium mb-2">
+              Description <span className="text-red-500">*</span>
+            </label>
+            <RichTextEditor
+              label="Description"
+              value={formData.description}
+              onChange={(value) => updateField('description', value)}
+              placeholder="Detailed product description for PDP"
+            />
+            {errors.description && <p className="text-xs text-red-600 mt-1">{errors.description}</p>}
           </div>
         </Card>
 
@@ -1784,20 +2082,78 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
           </Card>
         )}
 
-        {/* Main Image - Will be added later */}
-        {false && (
+        {/* Product Images */}
         <Card className="p-6">
           <h2 className="text-xl font-semibold mb-4">Product Images</h2>
-                                  <div>
-            <label className="block text-sm font-medium mb-2">Main Product Image *</label>
-            <MainImageUpload
-              value={formData.mainImage}
-              onChange={(value) => updateField('mainImage', value)}
-            />
-            <p className="text-xs text-gray-500 mt-1">Upload main product image (e.g., front view of jewelry)</p>
-                                    </div>
+          <div className="space-y-3">
+            <div>
+              <label className="block text-sm font-medium mb-2">Upload Images (multiple)</label>
+              <Input
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={(e) => uploadProductImages(e.target.files)}
+                className="cursor-pointer"
+              />
+              <p className="text-xs text-gray-500 mt-1">JPEG/PNG preferred. Multiple selections allowed.</p>
+            </div>
+            {uploadingProductImages && <p className="text-xs text-gray-500">Uploading...</p>}
+            {formData.images && formData.images.length > 0 && (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {formData.images.map((img) => (
+                  <div key={img} className="relative border rounded overflow-hidden">
+                    <img src={img} alt="Product" className="w-full h-32 object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => removeProductImage(img)}
+                      className="absolute top-2 right-2 bg-white/80 rounded-full p-1 shadow"
+                    >
+                      <Trash2 className="w-4 h-4 text-red-600" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </Card>
-        )}
+
+        {/* SEO */}
+        <Card className="p-6">
+          <h2 className="text-xl font-semibold mb-4">SEO</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              label="SEO Title"
+              required
+              value={formData.seoTitle}
+              onChange={(e) => updateField('seoTitle', e.target.value)}
+              type="text"
+              placeholder="Best 22K Gold Diamond Ring | Brand"
+            />
+            {errors.seoTitle && <p className="text-xs text-red-600 mt-1">{errors.seoTitle}</p>}
+            <FormField
+              label="SEO Tags (comma separated)"
+              required
+              value={formData.seoTags}
+              onChange={(e) => updateField('seoTags', e.target.value)}
+              type="text"
+              placeholder="gold ring, diamond jewelry, 22k"
+            />
+            {errors.seoTags && <p className="text-xs text-red-600 mt-1">{errors.seoTags}</p>}
+          </div>
+          <div className="mt-4">
+            <label className="block text-sm font-medium mb-2">
+              SEO Description <span className="text-red-500">*</span>
+            </label>
+            <textarea
+              className="w-full border border-gray-200 rounded-md p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1F3B29]"
+              rows={3}
+              value={formData.seoDescription}
+              onChange={(e) => updateField('seoDescription', e.target.value)}
+              placeholder="Meta description for search and social previews"
+            />
+            {errors.seoDescription && <p className="text-xs text-red-600 mt-1">{errors.seoDescription}</p>}
+          </div>
+        </Card>
 
         {/* Metal Calculation (Live) */}
         {showGoldFields && (
@@ -1823,7 +2179,7 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
             <div className="p-3 bg-gray-50 rounded border">
               <p className="text-sm text-gray-600">Selected Purity</p>
               <p className="text-lg font-semibold">
-                {formData.productType === 'Silver' ? formData.silverPurity || '—' : formData.goldPurity || '—'}
+                {selectedPurityLabel}
               </p>
               <p className="text-xs text-gray-500">{(purityPercent * 100).toFixed(1)}%</p>
             </div>
@@ -1925,7 +2281,7 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
               </div>
               <div className="flex justify-between text-sm text-gray-700">
                 <span>Diamonds Value</span>
-                <span>{formatINR(formData.diamondValue || 0)}</span>
+                <span>{formatINR(diamondValueAuto)}</span>
               </div>
               <div className="flex justify-between text-sm text-gray-700">
                 <span>Platform Commission</span>
