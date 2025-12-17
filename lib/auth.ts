@@ -15,7 +15,7 @@ export function generateToken(admin: Partial<AdminUser> | { _id?: string; email:
   return jwt.sign(
     { id: admin._id, email: admin.email, role: admin.role },
     JWT_SECRET,
-    { expiresIn: '24h' }
+    { expiresIn: '7d' }
   );
 }
 
