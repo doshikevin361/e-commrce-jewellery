@@ -1348,7 +1348,7 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                     diamonds: [...prev.diamonds, newDiamond],
                   }));
                 }}
-                className='bg-[#1F3B29] hover:bg-[#2d4a3a] text-white'>
+                className='text-white'>
                 <Plus className='w-4 h-4 mr-2' />
                 Add Diamond
               </Button>
@@ -1372,7 +1372,7 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                             diamonds: prev.diamonds.filter(d => d.id !== diamond.id),
                           }));
                         }}
-                        className='text-red-600 hover:text-red-700'>
+                        className='text-red-600'>
                         <Trash2 className='w-4 h-4' />
                       </Button>
                     </div>
