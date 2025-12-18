@@ -31,6 +31,12 @@ const normalizeProductPayload = (payload: any) => {
     // Making charges
     makingCharges: typeof payload.makingCharges === 'number' ? payload.makingCharges : 0,
     certification: payload.certification ?? '',
+    // New product detail fields
+    size: payload.size ?? '',
+    gender: Array.isArray(payload.gender) ? payload.gender : [],
+    itemsPair: payload.itemsPair ?? '',
+    huidHallmarkNo: payload.huidHallmarkNo ?? '',
+    lessStoneWeight: typeof payload.lessStoneWeight === 'number' ? payload.lessStoneWeight : 0,
     // Backward compatibility for old field names
     metalWeight: typeof payload.metalWeight === 'number' ? payload.metalWeight : (payload.hasGold ? payload.goldWeight : (payload.hasSilver ? payload.silverWeight : 0)),
     metalPurity: payload.metalPurity ?? (payload.hasGold ? payload.goldPurity : (payload.hasSilver ? payload.silverPurity : '')),
