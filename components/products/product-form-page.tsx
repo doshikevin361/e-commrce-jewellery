@@ -286,7 +286,7 @@ interface ProductFormData {
   diamondSetting: string;
   certifiedLabs: string;
   certificateNo: string;
-  makingChargesDiscount: number;
+  discount: number;
 
   // Multiple Diamonds
   diamonds: Diamond[];
@@ -348,6 +348,7 @@ interface ProductFormData {
   diamondCertCharges: number;
   otherCharges?: number;
   gstRate: number;
+  customMetalRate?: number; // Custom metal rate to override live price
 }
 
 interface ProductFormPageProps {
@@ -496,7 +497,7 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
     diamondSetting: '',
     certifiedLabs: '',
     certificateNo: '',
-    makingChargesDiscount: 0,
+    discount: 0,
     diamonds: [],
     occasion: '',
     dimension: '',
@@ -546,6 +547,7 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
     diamondCertCharges: 0,
     otherCharges: 0,
     gstRate: 3,
+    customMetalRate: undefined,
   });
 
   useEffect(() => {
@@ -876,7 +878,7 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
           diamondSetting: product.diamondSetting || '',
           certifiedLabs: product.certifiedLabs || '',
           certificateNo: product.certificateNo || '',
-          makingChargesDiscount: product.makingChargesDiscount || 0,
+          discount: product.discount || product.makingChargesDiscount || 0,
           occasion: product.occasion || '',
           dimension: product.dimension || '',
           height: product.height || 0,
@@ -925,6 +927,7 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
           diamondCertCharges: product.diamondCertCharges ?? 0,
           otherCharges: product.otherCharges ?? 0,
           gstRate: product.gstRate ?? 3,
+          customMetalRate: product.customMetalRate ?? undefined,
           diamonds: product.diamonds || [],
         });
       }
@@ -1006,6 +1009,9 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
         regularPrice: 0,
         sellingPrice: 0,
         costPrice: 0,
+        price: totalAmount,
+        subTotal: subTotal,
+        totalAmount: totalAmount,
         goldWeight,
         goldRatePerGram,
         silverWeight,
@@ -1055,12 +1061,14 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
     }
   };
 
-  const metalLiveRate =
+  // Use custom metal rate if provided, otherwise use live rate
+  const liveMetalRate =
     formData.productType === 'Silver'
       ? livePrices?.silver ?? 0
       : formData.productType === 'Platinum'
       ? livePrices?.platinum ?? 0
       : livePrices?.gold ?? 0;
+  const metalLiveRate = formData.customMetalRate ?? liveMetalRate;
   // Prefer the explicit Purity dropdown value; fallback to karat if not set.
   const selectedPurityValue = formData.silverPurity || formData.goldPurity;
 
@@ -2212,8 +2220,25 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
 
             <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4'>
               <div className='p-3 bg-gray-50 rounded border'>
-                <p className='text-sm text-gray-600'>Live Rate (24K) per gram</p>
-                <p className='text-2xl font-semibold text-[#1F3B29]'>{metalLiveRate ? formatINR(metalLiveRate) : 'Loading...'}</p>
+                <p className='text-sm text-gray-600 mb-2'>Metal Rate (24K) per gram</p>
+                <FormField
+                  label=''
+                  value={formData.customMetalRate ?? liveMetalRate}
+                  onChange={e => {
+                    const value = parseFloat(e.target.value) || 0;
+                    // If value equals live rate, clear custom rate
+                    if (value === liveMetalRate) {
+                      updateField('customMetalRate', undefined);
+                    } else {
+                      updateField('customMetalRate', value);
+                    }
+                  }}
+                  type='number'
+                  placeholder={liveMetalRate.toString()}
+                />
+                <p className='text-xs text-gray-500 mt-1'>
+                  {formData.customMetalRate ? 'Custom rate' : `Live: ${formatINR(liveMetalRate)}`}
+                </p>
               </div>
               <div className='p-3 bg-gray-50 rounded border'>
                 <p className='text-sm text-gray-600'>Selected Purity</p>
@@ -2266,15 +2291,15 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                 <p className='text-xs text-gray-500 mt-1'>Value: {formatINR(makingChargesValue)}</p>
               </div>
               <div className='p-3 bg-white rounded border'>
-                <p className='text-sm text-gray-600'>Making Charges Discount (%)</p>
+                <p className='text-sm text-gray-600'>Discount (%)</p>
                 <FormField
                   label=''
-                  value={formData.makingChargesDiscount}
-                  onChange={e => updateField('makingChargesDiscount', parseFloat(e.target.value) || 0)}
+                  value={formData.discount}
+                  onChange={e => updateField('discount', parseFloat(e.target.value) || 0)}
                   type='number'
                   placeholder='Example: 5'
                 />
-                <p className='text-xs text-gray-500 mt-1'>Applied to making charges</p>
+                <p className='text-xs text-gray-500 mt-1'>Applied to total amount</p>
               </div>
               <div className='p-3 bg-white rounded border'>
                 <p className='text-sm text-gray-600'>Diamonds Value (auto)</p>
