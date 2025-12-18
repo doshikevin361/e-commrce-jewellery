@@ -1111,7 +1111,7 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
   const selectedPurityLabel = getOptionLabel([...purities, ...karats], selectedPurityValue);
 
   const purityPercent = parsePurityPercent(selectedPurityValue || '24kt');
-  const purityMetalRate = Math.round(metalLiveRate * purityPercent);
+  const purityMetalRate = metalLiveRate * purityPercent;
   const goldWeightGram = formData.weight || 0;
   const totalDiamondWeightCt = formData.diamonds.reduce((sum, d) => sum + (d.diamondWeight || 0), 0);
   const netGoldWeight = Math.max(0, goldWeightGram - totalDiamondWeightCt - (formData.lessStoneWeight || 0));
