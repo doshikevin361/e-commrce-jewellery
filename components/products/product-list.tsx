@@ -154,12 +154,19 @@ export function ProductList() {
     }
   };
 
+  // Helper function to get category name from category ID
+  const getCategoryName = (categoryId: string): string => {
+    if (!categoryId) return '-';
+    const category = categories.find(cat => cat._id === categoryId || cat.name === categoryId);
+    return category ? category.name : categoryId;
+  };
+
   const filteredProducts = products.filter(p => {
     const matchesSearch =
       p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (p.sku && p.sku.toLowerCase().includes(searchTerm.toLowerCase())) ||
       (p.brand && p.brand.toLowerCase().includes(searchTerm.toLowerCase()));
-    const matchesCategory = categoryFilter === 'all' || p.category === categoryFilter;
+    const matchesCategory = categoryFilter === 'all' || p.category === categoryFilter || getCategoryName(p.category) === categoryFilter;
     const matchesVendor = vendorFilter === 'all' || p.vendor === vendorFilter;
     const matchesStatus = statusFilter === 'all' || p.status === statusFilter;
     const matchesStock =
@@ -261,7 +268,7 @@ export function ProductList() {
       const csvRows = filteredProducts.map(p => [
         p.name,
         p.sku || '',
-        p.category,
+        getCategoryName(p.category),
         p.vendor,
         p.sellingPrice || p.price || 0,
         p.stock,
@@ -410,7 +417,7 @@ export function ProductList() {
                 <SelectContent>
                   <SelectItem value='all'>All Categories</SelectItem>
                   {(Array.isArray(categories) ? categories : []).map(cat => (
-                    <SelectItem key={cat._id} value={cat.name}>
+                    <SelectItem key={cat._id} value={cat._id}>
                       {cat.name}
                     </SelectItem>
                   ))}
@@ -503,7 +510,7 @@ export function ProductList() {
                           </div>
                         </TableCell>
                         <TableCell className='py-4 px-4 text-sm text-slate-700 dark:text-slate-300 font-medium'>
-                          {product.category}
+                          {getCategoryName(product.category)}
                         </TableCell>
                         <TableCell className='py-4 px-4 text-sm text-slate-700 dark:text-slate-300 font-medium'>{product.vendor}</TableCell>
                         <TableCell className='py-4 px-4 text-sm font-semibold text-slate-900 dark:text-white'>
@@ -616,7 +623,7 @@ export function ProductList() {
             <div className='grid grid-cols-1 sm:grid-cols-4 gap-4'>
               <DetailItem label='Name' value={viewProductData.name} />
               <DetailItem label='SKU' value={viewProductData.sku} />
-              <DetailItem label='Category' value={viewProductData.category} />
+              <DetailItem label='Category' value={getCategoryName(viewProductData.category)} />
               <DetailItem label='Vendor' value={viewProductData.vendor} />
               <DetailItem label='Product Type' value={viewProductData.product_type} />
               <DetailItem label='Brand' value={viewProductData.brand} />
@@ -636,14 +643,6 @@ export function ProductList() {
                   }
                 />
                 <DetailItem label='Purity' value={viewProductData.jewelleryPurity || '-'} />
-                <DetailItem
-                  label='Making Charges'
-                  value={
-                    typeof viewProductData.jewelleryMakingCharges === 'number' && viewProductData.jewelleryMakingCharges > 0
-                      ? formatCurrency(viewProductData.jewelleryMakingCharges)
-                      : '-'
-                  }
-                />
                 <DetailItem label='Stone Details' value={viewProductData.jewelleryStoneDetails || '-'} />
                 <DetailItem label='Stock' value={viewProductData.stock} />
                 <DetailItem label='Allow Reviews' value={viewProductData.allowReviews ? 'Yes' : 'No'} />

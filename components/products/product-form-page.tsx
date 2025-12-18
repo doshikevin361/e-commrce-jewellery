@@ -266,8 +266,8 @@ interface ProductFormData {
   lessStoneWeight: number;
   netGoldWeight: number;
   size: string;
-  gender: string;
-  itemsPair: number;
+  gender: string[]; // Multi-select for gender
+  itemsPair: string; // Changed to string for text field
   pincode: string;
   huidHallmarkNo: string;
   hsnCode: string;
@@ -479,8 +479,8 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
     lessStoneWeight: 0,
     netGoldWeight: 0,
     size: '',
-    gender: '',
-    itemsPair: 1,
+    gender: [],
+    itemsPair: '',
     pincode: '',
     huidHallmarkNo: '',
     diamondsType: '',
@@ -858,8 +858,8 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
           lessStoneWeight: product.lessStoneWeight || 0,
           netGoldWeight: product.netGoldWeight || 0,
           size: product.size || '',
-          gender: product.gender || '',
-          itemsPair: product.itemsPair || 1,
+          gender: Array.isArray(product.gender) ? product.gender : (product.gender ? [product.gender] : []),
+          itemsPair: product.itemsPair?.toString() || '',
           pincode: product.pincode || '',
           huidHallmarkNo: product.huidHallmarkNo || '',
           hsnCode: product.hsnCode || product.hsn || '',
@@ -1001,7 +1001,7 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
         hasGold: ['Gold', 'Platinum'].includes(formData.productType),
         hasSilver: formData.productType === 'Silver',
         hasDiamond: formData.productType === 'Diamonds' || formData.lessDiamondWeight > 0,
-        taxRate: 3,
+        taxRate: formData.gstRate || 3,
         stock: 1,
         regularPrice: 0,
         sellingPrice: 0,
@@ -1191,6 +1191,63 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
               placeholder='Example: 10'
               required
               error={errors.weight}
+            />
+
+            <FormField
+              label='Size'
+              value={formData.size}
+              onChange={e => updateField('size', e.target.value)}
+              type='text'
+              placeholder='Example: 7, M, or 2.5'
+            />
+
+            <div className='flex flex-col gap-2'>
+              <label className='text-sm font-medium text-slate-700 dark:text-slate-300'>
+                Gender (Multi-select)
+              </label>
+              <div className='flex flex-wrap gap-3 px-4 py-3 border border-slate-200 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700'>
+                {GENDER_OPTIONS.map(option => (
+                  <label key={option.value} className='flex items-center gap-2 cursor-pointer'>
+                    <input
+                      type='checkbox'
+                      checked={(formData.gender || []).includes(option.value)}
+                      onChange={e => {
+                        const currentSelection = formData.gender || [];
+                        const newSelection = e.target.checked
+                          ? [...currentSelection, option.value]
+                          : currentSelection.filter(g => g !== option.value);
+                        updateField('gender', newSelection);
+                      }}
+                      className='w-4 h-4 text-[#1F3B29] border-gray-300 rounded focus:ring-[#1F3B29]'
+                    />
+                    <span className='text-sm'>{option.label}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <FormField
+              label='Items Pairs'
+              value={formData.itemsPair}
+              onChange={e => updateField('itemsPair', e.target.value)}
+              type='text'
+              placeholder='Example: 1, 2, or Pair'
+            />
+
+            <FormField
+              label='HUID Hallmark No'
+              value={formData.huidHallmarkNo}
+              onChange={e => updateField('huidHallmarkNo', e.target.value)}
+              type='text'
+              placeholder='Enter Hallmark Number'
+            />
+
+            <FormField
+              label='Stoneless Weight (Gram)'
+              value={formData.lessStoneWeight}
+              onChange={e => updateField('lessStoneWeight', parseFloat(e.target.value) || 0)}
+              type='number'
+              placeholder='Example: 8.5'
             />
           </div>
         </Card>
@@ -1403,6 +1460,19 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                         options={diamondTypes.length ? diamondTypes : [...DEFAULT_DIAMONDS_TYPE_OPTIONS]}
                         placeholder='Select Diamonds Type'
                         withSearch={diamondTypes.length > 10}
+                      />
+
+                      <FormField
+                        label='No of Diamonds'
+                        value={diamond.noOfDiamonds}
+                        onChange={e => {
+                          const updatedDiamonds = formData.diamonds.map(d =>
+                            d.id === diamond.id ? { ...d, noOfDiamonds: parseInt(e.target.value) || 0 } : d
+                          );
+                          setFormData(prev => ({ ...prev, diamonds: updatedDiamonds }));
+                        }}
+                        type='number'
+                        placeholder='Example: 10'
                       />
 
                       <FormField
@@ -1720,7 +1790,7 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                       </div>
 
                       <div className='md:col-span-3'>
-                        <label className='block text-sm font-medium mb-2'>Description</label>
+                        <label className='block text-sm font-medium mb-2'></label>
                         <RichTextEditor
                           label='Diamond Description'
                           value={diamond.description || ''}
@@ -1792,16 +1862,6 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
               </div>
             )}
 
-            {/* Making Charges Discount */}
-            <div className='mt-4'>
-              <FormField
-                label='Making Charges Discount (%)'
-                value={formData.makingChargesDiscount}
-                onChange={e => updateField('makingChargesDiscount', parseFloat(e.target.value) || 0)}
-                type='number'
-                placeholder='Example: 5'
-              />
-            </div>
           </Card>
         )}
 
@@ -2165,7 +2225,7 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                 <p className='text-2xl font-semibold text-[#1F3B29]'>{formatINR(purityMetalRate)}</p>
               </div>
               <div className='p-3 bg-gray-50 rounded border'>
-                <p className='text-sm text-gray-600'>Gold Weight (Gram)</p>
+                <p className='text-sm text-gray-600'>{formData.productType} Weight (Gram)</p>
                 <p className='text-2xl font-semibold text-[#1F3B29]'>{goldWeightGram || 0}</p>
               </div>
             </div>
@@ -2204,6 +2264,17 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                   placeholder='500'
                 />
                 <p className='text-xs text-gray-500 mt-1'>Value: {formatINR(makingChargesValue)}</p>
+              </div>
+              <div className='p-3 bg-white rounded border'>
+                <p className='text-sm text-gray-600'>Making Charges Discount (%)</p>
+                <FormField
+                  label=''
+                  value={formData.makingChargesDiscount}
+                  onChange={e => updateField('makingChargesDiscount', parseFloat(e.target.value) || 0)}
+                  type='number'
+                  placeholder='Example: 5'
+                />
+                <p className='text-xs text-gray-500 mt-1'>Applied to making charges</p>
               </div>
               <div className='p-3 bg-white rounded border'>
                 <p className='text-sm text-gray-600'>Diamonds Value (auto)</p>
