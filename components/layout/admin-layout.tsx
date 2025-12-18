@@ -23,6 +23,49 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
     setIsLoading(false);
   }, [router]);
 
+  // Global fetch interceptor to handle unauthorized errors
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    // Store the current fetch (might already be wrapped by CustomerAuthHandler)
+    const currentFetch = window.fetch;
+
+    // Override fetch to intercept responses
+    window.fetch = async function (...args) {
+      const response = await currentFetch.apply(this, args);
+      
+      // Check for unauthorized errors (401 or 403) on admin API calls
+      if (response.status === 401 || response.status === 403) {
+        const url = args[0];
+        const urlString = typeof url === 'string' ? url : url instanceof Request ? url.url : String(url);
+        
+        // Only handle logout for admin API calls
+        if (urlString.includes('/api/admin/') || (urlString.includes('/api/auth/') && !urlString.includes('/api/auth/customer/'))) {
+          console.warn('[AdminLayout] Unauthorized access detected, logging out...');
+          
+          // Clear admin tokens
+          localStorage.removeItem('adminToken');
+          localStorage.removeItem('adminUser');
+          
+          // Clear customer tokens (if any)
+          localStorage.removeItem('customerToken');
+          localStorage.removeItem('currentUser');
+          localStorage.removeItem('userToken');
+          
+          // Use window.location.href for immediate redirect (works even if response is being processed)
+          window.location.href = '/login';
+        }
+      }
+      
+      return response;
+    };
+
+    // Cleanup: restore previous fetch on unmount
+    return () => {
+      window.fetch = currentFetch;
+    };
+  }, [router]);
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">

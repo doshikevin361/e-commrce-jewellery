@@ -7,6 +7,7 @@ import { CategoriesProvider } from '@/contexts/CategoriesContext';
 import { CartProvider } from '@/contexts/CartContext';
 import { WishlistProvider } from '@/contexts/WishlistContext';
 import { WebsiteLayout } from '@/components/layout/website-layout';
+import { CustomerAuthHandler } from '@/components/layout/customer-auth-handler';
 import { ScrollToTop } from '@/components/scroll-to-top';
 import './globals.css';
 import { Toaster } from 'react-hot-toast';
@@ -57,6 +58,7 @@ export default function RootLayout({
       <body className={`${geist.className} ${geistMono.variable} antialiased`}>
         <ThemeProvider attribute='class' defaultTheme='light' enableSystem>
           <SettingsProvider>
+            <CustomerAuthHandler />
             <CategoriesProvider>
               <CartProvider>
                 <WishlistProvider>

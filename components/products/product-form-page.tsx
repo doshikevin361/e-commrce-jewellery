@@ -381,6 +381,7 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
     error?: string;
   } | null>(null);
   const [uploadingProductImages, setUploadingProductImages] = useState(false);
+  const [uploadingMainThumbnail, setUploadingMainThumbnail] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const isDiamondComplete = (d: Diamond) =>
@@ -406,6 +407,38 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
       const nextSlug = shouldUpdateSlug ? slugify(value) : prev.urlSlug;
       return { ...prev, name: value, urlSlug: nextSlug };
     });
+  };
+
+  const uploadMainThumbnail = async (file: File | null) => {
+    if (!file) return;
+    setUploadingMainThumbnail(true);
+    try {
+      const formDataUpload = new FormData();
+      formDataUpload.append('file', file);
+      const res = await fetch('/api/upload', { method: 'POST', body: formDataUpload });
+      if (res.ok) {
+        const data = await res.json();
+        if (data?.url) {
+          setFormData(prev => ({ ...prev, mainImage: data.url }));
+          setErrors(prev => ({ ...prev, mainImage: '' }));
+        }
+      } else {
+        throw new Error('Upload failed');
+      }
+    } catch (error) {
+      console.error('Failed to upload main thumbnail:', error);
+      toast({
+        title: 'Upload failed',
+        description: 'Could not upload main thumbnail image.',
+        variant: 'destructive',
+      });
+    } finally {
+      setUploadingMainThumbnail(false);
+    }
+  };
+
+  const removeMainThumbnail = () => {
+    setFormData(prev => ({ ...prev, mainImage: '' }));
   };
 
   const uploadProductImages = async (files: FileList | null) => {
@@ -962,6 +995,7 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
       if (!selectedPurityValue) nextErrors.silverPurity = 'This field is required';
       if (!formData.weight || formData.weight <= 0) nextErrors.weight = 'This field is required';
       if (!formData.shortDescription?.trim() && !formData.description?.trim()) nextErrors.description = 'Description is required';
+      if (!formData.mainImage?.trim()) nextErrors.mainImage = 'This field is required';
       if (!formData.seoTitle?.trim()) nextErrors.seoTitle = 'This field is required';
       if (!formData.seoDescription?.trim()) nextErrors.seoDescription = 'This field is required';
       if (!formData.seoTags?.trim()) nextErrors.seoTags = 'This field is required';
@@ -995,6 +1029,7 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
         shortDescription: formData.shortDescription || formData.description.substring(0, 200),
         longDescription: formData.description,
         specifications: formData.specifications,
+        mainImage: formData.mainImage,
         images: formData.images,
         seoTitle: formData.seoTitle,
         seoDescription: formData.seoDescription,
@@ -2133,9 +2168,48 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
           </Card>
         )}
 
+        {/* Main Thumbnail Image */}
+        <Card className='p-6'>
+          <h2 className='text-xl font-semibold mb-4'>Main Thumbnail Image</h2>
+          <div className='space-y-3'>
+            <div>
+              <label className='block text-sm font-medium mb-2'>
+                Main Thumbnail Image <span className='text-red-500'>*</span>
+              </label>
+              {!formData.mainImage ? (
+                <>
+                  <Input
+                    type='file'
+                    accept='image/*'
+                    onChange={e => {
+                      const file = e.target.files?.[0];
+                      if (file) uploadMainThumbnail(file);
+                    }}
+                    className='cursor-pointer'
+                    disabled={uploadingMainThumbnail}
+                  />
+                  <p className='text-xs text-gray-500 mt-1'>This image will be displayed as the main product image on the website. JPEG/PNG preferred.</p>
+                </>
+              ) : (
+                <div className='relative inline-block border rounded overflow-hidden'>
+                  <img src={formData.mainImage} alt='Main thumbnail' className='w-48 h-48 object-cover' />
+                  <button
+                    type='button'
+                    onClick={removeMainThumbnail}
+                    className='absolute top-2 right-2 bg-white/80 rounded-full p-1 shadow hover:bg-white'>
+                    <Trash2 className='w-4 h-4 text-red-600' />
+                  </button>
+                </div>
+              )}
+              {uploadingMainThumbnail && <p className='text-xs text-gray-500 mt-1'>Uploading...</p>}
+              {errors.mainImage && <p className='text-xs text-red-500 mt-1'>{errors.mainImage}</p>}
+            </div>
+          </div>
+        </Card>
+
         {/* Product Images */}
         <Card className='p-6'>
-          <h2 className='text-xl font-semibold mb-4'>Product Images</h2>
+          <h2 className='text-xl font-semibold mb-4'>Product Gallery Images</h2>
           <div className='space-y-3'>
             <div>
               <label className='block text-sm font-medium mb-2'>Upload Images (multiple)</label>
