@@ -247,6 +247,8 @@ interface Diamond {
   thickness?: number;
   description?: string;
   specifications?: { key: string; value: string }[];
+  pricePerCarat?: number;
+  diamondDiscount?: number;
   diamondPrice?: number;
 }
 
@@ -1454,6 +1456,8 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                     thickness: 0,
                     description: '',
                     specifications: [{ key: '', value: '' }],
+                    pricePerCarat: 0,
+                    diamondDiscount: 0,
                     diamondPrice: 0,
                   };
                   setFormData(prev => ({
@@ -1522,9 +1526,18 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                         label='Diamond Weight (ct)'
                         value={diamond.diamondWeight}
                         onChange={e => {
-                          const updatedDiamonds = formData.diamonds.map(d =>
-                            d.id === diamond.id ? { ...d, diamondWeight: parseFloat(e.target.value) || 0 } : d
-                          );
+                          const weight = parseFloat(e.target.value) || 0;
+                          const updatedDiamonds = formData.diamonds.map(d => {
+                            if (d.id === diamond.id) {
+                              const pricePerCarat = d.pricePerCarat || 0;
+                              const calculatedPrice = Math.max(
+                                0,
+                                (pricePerCarat * weight) * (1 - ((d.diamondDiscount || 0) / 100))
+                              );
+                              return { ...d, diamondWeight: weight, diamondPrice: calculatedPrice };
+                            }
+                            return d;
+                          });
                           setFormData(prev => ({ ...prev, diamonds: updatedDiamonds }));
                         }}
                         type='number'
@@ -1532,16 +1545,54 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                       />
 
                       <FormField
-                        label='Diamond Price (₹)'
-                        value={diamond.diamondPrice || 0}
+                        label='Price Per Carat (₹)'
+                        value={diamond.pricePerCarat || 0}
                         onChange={e => {
-                          const updatedDiamonds = formData.diamonds.map(d =>
-                            d.id === diamond.id ? { ...d, diamondPrice: parseFloat(e.target.value) || 0 } : d
-                          );
+                          const pricePerCarat = parseFloat(e.target.value) || 0;
+                          const updatedDiamonds = formData.diamonds.map(d => {
+                            if (d.id === diamond.id) {
+                              const weight = d.diamondWeight || 0;
+                              const discountPercent = d.diamondDiscount || 0;
+                              const basePrice = pricePerCarat * weight;
+                              const calculatedPrice = Math.max(0, basePrice * (1 - discountPercent / 100));
+                              return { ...d, pricePerCarat, diamondPrice: calculatedPrice };
+                            }
+                            return d;
+                          });
                           setFormData(prev => ({ ...prev, diamonds: updatedDiamonds }));
                         }}
                         type='number'
-                        placeholder='Example: 20000'
+                        placeholder='Example: 40000'
+                      />
+
+                      <FormField
+                        label='Diamond Discount (%)'
+                        value={diamond.diamondDiscount || 0}
+                        onChange={e => {
+                          const discountPercent = parseFloat(e.target.value) || 0;
+                          const updatedDiamonds = formData.diamonds.map(d => {
+                            if (d.id === diamond.id) {
+                              const pricePerCarat = d.pricePerCarat || 0;
+                              const weight = d.diamondWeight || 0;
+                              const basePrice = pricePerCarat * weight;
+                              const calculatedPrice = Math.max(0, basePrice * (1 - discountPercent / 100));
+                              return { ...d, diamondDiscount: discountPercent, diamondPrice: calculatedPrice };
+                            }
+                            return d;
+                          });
+                          setFormData(prev => ({ ...prev, diamonds: updatedDiamonds }));
+                        }}
+                        type='number'
+                        placeholder='Example: 10'
+                      />
+
+                      <FormField
+                        label='Diamond Price (₹)'
+                        value={diamond.diamondPrice || 0}
+                        onChange={() => {}}
+                        type='number'
+                        placeholder='Auto-calculated'
+                        disabled
                       />
 
                       <FormField
