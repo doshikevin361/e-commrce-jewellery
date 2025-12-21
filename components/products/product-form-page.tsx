@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Loader2, Package, Upload, Plus, Trash2 } from 'lucide-react';
+import { ArrowLeft, Loader2, Package, Upload, Plus, Trash2, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import FormField from '../formField/formField';
 import Dropdown from '../customDropdown/customDropdown';
@@ -476,6 +476,62 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
 
   const removeProductImage = (url: string) => {
     setFormData(prev => ({ ...prev, images: (prev.images || []).filter(img => img !== url) }));
+  };
+
+  const uploadGemstonePhoto = async (file: File | null) => {
+    if (!file) return;
+    try {
+      const formDataUpload = new FormData();
+      formDataUpload.append('file', file);
+      const res = await fetch('/api/upload', { method: 'POST', body: formDataUpload });
+      if (res.ok) {
+        const data = await res.json();
+        if (data?.url) {
+          setFormData(prev => ({ ...prev, gemstonePhoto: data.url }));
+          toast({
+            title: 'Success',
+            description: 'Gemstone photo uploaded successfully.',
+          });
+        }
+      } else {
+        throw new Error('Upload failed');
+      }
+    } catch (error) {
+      console.error('Failed to upload gemstone photo:', error);
+      toast({
+        title: 'Upload failed',
+        description: 'Could not upload gemstone photo.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const uploadGemstoneCertificate = async (file: File | null) => {
+    if (!file) return;
+    try {
+      const formDataUpload = new FormData();
+      formDataUpload.append('file', file);
+      const res = await fetch('/api/upload', { method: 'POST', body: formDataUpload });
+      if (res.ok) {
+        const data = await res.json();
+        if (data?.url) {
+          setFormData(prev => ({ ...prev, gemstoneCertificate: data.url }));
+          toast({
+            title: 'Success',
+            description: 'Gemstone certificate uploaded successfully.',
+          });
+        }
+      } else {
+        throw new Error('Upload failed');
+      }
+    } catch (error) {
+      console.error('Failed to upload gemstone certificate:', error);
+      toast({
+        title: 'Upload failed',
+        description: 'Could not upload gemstone certificate.',
+        variant: 'destructive',
+      });
+    }
   };
 
   const addSpecificationRow = () => {
@@ -1121,10 +1177,17 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
   const vendorCommissionValue = netGoldWeight * (formData.vendorCommissionRate / 100) * metalLiveRate;
   const makingChargesValue = netGoldWeight * formData.makingChargePerGram;
   const diamondValueAuto = formData.diamonds.reduce((sum, d) => sum + (d.diamondPrice || 0), 0);
-  const platformCommissionBase = goldValue + vendorCommissionValue + makingChargesValue + diamondValueAuto;
+  
+  // For Gemstone products, use gemstone price instead of gold/diamond calculations
+  const gemstoneValue = formData.productType === 'Gemstone' ? (formData.gemstonePrice || 0) : 0;
+  const platformCommissionBase = formData.productType === 'Gemstone' 
+    ? gemstoneValue 
+    : goldValue + vendorCommissionValue + makingChargesValue + diamondValueAuto;
   const platformCommissionValue = platformCommissionBase * (formData.platformCommissionRate / 100);
   const extraCharges = formData.otherCharges ?? 0;
-  const subTotal = goldValue + vendorCommissionValue + makingChargesValue + diamondValueAuto + platformCommissionValue + extraCharges;
+  const subTotal = formData.productType === 'Gemstone'
+    ? gemstoneValue + platformCommissionValue + extraCharges
+    : goldValue + vendorCommissionValue + makingChargesValue + diamondValueAuto + platformCommissionValue + extraCharges;
   const gst = subTotal * ((formData.gstRate || 0) / 100);
   const totalAmount = subTotal + gst;
 
@@ -2059,8 +2122,8 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
           </Card>
         )}
 
-        {/* Gemstone Fields - Will be added later */}
-        {false && showGemstoneFields && (
+        {/* Gemstone Fields */}
+        {showGemstoneFields && (
           <Card className='p-6'>
             <h2 className='text-xl font-semibold mb-4'>Gemstone Field</h2>
             <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
@@ -2088,20 +2151,22 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                 placeholder='Example: GIA, IGI, SGL'
               />
 
-              <FormField
-                label='Colour'
+              <Dropdown
+                labelMain='Colour'
                 value={formData.gemstoneColour}
-                onChange={e => updateField('gemstoneColour', e.target.value)}
-                type='text'
-                placeholder='Example: Red, Blue, Green'
+                onChange={option => updateField('gemstoneColour', option.value)}
+                options={diamondColors}
+                placeholder='Select Colour'
+                withSearch={diamondColors.length > 10}
               />
 
-              <FormField
-                label='Shape/Cut'
+              <Dropdown
+                labelMain='Shape/Cut'
                 value={formData.gemstoneShape}
-                onChange={e => updateField('gemstoneShape', e.target.value)}
-                type='text'
-                placeholder='Example: Round, Oval, Cushion'
+                onChange={option => updateField('gemstoneShape', option.value)}
+                options={diamondShapes}
+                placeholder='Select Shape/Cut'
+                withSearch={diamondShapes.length > 10}
               />
 
               <FormField
@@ -2192,28 +2257,68 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
             <div className='mt-4 space-y-4'>
               <div>
                 <label className='block text-sm font-medium mb-2'>Gemstone Photo</label>
-                <Input
-                  type='file'
-                  accept='image/*'
-                  onChange={e => {
-                    // Handle file upload
-                  }}
-                  className='cursor-pointer'
-                />
-                <p className='text-xs text-gray-500 mt-1'>Upload gemstone photo</p>
+                {formData.gemstonePhoto ? (
+                  <div className='relative inline-block'>
+                    <img
+                      src={formData.gemstonePhoto}
+                      alt='Gemstone'
+                      className='w-32 h-32 object-cover rounded border'
+                    />
+                    <button
+                      type='button'
+                      onClick={() => setFormData(prev => ({ ...prev, gemstonePhoto: '' }))}
+                      className='absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600'
+                    >
+                      <X className='w-4 h-4' />
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <Input
+                      type='file'
+                      accept='image/*'
+                      onChange={e => {
+                        const file = e.target.files?.[0];
+                        if (file) uploadGemstonePhoto(file);
+                      }}
+                      className='cursor-pointer'
+                    />
+                    <p className='text-xs text-gray-500 mt-1'>Upload gemstone photo</p>
+                  </>
+                )}
               </div>
 
               <div>
                 <label className='block text-sm font-medium mb-2'>Gemstone Certificate (Photo)</label>
-                <Input
-                  type='file'
-                  accept='image/*'
-                  onChange={e => {
-                    // Handle file upload
-                  }}
-                  className='cursor-pointer'
-                />
-                <p className='text-xs text-gray-500 mt-1'>Upload gemstone certificate image</p>
+                {formData.gemstoneCertificate ? (
+                  <div className='relative inline-block'>
+                    <img
+                      src={formData.gemstoneCertificate}
+                      alt='Certificate'
+                      className='w-32 h-32 object-cover rounded border'
+                    />
+                    <button
+                      type='button'
+                      onClick={() => setFormData(prev => ({ ...prev, gemstoneCertificate: '' }))}
+                      className='absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600'
+                    >
+                      <X className='w-4 h-4' />
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <Input
+                      type='file'
+                      accept='image/*'
+                      onChange={e => {
+                        const file = e.target.files?.[0];
+                        if (file) uploadGemstoneCertificate(file);
+                      }}
+                      className='cursor-pointer'
+                    />
+                    <p className='text-xs text-gray-500 mt-1'>Upload gemstone certificate image</p>
+                  </>
+                )}
               </div>
             </div>
           </Card>
