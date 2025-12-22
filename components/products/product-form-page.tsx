@@ -1381,6 +1381,14 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                   placeholder='Example: 50000'
                 />
 
+                <FormField
+                  label='Stock'
+                  value={formData.stock}
+                  onChange={e => updateField('stock', parseInt(e.target.value) || 0)}
+                  type='number'
+                  placeholder='Example: 10'
+                />
+
                 <div className='flex flex-col gap-2'>
                   <label className='text-sm font-medium text-slate-700 dark:text-slate-300'>
                     Gender (Multi-select)
