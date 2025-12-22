@@ -325,6 +325,7 @@ interface ProductFormData {
   gemstoneShape: string;
   gemstoneWeight: number;
   gemstonePrice: number;
+  diamondsPrice?: number; // Direct price for Diamonds product type when no metals are added
   ratti: number;
   specificGravity: number;
   hardness: number;
@@ -1001,6 +1002,7 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
           gemstoneShape: product.gemstoneShape || '',
           gemstoneWeight: product.gemstoneWeight || 0,
           gemstonePrice: product.gemstonePrice || 0,
+          diamondsPrice: product.diamondsPrice || 0,
           ratti: product.ratti || 0,
           specificGravity: product.specificGravity || 0,
           hardness: product.hardness || 0,
@@ -1137,8 +1139,8 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
         hasGold: ['Gold', 'Platinum'].includes(formData.productType),
         hasSilver: formData.productType === 'Silver',
         hasDiamond: formData.productType === 'Diamonds' || formData.lessDiamondWeight > 0,
-        taxRate: formData.gstRate || 3, // GST percentage stored
-        gstAmount: gstAmount, // GST amount stored separately (will be calculated on website for invoice)
+        taxRate: formData.gstRate || 3, // GST percentage stored (will be calculated on website for invoice)
+        discount: formData.discount || 0, // Discount percentage stored (will be calculated on website for invoice)
         stock: formData.stock || 1,
         regularPrice: 0,
         sellingPrice: 0,
@@ -1244,22 +1246,29 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
   // For Gemstone and Imitation products, use gemstone price instead of gold/diamond calculations
   const isSimpleProductType = formData.productType === 'Gemstone' || formData.productType === 'Imitation';
   const gemstoneValue = isSimpleProductType ? (formData.gemstonePrice || 0) : 0;
-  const platformCommissionBase = formData.productType === 'Diamonds'
-    ? diamondsProductMetalValue
+  
+  // For Diamonds product type, check if metals are added
+  const hasMetalsInDiamonds = formData.productType === 'Diamonds' && formData.diamonds.some(d => d.metalType);
+  const diamondsDirectPrice = formData.productType === 'Diamonds' && !hasMetalsInDiamonds ? (formData.diamondsPrice || 0) : 0;
+  
+  const platformCommissionBase = formData.productType === 'Diamonds' && hasMetalsInDiamonds
+    ? diamondsProductMetalValue + diamondValueAuto
     : isSimpleProductType 
       ? gemstoneValue 
-      : goldValue + vendorCommissionValue + makingChargesValue + diamondValueAuto;
+      : formData.productType === 'Diamonds' && !hasMetalsInDiamonds
+        ? diamondsDirectPrice
+        : goldValue + vendorCommissionValue + makingChargesValue + diamondValueAuto;
   const platformCommissionValue = platformCommissionBase * (formData.platformCommissionRate / 100);
   const extraCharges = formData.otherCharges ?? 0;
-  // Original price without GST (this will be stored)
-  const subTotal = formData.productType === 'Diamonds'
-    ? diamondsProductMetalValue + platformCommissionValue + extraCharges
-    : isSimpleProductType
-      ? gemstoneValue
-      : goldValue + vendorCommissionValue + makingChargesValue + diamondValueAuto + platformCommissionValue + extraCharges;
-  // Calculate GST amount (will be stored separately, calculated on website for invoice)
-  const gstAmount = subTotal * ((formData.gstRate || 0) / 100);
-  // totalAmount is now just subTotal (without GST) - GST will be calculated on website
+  // Original price - GST and discount are NOT included in calculation, only stored for invoice
+  const subTotal = formData.productType === 'Diamonds' && !hasMetalsInDiamonds
+    ? diamondsDirectPrice
+    : formData.productType === 'Diamonds' && hasMetalsInDiamonds
+      ? diamondsProductMetalValue + diamondValueAuto + platformCommissionValue + extraCharges
+      : isSimpleProductType
+        ? gemstoneValue
+        : goldValue + vendorCommissionValue + makingChargesValue + diamondValueAuto + platformCommissionValue + extraCharges;
+  // GST and discount are stored but NOT calculated here - will be calculated on website invoice
   const totalAmount = subTotal;
 
   const showGoldFields = ['Gold', 'Silver', 'Platinum'].includes(formData.productType);
@@ -2805,23 +2814,12 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                 <p className='text-xs text-gray-500 mt-1'>Value: {formatINR(makingChargesValue)}</p>
               </div>
               <div className='p-3 bg-white rounded border'>
-                <p className='text-sm text-gray-600'>Discount (%)</p>
-                <FormField
-                  label=''
-                  value={formData.discount}
-                  onChange={e => updateField('discount', parseFloat(e.target.value) || 0)}
-                  type='number'
-                  placeholder='Example: 5'
-                />
-                <p className='text-xs text-gray-500 mt-1'>Applied to total amount</p>
-              </div>
-              <div className='p-3 bg-white rounded border'>
                 <p className='text-sm text-gray-600'>Diamonds Value (auto)</p>
                 <p className='text-lg font-semibold text-[#1F3B29]'>{formatINR(diamondValueAuto)}</p>
               </div>
             </div>
 
-            <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4'>
+            <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4 mt-4'>
               <div className='p-3 bg-white rounded border'>
                 <p className='text-sm text-gray-600'>Platform Commission (%)</p>
                 <FormField
@@ -2843,17 +2841,124 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                   placeholder='0'
                 />
               </div>
+            </div>
+          </Card>
+        )}
+
+        {/* Price, Discount & GST - For All Product Types */}
+        <Card className='p-6'>
+          <h2 className='text-xl font-semibold mb-4 flex items-center gap-2'>
+            <Package className='w-5 h-5' />
+            Price & Tax Details
+          </h2>
+          <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
+            {/* Show Price field for Gemstone/Imitation */}
+            {isSimpleProductType && (
               <div className='p-3 bg-white rounded border'>
-                <p className='text-sm text-gray-600'>GST Rate</p>
-                <Dropdown
-                  labelMain='GST'
-                  value={String(formData.gstRate)}
-                  onChange={option => updateField('gstRate', parseFloat(option.value) || 0)}
-                  options={GST_OPTIONS}
-                  placeholder='Select GST'
+                <p className='text-sm text-gray-600'>Price (₹)</p>
+                <FormField
+                  label=''
+                  value={formData.gemstonePrice}
+                  onChange={e => updateField('gemstonePrice', parseFloat(e.target.value) || 0)}
+                  type='number'
+                  placeholder='Example: 50000'
                 />
               </div>
-              <div className='p-3 bg-gray-50 rounded border space-y-2'>
+            )}
+            
+            {/* Show Price field for Diamonds when no metals are added */}
+            {formData.productType === 'Diamonds' && !hasMetalsInDiamonds && (
+              <div className='p-3 bg-white rounded border'>
+                <p className='text-sm text-gray-600'>Price (₹)</p>
+                <FormField
+                  label=''
+                  value={formData.diamondsPrice}
+                  onChange={e => updateField('diamondsPrice', parseFloat(e.target.value) || 0)}
+                  type='number'
+                  placeholder='Example: 50000'
+                />
+                <p className='text-xs text-gray-500 mt-1'>Direct price (no metals added)</p>
+              </div>
+            )}
+            
+            {/* Discount field for all product types */}
+            <div className='p-3 bg-white rounded border'>
+              <p className='text-sm text-gray-600'>Discount (%)</p>
+              <FormField
+                label=''
+                value={formData.discount}
+                onChange={e => updateField('discount', parseFloat(e.target.value) || 0)}
+                type='number'
+                placeholder='Example: 5'
+              />
+              <p className='text-xs text-gray-500 mt-1'>Stored for invoice calculation (website)</p>
+            </div>
+            
+            {/* GST field for all product types */}
+            <div className='p-3 bg-white rounded border'>
+              <p className='text-sm text-gray-600'>GST Rate</p>
+              <Dropdown
+                labelMain='GST'
+                value={String(formData.gstRate)}
+                onChange={option => updateField('gstRate', parseFloat(option.value) || 0)}
+                options={GST_OPTIONS}
+                placeholder='Select GST'
+              />
+              <p className='text-xs text-gray-500 mt-1'>Stored for invoice calculation (website)</p>
+            </div>
+          </div>
+
+          {/* Price Summary for all product types */}
+          <div className='mt-6 p-4 bg-gray-50 rounded-lg border-2 border-gray-200'>
+            <h3 className='text-lg font-semibold mb-4'>Price Summary</h3>
+            {isSimpleProductType ? (
+              <div className='space-y-2'>
+                <div className='flex justify-between font-semibold text-gray-900'>
+                  <span>Original Price</span>
+                  <span>{formatINR(gemstoneValue)}</span>
+                </div>
+                <div className='text-xs text-gray-500 mt-2 pt-2 border-t'>
+                  <p>Note: Discount ({formData.discount || 0}%) and GST ({formData.gstRate || 0}%) are stored and will be calculated on the invoice when the website is ready.</p>
+                </div>
+              </div>
+            ) : formData.productType === 'Diamonds' && !hasMetalsInDiamonds ? (
+              <div className='space-y-2'>
+                <div className='flex justify-between font-semibold text-gray-900'>
+                  <span>Price</span>
+                  <span>{formatINR(diamondsDirectPrice)}</span>
+                </div>
+                <div className='text-xs text-gray-500 mt-2 pt-2 border-t'>
+                  <p>Note: Discount ({formData.discount || 0}%) and GST ({formData.gstRate || 0}%) are stored and will be calculated on the invoice when the website is ready.</p>
+                </div>
+              </div>
+            ) : formData.productType === 'Diamonds' && hasMetalsInDiamonds ? (
+              <div className='space-y-2'>
+                <div className='flex justify-between text-sm text-gray-700'>
+                  <span>Total Metals Value</span>
+                  <span>{formatINR(diamondsProductMetalValue)}</span>
+                </div>
+                <div className='flex justify-between text-sm text-gray-700'>
+                  <span>Total Diamonds Value</span>
+                  <span>{formatINR(diamondValueAuto)}</span>
+                </div>
+                <div className='flex justify-between text-sm text-gray-700'>
+                  <span>Platform Commission</span>
+                  <span>{formatINR(platformCommissionValue)}</span>
+                </div>
+                <div className='flex justify-between text-sm text-gray-700'>
+                  <span>Other Charges</span>
+                  <span>{formatINR(extraCharges)}</span>
+                </div>
+                <div className='flex justify-between font-semibold text-gray-900 pt-2 border-t'>
+                  <span>Total Amount</span>
+                  <span>{formatINR(subTotal)}</span>
+                </div>
+                <div className='text-xs text-gray-500 mt-2 pt-2 border-t'>
+                  <p>Note: Discount ({formData.discount || 0}%) and GST ({formData.gstRate || 0}%) are stored and will be calculated on the invoice when the website is ready.</p>
+                </div>
+              </div>
+            ) : (
+              <div className='space-y-2'>
                 <div className='flex justify-between text-sm text-gray-700'>
                   <span>Metal Value</span>
                   <span>{formatINR(goldValue)}</span>
@@ -2878,26 +2983,17 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                   <span>Other Charges</span>
                   <span>{formatINR(extraCharges)}</span>
                 </div>
-                <div className='flex justify-between font-semibold text-gray-900'>
-                  <span>Sub Total</span>
+                <div className='flex justify-between font-semibold text-gray-900 pt-2 border-t'>
+                  <span>Total Amount</span>
                   <span>{formatINR(subTotal)}</span>
                 </div>
-                <div className='flex justify-between text-sm text-gray-700'>
-                  <span>GST ({formData.gstRate || 0}%)</span>
-                  <span>{formatINR(gstAmount)} (calculated on website)</span>
-                </div>
-                <div className='flex justify-between text-lg font-bold text-[#1F3B29]'>
-                  <span>Total Amount (without GST)</span>
-                  <span>{formatINR(totalAmount)}</span>
-                </div>
-                <div className='flex justify-between text-sm text-gray-600 mt-2 pt-2 border-t'>
-                  <span>Final Amount (with GST) - calculated on invoice</span>
-                  <span>{formatINR(totalAmount + gstAmount)}</span>
+                <div className='text-xs text-gray-500 mt-2 pt-2 border-t'>
+                  <p>Note: Discount ({formData.discount || 0}%) and GST ({formData.gstRate || 0}%) are stored and will be calculated on the invoice when the website is ready.</p>
                 </div>
               </div>
-            </div>
-          </Card>
-        )}
+            )}
+          </div>
+        </Card>
 
         {/* Submit Button */}
         <div className='flex justify-end gap-4'>
