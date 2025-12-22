@@ -1188,7 +1188,30 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
   };
 
   const updateField = (field: keyof ProductFormData, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    // Reset form values when product type changes
+    if (field === 'productType') {
+      setFormData(prev => {
+        const resetData: Partial<ProductFormData> = {
+          productType: value,
+          // Reset product-specific fields
+          diamonds: [],
+          gemstonePrice: 0,
+          diamondsPrice: 0,
+          goldWeight: 0,
+          lessDiamondWeight: 0,
+          lessStoneWeight: 0,
+          netGoldWeight: 0,
+          goldPurity: '',
+          silverPurity: '',
+          platformCommissionRate: 0,
+          otherCharges: 0,
+          discount: 0,
+        };
+        return { ...prev, ...resetData };
+      });
+    } else {
+      setFormData(prev => ({ ...prev, [field]: value }));
+    }
     if (errors[field]) {
       setErrors(prev => {
         const next = { ...prev };
@@ -2827,32 +2850,6 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
               </div>
             </div>
 
-            <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4 mt-4'>
-              {/* Platform Commission field - for all product types */}
-              <div className='p-3 bg-white rounded border'>
-                <p className='text-sm text-gray-600'>Platform Commission (%)</p>
-                <FormField
-                  label=''
-                  value={formData.platformCommissionRate}
-                  onChange={e => updateField('platformCommissionRate', parseFloat(e.target.value) || 0)}
-                  type='number'
-                  placeholder='0'
-                />
-                {formData.platformCommissionRate > 0 && (
-                  <p className='text-xs text-gray-500 mt-1'>Value: {formatINR(platformCommissionValue)}</p>
-                )}
-              </div>
-              <div className='p-3 bg-white rounded border'>
-                <p className='text-sm text-gray-600'>Other Charges (₹)</p>
-                <FormField
-                  label=''
-                  value={formData.otherCharges}
-                  onChange={e => updateField('otherCharges', parseFloat(e.target.value) || 0)}
-                  type='number'
-                  placeholder='0'
-                />
-              </div>
-            </div>
           </Card>
         )}
 
@@ -2918,6 +2915,21 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                 placeholder='Select GST'
               />
               <p className='text-xs text-gray-500 mt-1'>Stored for invoice calculation (website)</p>
+            </div>
+            
+            {/* Platform Commission field - for all product types */}
+            <div className='p-3 bg-white rounded border'>
+              <p className='text-sm text-gray-600'>Platform Commission (%)</p>
+              <FormField
+                label=''
+                value={formData.platformCommissionRate}
+                onChange={e => updateField('platformCommissionRate', parseFloat(e.target.value) || 0)}
+                type='number'
+                placeholder='0'
+              />
+              {formData.platformCommissionRate > 0 && (
+                <p className='text-xs text-gray-500 mt-1'>Value: {formatINR(platformCommissionValue)}</p>
+              )}
             </div>
           </div>
 
