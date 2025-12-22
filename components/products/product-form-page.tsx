@@ -1446,6 +1446,30 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                       type='number'
                       placeholder='Example: 10x'
                     />
+
+                    <FormField
+                      label='Hardness'
+                      value={formData.hardness}
+                      onChange={e => updateField('hardness', parseFloat(e.target.value) || 0)}
+                      type='number'
+                      placeholder='Example: 9.0'
+                    />
+
+                    <FormField
+                      label='Refractive Index'
+                      value={formData.refractiveIndex}
+                      onChange={e => updateField('refractiveIndex', parseFloat(e.target.value) || 0)}
+                      type='number'
+                      placeholder='Example: 1.76'
+                    />
+
+                    <FormField
+                      label='Report No'
+                      value={formData.reportNo}
+                      onChange={e => updateField('reportNo', e.target.value)}
+                      type='text'
+                      placeholder='Example: GIA123456'
+                    />
                   </>
                 )}
 
