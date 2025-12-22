@@ -1070,8 +1070,10 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
       if (!formData.seoDescription?.trim()) nextErrors.seoDescription = 'This field is required';
       if (!formData.seoTags?.trim()) nextErrors.seoTags = 'This field is required';
       
-      // Validations only for Gold/Silver/Platinum/Diamonds (fields that are shown)
-      if (showDiamondFields || showGoldFields) {
+      // Validations only for Gold/Silver/Platinum (fields that are shown and required)
+      // For Diamonds product type, designType, purity, and weight are optional (metals are optional)
+      if (showGoldFields) {
+        // Gold/Silver/Platinum - these fields are required
         if (!formData.designType) nextErrors.designType = 'This field is required';
         if (!selectedPurityValue) {
           nextErrors.silverPurity = 'This field is required';
@@ -1079,6 +1081,10 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
         if (!formData.weight || formData.weight <= 0) {
           nextErrors.weight = 'This field is required';
         }
+      } else if (formData.productType === 'Diamonds') {
+        // For Diamonds product type, only validate designType (it's shown in the form)
+        // Purity and weight are not required since metals are optional
+        if (!formData.designType) nextErrors.designType = 'This field is required';
       }
       
       // Validations only for Gemstone/Imitation (fields that are shown)
