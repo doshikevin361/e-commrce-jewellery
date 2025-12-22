@@ -1053,37 +1053,44 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
       const computedSku = formData.sku?.trim() || generateSkuValue(formData.productType);
       const selectedPurityValue = formData.silverPurity || formData.goldPurity;
       const isSimpleProductType = formData.productType === 'Gemstone' || formData.productType === 'Imitation';
+      const showGoldFields = ['Gold', 'Silver', 'Platinum'].includes(formData.productType);
+      const showDiamondFields = formData.productType === 'Diamonds' || showGoldFields;
       const nextErrors: Record<string, string> = {};
+      
+      // Common validations for all product types
       if (!formData.productType) nextErrors.productType = 'This field is required';
       if (!formData.category) nextErrors.category = 'This field is required';
-      if (!formData.designType) nextErrors.designType = 'This field is required';
       if (!formData.name?.trim()) nextErrors.name = 'This field is required';
       if (!computedSlug) nextErrors.urlSlug = 'This field is required';
       if (!computedSku) nextErrors.sku = 'This field is required';
       if (!formData.hsnCode?.trim()) nextErrors.hsnCode = 'This field is required';
-      
-      // Purity validation only for Gold/Silver/Platinum/Diamonds (not for Gemstone/Imitation)
-      if (!isSimpleProductType && !selectedPurityValue) {
-        nextErrors.silverPurity = 'This field is required';
-      }
-      
-      // Weight validation - for Gemstone use gemstoneWeight, for others use weight
-      if (isSimpleProductType) {
-        if (formData.productType === 'Gemstone' && (!formData.gemstoneWeight || formData.gemstoneWeight <= 0)) {
-          nextErrors.gemstoneWeight = 'Gemstone weight is required';
-        }
-        if (!formData.gemstonePrice || formData.gemstonePrice <= 0) {
-          nextErrors.gemstonePrice = 'Price is required';
-        }
-      } else {
-        if (!formData.weight || formData.weight <= 0) nextErrors.weight = 'This field is required';
-      }
-      
       if (!formData.shortDescription?.trim() && !formData.description?.trim()) nextErrors.description = 'Description is required';
       if (!formData.mainImage?.trim()) nextErrors.mainImage = 'This field is required';
       if (!formData.seoTitle?.trim()) nextErrors.seoTitle = 'This field is required';
       if (!formData.seoDescription?.trim()) nextErrors.seoDescription = 'This field is required';
       if (!formData.seoTags?.trim()) nextErrors.seoTags = 'This field is required';
+      
+      // Validations only for Gold/Silver/Platinum/Diamonds (fields that are shown)
+      if (showDiamondFields || showGoldFields) {
+        if (!formData.designType) nextErrors.designType = 'This field is required';
+        if (!selectedPurityValue) {
+          nextErrors.silverPurity = 'This field is required';
+        }
+        if (!formData.weight || formData.weight <= 0) {
+          nextErrors.weight = 'This field is required';
+        }
+      }
+      
+      // Validations only for Gemstone/Imitation (fields that are shown)
+      if (isSimpleProductType) {
+        if (!formData.gemstonePrice || formData.gemstonePrice <= 0) {
+          nextErrors.gemstonePrice = 'Price is required';
+        }
+        // Gemstone weight only for Gemstone type (not Imitation)
+        if (formData.productType === 'Gemstone' && (!formData.gemstoneWeight || formData.gemstoneWeight <= 0)) {
+          nextErrors.gemstoneWeight = 'Gemstone weight is required';
+        }
+      }
 
       if (Object.keys(nextErrors).length) {
         setErrors(nextErrors);
