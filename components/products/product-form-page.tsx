@@ -637,7 +637,7 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
     weight: 0,
     stock: 1,
     vendorCommissionRate: 5,
-    platformCommissionRate: 2,
+    platformCommissionRate: 0,
     makingChargePerGram: 500,
     diamondValue: 0,
     shippingCharges: 0,
@@ -1019,7 +1019,7 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
           weight: product.weight || 0,
           stock: product.stock ?? 1,
           vendorCommissionRate: product.vendorCommissionRate ?? 5,
-          platformCommissionRate: product.platformCommissionRate ?? 2,
+          platformCommissionRate: product.platformCommissionRate ?? 0,
           makingChargePerGram: product.makingChargePerGram ?? 500,
           diamondValue: product.diamondValue ?? 0,
           shippingCharges: product.shippingCharges ?? 0,
@@ -1262,7 +1262,10 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
       : formData.productType === 'Diamonds' && !hasMetalsInDiamonds
         ? diamondValueAuto
         : goldValue + vendorCommissionValue + makingChargesValue + diamondValueAuto;
-  const platformCommissionValue = platformCommissionBase * (formData.platformCommissionRate / 100);
+  // Only calculate platform commission if rate is provided (> 0)
+  const platformCommissionValue = (formData.platformCommissionRate > 0)
+    ? platformCommissionBase * (formData.platformCommissionRate / 100)
+    : 0;
   const extraCharges = formData.otherCharges ?? 0;
   // Original price - GST and discount are NOT included in calculation, only stored for invoice
   // For Diamonds: calculated price (metals + diamonds including direct price) + commission (no other charges)
@@ -2825,6 +2828,7 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
             </div>
 
             <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4 mt-4'>
+              {/* Platform Commission field - for all product types */}
               <div className='p-3 bg-white rounded border'>
                 <p className='text-sm text-gray-600'>Platform Commission (%)</p>
                 <FormField
@@ -2832,9 +2836,11 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                   value={formData.platformCommissionRate}
                   onChange={e => updateField('platformCommissionRate', parseFloat(e.target.value) || 0)}
                   type='number'
-                  placeholder='2'
+                  placeholder='0'
                 />
-                <p className='text-xs text-gray-500 mt-1'>Value: {formatINR(platformCommissionValue)}</p>
+                {formData.platformCommissionRate > 0 && (
+                  <p className='text-xs text-gray-500 mt-1'>Value: {formatINR(platformCommissionValue)}</p>
+                )}
               </div>
               <div className='p-3 bg-white rounded border'>
                 <p className='text-sm text-gray-600'>Other Charges (₹)</p>
@@ -2948,10 +2954,12 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                   <span>Total Diamonds Value</span>
                   <span>{formatINR(diamondValueAuto)}</span>
                 </div>
-                <div className='flex justify-between text-sm text-gray-700'>
-                  <span>Platform Commission</span>
-                  <span>{formatINR(platformCommissionValue)}</span>
-                </div>
+                {formData.platformCommissionRate > 0 && (
+                  <div className='flex justify-between text-sm text-gray-700'>
+                    <span>Platform Commission</span>
+                    <span>{formatINR(platformCommissionValue)}</span>
+                  </div>
+                )}
                 <div className='flex justify-between font-semibold text-gray-900 pt-2 border-t'>
                   <span>Total Amount</span>
                   <span>{formatINR(subTotal)}</span>
@@ -2978,10 +2986,12 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                   <span>Diamonds Value</span>
                   <span>{formatINR(diamondValueAuto)}</span>
                 </div>
-                <div className='flex justify-between text-sm text-gray-700'>
-                  <span>Platform Commission</span>
-                  <span>{formatINR(platformCommissionValue)}</span>
-                </div>
+                {formData.platformCommissionRate > 0 && (
+                  <div className='flex justify-between text-sm text-gray-700'>
+                    <span>Platform Commission</span>
+                    <span>{formatINR(platformCommissionValue)}</span>
+                  </div>
+                )}
                 <div className='flex justify-between text-sm text-gray-700'>
                   <span>Other Charges</span>
                   <span>{formatINR(extraCharges)}</span>
