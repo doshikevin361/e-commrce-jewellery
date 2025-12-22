@@ -1136,6 +1136,7 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
         seoTags: formData.seoTags,
         hsnCode: formData.hsnCode,
         isB2C: true,
+        status: 'active', // Default status is active
         hasGold: ['Gold', 'Platinum'].includes(formData.productType),
         hasSilver: formData.productType === 'Silver',
         hasDiamond: formData.productType === 'Diamonds' || formData.lessDiamondWeight > 0,
@@ -1219,7 +1220,10 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
   const goldValue = netGoldWeight * purityMetalRate;
   const vendorCommissionValue = netGoldWeight * (formData.vendorCommissionRate / 100) * metalLiveRate;
   const makingChargesValue = netGoldWeight * formData.makingChargePerGram;
-  const diamondValueAuto = formData.diamonds.reduce((sum, d) => sum + (d.diamondPrice || 0), 0);
+  // For Diamonds product type, include direct price in diamond value
+  const diamondValueAuto = formData.productType === 'Diamonds'
+    ? formData.diamonds.reduce((sum, d) => sum + (d.diamondPrice || 0), 0) + (formData.diamondsPrice || 0)
+    : formData.diamonds.reduce((sum, d) => sum + (d.diamondPrice || 0), 0);
   
   // For Diamonds product type, calculate from metal values in diamonds array (same calculation as main section)
   const diamondsProductMetalValue = formData.productType === 'Diamonds' 
@@ -1249,28 +1253,23 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
   
   // For Diamonds product type, check if metals are added
   const hasMetalsInDiamonds = formData.productType === 'Diamonds' && formData.diamonds.some(d => d.metalType);
-  const diamondsDirectPrice = formData.productType === 'Diamonds' ? (formData.diamondsPrice || 0) : 0;
   
-  // Calculate platform commission base for Diamonds with metals
-  const diamondsCalculatedValue = formData.productType === 'Diamonds' && hasMetalsInDiamonds
-    ? diamondsProductMetalValue + diamondValueAuto
-    : 0;
-  
+  // Calculate platform commission base
   const platformCommissionBase = formData.productType === 'Diamonds' && hasMetalsInDiamonds
-    ? diamondsCalculatedValue
+    ? diamondsProductMetalValue + diamondValueAuto
     : isSimpleProductType 
       ? gemstoneValue 
       : formData.productType === 'Diamonds' && !hasMetalsInDiamonds
-        ? diamondsDirectPrice
+        ? diamondValueAuto
         : goldValue + vendorCommissionValue + makingChargesValue + diamondValueAuto;
   const platformCommissionValue = platformCommissionBase * (formData.platformCommissionRate / 100);
   const extraCharges = formData.otherCharges ?? 0;
   // Original price - GST and discount are NOT included in calculation, only stored for invoice
-  // For Diamonds: direct price + calculated price (if metals added)
+  // For Diamonds: calculated price (metals + diamonds including direct price) + commission (no other charges)
   const subTotal = formData.productType === 'Diamonds' && hasMetalsInDiamonds
-    ? diamondsDirectPrice + diamondsCalculatedValue + platformCommissionValue + extraCharges
+    ? diamondsProductMetalValue + diamondValueAuto + platformCommissionValue
     : formData.productType === 'Diamonds' && !hasMetalsInDiamonds
-      ? diamondsDirectPrice
+      ? diamondValueAuto // Now includes direct price
       : isSimpleProductType
         ? gemstoneValue
         : goldValue + vendorCommissionValue + makingChargesValue + diamondValueAuto + platformCommissionValue + extraCharges;
@@ -2884,9 +2883,7 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                   placeholder='Example: 50000'
                 />
                 <p className='text-xs text-gray-500 mt-1'>
-                  {hasMetalsInDiamonds 
-                    ? 'Direct price (will be added to calculated metals + diamonds price)' 
-                    : 'Direct price (no metals added)'}
+                  Price will be added to Total Diamonds Value
                 </p>
               </div>
             )}
@@ -2934,8 +2931,8 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
             ) : formData.productType === 'Diamonds' && !hasMetalsInDiamonds ? (
               <div className='space-y-2'>
                 <div className='flex justify-between font-semibold text-gray-900'>
-                  <span>Price</span>
-                  <span>{formatINR(diamondsDirectPrice)}</span>
+                  <span>Total Diamonds Value</span>
+                  <span>{formatINR(diamondValueAuto)}</span>
                 </div>
                 <div className='text-xs text-gray-500 mt-2 pt-2 border-t'>
                   <p>Note: Discount ({formData.discount || 0}%) and GST ({formData.gstRate || 0}%) are stored and will be calculated on the invoice when the website is ready.</p>
@@ -2943,10 +2940,6 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
               </div>
             ) : formData.productType === 'Diamonds' && hasMetalsInDiamonds ? (
               <div className='space-y-2'>
-                <div className='flex justify-between text-sm text-gray-700'>
-                  <span>Direct Price</span>
-                  <span>{formatINR(diamondsDirectPrice)}</span>
-                </div>
                 <div className='flex justify-between text-sm text-gray-700'>
                   <span>Total Metals Value</span>
                   <span>{formatINR(diamondsProductMetalValue)}</span>
@@ -2958,10 +2951,6 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                 <div className='flex justify-between text-sm text-gray-700'>
                   <span>Platform Commission</span>
                   <span>{formatINR(platformCommissionValue)}</span>
-                </div>
-                <div className='flex justify-between text-sm text-gray-700'>
-                  <span>Other Charges</span>
-                  <span>{formatINR(extraCharges)}</span>
                 </div>
                 <div className='flex justify-between font-semibold text-gray-900 pt-2 border-t'>
                   <span>Total Amount</span>
