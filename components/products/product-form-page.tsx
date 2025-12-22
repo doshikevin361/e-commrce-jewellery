@@ -225,6 +225,7 @@ const GEMSTONE_NAME_OPTIONS = [
 
 interface Diamond {
   id: string;
+  metalType?: 'Gold' | 'Silver' | 'Platinum'; // For Diamonds product type
   diamondsType: string;
   noOfDiamonds: number;
   diamondWeight: number;
@@ -250,6 +251,12 @@ interface Diamond {
   pricePerCarat?: number;
   diamondDiscount?: number;
   diamondPrice?: number;
+  // Metal fields for Diamonds product type
+  metalWeight?: number;
+  metalPurity?: string;
+  customMetalRate?: number; // Custom metal rate to override live price (like main section)
+  makingCharges?: number;
+  metalValue?: number;
 }
 
 interface ProductFormData {
@@ -1097,14 +1104,15 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
         hasGold: ['Gold', 'Platinum'].includes(formData.productType),
         hasSilver: formData.productType === 'Silver',
         hasDiamond: formData.productType === 'Diamonds' || formData.lessDiamondWeight > 0,
-        taxRate: formData.gstRate || 3,
+        taxRate: formData.gstRate || 3, // GST percentage stored
+        gstAmount: gstAmount, // GST amount stored separately (will be calculated on website for invoice)
         stock: 1,
         regularPrice: 0,
         sellingPrice: 0,
         costPrice: 0,
-        price: totalAmount,
-        subTotal: subTotal,
-        totalAmount: totalAmount,
+        price: subTotal, // Original price without GST (same as subTotal)
+        subTotal: subTotal, // Original price without GST
+        totalAmount: subTotal, // Original price without GST (GST will be calculated on website for invoice)
         goldWeight,
         goldRatePerGram,
         silverWeight,
@@ -1178,22 +1186,52 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
   const makingChargesValue = netGoldWeight * formData.makingChargePerGram;
   const diamondValueAuto = formData.diamonds.reduce((sum, d) => sum + (d.diamondPrice || 0), 0);
   
-  // For Gemstone products, use gemstone price instead of gold/diamond calculations
-  const gemstoneValue = formData.productType === 'Gemstone' ? (formData.gemstonePrice || 0) : 0;
-  const platformCommissionBase = formData.productType === 'Gemstone' 
-    ? gemstoneValue 
-    : goldValue + vendorCommissionValue + makingChargesValue + diamondValueAuto;
+  // For Diamonds product type, calculate from metal values in diamonds array (same calculation as main section)
+  const diamondsProductMetalValue = formData.productType === 'Diamonds' 
+    ? formData.diamonds.reduce((sum, d) => {
+        if (d.metalType) {
+          // Calculate metal value using same logic as main section
+          const itemLiveRate = d.metalType === 'Silver'
+            ? livePrices?.silver ?? 0
+            : d.metalType === 'Platinum'
+            ? livePrices?.platinum ?? 0
+            : livePrices?.gold ?? 0;
+          const itemMetalLiveRate = d.customMetalRate ?? itemLiveRate;
+          const itemPurityPercent = parsePurityPercent(d.metalPurity || '24kt');
+          const itemPurityMetalRate = itemMetalLiveRate * itemPurityPercent;
+          const itemWeight = d.metalWeight || 0;
+          const itemMakingCharges = d.makingCharges || 0;
+          // Same calculation as main section: (weight * purityMetalRate) + (weight * makingCharges)
+          return sum + ((itemWeight * itemPurityMetalRate) + (itemWeight * itemMakingCharges));
+        }
+        return sum;
+      }, 0)
+    : 0;
+  
+  // For Gemstone and Imitation products, use gemstone price instead of gold/diamond calculations
+  const isSimpleProductType = formData.productType === 'Gemstone' || formData.productType === 'Imitation';
+  const gemstoneValue = isSimpleProductType ? (formData.gemstonePrice || 0) : 0;
+  const platformCommissionBase = formData.productType === 'Diamonds'
+    ? diamondsProductMetalValue
+    : isSimpleProductType 
+      ? gemstoneValue 
+      : goldValue + vendorCommissionValue + makingChargesValue + diamondValueAuto;
   const platformCommissionValue = platformCommissionBase * (formData.platformCommissionRate / 100);
   const extraCharges = formData.otherCharges ?? 0;
-  const subTotal = formData.productType === 'Gemstone'
-    ? gemstoneValue + platformCommissionValue + extraCharges
-    : goldValue + vendorCommissionValue + makingChargesValue + diamondValueAuto + platformCommissionValue + extraCharges;
-  const gst = subTotal * ((formData.gstRate || 0) / 100);
-  const totalAmount = subTotal + gst;
+  // Original price without GST (this will be stored)
+  const subTotal = formData.productType === 'Diamonds'
+    ? diamondsProductMetalValue + platformCommissionValue + extraCharges
+    : isSimpleProductType
+      ? gemstoneValue
+      : goldValue + vendorCommissionValue + makingChargesValue + diamondValueAuto + platformCommissionValue + extraCharges;
+  // Calculate GST amount (will be stored separately, calculated on website for invoice)
+  const gstAmount = subTotal * ((formData.gstRate || 0) / 100);
+  // totalAmount is now just subTotal (without GST) - GST will be calculated on website
+  const totalAmount = subTotal;
 
   const showGoldFields = ['Gold', 'Silver', 'Platinum'].includes(formData.productType);
   const showDiamondFields = formData.productType === 'Diamonds' || showGoldFields;
-  const showGemstoneFields = formData.productType === 'Gemstone';
+  const showGemstoneFields = formData.productType === 'Gemstone' || formData.productType === 'Imitation';
 
   if (loading && productId) {
     return (
@@ -1246,117 +1284,204 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
           />
         </Card>
 
-        {/* Design Type, Karat, Purity, Metal Color Fields */}
+        {/* Product Details */}
         <Card className='p-6'>
           <h2 className='text-xl font-semibold mb-4 flex items-center gap-2'>
             <Package className='w-5 h-5' />
             Product Details
           </h2>
           <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4'>
-            <Dropdown
-              labelMain='Design Type *'
-              value={formData.designType}
-              onChange={option => updateField('designType', option.value)}
-              options={designTypes}
-              placeholder='Select Design Type'
-              withSearch={designTypes.length > 10}
-              error={errors.designType}
-            />
-
-            <Dropdown
-              labelMain='Karat'
-              value={formData.goldPurity}
-              onChange={option => updateField('goldPurity', option.value)}
-              options={karats}
-              placeholder='Select Karat'
-              withSearch={karats.length > 10}
-            />
-
-            <Dropdown
-              labelMain={formData.productType ? `${formData.productType} Purity *` : 'Purity *'}
-              value={formData.silverPurity}
-              onChange={option => updateField('silverPurity', option.value)}
-              options={purities}
-              placeholder={formData.productType ? `Select ${formData.productType} Purity` : 'Select Purity'}
-              withSearch={purities.length > 10}
-              error={errors.silverPurity}
-            />
-
-            <Dropdown
-              labelMain='Metal Colour'
-              value={formData.metalColour}
-              onChange={option => updateField('metalColour', option.value)}
-              options={metalColors}
-              placeholder='Select Metal Colour'
-              withSearch={metalColors.length > 10}
-            />
-
-            <FormField
-              label={formData.productType ? `${formData.productType} Weight (Gram)` : 'Weight (Gram)'}
-              value={formData.weight}
-              onChange={e => updateField('weight', parseFloat(e.target.value) || 0)}
-              type='number'
-              placeholder='Example: 10'
-              required
-              error={errors.weight}
-            />
-
-            <FormField
-              label='Size'
-              value={formData.size}
-              onChange={e => updateField('size', e.target.value)}
-              type='text'
-              placeholder='Example: 7, M, or 2.5'
-            />
-
-            <div className='flex flex-col gap-2'>
-              <label className='text-sm font-medium text-slate-700 dark:text-slate-300'>
-                Gender (Multi-select)
-              </label>
-              <div className='flex flex-wrap gap-3 px-4 py-3 border border-slate-200 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700'>
-                {GENDER_OPTIONS.map(option => (
-                  <label key={option.value} className='flex items-center gap-2 cursor-pointer'>
-                    <input
-                      type='checkbox'
-                      checked={(formData.gender || []).includes(option.value)}
-                      onChange={e => {
-                        const currentSelection = formData.gender || [];
-                        const newSelection = e.target.checked
-                          ? [...currentSelection, option.value]
-                          : currentSelection.filter(g => g !== option.value);
-                        updateField('gender', newSelection);
-                      }}
-                      className='w-4 h-4 text-[#1F3B29] border-gray-300 rounded focus:ring-[#1F3B29]'
+            {showGemstoneFields ? (
+              <>
+                {/* Gemstone/Imitation Fields */}
+                {formData.productType === 'Gemstone' && (
+                  <>
+                    <Dropdown
+                      labelMain='Gemstone Name'
+                      value={formData.gemstoneName}
+                      onChange={option => updateField('gemstoneName', option.value)}
+                      options={[...GEMSTONE_NAME_OPTIONS]}
+                      placeholder='Example: Ruby (Manik), Emerald (Panna)'
                     />
-                    <span className='text-sm'>{option.label}</span>
+
+                    <FormField
+                      label='Certified Laboratory'
+                      value={formData.gemstoneCertificateLab}
+                      onChange={e => updateField('gemstoneCertificateLab', e.target.value)}
+                      type='text'
+                      placeholder='Example: GIA, IGI, SGL'
+                    />
+
+                    <Dropdown
+                      labelMain='Colour'
+                      value={formData.gemstoneColour}
+                      onChange={option => updateField('gemstoneColour', option.value)}
+                      options={diamondColors}
+                      placeholder='Select Colour'
+                      withSearch={diamondColors.length > 10}
+                    />
+
+                    <Dropdown
+                      labelMain='Shape/Cut'
+                      value={formData.gemstoneShape}
+                      onChange={option => updateField('gemstoneShape', option.value)}
+                      options={diamondShapes}
+                      placeholder='Select Shape/Cut'
+                      withSearch={diamondShapes.length > 10}
+                    />
+
+                    <FormField
+                      label='Gemstone Weight (Cts)'
+                      value={formData.gemstoneWeight}
+                      onChange={e => updateField('gemstoneWeight', parseFloat(e.target.value) || 0)}
+                      type='number'
+                      placeholder='Example: 2.5'
+                    />
+                  </>
+                )}
+
+                <FormField
+                  label='Price (₹)'
+                  value={formData.gemstonePrice}
+                  onChange={e => updateField('gemstonePrice', parseFloat(e.target.value) || 0)}
+                  type='number'
+                  placeholder='Example: 50000'
+                />
+
+                <div className='flex flex-col gap-2'>
+                  <label className='text-sm font-medium text-slate-700 dark:text-slate-300'>
+                    Gender (Multi-select)
                   </label>
-                ))}
-              </div>
-            </div>
+                  <div className='flex flex-wrap gap-3 px-4 py-3 border border-slate-200 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700'>
+                    {GENDER_OPTIONS.map(option => (
+                      <label key={option.value} className='flex items-center gap-2 cursor-pointer'>
+                        <input
+                          type='checkbox'
+                          checked={(formData.gender || []).includes(option.value)}
+                          onChange={e => {
+                            const currentSelection = formData.gender || [];
+                            const newSelection = e.target.checked
+                              ? [...currentSelection, option.value]
+                              : currentSelection.filter(g => g !== option.value);
+                            updateField('gender', newSelection);
+                          }}
+                          className='w-4 h-4 text-[#1F3B29] border-gray-300 rounded focus:ring-[#1F3B29]'
+                        />
+                        <span className='text-sm'>{option.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                {/* Gold/Silver/Platinum/Diamonds Fields */}
+                <Dropdown
+                  labelMain='Design Type *'
+                  value={formData.designType}
+                  onChange={option => updateField('designType', option.value)}
+                  options={designTypes}
+                  placeholder='Select Design Type'
+                  withSearch={designTypes.length > 10}
+                  error={errors.designType}
+                />
 
-            <FormField
-              label='Items Pairs'
-              value={formData.itemsPair}
-              onChange={e => updateField('itemsPair', e.target.value)}
-              type='text'
-              placeholder='Example: 1, 2, or Pair'
-            />
+                <Dropdown
+                  labelMain='Karat'
+                  value={formData.goldPurity}
+                  onChange={option => updateField('goldPurity', option.value)}
+                  options={karats}
+                  placeholder='Select Karat'
+                  withSearch={karats.length > 10}
+                />
 
-            <FormField
-              label='HUID Hallmark No'
-              value={formData.huidHallmarkNo}
-              onChange={e => updateField('huidHallmarkNo', e.target.value)}
-              type='text'
-              placeholder='Enter Hallmark Number'
-            />
+                <Dropdown
+                  labelMain={formData.productType ? `${formData.productType} Purity *` : 'Purity *'}
+                  value={formData.silverPurity}
+                  onChange={option => updateField('silverPurity', option.value)}
+                  options={purities}
+                  placeholder={formData.productType ? `Select ${formData.productType} Purity` : 'Select Purity'}
+                  withSearch={purities.length > 10}
+                  error={errors.silverPurity}
+                />
 
-            <FormField
-              label='Stoneless Weight (Gram)'
-              value={formData.lessStoneWeight}
-              onChange={e => updateField('lessStoneWeight', parseFloat(e.target.value) || 0)}
-              type='number'
-              placeholder='Example: 8.5'
-            />
+                <Dropdown
+                  labelMain='Metal Colour'
+                  value={formData.metalColour}
+                  onChange={option => updateField('metalColour', option.value)}
+                  options={metalColors}
+                  placeholder='Select Metal Colour'
+                  withSearch={metalColors.length > 10}
+                />
+
+                <FormField
+                  label={formData.productType ? `${formData.productType} Weight (Gram)` : 'Weight (Gram)'}
+                  value={formData.weight}
+                  onChange={e => updateField('weight', parseFloat(e.target.value) || 0)}
+                  type='number'
+                  placeholder='Example: 10'
+                  required
+                  error={errors.weight}
+                />
+
+                <FormField
+                  label='Size'
+                  value={formData.size}
+                  onChange={e => updateField('size', e.target.value)}
+                  type='text'
+                  placeholder='Example: 7, M, or 2.5'
+                />
+
+                <div className='flex flex-col gap-2'>
+                  <label className='text-sm font-medium text-slate-700 dark:text-slate-300'>
+                    Gender (Multi-select)
+                  </label>
+                  <div className='flex flex-wrap gap-3 px-4 py-3 border border-slate-200 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700'>
+                    {GENDER_OPTIONS.map(option => (
+                      <label key={option.value} className='flex items-center gap-2 cursor-pointer'>
+                        <input
+                          type='checkbox'
+                          checked={(formData.gender || []).includes(option.value)}
+                          onChange={e => {
+                            const currentSelection = formData.gender || [];
+                            const newSelection = e.target.checked
+                              ? [...currentSelection, option.value]
+                              : currentSelection.filter(g => g !== option.value);
+                            updateField('gender', newSelection);
+                          }}
+                          className='w-4 h-4 text-[#1F3B29] border-gray-300 rounded focus:ring-[#1F3B29]'
+                        />
+                        <span className='text-sm'>{option.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <FormField
+                  label='Items Pairs'
+                  value={formData.itemsPair}
+                  onChange={e => updateField('itemsPair', e.target.value)}
+                  type='text'
+                  placeholder='Example: 1, 2, or Pair'
+                />
+
+                <FormField
+                  label='HUID Hallmark No'
+                  value={formData.huidHallmarkNo}
+                  onChange={e => updateField('huidHallmarkNo', e.target.value)}
+                  type='text'
+                  placeholder='Enter Hallmark Number'
+                />
+
+                <FormField
+                  label='Stoneless Weight (Gram)'
+                  value={formData.lessStoneWeight}
+                  onChange={e => updateField('lessStoneWeight', parseFloat(e.target.value) || 0)}
+                  type='number'
+                  placeholder='Example: 8.5'
+                />
+              </>
+            )}
           </div>
         </Card>
 
@@ -1482,66 +1607,176 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                 <Package className='w-5 h-5' />
                 Diamonds Field Details
               </h2>
-              <Button
-                type='button'
-                onClick={() => {
-                  const hasIncomplete = formData.diamonds.some(d => !isDiamondComplete(d));
-                  if (hasIncomplete) {
-                    toast({
-                      title: 'Please complete current diamond first',
-                      description: 'Fill required fields before adding another diamond.',
-                      variant: 'destructive',
-                    });
-                    return;
-                  }
+              {formData.productType === 'Diamonds' ? (
+                <div className='flex gap-2'>
+                  <Button
+                    type='button'
+                    onClick={() => {
+                      const newMetal: Diamond = {
+                        id: Date.now().toString(),
+                        metalType: 'Gold',
+                        diamondsType: '',
+                        noOfDiamonds: 0,
+                        diamondWeight: 0,
+                        diamondSize: '',
+                        settingType: '',
+                        clarity: '',
+                        diamondsColour: '',
+                        diamondsShape: '',
+                        diamondSetting: '',
+                        certifiedLabs: '',
+                        certificateNo: '',
+                        certificateImages: [],
+                        metalWeight: 0,
+                        metalPurity: '',
+                        customMetalRate: undefined,
+                        makingCharges: 0,
+                        metalValue: 0,
+                      };
+                      setFormData(prev => ({
+                        ...prev,
+                        diamonds: [...prev.diamonds, newMetal],
+                      }));
+                    }}
+                    className='text-white'>
+                    <Plus className='w-4 h-4 mr-2' />
+                    Add Gold
+                  </Button>
+                  <Button
+                    type='button'
+                    onClick={() => {
+                      const newMetal: Diamond = {
+                        id: Date.now().toString(),
+                        metalType: 'Silver',
+                        diamondsType: '',
+                        noOfDiamonds: 0,
+                        diamondWeight: 0,
+                        diamondSize: '',
+                        settingType: '',
+                        clarity: '',
+                        diamondsColour: '',
+                        diamondsShape: '',
+                        diamondSetting: '',
+                        certifiedLabs: '',
+                        certificateNo: '',
+                        certificateImages: [],
+                        metalWeight: 0,
+                        metalPurity: '',
+                        customMetalRate: undefined,
+                        makingCharges: 0,
+                        metalValue: 0,
+                      };
+                      setFormData(prev => ({
+                        ...prev,
+                        diamonds: [...prev.diamonds, newMetal],
+                      }));
+                    }}
+                    className='text-white'>
+                    <Plus className='w-4 h-4 mr-2' />
+                    Add Silver
+                  </Button>
+                  <Button
+                    type='button'
+                    onClick={() => {
+                      const newMetal: Diamond = {
+                        id: Date.now().toString(),
+                        metalType: 'Platinum',
+                        diamondsType: '',
+                        noOfDiamonds: 0,
+                        diamondWeight: 0,
+                        diamondSize: '',
+                        settingType: '',
+                        clarity: '',
+                        diamondsColour: '',
+                        diamondsShape: '',
+                        diamondSetting: '',
+                        certifiedLabs: '',
+                        certificateNo: '',
+                        certificateImages: [],
+                        metalWeight: 0,
+                        metalPurity: '',
+                        customMetalRate: undefined,
+                        makingCharges: 0,
+                        metalValue: 0,
+                      };
+                      setFormData(prev => ({
+                        ...prev,
+                        diamonds: [...prev.diamonds, newMetal],
+                      }));
+                    }}
+                    className='text-white'>
+                    <Plus className='w-4 h-4 mr-2' />
+                    Add Platinum
+                  </Button>
+                </div>
+              ) : (
+                <Button
+                  type='button'
+                  onClick={() => {
+                    const hasIncomplete = formData.diamonds.some(d => !isDiamondComplete(d));
+                    if (hasIncomplete) {
+                      toast({
+                        title: 'Please complete current diamond first',
+                        description: 'Fill required fields before adding another diamond.',
+                        variant: 'destructive',
+                      });
+                      return;
+                    }
 
-                  const newDiamond: Diamond = {
-                    id: Date.now().toString(),
-                    diamondsType: '',
-                    noOfDiamonds: 0,
-                    diamondWeight: 0,
-                    diamondSize: '',
-                    settingType: '',
-                    clarity: '',
-                    diamondsColour: '',
-                    diamondsShape: '',
-                    diamondSetting: '',
-                    certifiedLabs: '',
-                    certificateNo: '',
-                    certificateImages: [],
-                    occasion: '',
-                    dimension: '',
-                    height: 0,
-                    width: 0,
-                    length: 0,
-                    brand: '',
-                    collection: '',
-                    thickness: 0,
-                    description: '',
-                    specifications: [{ key: '', value: '' }],
-                    pricePerCarat: 0,
-                    diamondDiscount: 0,
-                    diamondPrice: 0,
-                  };
-                  setFormData(prev => ({
-                    ...prev,
-                    diamonds: [...prev.diamonds, newDiamond],
-                  }));
-                }}
-                className='text-white'>
-                <Plus className='w-4 h-4 mr-2' />
-                Add Diamond
-              </Button>
+                    const newDiamond: Diamond = {
+                      id: Date.now().toString(),
+                      diamondsType: '',
+                      noOfDiamonds: 0,
+                      diamondWeight: 0,
+                      diamondSize: '',
+                      settingType: '',
+                      clarity: '',
+                      diamondsColour: '',
+                      diamondsShape: '',
+                      diamondSetting: '',
+                      certifiedLabs: '',
+                      certificateNo: '',
+                      certificateImages: [],
+                      occasion: '',
+                      dimension: '',
+                      height: 0,
+                      width: 0,
+                      length: 0,
+                      brand: '',
+                      collection: '',
+                      thickness: 0,
+                      description: '',
+                      specifications: [{ key: '', value: '' }],
+                      pricePerCarat: 0,
+                      diamondDiscount: 0,
+                      diamondPrice: 0,
+                    };
+                    setFormData(prev => ({
+                      ...prev,
+                      diamonds: [...prev.diamonds, newDiamond],
+                    }));
+                  }}
+                  className='text-white'>
+                  <Plus className='w-4 h-4 mr-2' />
+                  Add Diamond
+                </Button>
+              )}
             </div>
 
             {formData.diamonds.length === 0 ? (
-              <p className='text-gray-500 text-center py-8'>No diamonds added. Click "Add Diamond" to add one.</p>
+              <p className='text-gray-500 text-center py-8'>
+                {formData.productType === 'Diamonds' 
+                  ? 'No metals added. Click "Add Gold", "Add Silver", or "Add Platinum" to add one.'
+                  : 'No diamonds added. Click "Add Diamond" to add one.'}
+              </p>
             ) : (
               <div className='space-y-6'>
                 {formData.diamonds.map((diamond, index) => (
                   <Card key={diamond.id} className='p-4 border-2 border-gray-200'>
                     <div className='flex items-center justify-between mb-4'>
-                      <h3 className='font-semibold text-lg'>Diamond {index + 1}</h3>
+                      <h3 className='font-semibold text-lg'>
+                        {diamond.metalType ? `${diamond.metalType} ${index + 1}` : `Diamond ${index + 1}`}
+                      </h3>
                       <Button
                         type='button'
                         variant='ghost'
@@ -1558,19 +1793,182 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                     </div>
 
                     <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
-                      <Dropdown
-                        labelMain='Diamonds Type'
-                        value={diamond.diamondsType}
-                        onChange={option => {
-                          const updatedDiamonds = formData.diamonds.map(d =>
-                            d.id === diamond.id ? { ...d, diamondsType: option.value } : d
-                          );
-                          setFormData(prev => ({ ...prev, diamonds: updatedDiamonds }));
-                        }}
-                        options={diamondTypes.length ? diamondTypes : [...DEFAULT_DIAMONDS_TYPE_OPTIONS]}
-                        placeholder='Select Diamonds Type'
-                        withSearch={diamondTypes.length > 10}
-                      />
+                      {diamond.metalType ? (() => {
+                        // Get live price based on metal type (same logic as main section)
+                        const itemLiveMetalRate = diamond.metalType === 'Silver'
+                          ? livePrices?.silver ?? 0
+                          : diamond.metalType === 'Platinum'
+                          ? livePrices?.platinum ?? 0
+                          : livePrices?.gold ?? 0;
+                        const itemMetalLiveRate = diamond.customMetalRate ?? itemLiveMetalRate;
+                        const itemPurityPercent = parsePurityPercent(diamond.metalPurity || '24kt');
+                        const itemPurityMetalRate = itemMetalLiveRate * itemPurityPercent;
+                        const itemWeight = diamond.metalWeight || 0;
+                        const itemMakingCharges = diamond.makingCharges || 0;
+                        const calculatedMetalValue = (itemWeight * itemPurityMetalRate) + (itemWeight * itemMakingCharges);
+                        
+                        return (
+                          <>
+                            {/* Metal Fields for Diamonds product type */}
+                            <FormField
+                              label={`${diamond.metalType} Weight (Gram)`}
+                              value={diamond.metalWeight || 0}
+                              onChange={e => {
+                                const weight = parseFloat(e.target.value) || 0;
+                                const updatedDiamonds = formData.diamonds.map(d => {
+                                  if (d.id === diamond.id) {
+                                    const liveRate = d.metalType === 'Silver'
+                                      ? livePrices?.silver ?? 0
+                                      : d.metalType === 'Platinum'
+                                      ? livePrices?.platinum ?? 0
+                                      : livePrices?.gold ?? 0;
+                                    const metalLiveRate = d.customMetalRate ?? liveRate;
+                                    const purityPercent = parsePurityPercent(d.metalPurity || '24kt');
+                                    const purityMetalRate = metalLiveRate * purityPercent;
+                                    const makingCharges = d.makingCharges || 0;
+                                    const metalValue = (weight * purityMetalRate) + (weight * makingCharges);
+                                    return { ...d, metalWeight: weight, metalValue };
+                                  }
+                                  return d;
+                                });
+                                setFormData(prev => ({ ...prev, diamonds: updatedDiamonds }));
+                              }}
+                              type='number'
+                              placeholder='Example: 10'
+                            />
+
+                            <Dropdown
+                              labelMain={`${diamond.metalType} Purity`}
+                              value={diamond.metalPurity || ''}
+                              onChange={option => {
+                                const updatedDiamonds = formData.diamonds.map(d => {
+                                  if (d.id === diamond.id) {
+                                    const liveRate = d.metalType === 'Silver'
+                                      ? livePrices?.silver ?? 0
+                                      : d.metalType === 'Platinum'
+                                      ? livePrices?.platinum ?? 0
+                                      : livePrices?.gold ?? 0;
+                                    const metalLiveRate = d.customMetalRate ?? liveRate;
+                                    const purityPercent = parsePurityPercent(option.value);
+                                    const purityMetalRate = metalLiveRate * purityPercent;
+                                    const weight = d.metalWeight || 0;
+                                    const makingCharges = d.makingCharges || 0;
+                                    const metalValue = (weight * purityMetalRate) + (weight * makingCharges);
+                                    return { ...d, metalPurity: option.value, metalValue };
+                                  }
+                                  return d;
+                                });
+                                setFormData(prev => ({ ...prev, diamonds: updatedDiamonds }));
+                              }}
+                              options={diamond.metalType === 'Silver' ? purities : karats}
+                              placeholder={`Select ${diamond.metalType} Purity`}
+                              withSearch={true}
+                            />
+
+                            <FormField
+                              label={`Metal Rate (24K) per gram (₹)`}
+                              value={diamond.customMetalRate ?? itemLiveMetalRate}
+                              onChange={e => {
+                                const value = parseFloat(e.target.value) || 0;
+                                const updatedDiamonds = formData.diamonds.map(d => {
+                                  if (d.id === diamond.id) {
+                                    // If value equals live rate, clear custom rate
+                                    const liveRate = d.metalType === 'Silver'
+                                      ? livePrices?.silver ?? 0
+                                      : d.metalType === 'Platinum'
+                                      ? livePrices?.platinum ?? 0
+                                      : livePrices?.gold ?? 0;
+                                    if (value === liveRate) {
+                                      const purityPercent = parsePurityPercent(d.metalPurity || '24kt');
+                                      const purityMetalRate = liveRate * purityPercent;
+                                      const weight = d.metalWeight || 0;
+                                      const makingCharges = d.makingCharges || 0;
+                                      const metalValue = (weight * purityMetalRate) + (weight * makingCharges);
+                                      return { ...d, customMetalRate: undefined, metalValue };
+                                    } else {
+                                      const purityPercent = parsePurityPercent(d.metalPurity || '24kt');
+                                      const purityMetalRate = value * purityPercent;
+                                      const weight = d.metalWeight || 0;
+                                      const makingCharges = d.makingCharges || 0;
+                                      const metalValue = (weight * purityMetalRate) + (weight * makingCharges);
+                                      return { ...d, customMetalRate: value, metalValue };
+                                    }
+                                  }
+                                  return d;
+                                });
+                                setFormData(prev => ({ ...prev, diamonds: updatedDiamonds }));
+                              }}
+                              type='number'
+                              placeholder={itemLiveMetalRate.toString()}
+                            />
+                            <p className='text-xs text-gray-500 -mt-2 mb-2'>
+                              {diamond.customMetalRate ? 'Custom rate' : `Live: ${formatINR(itemLiveMetalRate)}`}
+                            </p>
+
+                            <FormField
+                              label='Making Charges per Gram (₹)'
+                              value={diamond.makingCharges || 0}
+                              onChange={e => {
+                                const makingCharges = parseFloat(e.target.value) || 0;
+                                const updatedDiamonds = formData.diamonds.map(d => {
+                                  if (d.id === diamond.id) {
+                                    const liveRate = d.metalType === 'Silver'
+                                      ? livePrices?.silver ?? 0
+                                      : d.metalType === 'Platinum'
+                                      ? livePrices?.platinum ?? 0
+                                      : livePrices?.gold ?? 0;
+                                    const metalLiveRate = d.customMetalRate ?? liveRate;
+                                    const purityPercent = parsePurityPercent(d.metalPurity || '24kt');
+                                    const purityMetalRate = metalLiveRate * purityPercent;
+                                    const weight = d.metalWeight || 0;
+                                    const metalValue = (weight * purityMetalRate) + (weight * makingCharges);
+                                    return { ...d, makingCharges, metalValue };
+                                  }
+                                  return d;
+                                });
+                                setFormData(prev => ({ ...prev, diamonds: updatedDiamonds }));
+                              }}
+                              type='number'
+                              placeholder='Example: 500'
+                            />
+
+                            <div className='md:col-span-2 p-3 bg-gray-50 rounded border'>
+                              <p className='text-sm text-gray-600 mb-1'>Selected Purity</p>
+                              <p className='text-lg font-semibold'>{getOptionLabel(diamond.metalType === 'Silver' ? purities : karats, diamond.metalPurity || '24kt')}</p>
+                              <p className='text-xs text-gray-500'>{(itemPurityPercent * 100).toFixed(1)}%</p>
+                            </div>
+
+                            <div className='md:col-span-2 p-3 bg-gray-50 rounded border'>
+                              <p className='text-sm text-gray-600 mb-1'>Purity Rate</p>
+                              <p className='text-2xl font-semibold text-[#1F3B29]'>{formatINR(itemPurityMetalRate)}</p>
+                            </div>
+
+                            <FormField
+                              label={`${diamond.metalType} Value (₹)`}
+                              value={calculatedMetalValue}
+                              onChange={() => {}}
+                              type='number'
+                              placeholder='Auto-calculated'
+                              disabled
+                            />
+                          </>
+                        );
+                      })() : (
+                        <>
+                          {/* Diamond Fields */}
+                          <Dropdown
+                            labelMain='Diamonds Type'
+                            value={diamond.diamondsType}
+                            onChange={option => {
+                              const updatedDiamonds = formData.diamonds.map(d =>
+                                d.id === diamond.id ? { ...d, diamondsType: option.value } : d
+                              );
+                              setFormData(prev => ({ ...prev, diamonds: updatedDiamonds }));
+                            }}
+                            options={diamondTypes.length ? diamondTypes : [...DEFAULT_DIAMONDS_TYPE_OPTIONS]}
+                            placeholder='Select Diamonds Type'
+                            withSearch={diamondTypes.length > 10}
+                          />
 
                       <FormField
                         label='No of Diamonds'
@@ -1946,76 +2344,109 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                         </div>
                       </div>
 
-                      <div className='md:col-span-3'>
-                        <label className='block text-sm font-medium mb-2'></label>
-                        <RichTextEditor
-                          label='Diamond Description'
-                          value={diamond.description || ''}
-                          onChange={value => {
-                            const updatedDiamonds = formData.diamonds.map(d => (d.id === diamond.id ? { ...d, description: value } : d));
-                            setFormData(prev => ({ ...prev, diamonds: updatedDiamonds }));
-                          }}
-                          placeholder='Enter description for this diamond'
-                        />
-                      </div>
-
-                      <div className='md:col-span-3'>
-                        <label className='block text-sm font-medium mb-2'>Certificate Images</label>
-                        <Input
-                          type='file'
-                          multiple
-                          accept='image/*'
-                          onChange={e => uploadCertificateImages(diamond.id, e.target.files)}
-                          className='cursor-pointer'
-                        />
-                        <p className='text-xs text-gray-500 mt-1'>Upload certificate images (e.g., IGI, SGI certificates)</p>
-                        {uploadingDiamondId === diamond.id && <p className='text-xs text-blue-600 mt-1'>Uploading...</p>}
-
-                        {diamond.certificateImages && diamond.certificateImages.length > 0 && (
-                          <div className='flex flex-wrap gap-3 mt-3'>
-                            {diamond.certificateImages.map((url, idx) => (
-                              <div key={`${diamond.id}-cert-${idx}`} className='relative w-24 h-24 rounded border overflow-hidden'>
-                                <img src={url} alt='Certificate' className='w-full h-full object-cover' />
-                                <button
-                                  type='button'
-                                  onClick={() => {
-                                    const updatedImages = (diamond.certificateImages || []).filter((_, i) => i !== idx);
-                                    const updatedDiamonds = formData.diamonds.map(d =>
-                                      d.id === diamond.id ? { ...d, certificateImages: updatedImages } : d
-                                    );
-                                    setFormData(prev => ({ ...prev, diamonds: updatedDiamonds }));
-                                  }}
-                                  className='absolute top-1 right-1 bg-black/60 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs'
-                                  aria-label='Remove image'>
-                                  ×
-                                </button>
-                              </div>
-                            ))}
+                      {!diamond.metalType && (
+                        <>
+                          <div className='md:col-span-3'>
+                            <label className='block text-sm font-medium mb-2'></label>
+                            <RichTextEditor
+                              label='Diamond Description'
+                              value={diamond.description || ''}
+                              onChange={value => {
+                                const updatedDiamonds = formData.diamonds.map(d => (d.id === diamond.id ? { ...d, description: value } : d));
+                                setFormData(prev => ({ ...prev, diamonds: updatedDiamonds }));
+                              }}
+                              placeholder='Enter description for this diamond'
+                            />
                           </div>
-                        )}
-                      </div>
+
+                          <div className='md:col-span-3'>
+                            <label className='block text-sm font-medium mb-2'>Certificate Images</label>
+                            <Input
+                              type='file'
+                              multiple
+                              accept='image/*'
+                              onChange={e => uploadCertificateImages(diamond.id, e.target.files)}
+                              className='cursor-pointer'
+                            />
+                            <p className='text-xs text-gray-500 mt-1'>Upload certificate images (e.g., IGI, SGI certificates)</p>
+                            {uploadingDiamondId === diamond.id && <p className='text-xs text-blue-600 mt-1'>Uploading...</p>}
+
+                            {diamond.certificateImages && diamond.certificateImages.length > 0 && (
+                              <div className='flex flex-wrap gap-3 mt-3'>
+                                {diamond.certificateImages.map((url, idx) => (
+                                  <div key={`${diamond.id}-cert-${idx}`} className='relative w-24 h-24 rounded border overflow-hidden'>
+                                    <img src={url} alt='Certificate' className='w-full h-full object-cover' />
+                                    <button
+                                      type='button'
+                                      onClick={() => {
+                                        const updatedImages = (diamond.certificateImages || []).filter((_, i) => i !== idx);
+                                        const updatedDiamonds = formData.diamonds.map(d =>
+                                          d.id === diamond.id ? { ...d, certificateImages: updatedImages } : d
+                                        );
+                                        setFormData(prev => ({ ...prev, diamonds: updatedDiamonds }));
+                                      }}
+                                      className='absolute top-1 right-1 bg-black/60 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs'
+                                      aria-label='Remove image'>
+                                      ×
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </>
+                      )}
+                        </>
+                      )}
                     </div>
                   </Card>
                 ))}
               </div>
             )}
 
-            {/* Total Diamonds Summary - Automatic Calculation */}
+            {/* Total Summary - Automatic Calculation */}
             {formData.diamonds.length > 0 && (
               <div className='mt-6 p-4 bg-gray-50 rounded-lg border-2 border-gray-200'>
                 <h3 className='text-lg font-semibold mb-4'>Total Summary</h3>
-                <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
-                  <div className='bg-white p-3 rounded-lg'>
-                    <p className='text-sm text-gray-600 mb-1'>Total No. of Diamonds</p>
-                    <p className='text-2xl font-bold text-[#1F3B29]'>{formData.diamonds.length}</p>
+                {formData.productType === 'Diamonds' ? (
+                  <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
+                    <div className='bg-white p-3 rounded-lg'>
+                      <p className='text-sm text-gray-600 mb-1'>Total Metals</p>
+                      <p className='text-2xl font-bold text-[#1F3B29]'>{formData.diamonds.length}</p>
+                    </div>
+                    <div className='bg-white p-3 rounded-lg'>
+                      <p className='text-sm text-gray-600 mb-1'>Total Gold Weight (Gram)</p>
+                      <p className='text-2xl font-bold text-[#1F3B29]'>
+                        {formData.diamonds.filter(d => d.metalType === 'Gold').reduce((sum, d) => sum + (d.metalWeight || 0), 0).toFixed(2)}
+                      </p>
+                    </div>
+                    <div className='bg-white p-3 rounded-lg'>
+                      <p className='text-sm text-gray-600 mb-1'>Total Silver Weight (Gram)</p>
+                      <p className='text-2xl font-bold text-[#1F3B29]'>
+                        {formData.diamonds.filter(d => d.metalType === 'Silver').reduce((sum, d) => sum + (d.metalWeight || 0), 0).toFixed(2)}
+                      </p>
+                    </div>
+                    <div className='bg-white p-3 rounded-lg'>
+                      <p className='text-sm text-gray-600 mb-1'>Total Platinum Weight (Gram)</p>
+                      <p className='text-2xl font-bold text-[#1F3B29]'>
+                        {formData.diamonds.filter(d => d.metalType === 'Platinum').reduce((sum, d) => sum + (d.metalWeight || 0), 0).toFixed(2)}
+                      </p>
+                    </div>
                   </div>
-                  <div className='bg-white p-3 rounded-lg'>
-                    <p className='text-sm text-gray-600 mb-1'>Total Diamonds Weight (ct)</p>
-                    <p className='text-2xl font-bold text-[#1F3B29]'>
-                      {formData.diamonds.reduce((sum, d) => sum + (d.diamondWeight || 0), 0).toFixed(2)}
-                    </p>
+                ) : (
+                  <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
+                    <div className='bg-white p-3 rounded-lg'>
+                      <p className='text-sm text-gray-600 mb-1'>Total No. of Diamonds</p>
+                      <p className='text-2xl font-bold text-[#1F3B29]'>{formData.diamonds.length}</p>
+                    </div>
+                    <div className='bg-white p-3 rounded-lg'>
+                      <p className='text-sm text-gray-600 mb-1'>Total Diamonds Weight (ct)</p>
+                      <p className='text-2xl font-bold text-[#1F3B29]'>
+                        {formData.diamonds.reduce((sum, d) => sum + (d.diamondWeight || 0), 0).toFixed(2)}
+                      </p>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             )}
 
@@ -2118,208 +2549,6 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                 onChange={value => updateField('description', value)}
                 placeholder='Enter detailed product description and specifications...'
               />
-            </div>
-          </Card>
-        )}
-
-        {/* Gemstone Fields */}
-        {showGemstoneFields && (
-          <Card className='p-6'>
-            <h2 className='text-xl font-semibold mb-4'>Gemstone Field</h2>
-            <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-              <Dropdown
-                labelMain='Gemstone Name'
-                value={formData.gemstoneName}
-                onChange={option => updateField('gemstoneName', option.value)}
-                options={[...GEMSTONE_NAME_OPTIONS]}
-                placeholder='Example: Ruby (Manik), Emerald (Panna)'
-              />
-
-              <FormField
-                label='Report No.'
-                value={formData.reportNo}
-                onChange={e => updateField('reportNo', e.target.value)}
-                type='text'
-                placeholder='Example: RPT123456'
-              />
-
-              <FormField
-                label='Certified Laboratory'
-                value={formData.gemstoneCertificateLab}
-                onChange={e => updateField('gemstoneCertificateLab', e.target.value)}
-                type='text'
-                placeholder='Example: GIA, IGI, SGL'
-              />
-
-              <Dropdown
-                labelMain='Colour'
-                value={formData.gemstoneColour}
-                onChange={option => updateField('gemstoneColour', option.value)}
-                options={diamondColors}
-                placeholder='Select Colour'
-                withSearch={diamondColors.length > 10}
-              />
-
-              <Dropdown
-                labelMain='Shape/Cut'
-                value={formData.gemstoneShape}
-                onChange={option => updateField('gemstoneShape', option.value)}
-                options={diamondShapes}
-                placeholder='Select Shape/Cut'
-                withSearch={diamondShapes.length > 10}
-              />
-
-              <FormField
-                label='Dimension'
-                value={formData.dimension}
-                onChange={e => updateField('dimension', e.target.value)}
-                type='text'
-                placeholder='Example: 5x4x3 mm'
-              />
-
-              <FormField
-                label='Gemstone Weight (Cts)'
-                value={formData.gemstoneWeight}
-                onChange={e => updateField('gemstoneWeight', parseFloat(e.target.value) || 0)}
-                type='number'
-                placeholder='Example: 2.5'
-              />
-
-              <FormField
-                label='Price (₹)'
-                value={formData.gemstonePrice}
-                onChange={e => updateField('gemstonePrice', parseFloat(e.target.value) || 0)}
-                type='number'
-                placeholder='Example: 50000'
-              />
-
-              <FormField
-                label='Ratti'
-                value={formData.ratti}
-                onChange={e => updateField('ratti', parseFloat(e.target.value) || 0)}
-                type='number'
-                placeholder='Example: 3.5'
-              />
-
-              <FormField
-                label='Specific Gravity'
-                value={formData.specificGravity}
-                onChange={e => updateField('specificGravity', parseFloat(e.target.value) || 0)}
-                type='number'
-                placeholder='Example: 4.0'
-              />
-
-              <FormField
-                label='Hardness'
-                value={formData.hardness}
-                onChange={e => updateField('hardness', parseFloat(e.target.value) || 0)}
-                type='number'
-                placeholder='Example: 9.0'
-              />
-
-              <FormField
-                label='Refractive Index'
-                value={formData.refractiveIndex}
-                onChange={e => updateField('refractiveIndex', parseFloat(e.target.value) || 0)}
-                type='number'
-                placeholder='Example: 1.76'
-              />
-
-              <FormField
-                label='Magnification'
-                value={formData.magnification}
-                onChange={e => updateField('magnification', parseFloat(e.target.value) || 0)}
-                type='number'
-                placeholder='Example: 10x'
-              />
-
-              <div className='md:col-span-2'>
-                <FormField
-                  label='Remarks'
-                  value={formData.remarks}
-                  onChange={e => updateField('remarks', e.target.value)}
-                  type='text'
-                  placeholder='Example: Natural untreated gemstone'
-                />
-              </div>
-
-              <div className='md:col-span-2'>
-                <label className='block text-sm font-medium mb-2'>Description</label>
-                <RichTextEditor
-                  label='Gemstone Description'
-                  value={formData.gemstoneDescription}
-                  onChange={value => updateField('gemstoneDescription', value)}
-                  placeholder='Enter gemstone description...'
-                />
-              </div>
-            </div>
-
-            <div className='mt-4 space-y-4'>
-              <div>
-                <label className='block text-sm font-medium mb-2'>Gemstone Photo</label>
-                {formData.gemstonePhoto ? (
-                  <div className='relative inline-block'>
-                    <img
-                      src={formData.gemstonePhoto}
-                      alt='Gemstone'
-                      className='w-32 h-32 object-cover rounded border'
-                    />
-                    <button
-                      type='button'
-                      onClick={() => setFormData(prev => ({ ...prev, gemstonePhoto: '' }))}
-                      className='absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600'
-                    >
-                      <X className='w-4 h-4' />
-                    </button>
-                  </div>
-                ) : (
-                  <>
-                    <Input
-                      type='file'
-                      accept='image/*'
-                      onChange={e => {
-                        const file = e.target.files?.[0];
-                        if (file) uploadGemstonePhoto(file);
-                      }}
-                      className='cursor-pointer'
-                    />
-                    <p className='text-xs text-gray-500 mt-1'>Upload gemstone photo</p>
-                  </>
-                )}
-              </div>
-
-              <div>
-                <label className='block text-sm font-medium mb-2'>Gemstone Certificate (Photo)</label>
-                {formData.gemstoneCertificate ? (
-                  <div className='relative inline-block'>
-                    <img
-                      src={formData.gemstoneCertificate}
-                      alt='Certificate'
-                      className='w-32 h-32 object-cover rounded border'
-                    />
-                    <button
-                      type='button'
-                      onClick={() => setFormData(prev => ({ ...prev, gemstoneCertificate: '' }))}
-                      className='absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600'
-                    >
-                      <X className='w-4 h-4' />
-                    </button>
-                  </div>
-                ) : (
-                  <>
-                    <Input
-                      type='file'
-                      accept='image/*'
-                      onChange={e => {
-                        const file = e.target.files?.[0];
-                        if (file) uploadGemstoneCertificate(file);
-                      }}
-                      className='cursor-pointer'
-                    />
-                    <p className='text-xs text-gray-500 mt-1'>Upload gemstone certificate image</p>
-                  </>
-                )}
-              </div>
             </div>
           </Card>
         )}
@@ -2600,11 +2829,15 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                 </div>
                 <div className='flex justify-between text-sm text-gray-700'>
                   <span>GST ({formData.gstRate || 0}%)</span>
-                  <span>{formatINR(gst)}</span>
+                  <span>{formatINR(gstAmount)} (calculated on website)</span>
                 </div>
                 <div className='flex justify-between text-lg font-bold text-[#1F3B29]'>
-                  <span>Total Amount</span>
+                  <span>Total Amount (without GST)</span>
                   <span>{formatINR(totalAmount)}</span>
+                </div>
+                <div className='flex justify-between text-sm text-gray-600 mt-2 pt-2 border-t'>
+                  <span>Final Amount (with GST) - calculated on invoice</span>
+                  <span>{formatINR(totalAmount + gstAmount)}</span>
                 </div>
               </div>
             </div>
