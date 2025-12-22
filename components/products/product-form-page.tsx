@@ -543,6 +543,10 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
     }
   };
 
+  const removeGemstoneCertificate = () => {
+    setFormData(prev => ({ ...prev, gemstoneCertificate: '' }));
+  };
+
   const addSpecificationRow = () => {
     setFormData(prev => ({
       ...prev,
@@ -1409,6 +1413,38 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                       onChange={e => updateField('gemstoneWeight', parseFloat(e.target.value) || 0)}
                       type='number'
                       placeholder='Example: 2.5'
+                    />
+
+                    <FormField
+                      label='Ratti'
+                      value={formData.ratti}
+                      onChange={e => updateField('ratti', parseFloat(e.target.value) || 0)}
+                      type='number'
+                      placeholder='Example: 5.2'
+                    />
+
+                    <FormField
+                      label='Dimension'
+                      value={formData.dimension}
+                      onChange={e => updateField('dimension', e.target.value)}
+                      type='text'
+                      placeholder='Example: 2x3x1 cm'
+                    />
+
+                    <FormField
+                      label='Specific Gravity'
+                      value={formData.specificGravity}
+                      onChange={e => updateField('specificGravity', parseFloat(e.target.value) || 0)}
+                      type='number'
+                      placeholder='Example: 3.95'
+                    />
+
+                    <FormField
+                      label='Magnification'
+                      value={formData.magnification}
+                      onChange={e => updateField('magnification', parseFloat(e.target.value) || 0)}
+                      type='number'
+                      placeholder='Example: 10x'
                     />
                   </>
                 )}
@@ -2714,6 +2750,42 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
             )}
           </div>
         </Card>
+
+        {/* Gemstone Certificate Image - Only for Gemstone product type */}
+        {formData.productType === 'Gemstone' && (
+          <Card className='p-6'>
+            <h2 className='text-xl font-semibold mb-4'>Gemstone Certificate</h2>
+            <div className='space-y-3'>
+              <div>
+                <label className='block text-sm font-medium mb-2'>Gemstone Certificate Image</label>
+                {!formData.gemstoneCertificate ? (
+                  <>
+                    <Input
+                      type='file'
+                      accept='image/*'
+                      onChange={e => {
+                        const file = e.target.files?.[0];
+                        if (file) uploadGemstoneCertificate(file);
+                      }}
+                      className='cursor-pointer'
+                    />
+                    <p className='text-xs text-gray-500 mt-1'>Upload gemstone certificate image. JPEG/PNG preferred.</p>
+                  </>
+                ) : (
+                  <div className='relative inline-block border rounded overflow-hidden'>
+                    <img src={formData.gemstoneCertificate} alt='Gemstone certificate' className='w-48 h-48 object-cover' />
+                    <button
+                      type='button'
+                      onClick={removeGemstoneCertificate}
+                      className='absolute top-2 right-2 bg-white/80 rounded-full p-1 shadow hover:bg-white'>
+                      <Trash2 className='w-4 h-4 text-red-600' />
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </Card>
+        )}
 
         {/* SEO */}
         <Card className='p-6'>
