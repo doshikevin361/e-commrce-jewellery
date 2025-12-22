@@ -298,6 +298,10 @@ export function Sidebar() {
       label: 'Certified Labs',
       href: '/admin/certified-labs',
     },
+    {
+      label: 'Gemstone Names',
+      href: '/admin/gemstone-names',
+    },
   ];
 
   const cmsSubmenu = [

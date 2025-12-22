@@ -382,6 +382,7 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
   const [diamondShapes, setDiamondShapes] = useState<{ label: string; value: string }[]>([]);
   const [settingTypes, setSettingTypes] = useState<{ label: string; value: string }[]>([]);
   const [certifiedLabs, setCertifiedLabs] = useState<{ label: string; value: string }[]>([]);
+  const [gemstoneNames, setGemstoneNames] = useState<{ label: string; value: string }[]>([]);
   const [uploadingDiamondId, setUploadingDiamondId] = useState<string | null>(null);
   const [livePrices, setLivePrices] = useState<{
     gold: number;
@@ -667,6 +668,7 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
     fetchDiamondShapes();
     fetchSettingTypes();
     fetchCertifiedLabs();
+    fetchGemstoneNames();
     fetchLivePrices();
     if (productId) {
       fetchProduct();
@@ -894,6 +896,22 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
       }
     } catch (error) {
       console.error('Failed to fetch certified labs:', error);
+    }
+  };
+
+  const fetchGemstoneNames = async () => {
+    try {
+      const response = await fetch('/api/admin/gemstone-names?status=active');
+      if (response.ok) {
+        const data = await response.json();
+        const options = (data.gemstoneNames || []).map((item: any) => ({
+          label: item.name,
+          value: item.name,
+        }));
+        setGemstoneNames(options);
+      }
+    } catch (error) {
+      console.error('Failed to fetch gemstone names:', error);
     }
   };
 
@@ -1301,7 +1319,7 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
     : formData.productType === 'Diamonds' && !hasMetalsInDiamonds
       ? diamondValueAuto // Now includes direct price
       : isSimpleProductType
-        ? gemstoneValue
+        ? gemstoneValue + platformCommissionValue
         : goldValue + vendorCommissionValue + makingChargesValue + diamondValueAuto + platformCommissionValue + extraCharges;
   // GST and discount are stored but NOT calculated here - will be calculated on website invoice
   const totalAmount = subTotal;
@@ -1377,8 +1395,9 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                       labelMain='Gemstone Name'
                       value={formData.gemstoneName}
                       onChange={option => updateField('gemstoneName', option.value)}
-                      options={[...GEMSTONE_NAME_OPTIONS]}
+                      options={gemstoneNames.length > 0 ? gemstoneNames : [...GEMSTONE_NAME_OPTIONS]}
                       placeholder='Example: Ruby (Manik), Emerald (Panna)'
+                      withSearch={gemstoneNames.length > 10 || GEMSTONE_NAME_OPTIONS.length > 10}
                     />
 
                     <FormField
@@ -3034,9 +3053,19 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
             <h3 className='text-lg font-semibold mb-4'>Price Summary</h3>
             {isSimpleProductType ? (
               <div className='space-y-2'>
-                <div className='flex justify-between font-semibold text-gray-900'>
-                  <span>Original Price</span>
+                <div className='flex justify-between text-sm text-gray-700'>
+                  <span>Price</span>
                   <span>{formatINR(gemstoneValue)}</span>
+                </div>
+                {formData.platformCommissionRate > 0 && (
+                  <div className='flex justify-between text-sm text-gray-700'>
+                    <span>Platform Commission</span>
+                    <span>{formatINR(platformCommissionValue)}</span>
+                  </div>
+                )}
+                <div className='flex justify-between font-semibold text-gray-900 pt-2 border-t'>
+                  <span>Total Amount</span>
+                  <span>{formatINR(subTotal)}</span>
                 </div>
                 <div className='text-xs text-gray-500 mt-2 pt-2 border-t'>
                   <p>Note: Discount ({formData.discount || 0}%) and GST ({formData.gstRate || 0}%) are stored and will be calculated on the invoice when the website is ready.</p>
