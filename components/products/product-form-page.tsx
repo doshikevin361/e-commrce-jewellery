@@ -343,6 +343,7 @@ interface ProductFormData {
   name: string;
   urlSlug: string;
   weight: number;
+  stock: number;
 
   // Pricing & charges
   vendorCommissionRate: number; // %
@@ -633,6 +634,7 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
     name: '',
     urlSlug: '',
     weight: 0,
+    stock: 1,
     vendorCommissionRate: 5,
     platformCommissionRate: 2,
     makingChargePerGram: 500,
@@ -1013,6 +1015,7 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
           name: product.name || '',
           urlSlug: product.urlSlug || '',
           weight: product.weight || 0,
+          stock: product.stock ?? 1,
           vendorCommissionRate: product.vendorCommissionRate ?? 5,
           platformCommissionRate: product.platformCommissionRate ?? 2,
           makingChargePerGram: product.makingChargePerGram ?? 500,
@@ -1049,6 +1052,7 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
       const computedSlug = formData.urlSlug?.trim() || slugify(formData.name || '');
       const computedSku = formData.sku?.trim() || generateSkuValue(formData.productType);
       const selectedPurityValue = formData.silverPurity || formData.goldPurity;
+      const isSimpleProductType = formData.productType === 'Gemstone' || formData.productType === 'Imitation';
       const nextErrors: Record<string, string> = {};
       if (!formData.productType) nextErrors.productType = 'This field is required';
       if (!formData.category) nextErrors.category = 'This field is required';
@@ -1057,8 +1061,24 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
       if (!computedSlug) nextErrors.urlSlug = 'This field is required';
       if (!computedSku) nextErrors.sku = 'This field is required';
       if (!formData.hsnCode?.trim()) nextErrors.hsnCode = 'This field is required';
-      if (!selectedPurityValue) nextErrors.silverPurity = 'This field is required';
-      if (!formData.weight || formData.weight <= 0) nextErrors.weight = 'This field is required';
+      
+      // Purity validation only for Gold/Silver/Platinum/Diamonds (not for Gemstone/Imitation)
+      if (!isSimpleProductType && !selectedPurityValue) {
+        nextErrors.silverPurity = 'This field is required';
+      }
+      
+      // Weight validation - for Gemstone use gemstoneWeight, for others use weight
+      if (isSimpleProductType) {
+        if (formData.productType === 'Gemstone' && (!formData.gemstoneWeight || formData.gemstoneWeight <= 0)) {
+          nextErrors.gemstoneWeight = 'Gemstone weight is required';
+        }
+        if (!formData.gemstonePrice || formData.gemstonePrice <= 0) {
+          nextErrors.gemstonePrice = 'Price is required';
+        }
+      } else {
+        if (!formData.weight || formData.weight <= 0) nextErrors.weight = 'This field is required';
+      }
+      
       if (!formData.shortDescription?.trim() && !formData.description?.trim()) nextErrors.description = 'Description is required';
       if (!formData.mainImage?.trim()) nextErrors.mainImage = 'This field is required';
       if (!formData.seoTitle?.trim()) nextErrors.seoTitle = 'This field is required';
@@ -1106,7 +1126,7 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
         hasDiamond: formData.productType === 'Diamonds' || formData.lessDiamondWeight > 0,
         taxRate: formData.gstRate || 3, // GST percentage stored
         gstAmount: gstAmount, // GST amount stored separately (will be calculated on website for invoice)
-        stock: 1,
+        stock: formData.stock || 1,
         regularPrice: 0,
         sellingPrice: 0,
         costPrice: 0,
@@ -1422,6 +1442,14 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                   placeholder='Example: 10'
                   required
                   error={errors.weight}
+                />
+
+                <FormField
+                  label='Stock'
+                  value={formData.stock}
+                  onChange={e => updateField('stock', parseInt(e.target.value) || 0)}
+                  type='number'
+                  placeholder='Example: 10'
                 />
 
                 <FormField
@@ -2409,10 +2437,10 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
               <div className='mt-6 p-4 bg-gray-50 rounded-lg border-2 border-gray-200'>
                 <h3 className='text-lg font-semibold mb-4'>Total Summary</h3>
                 {formData.productType === 'Diamonds' ? (
-                  <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
+                  <div className='grid grid-cols-2 md:grid-cols-5 gap-4'>
                     <div className='bg-white p-3 rounded-lg'>
                       <p className='text-sm text-gray-600 mb-1'>Total Metals</p>
-                      <p className='text-2xl font-bold text-[#1F3B29]'>{formData.diamonds.length}</p>
+                      <p className='text-2xl font-bold text-[#1F3B29]'>{formData.diamonds.filter(d => d.metalType).length}</p>
                     </div>
                     <div className='bg-white p-3 rounded-lg'>
                       <p className='text-sm text-gray-600 mb-1'>Total Gold Weight (Gram)</p>
@@ -2430,6 +2458,12 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                       <p className='text-sm text-gray-600 mb-1'>Total Platinum Weight (Gram)</p>
                       <p className='text-2xl font-bold text-[#1F3B29]'>
                         {formData.diamonds.filter(d => d.metalType === 'Platinum').reduce((sum, d) => sum + (d.metalWeight || 0), 0).toFixed(2)}
+                      </p>
+                    </div>
+                    <div className='bg-white p-3 rounded-lg'>
+                      <p className='text-sm text-gray-600 mb-1'>Total Metal Value (₹)</p>
+                      <p className='text-2xl font-bold text-[#1F3B29]'>
+                        {formatINR(diamondsProductMetalValue)}
                       </p>
                     </div>
                   </div>
