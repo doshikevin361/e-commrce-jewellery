@@ -59,6 +59,7 @@ function HomeHeaderContent() {
   const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [openCategoryDropdown, setOpenCategoryDropdown] = useState<string | null>(null);
   const [expandedMobileCategories, setExpandedMobileCategories] = useState<Set<string>>(new Set());
+  const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [featuredProducts, setFeaturedProducts] = useState<Record<string, any>>({});
   const [hoveredSubcategory, setHoveredSubcategory] = useState<{ category: string; subcategory: string } | null>(null);
   const [styleImages, setStyleImages] = useState<Record<string, string>>({});
@@ -322,6 +323,15 @@ function HomeHeaderContent() {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, [mounted]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (closeTimeoutRef.current) {
+        clearTimeout(closeTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -651,8 +661,21 @@ function HomeHeaderContent() {
                         key={category._id}
                         className='relative'
                         style={{ animationDelay: `${(menuItems.length + index) * 50}ms` }}
-                        onMouseEnter={() => setOpenCategoryDropdown(category._id)}
-                        onMouseLeave={() => setOpenCategoryDropdown(null)}>
+                        onMouseEnter={() => {
+                          // Clear any pending close timeout
+                          if (closeTimeoutRef.current) {
+                            clearTimeout(closeTimeoutRef.current);
+                            closeTimeoutRef.current = null;
+                          }
+                          setOpenCategoryDropdown(category._id);
+                        }}
+                        onMouseLeave={() => {
+                          // Add a small delay before closing to allow mouse to move to mega menu
+                          closeTimeoutRef.current = setTimeout(() => {
+                            setOpenCategoryDropdown(null);
+                            closeTimeoutRef.current = null;
+                          }, 150);
+                        }}>
                         <Link
                           href={`/jewellery?category=${encodeURIComponent(category.name)}`}
                           className={cn(
@@ -722,8 +745,22 @@ function HomeHeaderContent() {
               <div
                 key={category._id}
                 className='absolute top-full left-0 right-0 w-full bg-white shadow-2xl border-t border-gray-200/60 z-50 animate-in fade-in slide-in-from-top-3 duration-300'
-                onMouseEnter={() => setOpenCategoryDropdown(category._id)}
-                onMouseLeave={() => setOpenCategoryDropdown(null)}>
+                style={{ marginTop: '-1px' }}
+                onMouseEnter={() => {
+                  // Clear any pending close timeout
+                  if (closeTimeoutRef.current) {
+                    clearTimeout(closeTimeoutRef.current);
+                    closeTimeoutRef.current = null;
+                  }
+                  setOpenCategoryDropdown(category._id);
+                }}
+                onMouseLeave={() => {
+                  // Add a small delay before closing
+                  closeTimeoutRef.current = setTimeout(() => {
+                    setOpenCategoryDropdown(null);
+                    closeTimeoutRef.current = null;
+                  }, 150);
+                }}>
                 <div className='mx-auto w-full max-w-[1440px] px-4 sm:px-6 md:px-8 lg:px-12 py-6 lg:py-8'>
                   <div className='grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8'>
                     {/* Column 1: SHOP BY STYLE - Only show if subcategories exist */}
