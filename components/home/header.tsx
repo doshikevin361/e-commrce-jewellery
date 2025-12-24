@@ -57,6 +57,31 @@ function HomeHeaderContent() {
   const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [openCategoryDropdown, setOpenCategoryDropdown] = useState<string | null>(null);
   const [expandedMobileCategories, setExpandedMobileCategories] = useState<Set<string>>(new Set());
+  const [featuredProducts, setFeaturedProducts] = useState<Record<string, any>>({});
+  const [hoveredSubcategory, setHoveredSubcategory] = useState<{category: string; subcategory: string} | null>(null);
+  const [styleImages, setStyleImages] = useState<Record<string, string>>({});
+  const [materialImages, setMaterialImages] = useState<Record<string, string>>({});
+  const [occasionImages, setOccasionImages] = useState<Record<string, string>>({});
+  
+  // Product types and genders for menu
+  const PRODUCT_TYPES = ['Gold', 'Silver', 'Diamonds', 'Platinum', 'Gemstone', 'Imitation'];
+  const GENDERS = ['Man', 'Women', 'Unisex'];
+  
+  // Shop By Style options (these would be subcategories or design types)
+  const SHOP_BY_STYLE = ['Engagement', 'Solitaire', 'Casual', 'Classic', 'Navratna', 'Mangalsutra Ring', 'Couple Bands', 'Eternity', 'Three Stone'];
+  
+  // Price ranges
+  const PRICE_RANGES = [
+    { label: 'UNDER ₹10K', value: '0-10000' },
+    { label: '₹10K - ₹20K', value: '10000-20000' },
+    { label: '₹20K - ₹30K', value: '20000-30000' },
+    { label: '₹30K - ₹50K', value: '30000-50000' },
+    { label: '₹50K - ₹75K', value: '50000-75000' },
+    { label: 'ABOVE ₹75K', value: '75000-999999999' },
+  ];
+  
+  // Occasions
+  const OCCASIONS = ['Daily Wear', 'Casual Outings', 'Festive', 'Anniversary', 'Wedding'];
 
   useEffect(() => {
     setMounted(true);
@@ -120,6 +145,97 @@ function HomeHeaderContent() {
 
     fetchCategories();
   }, []);
+
+  // Fetch featured product for a category/subcategory/productType/gender combination
+  const fetchFeaturedProduct = async (category: string, subcategory?: string, productType?: string, gender?: string) => {
+    const key = `${category}-${subcategory || 'all'}-${productType || 'all'}-${gender || 'all'}`;
+    if (featuredProducts[key]) return; // Already fetched
+    
+    try {
+      const params = new URLSearchParams({ category });
+      if (subcategory) params.append('subcategory', subcategory);
+      if (productType) params.append('productType', productType);
+      if (gender) params.append('gender', gender);
+      
+      const response = await fetch(`/api/public/products/featured?${params.toString()}`);
+      if (response.ok) {
+        const data = await response.json();
+        setFeaturedProducts(prev => ({
+          ...prev,
+          [key]: data.product
+        }));
+      }
+    } catch (error) {
+      console.error('Failed to fetch featured product:', error);
+    }
+  };
+
+  // Fetch image for style/subcategory - only when needed
+  const fetchStyleImage = async (category: string, styleName: string) => {
+    const key = `${category}-${styleName}`;
+    if (styleImages[key]) return; // Already fetched
+    
+    try {
+      const params = new URLSearchParams({ category, subcategory: styleName, limit: '1' });
+      const response = await fetch(`/api/public/products/menu-images?${params.toString()}`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.products && data.products.length > 0 && data.products[0].mainImage) {
+          setStyleImages(prev => ({
+            ...prev,
+            [key]: data.products[0].mainImage
+          }));
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch style image:', error);
+    }
+  };
+
+  // Fetch image for material/product type - only when needed
+  const fetchMaterialImage = async (category: string, material: string) => {
+    const key = `${category}-${material}`;
+    if (materialImages[key]) return; // Already fetched
+    
+    try {
+      const params = new URLSearchParams({ category, productType: material, limit: '1' });
+      const response = await fetch(`/api/public/products/menu-images?${params.toString()}`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.products && data.products.length > 0 && data.products[0].mainImage) {
+          setMaterialImages(prev => ({
+            ...prev,
+            [key]: data.products[0].mainImage
+          }));
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch material image:', error);
+    }
+  };
+
+  // Fetch image for occasion - only when needed
+  const fetchOccasionImage = async (category: string, occasion: string) => {
+    const key = `${category}-${occasion}`;
+    if (occasionImages[key]) return; // Already fetched
+    
+    try {
+      // Occasions might be in tags or we can search by category
+      const params = new URLSearchParams({ category, limit: '1' });
+      const response = await fetch(`/api/public/products/menu-images?${params.toString()}`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.products && data.products.length > 0 && data.products[0].mainImage) {
+          setOccasionImages(prev => ({
+            ...prev,
+            [key]: data.products[0].mainImage
+          }));
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch occasion image:', error);
+    }
+  };
 
   // Get active category from URL
   const activeCategory = searchParams.get('category');
@@ -468,25 +584,23 @@ function HomeHeaderContent() {
                         key={category._id}
                         className='relative'
                         style={{ animationDelay: `${(menuItems.length + index) * 50}ms` }}
-                        onMouseEnter={() => hasSubcategories && setOpenCategoryDropdown(category._id)}
+                        onMouseEnter={() => setOpenCategoryDropdown(category._id)}
                         onMouseLeave={() => setOpenCategoryDropdown(null)}>
                         <Link
                           href={`/jewellery?category=${encodeURIComponent(category.name)}`}
                           className={cn(
                             'relative flex items-center gap-1.5 px-3 md:px-4 lg:px-5 py-2 rounded-lg cursor-pointer transition-all duration-300 whitespace-nowrap font-medium group',
                             isActive && 'bg-white/20 shadow-sm',
-                            hasSubcategories && isDropdownOpen && 'bg-white/15'
+                            isDropdownOpen && 'bg-white/15'
                           )}>
                           <span className='relative z-10'>{category.name}</span>
-                          {hasSubcategories && (
-                            <ChevronDown
-                              size={14}
-                              className={cn(
-                                'transition-all duration-300 text-white/70 group-hover:text-white',
-                                isDropdownOpen && 'rotate-180 text-white'
-                              )}
-                            />
-                          )}
+                          <ChevronDown
+                            size={14}
+                            className={cn(
+                              'transition-all duration-300 text-white/70 group-hover:text-white',
+                              isDropdownOpen && 'rotate-180 text-white'
+                            )}
+                          />
 
                           {/* White animated underline - always visible if active */}
                           <span
@@ -496,37 +610,264 @@ function HomeHeaderContent() {
                             )}
                           />
                         </Link>
-                        {hasSubcategories && isDropdownOpen && (
-                          <div className='absolute top-full left-0 mt-2 bg-white rounded-xl shadow-2xl border border-gray-200/60 py-2.5 z-50 min-w-[240px] max-w-[340px] backdrop-blur-sm bg-white/99 animate-in fade-in slide-in-from-top-3 duration-300'>
+                        {isDropdownOpen && (
+                          <div 
+                            className='absolute top-full left-0 mt-2 bg-white rounded-xl shadow-2xl border border-gray-200/60 z-50 w-[1000px] backdrop-blur-sm bg-white/99 animate-in fade-in slide-in-from-top-3 duration-300'
+                          >
                             {/* Arrow pointer */}
                             <div className='absolute -top-2 left-6 w-4 h-4 bg-white border-l border-t border-gray-200/60 rotate-45'></div>
-                            {/* Header */}
-                            <div className='px-4 py-2 border-b border-gray-100'>
-                              <p className='text-xs font-semibold text-[#1F3B29]/60 uppercase tracking-wider'>{category.name}</p>
-                            </div>
-                            {/* Subcategories */}
-                            <ul className='flex flex-col py-1.5'>
-                              {category.children?.map((subcategory, subIndex) => {
-                                const isSubActive = activeCategory === subcategory.name;
-                                return (
-                                  <li
-                                    key={subcategory._id}
-                                    style={{ animationDelay: `${subIndex * 30}ms` }}
-                                    className='animate-in fade-in slide-in-from-left-2 duration-300'>
+                            
+                            <div className='flex p-5 gap-4'>
+                              {/* Column 1: SHOP BY STYLE - Only show if subcategories exist */}
+                              {category.children && category.children.length > 0 && (
+                                <div className='flex-1 min-w-[200px]'>
+                                  <p className='text-[10px] font-semibold text-[#1F3B29] mb-3 uppercase tracking-wider'>SHOP BY STYLE</p>
+                                  <div className='grid grid-cols-2 gap-2.5'>
+                                    {category.children.slice(0, 9).map((item, idx) => {
+                                      const styleName = item.name;
+                                      const styleId = item._id;
+                                      const imageKey = `${category.name}-${styleName}`;
+                                      const hasImage = styleImages[imageKey];
+                                      
+                                      return (
+                                        <Link
+                                          key={styleId || idx}
+                                          href={`/jewellery?category=${encodeURIComponent(category.name)}&subcategory=${encodeURIComponent(styleName)}`}
+                                          onMouseEnter={() => {
+                                            setHoveredSubcategory({ category: category.name, subcategory: styleName });
+                                            fetchFeaturedProduct(category.name, styleName, PRODUCT_TYPES[0], GENDERS[0]);
+                                            if (!hasImage) {
+                                              fetchStyleImage(category.name, styleName);
+                                            }
+                                          }}
+                                          className='group/style flex flex-col items-center gap-1.5 p-1.5 rounded-lg hover:bg-[#F5EEE5]/50 transition-all duration-200'
+                                        >
+                                          <div className='relative w-14 h-14 rounded-lg overflow-hidden bg-[#F5EEE5] border border-[#C8A15B]/20'>
+                                            {hasImage ? (
+                                              <img
+                                                src={hasImage}
+                                                alt={styleName}
+                                                className='w-full h-full object-cover'
+                                              />
+                                            ) : (
+                                              <div className='w-full h-full flex items-center justify-center'>
+                                                <Diamond size={20} className='text-[#C8A15B]/60' strokeWidth={1.5} />
+                                              </div>
+                                            )}
+                                          </div>
+                                          <span className='text-[10px] font-medium text-[#1F3B29] text-center leading-tight group-hover/style:text-[#C8A15B] transition-colors duration-200'>
+                                            {styleName}
+                                          </span>
+                                        </Link>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Column 2: SHOP BY MATERIAL */}
+                              <div className='w-[130px]'>
+                                <p className='text-[10px] font-semibold text-[#1F3B29] mb-3 uppercase tracking-wider'>SHOP BY MATERIAL</p>
+                                <div className='flex flex-col gap-2.5'>
+                                  {PRODUCT_TYPES.map((material) => {
+                                    const imageKey = `${category.name}-${material}`;
+                                    const hasImage = materialImages[imageKey];
+                                    
+                                    return (
+                                      <Link
+                                        key={material}
+                                        href={`/jewellery?category=${encodeURIComponent(category.name)}&productType=${encodeURIComponent(material)}`}
+                                        onMouseEnter={() => {
+                                          // Only fetch image on hover if not already loaded
+                                          if (!hasImage) {
+                                            fetchMaterialImage(category.name, material);
+                                          }
+                                        }}
+                                        className='group/material flex items-center gap-2.5 p-1.5 rounded-lg hover:bg-[#F5EEE5]/50 transition-all duration-200'
+                                      >
+                                        <div className={cn(
+                                          'w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0',
+                                          material === 'Diamond' && 'bg-blue-50',
+                                          material === 'Platinum' && 'bg-gray-100',
+                                          material === 'Gemstone' && 'bg-purple-50',
+                                          material === 'Gold' && 'bg-yellow-50',
+                                          material === 'Silver' && 'bg-gray-50',
+                                          !['Diamond', 'Platinum', 'Gemstone', 'Gold', 'Silver'].includes(material) && 'bg-gray-50'
+                                        )}>
+                                          {hasImage ? (
+                                            <img
+                                              src={hasImage}
+                                              alt={material}
+                                              className='w-5 h-5 rounded-full object-cover'
+                                            />
+                                          ) : material === 'Diamond' ? (
+                                            <Diamond size={14} className='text-blue-500' strokeWidth={1.5} />
+                                          ) : (
+                                            <div className={cn(
+                                              'w-3.5 h-3.5 rounded-full',
+                                              material === 'Platinum' && 'bg-gray-300',
+                                              material === 'Gemstone' && 'bg-purple-300',
+                                              material === 'Gold' && 'bg-yellow-400',
+                                              material === 'Silver' && 'bg-gray-200',
+                                              !['Platinum', 'Gemstone', 'Gold', 'Silver'].includes(material) && 'bg-gray-200'
+                                            )} />
+                                          )}
+                                        </div>
+                                        <span className='text-[11px] font-medium text-[#1F3B29] group-hover/material:text-[#C8A15B] transition-colors duration-200'>
+                                          {material}
+                                        </span>
+                                      </Link>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+
+                              {/* Column 3: SHOP FOR */}
+                              <div className='w-[130px]'>
+                                <p className='text-[10px] font-semibold text-[#1F3B29] mb-3 uppercase tracking-wider'>SHOP FOR</p>
+                                <div className='flex flex-col gap-1.5 mb-3'>
+                                  {PRICE_RANGES.map((range) => (
                                     <Link
-                                      href={`/jewellery?category=${encodeURIComponent(subcategory.name)}`}
-                                      className={cn(
-                                        'group/sub flex items-center gap-3 px-4 py-2.5 mx-1.5 rounded-lg text-sm text-[#1F3B29] hover:bg-gradient-to-r hover:from-[#F5EEE5] hover:to-[#F5EEE5]/70 transition-all duration-200 font-medium relative',
-                                        isSubActive && 'bg-gradient-to-r from-[#F5EEE5] to-[#F5EEE5]/70 font-semibold shadow-sm'
-                                      )}>
-                                      <span className='w-2 h-2 rounded-full bg-[#C8A15B] opacity-0 group-hover/sub:opacity-100 transition-opacity duration-200 flex-shrink-0'></span>
-                                      <span className='flex-1'>{subcategory.name}</span>
-                                      <ChevronRight size={14} className='text-[#C8A15B] opacity-0 group-hover/sub:opacity-100 -translate-x-2 group-hover/sub:translate-x-0 transition-all duration-200 flex-shrink-0' />
+                                      key={range.value}
+                                      href={`/jewellery?category=${encodeURIComponent(category.name)}&minPrice=${range.value.split('-')[0]}&maxPrice=${range.value.split('-')[1]}`}
+                                      className='text-[11px] font-medium text-[#1F3B29] hover:text-[#C8A15B] transition-colors duration-200'
+                                    >
+                                      {range.label}
                                     </Link>
-                                  </li>
+                                  ))}
+                                </div>
+                                <div className='flex flex-col gap-1.5 pt-2.5 border-t border-gray-100'>
+                                  {GENDERS.map((gender) => (
+                                    <Link
+                                      key={gender}
+                                      href={`/jewellery?category=${encodeURIComponent(category.name)}&gender=${encodeURIComponent(gender)}`}
+                                      className='text-[11px] font-medium text-[#1F3B29] hover:text-[#C8A15B] transition-colors duration-200'
+                                    >
+                                      {gender.toUpperCase()}
+                                    </Link>
+                                  ))}
+                                </div>
+                              </div>
+
+                              {/* Column 4: SHOP BY OCCASION */}
+                              <div className='w-[130px]'>
+                                <p className='text-[10px] font-semibold text-[#1F3B29] mb-3 uppercase tracking-wider'>SHOP BY OCCASION</p>
+                                <div className='flex flex-col gap-2.5'>
+                                  {OCCASIONS.map((occasion) => {
+                                    const imageKey = `${category.name}-${occasion}`;
+                                    const hasImage = occasionImages[imageKey];
+                                    
+                                    return (
+                                      <Link
+                                        key={occasion}
+                                        href={`/jewellery?category=${encodeURIComponent(category.name)}&occasion=${encodeURIComponent(occasion)}`}
+                                        onMouseEnter={() => {
+                                          setHoveredSubcategory({ category: category.name, subcategory: occasion });
+                                          fetchFeaturedProduct(category.name, occasion, PRODUCT_TYPES[0], GENDERS[0]);
+                                          // Only fetch image on hover if not already loaded
+                                          if (!hasImage) {
+                                            fetchOccasionImage(category.name, occasion);
+                                          }
+                                        }}
+                                        className='group/occasion flex flex-col items-center gap-1.5 p-1.5 rounded-lg hover:bg-[#F5EEE5]/50 transition-all duration-200'
+                                      >
+                                        <div className='relative w-12 h-12 rounded-lg overflow-hidden bg-[#F5EEE5] border border-[#C8A15B]/20'>
+                                          {hasImage ? (
+                                            <img
+                                              src={hasImage}
+                                              alt={occasion}
+                                              className='w-full h-full object-cover'
+                                            />
+                                          ) : (
+                                            <div className='w-full h-full flex items-center justify-center'>
+                                              <Diamond size={18} className='text-[#C8A15B]/60' strokeWidth={1.5} />
+                                            </div>
+                                          )}
+                                        </div>
+                                        <span className='text-[10px] font-medium text-[#1F3B29] text-center leading-tight group-hover/occasion:text-[#C8A15B] transition-colors duration-200'>
+                                          {occasion}
+                                        </span>
+                                      </Link>
                                 );
                               })}
-                            </ul>
+                                </div>
+                              </div>
+
+                              {/* Column 5: Featured Product (Rightmost) */}
+                              <div className='w-[260px]'>
+                                {(() => {
+                                  const activeSubcategory = hoveredSubcategory?.category === category.name 
+                                    ? hoveredSubcategory.subcategory 
+                                    : (category.children && category.children.length > 0 
+                                        ? category.children[0]?.name 
+                                        : PRODUCT_TYPES[0]);
+                                  const firstProductType = category.children && category.children.length > 0 
+                                    ? PRODUCT_TYPES[0] 
+                                    : activeSubcategory;
+                                  const firstGender = GENDERS[0];
+                                  const productKey = category.children && category.children.length > 0
+                                    ? `${category.name}-${activeSubcategory || 'all'}-${firstProductType}-${firstGender}`
+                                    : `${category.name}-all-${activeSubcategory || PRODUCT_TYPES[0]}-${firstGender}`;
+                                  const featuredProduct = featuredProducts[productKey];
+                                  
+                                  // Fetch default featured product if not loaded
+                                  if (!featuredProduct && isDropdownOpen) {
+                                    if (category.children && category.children.length > 0) {
+                                      fetchFeaturedProduct(category.name, category.children[0]?.name, PRODUCT_TYPES[0], GENDERS[0]);
+                                    } else {
+                                      fetchFeaturedProduct(category.name, undefined, PRODUCT_TYPES[0], GENDERS[0]);
+                                    }
+                                  }
+                                  
+                                  return featuredProduct ? (
+                                    <div>
+                                      <Link
+                                        href={`/products/${featuredProduct.urlSlug || featuredProduct._id}`}
+                                        className='block group/product mb-2'
+                                      >
+                                        <div className='relative w-full aspect-square rounded-lg overflow-hidden bg-[#1F3B29] mb-2.5'>
+                                          {featuredProduct.mainImage ? (
+                                            <img
+                                              src={featuredProduct.mainImage}
+                                              alt={featuredProduct.name}
+                                              className='w-full h-full object-cover group-hover/product:scale-110 transition-transform duration-300'
+                                            />
+                                          ) : (
+                                            <div className='w-full h-full flex items-center justify-center'>
+                                              <Diamond size={50} className='text-white/20' />
+                                            </div>
+                                          )}
+                                        </div>
+                                        <p className='text-xs font-medium text-[#1F3B29] mb-2 text-center leading-snug'>
+                                          Sharp and Fashionable {category.name} to elevate your style!
+                                        </p>
+                                      </Link>
+                                      <Link
+                                        href={`/jewellery?category=${encodeURIComponent(category.name)}`}
+                                        className='block w-full text-center text-xs font-semibold text-[#1F3B29] hover:text-[#C8A15B] underline transition-colors duration-200'
+                                      >
+                                        VIEW ALL DESIGNS
+                                      </Link>
+                                    </div>
+                                  ) : (
+                                    <div>
+                                      <div className='relative w-full aspect-square rounded-lg overflow-hidden bg-[#1F3B29] mb-2.5 animate-pulse'>
+                                        <div className='w-full h-full flex items-center justify-center'>
+                                          <Diamond size={50} className='text-white/15' />
+                                        </div>
+                                      </div>
+                                      <div className='h-3 bg-gray-200 rounded mb-2 animate-pulse'></div>
+                                      <Link
+                                        href={`/jewellery?category=${encodeURIComponent(category.name)}`}
+                                        className='block w-full text-center text-xs font-semibold text-[#1F3B29] hover:text-[#C8A15B] underline transition-colors duration-200'
+                                      >
+                                        VIEW ALL DESIGNS
+                                      </Link>
+                                    </div>
+                                  );
+                                })()}
+                              </div>
+                            </div>
                           </div>
                         )}
                       </li>
