@@ -772,7 +772,10 @@ function HomeHeaderContent() {
                             const styleName = item.name;
                             const styleId = item._id;
                             const imageKey = `${category.name}-${styleName}`;
-                            const hasImage = styleImages[imageKey];
+                            // First check if subcategory has its own image, then check fetched product images
+                            const subcategoryImage = (item as any).image;
+                            const fetchedImage = styleImages[imageKey];
+                            const hasImage = subcategoryImage || fetchedImage;
 
                             return (
                               <Link
@@ -783,7 +786,8 @@ function HomeHeaderContent() {
                                 onMouseEnter={() => {
                                   setHoveredSubcategory({ category: category.name, subcategory: styleName });
                                   fetchFeaturedProduct(category.name, styleName, PRODUCT_TYPES[0], GENDERS[0]);
-                                  if (!hasImage) {
+                                  // Only fetch from products if subcategory doesn't have its own image
+                                  if (!subcategoryImage && !fetchedImage) {
                                     fetchStyleImage(category.name, styleName);
                                   }
                                 }}

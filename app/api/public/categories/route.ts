@@ -42,6 +42,7 @@ export async function GET() {
             productCount: 1,
             parentId: 1,
             displayOrder: 1,
+            position: 1,
             createdAt: 1,
           },
         },
@@ -87,8 +88,12 @@ export async function GET() {
     // Sort children within each category
     const sortCategories = (cats: any[]) => {
       return cats.sort((a, b) => {
-        if (a.displayOrder !== b.displayOrder) {
-          return (a.displayOrder || 999) - (b.displayOrder || 999);
+        // Use position for subcategories, displayOrder for categories
+        const aOrder = a.position !== undefined ? a.position : a.displayOrder;
+        const bOrder = b.position !== undefined ? b.position : b.displayOrder;
+        
+        if (aOrder !== bOrder) {
+          return (aOrder || 999) - (bOrder || 999);
         }
         if (a.featured !== b.featured) {
           return a.featured ? -1 : 1;
