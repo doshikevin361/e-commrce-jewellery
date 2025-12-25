@@ -48,6 +48,10 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     const updateData = {
       ...updateFields,
       parentId: updateFields.parentId === 'none' ? '' : updateFields.parentId,
+      occasions: Array.isArray(updateFields.occasions)
+        ? updateFields.occasions
+        : updateFields.occasions !== undefined ? [] : undefined,
+      megaMenuProductId: updateFields.megaMenuProductId || undefined,
       updatedAt: new Date(),
     };
 

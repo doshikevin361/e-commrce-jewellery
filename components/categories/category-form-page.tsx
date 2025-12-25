@@ -12,6 +12,14 @@ import { MainImageUpload } from '@/components/media/main-image-upload';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { CategoryTree } from './category-tree';
+import Dropdown from '@/components/customDropdown/customDropdown';
+import { X, Plus } from 'lucide-react';
+
+interface Occasion {
+  name: string;
+  productId?: string;
+  image?: string;
+}
 
 interface CategoryFormData {
   name: string;
@@ -34,6 +42,8 @@ interface CategoryFormData {
   commissionRate: number;
   featured: boolean;
   showProductCount: boolean;
+  occasions?: Occasion[];
+  megaMenuProductId?: string;
 }
 
 interface CategoryFormPageProps {
@@ -67,13 +77,20 @@ export function CategoryFormPage({ categoryId }: CategoryFormPageProps) {
     commissionRate: 0,
     featured: false,
     showProductCount: true,
+    occasions: [],
+    megaMenuProductId: '',
   });
 
   const [parentCategories, setParentCategories] = useState<any[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(false);
+  const [products, setProducts] = useState<Array<{ _id: string; name: string; mainImage?: string }>>([]);
+  const [loadingProducts, setLoadingProducts] = useState(false);
+  const [newOccasionName, setNewOccasionName] = useState('');
+  const [selectedProductForOccasion, setSelectedProductForOccasion] = useState<Record<number, string>>({});
 
   useEffect(() => {
     fetchParentCategories();
+    fetchProducts();
     if (categoryId) {
       fetchCategory();
     }
@@ -104,6 +121,21 @@ export function CategoryFormPage({ categoryId }: CategoryFormPageProps) {
       console.error('[v0] Failed to fetch parent categories:', error);
     } finally {
       setLoadingCategories(false);
+    }
+  };
+
+  const fetchProducts = async () => {
+    try {
+      setLoadingProducts(true);
+      const response = await fetch('/api/admin/products');
+      if (response.ok) {
+        const data = await response.json();
+        setProducts(Array.isArray(data) ? data : []);
+      }
+    } catch (error) {
+      console.error('[v0] Failed to fetch products:', error);
+    } finally {
+      setLoadingProducts(false);
     }
   };
 
@@ -168,6 +200,8 @@ export function CategoryFormPage({ categoryId }: CategoryFormPageProps) {
           icon: data.icon || data.image || '',
           focusKeywords: Array.isArray(data.focusKeywords) ? data.focusKeywords : [],
           status: data.status || 'active',
+          occasions: Array.isArray(data.occasions) ? data.occasions : [],
+          megaMenuProductId: data.megaMenuProductId || '',
         }));
       } else {
         const error = await response.json();
@@ -487,6 +521,110 @@ export function CategoryFormPage({ categoryId }: CategoryFormPageProps) {
                     className='h-[48px]'
                     min='0'
                   />
+                </div>
+              </div>
+
+              {/* MegaMenu Product Selection */}
+              <div className='flex items-center gap-6'>
+                <label htmlFor='megaMenuProductId' className='w-1/4 text-sm font-medium text-gray-700 text-right pr-4'>
+                  MegaMenu Featured Product
+                </label>
+                <div className='flex-1'>
+                  <Dropdown
+                    options={[
+                      { label: 'None', value: '' },
+                      ...products.map(p => ({ label: p.name, value: p._id })),
+                    ]}
+                    placeholder='Select a product to display in MegaMenu'
+                    withSearch={true}
+                    value={formData.megaMenuProductId || ''}
+                    onChange={option => updateField('megaMenuProductId', option.value)}
+                  />
+                  <p className='text-xs text-muted-foreground mt-1'>
+                    Product image will be shown beside the "Shop by Occasion" section in the MegaMenu
+                  </p>
+                </div>
+              </div>
+
+              {/* Occasions Management */}
+              <div className='flex items-start gap-6'>
+                <label className='w-1/4 text-sm font-medium text-gray-700 text-right pr-4 pt-3'>
+                  Shop by Occasion
+                </label>
+                <div className='flex-1 space-y-4'>
+                  <div className='space-y-3'>
+                    {(formData.occasions || []).map((occasion, index) => (
+                      <div key={index} className='flex items-center gap-3 p-3 border rounded-lg bg-gray-50'>
+                        <div className='flex-1'>
+                          <div className='font-medium text-sm text-gray-700 mb-2'>{occasion.name}</div>
+                          <Dropdown
+                            options={[
+                              { label: 'No product selected', value: '' },
+                              ...products.map(p => ({ label: p.name, value: p._id })),
+                            ]}
+                            placeholder='Select product for this occasion'
+                            withSearch={true}
+                            value={occasion.productId || ''}
+                            onChange={option => {
+                              const updatedOccasions = [...(formData.occasions || [])];
+                              updatedOccasions[index] = {
+                                ...updatedOccasions[index],
+                                productId: option.value,
+                                image: products.find(p => p._id === option.value)?.mainImage || undefined,
+                              };
+                              updateField('occasions', updatedOccasions);
+                            }}
+                          />
+                        </div>
+                        <Button
+                          type='button'
+                          variant='ghost'
+                          size='icon'
+                          onClick={() => {
+                            const updatedOccasions = (formData.occasions || []).filter((_, i) => i !== index);
+                            updateField('occasions', updatedOccasions);
+                          }}
+                          className='text-red-500 hover:text-red-700 hover:bg-red-50'>
+                          <X className='h-4 w-4' />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                  <div className='flex gap-2'>
+                    <Input
+                      placeholder='Enter occasion name (e.g., Daily Wear, Wedding)'
+                      value={newOccasionName}
+                      onChange={e => setNewOccasionName(e.target.value)}
+                      onKeyPress={e => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          if (newOccasionName.trim()) {
+                            const updatedOccasions = [...(formData.occasions || []), { name: newOccasionName.trim() }];
+                            updateField('occasions', updatedOccasions);
+                            setNewOccasionName('');
+                          }
+                        }
+                      }}
+                      className='flex-1'
+                    />
+                    <Button
+                      type='button'
+                      onClick={() => {
+                        if (newOccasionName.trim()) {
+                          const updatedOccasions = [...(formData.occasions || []), { name: newOccasionName.trim() }];
+                          updateField('occasions', updatedOccasions);
+                          setNewOccasionName('');
+                        }
+                      }}
+                      disabled={!newOccasionName.trim()}
+                      className='bg-primary text-white'>
+                      <Plus className='h-4 w-4 mr-1' />
+                      Add
+                    </Button>
+                  </div>
+                  <p className='text-xs text-muted-foreground'>
+                    Add occasion categories that will appear in the "Shop by Occasion" section of the MegaMenu
+                  </p>
                 </div>
               </div>
 

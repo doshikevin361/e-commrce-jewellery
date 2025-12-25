@@ -13,6 +13,7 @@ import { useWishlist } from '@/contexts/WishlistContext';
 import toast from 'react-hot-toast';
 import { cn } from '@/lib/utils';
 import { Loader2 } from 'lucide-react';
+import { Star, Circle, Zap, Gem, Coffee } from 'lucide-react'; // Replace with relevant icons
 
 // Grid2x2CheckIcon component (same as hero section)
 const Grid2x2CheckIcon = ({ size, className }: { size: number; className?: string }) => (
@@ -66,9 +67,19 @@ function HomeHeaderContent() {
   const [materialImages, setMaterialImages] = useState<Record<string, string>>({});
   const [occasionImages, setOccasionImages] = useState<Record<string, string>>({});
   const [fetchingProducts, setFetchingProducts] = useState<Set<string>>(new Set());
+  const [megaMenuProducts, setMegaMenuProducts] = useState<Record<string, any>>({});
 
-  // Product types and genders for menu
+  const PRODUCT_TYPE_ICONS: Record<string, JSX.Element> = {
+    Diamonds: <Diamond size={16} className='text-blue-500' strokeWidth={1.5} />,
+    Gold: <Star size={16} className='text-yellow-400' strokeWidth={1.5} />,
+    Silver: <Circle size={16} className='text-gray-400' strokeWidth={1.5} />,
+    Platinum: <Zap size={16} className='text-gray-300' strokeWidth={1.5} />,
+    Gemstone: <Gem size={16} className='text-purple-500' strokeWidth={1.5} />,
+    Imitation: <Coffee size={16} className='text-pink-400' strokeWidth={1.5} />,
+  };
+  // Your existing product types array
   const PRODUCT_TYPES = ['Gold', 'Silver', 'Diamonds', 'Platinum', 'Gemstone', 'Imitation'];
+
   const GENDERS = ['Man', 'Women', 'Unisex'];
 
   // Shop By Style options (these would be subcategories or design types)
@@ -94,8 +105,7 @@ function HomeHeaderContent() {
     { label: 'ABOVE ₹75K', value: '75000-999999999' },
   ];
 
-  // Occasions
-  const OCCASIONS = ['Daily Wear', 'Casual Outings', 'Festive', 'Anniversary', 'Wedding'];
+  // Occasions - now fetched dynamically from category data
 
   useEffect(() => {
     setMounted(true);
@@ -266,10 +276,31 @@ function HomeHeaderContent() {
     }
   };
 
+  // Fetch megaMenu product
+  const fetchMegaMenuProduct = useCallback(async (productId: string) => {
+    if (!productId || megaMenuProducts[productId]) return;
+
+    try {
+      // Use the megamenu-specific endpoint that doesn't check status
+      const response = await fetch(`/api/public/products/megamenu/${productId}`);
+      if (response.ok) {
+        const product = await response.json();
+        setMegaMenuProducts(prev => ({
+          ...prev,
+          [productId]: product,
+        }));
+      } else {
+        console.error('Failed to fetch megaMenu product:', response.status);
+      }
+    } catch (error) {
+      console.error('Error fetching megaMenu product:', error);
+    }
+  }, [megaMenuProducts]);
+
   // Get active category from URL
   const activeCategory = searchParams.get('category');
 
-  // Fetch default featured product when dropdown opens
+  // Fetch default featured product and megaMenu product when dropdown opens
   useEffect(() => {
     if (!openCategoryDropdown) return;
 
@@ -289,7 +320,13 @@ function HomeHeaderContent() {
         fetchFeaturedProduct(category.name, undefined, PRODUCT_TYPES[0], GENDERS[0]);
       }
     }
-  }, [openCategoryDropdown, categories]);
+
+    // Fetch megaMenu product if set
+    const megaMenuProductId = (category as any).megaMenuProductId;
+    if (megaMenuProductId && !megaMenuProducts[megaMenuProductId]) {
+      fetchMegaMenuProduct(megaMenuProductId);
+    }
+  }, [openCategoryDropdown, categories, fetchMegaMenuProduct, megaMenuProducts]);
 
   // Check for reset password token in URL (only on home page, not on verify-email page)
   useEffect(() => {
@@ -817,54 +854,40 @@ function HomeHeaderContent() {
                       <div className='flex flex-col gap-3'>
                         {PRODUCT_TYPES.map(material => {
                           const imageKey = `${category.name}-${material}`;
-                          const hasImage = materialImages[imageKey];
+                          const hasImage = materialImages[imageKey]; // only dynamic images
 
                           return (
                             <Link
                               key={material}
                               href={`/jewellery?category=${encodeURIComponent(category.name)}&productType=${encodeURIComponent(material)}`}
                               onMouseEnter={() => {
-                                // Only fetch image on hover if not already loaded
-                                if (!hasImage) {
-                                  fetchMaterialImage(category.name, material);
+                                if (!materialImages[imageKey]) {
+                                  fetchMaterialImage(category.name, material); // fetch only if not loaded
                                 }
                               }}
                               className='group/material flex items-center gap-3 p-2 rounded-lg hover:bg-[#F5EEE5]/50 transition-all duration-200'>
                               <div
                                 className={cn(
                                   'w-8 h-8 sm:w-9 sm:h-9 lg:w-7 lg:h-7 rounded-full flex items-center justify-center flex-shrink-0',
-                                  material === 'Diamond' && 'bg-blue-50',
+                                  material === 'Diamonds' && 'bg-blue-50',
                                   material === 'Platinum' && 'bg-gray-100',
                                   material === 'Gemstone' && 'bg-purple-50',
                                   material === 'Gold' && 'bg-yellow-50',
                                   material === 'Silver' && 'bg-gray-50',
-                                  !['Diamond', 'Platinum', 'Gemstone', 'Gold', 'Silver'].includes(material) && 'bg-gray-50'
+                                  material === 'Imitation' && 'bg-pink-50',
+                                  !['Diamonds', 'Platinum', 'Gemstone', 'Gold', 'Silver', 'Imitation'].includes(material) && 'bg-gray-50'
                                 )}>
                                 {hasImage ? (
                                   <img
                                     src={hasImage}
                                     alt={material}
-                                    className='w-5 h-5 sm:w-6 sm:h-6 lg:w-5 lg:h-5 rounded-full object-cover'
-                                  />
-                                ) : material === 'Diamond' ? (
-                                  <Diamond
-                                    size={16}
-                                    className='sm:w-[18px] sm:h-[18px] lg:w-[14px] lg:h-[14px] text-blue-500'
-                                    strokeWidth={1.5}
+                                    className='w-5 h-5 sm:w-6 sm:h-6 lg:w-16 lg:h-10 rounded-full object-cover'
                                   />
                                 ) : (
-                                  <div
-                                    className={cn(
-                                      'w-4 h-4 sm:w-5 sm:h-5 lg:w-3.5 lg:h-3.5 rounded-full',
-                                      material === 'Platinum' && 'bg-gray-300',
-                                      material === 'Gemstone' && 'bg-purple-300',
-                                      material === 'Gold' && 'bg-yellow-400',
-                                      material === 'Silver' && 'bg-gray-200',
-                                      !['Platinum', 'Gemstone', 'Gold', 'Silver'].includes(material) && 'bg-gray-200'
-                                    )}
-                                  />
+                                  PRODUCT_TYPE_ICONS[material] || <div className='w-4 h-4 rounded-full bg-gray-200' />
                                 )}
                               </div>
+
                               <span className='text-[12px] sm:text-[13px] lg:text-[11px] font-medium text-[#1F3B29] group-hover/material:text-[#C8A15B] transition-colors duration-200'>
                                 {material}
                               </span>
@@ -905,26 +928,30 @@ function HomeHeaderContent() {
                     <div className='lg:col-span-2'>
                       <p className='text-[11px] font-semibold text-[#1F3B29] mb-4 uppercase tracking-wider'>SHOP BY OCCASION</p>
                       <div className='grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 gap-3'>
-                        {OCCASIONS.map(occasion => {
-                          const imageKey = `${category.name}-${occasion}`;
-                          const hasImage = occasionImages[imageKey];
+                        {((category as any).occasions && Array.isArray((category as any).occasions) && (category as any).occasions.length > 0
+                          ? (category as any).occasions
+                          : []).map((occasion: any, index: number) => {
+                          const occasionName = occasion.name;
+                          const occasionProductId = occasion.productId;
+                          const occasionImage = occasion.image || (occasionProductId && occasionImages[`${category.name}-${occasionName}`]);
+                          const hasImage = occasionImage;
 
                           return (
                             <Link
-                              key={occasion}
-                              href={`/jewellery?category=${encodeURIComponent(category.name)}&occasion=${encodeURIComponent(occasion)}`}
+                              key={`${occasionName}-${index}`}
+                              href={occasionProductId ? `/products/${occasionProductId}` : `/jewellery?category=${encodeURIComponent(category.name)}&occasion=${encodeURIComponent(occasionName)}`}
                               onMouseEnter={() => {
-                                setHoveredSubcategory({ category: category.name, subcategory: occasion });
-                                fetchFeaturedProduct(category.name, occasion, PRODUCT_TYPES[0], GENDERS[0]);
-                                // Only fetch image on hover if not already loaded
-                                if (!hasImage) {
-                                  fetchOccasionImage(category.name, occasion);
+                                setHoveredSubcategory({ category: category.name, subcategory: occasionName });
+                                fetchFeaturedProduct(category.name, occasionName, PRODUCT_TYPES[0], GENDERS[0]);
+                                // Only fetch image on hover if not already loaded and no product image
+                                if (!hasImage && !occasionProductId) {
+                                  fetchOccasionImage(category.name, occasionName);
                                 }
                               }}
                               className='group/occasion flex flex-col items-center gap-2 p-2 rounded-lg hover:bg-[#F5EEE5]/50 transition-all duration-200'>
                               <div className='relative w-14 h-14 sm:w-16 sm:h-16 lg:w-12 lg:h-12 xl:w-14 xl:h-14 rounded-lg overflow-hidden bg-[#F5EEE5] border border-[#C8A15B]/20'>
                                 {hasImage ? (
-                                  <img src={hasImage} alt={occasion} className='w-full h-full object-cover' />
+                                  <img src={hasImage} alt={occasionName} className='w-full h-full object-cover' />
                                 ) : (
                                   <div className='w-full h-full flex items-center justify-center'>
                                     <Diamond size={18} className='text-[#C8A15B]/60' strokeWidth={1.5} />
@@ -932,7 +959,7 @@ function HomeHeaderContent() {
                                 )}
                               </div>
                               <span className='text-[11px] sm:text-[12px] lg:text-[10px] xl:text-[11px] font-medium text-[#1F3B29] text-center leading-tight group-hover/occasion:text-[#C8A15B] transition-colors duration-200'>
-                                {occasion}
+                                {occasionName}
                               </span>
                             </Link>
                           );
@@ -943,6 +970,40 @@ function HomeHeaderContent() {
                     {/* Column 5: Featured Product (Rightmost) */}
                     <div className='lg:col-span-3 xl:col-span-2'>
                       {(() => {
+                        // Check if megaMenuProductId is set and product is loaded
+                        const megaMenuProductId = (category as any).megaMenuProductId;
+                        const megaMenuProduct = megaMenuProductId ? megaMenuProducts[megaMenuProductId] : null;
+
+                        if (megaMenuProduct) {
+                          return (
+                            <div>
+                              <Link href={`/products/${megaMenuProduct.urlSlug || megaMenuProduct._id}`} className='block group/product mb-3'>
+                                <div className='relative w-full aspect-square rounded-lg overflow-hidden bg-[#1F3B29] mb-3'>
+                                  {megaMenuProduct.mainImage ? (
+                                    <img
+                                      src={megaMenuProduct.mainImage}
+                                      alt={megaMenuProduct.name || 'Featured Product'}
+                                      className='w-full h-full object-cover group-hover/product:scale-110 transition-transform duration-300'
+                                      onError={(e) => {
+                                        console.error('Failed to load product image:', megaMenuProduct.mainImage);
+                                        (e.target as HTMLImageElement).style.display = 'none';
+                                      }}
+                                    />
+                                  ) : (
+                                    <div className='w-full h-full flex items-center justify-center'>
+                                      <Diamond size={50} className='text-white/20' />
+                                    </div>
+                                  )}
+                                </div>
+                                <p className='text-sm sm:text-base lg:text-xs xl:text-sm font-medium text-[#1F3B29] mb-3 text-center leading-snug'>
+                                  {megaMenuProduct.shortDescription || megaMenuProduct.name || 'Featured Product'}
+                                </p>
+                              </Link>
+                            </div>
+                          );
+                        }
+
+                        // Fallback to original featured product logic
                         const activeSubcategory =
                           hoveredSubcategory?.category === category.name
                             ? hoveredSubcategory.subcategory

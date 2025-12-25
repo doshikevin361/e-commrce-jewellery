@@ -43,6 +43,8 @@ export async function GET() {
             parentId: 1,
             displayOrder: 1,
             position: 1,
+            occasions: 1,
+            megaMenuProductId: 1,
             createdAt: 1,
           },
         },

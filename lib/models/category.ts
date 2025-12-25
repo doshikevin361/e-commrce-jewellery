@@ -1,6 +1,12 @@
 import { connectToDatabase } from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
 
+export interface Occasion {
+  name: string;
+  productId?: string;
+  image?: string;
+}
+
 export interface Category {
   _id?: ObjectId;
   name: string;
@@ -22,6 +28,8 @@ export interface Category {
   featured: boolean;
   showProductCount: boolean;
   productCount?: number;
+  occasions?: Occasion[];
+  megaMenuProductId?: string;
   createdAt?: Date;
   updatedAt?: Date;
 }

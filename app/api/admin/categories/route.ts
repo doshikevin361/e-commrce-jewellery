@@ -87,6 +87,10 @@ export async function POST(request: Request) {
       focusKeywords: Array.isArray(body.focusKeywords)
         ? body.focusKeywords
         : [],
+      occasions: Array.isArray(body.occasions)
+        ? body.occasions
+        : [],
+      megaMenuProductId: body.megaMenuProductId || undefined,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
