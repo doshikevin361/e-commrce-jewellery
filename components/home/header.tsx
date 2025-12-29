@@ -865,6 +865,17 @@ function HomeHeaderContent() {
             const isDropdownOpen = openCategoryDropdown === category._id;
             if (!isDropdownOpen) return null;
 
+            // Check if all required fields are present for mega menu
+            const hasShopByStyle = category.children && category.children.length > 0;
+            const hasShopByOccasion =
+              (category as any).occasions && Array.isArray((category as any).occasions) && (category as any).occasions.length > 0;
+            const hasMegaMenuProduct = !!(category as any).megaMenuProductId;
+
+            // Only show mega menu if all three conditions are met
+            if (!hasShopByStyle || !hasShopByOccasion || !hasMegaMenuProduct) {
+              return null;
+            }
+
             return (
               <div
                 key={category._id}
