@@ -1,6 +1,27 @@
 'use client';
 
-import { Diamond, ShoppingCart, User, Menu, X, ChevronDown, ChevronRight, Heart, LogOut, Settings, ShoppingBag } from 'lucide-react';
+import {
+  Diamond,
+  ShoppingCart,
+  User,
+  Menu,
+  X,
+  ChevronDown,
+  ChevronRight,
+  Heart,
+  LogOut,
+  Settings,
+  ShoppingBag,
+  Store,
+  Circle,
+  Gift,
+  MoreHorizontal,
+  Star,
+  Zap,
+  Gem,
+  Coffee,
+  Loader2,
+} from 'lucide-react';
 import SearchBar from './SearchBar/SearchBar';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -12,8 +33,6 @@ import { useCart } from '@/contexts/CartContext';
 import { useWishlist } from '@/contexts/WishlistContext';
 import toast from 'react-hot-toast';
 import { cn } from '@/lib/utils';
-import { Loader2 } from 'lucide-react';
-import { Star, Circle, Zap, Gem, Coffee } from 'lucide-react'; // Replace with relevant icons
 
 // Grid2x2CheckIcon component (same as hero section)
 const Grid2x2CheckIcon = ({ size, className }: { size: number; className?: string }) => (
@@ -77,6 +96,29 @@ function HomeHeaderContent() {
     Platinum: <Zap size={16} className='text-gray-300' strokeWidth={1.5} />,
     Gemstone: <Gem size={16} className='text-purple-500' strokeWidth={1.5} />,
     Imitation: <Coffee size={16} className='text-pink-400' strokeWidth={1.5} />,
+  };
+
+  // Helper function to get icon for category
+  const getCategoryIcon = (categoryName: string) => {
+    const name = categoryName.toLowerCase();
+    // Use Circle with decorative styling for earrings
+    if (name.includes('earring'))
+      return <Circle size={16} className='text-gray-700' strokeWidth={2} fill='currentColor' fillOpacity={0.2} />;
+    if (name.includes('ring')) return <Ring size={16} className='text-gray-700' strokeWidth={1.5} />;
+    if (name.includes('gift') || name.includes('gifting')) return <Gift size={16} className='text-gray-700' strokeWidth={1.5} />;
+    if (name.includes('diamond')) return <Diamond size={16} className='text-gray-700' strokeWidth={1.5} />;
+    if (name.includes('gold')) return <Star size={16} className='text-gray-700' strokeWidth={1.5} />;
+    return <Diamond size={16} className='text-gray-700' strokeWidth={1.5} />;
+  };
+
+  // Helper function to get icon for menu item
+  const getMenuItemIcon = (itemName: string) => {
+    const name = itemName.toLowerCase();
+    if (name.includes('all jewellery') || name.includes('all')) return <Grid2x2CheckIcon size={16} className='text-gray-700' />;
+    if (name.includes('collection')) return <Grid2x2CheckIcon size={16} className='text-gray-700' />;
+    if (name.includes('wedding')) return <Ring size={16} className='text-gray-700' strokeWidth={1.5} />;
+    if (name.includes('gift') || name.includes('gifting')) return <Gift size={16} className='text-gray-700' strokeWidth={1.5} />;
+    return null;
   };
   // Your existing product types array
   const PRODUCT_TYPES = ['Gold', 'Silver', 'Diamonds', 'Platinum', 'Gemstone', 'Imitation'];
@@ -434,25 +476,25 @@ function HomeHeaderContent() {
   return (
     <React.Fragment>
       {/* Top bar with logo, search, and account/cart - Fixed Sticky */}
-      <div className='fixed top-0 left-0 right-0 bg-white z-50 shadow-sm'>
-        <div className='mx-auto flex w-full max-w-[1440px] items-center justify-between gap-2 sm:gap-3 md:gap-4 px-4 sm:px-6 md:px-8 lg:px-12 py-2 sm:py-2.5 md:py-3 pt-3 sm:pt-4 md:pt-5 lg:pt-6'>
+      <div className='fixed top-0 left-0 right-0 bg-white z-50'>
+        <div className='mx-auto flex w-full max-w-[1440px] items-center justify-between gap-2 sm:gap-3 md:gap-4 px-4 sm:px-6 md:px-8 lg:px-12 py-3 sm:py-3.5 md:py-4'>
           {/* Mobile Menu Button - In top bar for better visibility, hidden on desktop (1024px+) */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className='flex lg:hidden items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-lg transition-all duration-300 hover:bg-[#1F3B29]/10 active:scale-95 bg-[#1F3B29] text-white shadow-lg flex-shrink-0 mr-2 sm:mr-3'
+            className='flex lg:hidden items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-lg transition-all duration-300 hover:bg-[#1F3B29]/10 active:scale-95 bg-[#1F3B29] text-white shadow-lg flex-shrink-0'
             aria-label='Menu'
             type='button'>
             {mobileMenuOpen ? (
-              <X size={24} className='sm:w-7 sm:h-7 text-white flex-shrink-0 font-bold stroke-[2.5]' />
+              <X size={20} className='sm:w-6 sm:h-6 text-white flex-shrink-0 font-bold stroke-[2.5]' />
             ) : (
-              <Menu size={24} className='sm:w-7 sm:h-7 text-white flex-shrink-0 font-bold stroke-[2.5]' />
+              <Menu size={20} className='sm:w-6 sm:h-6 text-white flex-shrink-0 font-bold stroke-[2.5]' />
             )}
           </button>
 
           {/* Logo */}
           <Link
             href='/'
-            className='flex items-center gap-1 sm:gap-1.5 md:gap-2 flex-shrink-0 transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer'>
+            className='flex items-center gap-1 sm:gap-1.5 md:gap-2 flex-shrink-0 transition-all duration-300 hover:opacity-80 active:scale-95 cursor-pointer'>
             {logo ? (
               <img
                 src={logo.imageUrl}
@@ -461,14 +503,14 @@ function HomeHeaderContent() {
                 style={{
                   width: `${logo.width}px`,
                   height: `${logo.height}px`,
-                  maxWidth: '200px',
-                  maxHeight: '60px',
+                  maxWidth: '180px',
+                  maxHeight: '50px',
                 }}
               />
             ) : (
               <>
-                <Diamond size={16} className='sm:w-[17px] sm:h-[17px] md:w-[18px] md:h-[18px] text-[#1F3B29]' />
-                <span className='text-sm sm:text-base md:text-lg lg:text-xl font-semibold tracking-[0.08em] sm:tracking-[0.1em] md:tracking-[0.15em] lg:tracking-[0.2em] text-[#1F3B29] whitespace-nowrap'>
+                <Diamond size={18} className='sm:w-5 sm:h-5 md:w-6 md:h-6 text-[#1F3B29]' />
+                <span className='text-base sm:text-lg md:text-xl lg:text-2xl font-bold tracking-wide text-[#1F3B29] whitespace-nowrap'>
                   Jewellery
                 </span>
               </>
@@ -480,22 +522,37 @@ function HomeHeaderContent() {
             <SearchBar />
           </div>
 
-          {/* Right Side Icons */}
-          <div className='flex items-center gap-1 sm:gap-1.5 md:gap-3 lg:gap-4 text-xs sm:text-sm text-[#1F3B29]'>
-            {/* Wishlist - Hidden on mobile, icon only on tablet, full on desktop */}
+          {/* Right Side Icons - Tanishq Style */}
+          <div className='flex items-center gap-2 sm:gap-3 md:gap-4 text-[#1F3B29]'>
+            {/* Diamond Icon */}
+            <Link
+              href='/jewellery?productType=Diamonds'
+              className='hidden md:flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-full transition-all duration-300 hover:bg-gray-100 active:scale-95'
+              aria-label='Diamonds'>
+              <Diamond size={20} className='sm:w-5 sm:h-5 text-[#1F3B29]' />
+            </Link>
+
+            {/* Store Icon */}
+            <Link
+              href='/contact'
+              className='hidden md:flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-full transition-all duration-300 hover:bg-gray-100 active:scale-95'
+              aria-label='Stores'>
+              <Store size={20} className='sm:w-5 sm:h-5 text-[#1F3B29]' />
+            </Link>
+
+            {/* Wishlist */}
             <Link
               href='/wishlist'
-              className='hidden sm:flex items-center gap-1 font-semibold px-1 sm:px-1.5 md:px-2 transition-all duration-300 hover:scale-110 active:scale-95 relative'
+              className='flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-full transition-all duration-300 hover:bg-gray-100 active:scale-95 relative'
               aria-label='Wishlist'>
               <div className='relative flex-shrink-0'>
-                <Heart size={15} className='sm:w-[16px] sm:h-[16px] md:w-[18px] md:h-[18px] text-[#1F3B29]' />
+                <Heart size={20} className='sm:w-5 sm:h-5 text-[#1F3B29]' />
                 {wishlistCount > 0 && (
-                  <span className='absolute -top-1 -right-1 bg-[#C8A15B] text-white text-[9px] sm:text-[10px] font-bold rounded-full w-3.5 h-3.5 sm:w-4 sm:h-4 flex items-center justify-center shadow-sm leading-none'>
+                  <span className='absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold rounded-full w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center shadow-sm leading-none'>
                     {wishlistCount > 99 ? '99+' : wishlistCount}
                   </span>
                 )}
               </div>
-              <span className='hidden lg:inline text-xs sm:text-sm whitespace-nowrap'>Wishlist</span>
             </Link>
             {/* Account Dropdown */}
             <div className='relative' ref={accountDropdownRef}>
@@ -503,30 +560,26 @@ function HomeHeaderContent() {
                 <>
                   <button
                     onClick={() => setAccountDropdownOpen(!accountDropdownOpen)}
-                    className='flex items-center gap-0.5 sm:gap-1 font-semibold px-1 sm:px-1.5 md:px-2 transition-all duration-300 hover:scale-110 active:scale-95 whitespace-nowrap'
+                    className='flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-full transition-all duration-300 hover:bg-gray-100 active:scale-95'
                     aria-label='Account'>
-                    <User size={15} className='sm:w-[16px] sm:h-[16px] md:w-[18px] md:h-[18px] flex-shrink-0' />
-                    <span className='hidden sm:inline text-xs sm:text-sm whitespace-nowrap truncate max-w-[80px] sm:max-w-[100px] md:max-w-none'>
-                      {customerName || 'My Account'}
-                    </span>
-                    <ChevronDown
-                      size={12}
-                      className={`hidden sm:block transition-transform duration-300 ${accountDropdownOpen ? 'rotate-180' : ''}`}
-                    />
+                    <User size={20} className='sm:w-5 sm:h-5 text-[#1F3B29] flex-shrink-0' />
                   </button>
                   {accountDropdownOpen && (
                     <div className='absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-100 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200'>
+                      <div className='px-4 py-2 border-b border-gray-100'>
+                        <p className='text-sm font-semibold text-[#1F3B29] truncate'>{customerName || 'My Account'}</p>
+                      </div>
                       <Link
                         href='/customer-profile'
                         onClick={() => setAccountDropdownOpen(false)}
-                        className='flex items-center gap-2 px-4 py-2.5 text-sm text-[#1F3B29] hover:bg-[#F5EEE5]/60 transition-colors duration-200 font-medium'>
+                        className='flex items-center gap-2 px-4 py-2.5 text-sm text-[#1F3B29] hover:bg-gray-50 transition-colors duration-200 font-medium'>
                         <Settings size={16} />
                         My Profile
                       </Link>
                       <Link
                         href='/my-orders'
                         onClick={() => setAccountDropdownOpen(false)}
-                        className='flex items-center gap-2 px-4 py-2.5 text-sm text-[#1F3B29] hover:bg-[#F5EEE5]/60 transition-colors duration-200 font-medium'>
+                        className='flex items-center gap-2 px-4 py-2.5 text-sm text-[#1F3B29] hover:bg-gray-50 transition-colors duration-200 font-medium'>
                         <ShoppingBag size={16} />
                         My Orders
                       </Link>
@@ -543,14 +596,9 @@ function HomeHeaderContent() {
                 <>
                   <button
                     onClick={() => setAccountDropdownOpen(!accountDropdownOpen)}
-                    className='flex items-center gap-0.5 sm:gap-1 font-semibold px-1 sm:px-1.5 md:px-2 transition-all duration-300 hover:scale-110 active:scale-95 whitespace-nowrap'
+                    className='flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-full transition-all duration-300 hover:bg-gray-100 active:scale-95'
                     aria-label='Login'>
-                    <User size={15} className='sm:w-[16px] sm:h-[16px] md:w-[18px] md:h-[18px] flex-shrink-0' />
-                    <span className='hidden sm:inline text-xs sm:text-sm whitespace-nowrap'>Login</span>
-                    <ChevronDown
-                      size={12}
-                      className={`hidden sm:block transition-transform duration-300 ${accountDropdownOpen ? 'rotate-180' : ''}`}
-                    />
+                    <User size={20} className='sm:w-5 sm:h-5 text-[#1F3B29] flex-shrink-0' />
                   </button>
                   {accountDropdownOpen && (
                     <div className='absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-100 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200'>
@@ -560,7 +608,7 @@ function HomeHeaderContent() {
                           setAuthMode('login');
                           setAuthModalOpen(true);
                         }}
-                        className='w-full text-left block px-4 py-2.5 text-sm text-[#1F3B29] hover:bg-[#F5EEE5]/60 transition-colors duration-200 font-medium'>
+                        className='w-full text-left block px-4 py-2.5 text-sm text-[#1F3B29] hover:bg-gray-50 transition-colors duration-200 font-medium'>
                         Login
                       </button>
                       <button
@@ -569,7 +617,7 @@ function HomeHeaderContent() {
                           setAuthMode('register');
                           setAuthModalOpen(true);
                         }}
-                        className='w-full text-left block px-4 py-2.5 text-sm text-[#1F3B29] hover:bg-[#F5EEE5]/60 transition-colors duration-200 font-medium'>
+                        className='w-full text-left block px-4 py-2.5 text-sm text-[#1F3B29] hover:bg-gray-50 transition-colors duration-200 font-medium'>
                         Create Account
                       </button>
                     </div>
@@ -580,28 +628,27 @@ function HomeHeaderContent() {
             {/* Cart */}
             <Link
               href='/cart'
-              className='flex items-center gap-1 sm:gap-1.5 font-semibold px-1 sm:px-1.5 md:px-2 transition-all duration-300 hover:scale-110 active:scale-95 relative'
+              className='flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-full transition-all duration-300 hover:bg-gray-100 active:scale-95 relative'
               aria-label='Cart'>
               <div className='relative flex-shrink-0'>
-                <ShoppingCart size={15} className='sm:w-[16px] sm:h-[16px] md:w-[18px] md:h-[18px] text-[#1F3B29]' />
+                <ShoppingCart size={20} className='sm:w-5 sm:h-5 text-[#1F3B29]' />
                 {cartCount > 0 && (
-                  <span className='absolute -top-1 -right-1 bg-[#C8A15B] text-white text-[9px] sm:text-[10px] font-bold rounded-full w-3.5 h-3.5 sm:w-4 sm:h-4 flex items-center justify-center shadow-sm leading-none'>
+                  <span className='absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold rounded-full w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center shadow-sm leading-none'>
                     {cartCount > 99 ? '99+' : cartCount}
                   </span>
                 )}
               </div>
-              <span className='hidden lg:inline text-xs sm:text-sm whitespace-nowrap text-[#1F3B29]'>Your Cart</span>
             </Link>
           </div>
         </div>
         {/* Mobile Search Bar - Below main bar */}
-        <div className='sm:hidden border-t border-gray-100 px-4 py-2'>
+        <div className='sm:hidden border-t border-gray-100 px-4 py-2.5'>
           <SearchBar />
         </div>
 
         {/* Mobile/Tablet Menu Dropdown - Positioned from top bar, hidden on desktop (1024px+) */}
         {mobileMenuOpen && (
-          <div className='lg:hidden fixed top-[60px] sm:top-[70px] left-0 right-0 w-full bg-[#1F3B29] border-t-2 border-white/20 shadow-2xl z-50 max-h-[75vh] overflow-y-auto'>
+          <div className='lg:hidden fixed top-[70px] sm:top-[75px] md:top-[80px] left-0 right-0 w-full bg-[#1F3B29] border-t-2 border-white/20 shadow-2xl z-50 max-h-[75vh] overflow-y-auto'>
             <div className='px-4 sm:px-6 md:px-8 py-4 sm:py-5'>
               <ul className='flex flex-col gap-1 sm:gap-2'>
                 {menuLoading || categoriesLoading ? (
@@ -708,10 +755,10 @@ function HomeHeaderContent() {
       {/* Main Header with Navigation */}
       <header className='bg-white'>
         {/* Spacer to account for fixed header */}
-        <div className='h-[60px] sm:h-[70px] md:h-[80px] lg:h-[90px]' />
+        <div className='h-[70px] sm:h-[75px] md:h-[80px] lg:h-[85px]' />
 
         {/* Navigation Menu Bar - Hidden on mobile/tablet, shown on desktop */}
-        <nav className='hidden lg:block w-full bg-[#1F3B29] text-white duration-700 relative z-40 min-h-[56px]'>
+        <nav className='hidden lg:block w-full bg-white border-b border-gray-200 text-gray-700 duration-700 relative z-40 min-h-[56px]'>
           <div className='mx-auto flex w-full max-w-[1440px] items-center justify-between px-4 sm:px-6 md:px-8 lg:px-12 py-3 sm:py-3.5 md:py-4 lg:py-4'>
             {/* Desktop Navigation */}
             <ul className='flex items-center gap-1 lg:gap-2 xl:gap-3 text-xs md:text-sm flex-wrap'>
@@ -756,22 +803,25 @@ function HomeHeaderContent() {
                           href={`/jewellery?category=${encodeURIComponent(category.name)}`}
                           className={cn(
                             'relative flex items-center gap-1.5 px-3 md:px-4 lg:px-5 py-2 rounded-lg cursor-pointer transition-all duration-300 whitespace-nowrap font-medium group',
-                            isActive && 'bg-white/20 shadow-sm',
-                            isDropdownOpen && 'bg-white/15'
+                            isActive && 'bg-gray-100 shadow-sm',
+                            isDropdownOpen && 'bg-gray-50'
                           )}>
-                          <span className='relative z-10'>{category.name}</span>
-                          <ChevronDown
-                            size={14}
-                            className={cn(
-                              'transition-all duration-300 text-white/70 group-hover:text-white',
-                              isDropdownOpen && 'rotate-180 text-white'
-                            )}
-                          />
+                          {getCategoryIcon(category.name)}
+                          <span className='relative z-10 text-gray-700'>{category.name}</span>
+                          {hasSubcategories && (
+                            <ChevronDown
+                              size={14}
+                              className={cn(
+                                'transition-all duration-300 text-gray-500 group-hover:text-gray-700',
+                                isDropdownOpen && 'rotate-180 text-gray-700'
+                              )}
+                            />
+                          )}
 
-                          {/* White animated underline - always visible if active */}
+                          {/* Animated underline - always visible if active */}
                           <span
                             className={cn(
-                              'pointer-events-none absolute bottom-0 left-4 right-4 h-[2px] bg-white transition-transform duration-300',
+                              'pointer-events-none absolute bottom-0 left-4 right-4 h-[2px] bg-[#1F3B29] transition-transform duration-300',
                               isActive ? 'scale-x-100' : 'scale-x-0 origin-left group-hover:scale-x-100'
                             )}
                           />
@@ -779,34 +829,32 @@ function HomeHeaderContent() {
                       </li>
                     );
                   })}
-                  {menuItems.map((item, index) => (
-                    <li key={item.name} className='relative' style={{ animationDelay: `${index * 50}ms` }}>
-                      <Link
-                        href={item.href}
-                        className='
-        relative flex items-center gap-1
-        px-3 md:px-4 lg:px-5 py-2
-        rounded-lg cursor-pointer
-        transition-all duration-300
-        whitespace-nowrap font-medium
-        group
-      '>
-                        <span className='relative z-10'>{item.name}</span>
+                  {menuItems.map((item, index) => {
+                    const itemIcon = getMenuItemIcon(item.name);
+                    return (
+                      <li key={item.name} className='relative' style={{ animationDelay: `${index * 50}ms` }}>
+                        <Link
+                          href={item.href}
+                          className='relative flex items-center gap-1.5 px-3 md:px-4 lg:px-5 py-2 rounded-lg cursor-pointer transition-all duration-300 whitespace-nowrap font-medium group'>
+                          {itemIcon}
+                          <span className='relative z-10 text-gray-700'>{item.name}</span>
 
-                        {/* White animated underline */}
-                        <span
-                          className='
-        pointer-events-none
-        absolute bottom-0 left-4 right-4 
-        h-[2px] bg-white 
-        scale-x-0 origin-left
-        group-hover:scale-x-100 
-        transition-transform duration-300
-      '
-                        />
-                      </Link>
-                    </li>
-                  ))}
+                          {/* Animated underline */}
+                          <span className='pointer-events-none absolute bottom-0 left-4 right-4 h-[2px] bg-[#1F3B29] scale-x-0 origin-left group-hover:scale-x-100 transition-transform duration-300' />
+                        </Link>
+                      </li>
+                    );
+                  })}
+                  {/* More menu item */}
+                  <li className='relative'>
+                    <Link
+                      href='/jewellery'
+                      className='relative flex items-center gap-1.5 px-3 md:px-4 lg:px-5 py-2 rounded-lg cursor-pointer transition-all duration-300 whitespace-nowrap font-medium group'>
+                      <MoreHorizontal size={16} className='text-gray-700' strokeWidth={1.5} />
+                      <span className='relative z-10 text-gray-700'>More</span>
+                      <span className='pointer-events-none absolute bottom-0 left-4 right-4 h-[2px] bg-[#1F3B29] scale-x-0 origin-left group-hover:scale-x-100 transition-transform duration-300' />
+                    </Link>
+                  </li>
                 </>
               )}
             </ul>
