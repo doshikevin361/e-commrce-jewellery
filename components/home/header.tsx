@@ -68,6 +68,7 @@ function HomeHeaderContent() {
   const [occasionImages, setOccasionImages] = useState<Record<string, string>>({});
   const [fetchingProducts, setFetchingProducts] = useState<Set<string>>(new Set());
   const [megaMenuProducts, setMegaMenuProducts] = useState<Record<string, any>>({});
+  const [logo, setLogo] = useState<{ imageUrl: string; altText: string; width: number; height: number } | null>(null);
 
   const PRODUCT_TYPE_ICONS: Record<string, JSX.Element> = {
     Diamonds: <Diamond size={16} className='text-blue-500' strokeWidth={1.5} />,
@@ -168,6 +169,25 @@ function HomeHeaderContent() {
     };
 
     fetchCategories();
+  }, []);
+
+  // Fetch active logo
+  useEffect(() => {
+    const fetchLogo = async () => {
+      try {
+        const response = await fetch('/api/public/logo');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.logo) {
+            setLogo(data.logo);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch logo:', error);
+      }
+    };
+
+    fetchLogo();
   }, []);
 
   // Fetch featured product for a category/subcategory/productType/gender combination
@@ -430,10 +450,26 @@ function HomeHeaderContent() {
           <Link
             href='/'
             className='flex items-center gap-1 sm:gap-1.5 md:gap-2 flex-shrink-0 transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer'>
-            <Diamond size={16} className='sm:w-[17px] sm:h-[17px] md:w-[18px] md:h-[18px] text-[#1F3B29]' />
-            <span className='text-sm sm:text-base md:text-lg lg:text-xl font-semibold tracking-[0.08em] sm:tracking-[0.1em] md:tracking-[0.15em] lg:tracking-[0.2em] text-[#1F3B29] whitespace-nowrap'>
-              Jewellery
-            </span>
+            {logo ? (
+              <img
+                src={logo.imageUrl}
+                alt={logo.altText}
+                className='object-contain'
+                style={{
+                  width: `${logo.width}px`,
+                  height: `${logo.height}px`,
+                  maxWidth: '200px',
+                  maxHeight: '60px',
+                }}
+              />
+            ) : (
+              <>
+                <Diamond size={16} className='sm:w-[17px] sm:h-[17px] md:w-[18px] md:h-[18px] text-[#1F3B29]' />
+                <span className='text-sm sm:text-base md:text-lg lg:text-xl font-semibold tracking-[0.08em] sm:tracking-[0.1em] md:tracking-[0.15em] lg:tracking-[0.2em] text-[#1F3B29] whitespace-nowrap'>
+                  Jewellery
+                </span>
+              </>
+            )}
           </Link>
 
           {/* Search Bar - Hidden on mobile, shown on tablet+ */}
