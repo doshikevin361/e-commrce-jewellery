@@ -297,25 +297,28 @@ function HomeHeaderContent() {
   };
 
   // Fetch megaMenu product
-  const fetchMegaMenuProduct = useCallback(async (productId: string) => {
-    if (!productId || megaMenuProducts[productId]) return;
+  const fetchMegaMenuProduct = useCallback(
+    async (productId: string) => {
+      if (!productId || megaMenuProducts[productId]) return;
 
-    try {
-      // Use the megamenu-specific endpoint that doesn't check status
-      const response = await fetch(`/api/public/products/megamenu/${productId}`);
-      if (response.ok) {
-        const product = await response.json();
-        setMegaMenuProducts(prev => ({
-          ...prev,
-          [productId]: product,
-        }));
-      } else {
-        console.error('Failed to fetch megaMenu product:', response.status);
+      try {
+        // Use the megamenu-specific endpoint that doesn't check status
+        const response = await fetch(`/api/public/products/megamenu/${productId}`);
+        if (response.ok) {
+          const product = await response.json();
+          setMegaMenuProducts(prev => ({
+            ...prev,
+            [productId]: product,
+          }));
+        } else {
+          console.error('Failed to fetch megaMenu product:', response.status);
+        }
+      } catch (error) {
+        console.error('Error fetching megaMenu product:', error);
       }
-    } catch (error) {
-      console.error('Error fetching megaMenu product:', error);
-    }
-  }, [megaMenuProducts]);
+    },
+    [megaMenuProducts]
+  );
 
   // Get active category from URL
   const activeCategory = searchParams.get('category');
@@ -964,9 +967,12 @@ function HomeHeaderContent() {
                     <div className='lg:col-span-2'>
                       <p className='text-[11px] font-semibold text-[#1F3B29] mb-4 uppercase tracking-wider'>SHOP BY OCCASION</p>
                       <div className='grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 gap-3'>
-                        {((category as any).occasions && Array.isArray((category as any).occasions) && (category as any).occasions.length > 0
+                        {((category as any).occasions &&
+                        Array.isArray((category as any).occasions) &&
+                        (category as any).occasions.length > 0
                           ? (category as any).occasions
-                          : []).map((occasion: any, index: number) => {
+                          : []
+                        ).map((occasion: any, index: number) => {
                           const occasionName = occasion.name;
                           const occasionProductId = occasion.productId;
                           const occasionImage = occasion.image || (occasionProductId && occasionImages[`${category.name}-${occasionName}`]);
@@ -975,7 +981,11 @@ function HomeHeaderContent() {
                           return (
                             <Link
                               key={`${occasionName}-${index}`}
-                              href={occasionProductId ? `/products/${occasionProductId}` : `/jewellery?category=${encodeURIComponent(category.name)}&occasion=${encodeURIComponent(occasionName)}`}
+                              href={
+                                occasionProductId
+                                  ? `/products/${occasionProductId}`
+                                  : `/jewellery?category=${encodeURIComponent(category.name)}&occasion=${encodeURIComponent(occasionName)}`
+                              }
                               onMouseEnter={() => {
                                 setHoveredSubcategory({ category: category.name, subcategory: occasionName });
                                 fetchFeaturedProduct(category.name, occasionName, PRODUCT_TYPES[0], GENDERS[0]);
@@ -1013,14 +1023,16 @@ function HomeHeaderContent() {
                         if (megaMenuProduct) {
                           return (
                             <div>
-                              <Link href={`/products/${megaMenuProduct.urlSlug || megaMenuProduct._id}`} className='block group/product mb-3'>
+                              <Link
+                                href={`/products/${megaMenuProduct.urlSlug || megaMenuProduct._id}`}
+                                className='block group/product mb-3'>
                                 <div className='relative w-full aspect-square rounded-lg overflow-hidden bg-[#1F3B29] mb-3'>
                                   {megaMenuProduct.mainImage ? (
                                     <img
                                       src={megaMenuProduct.mainImage}
                                       alt={megaMenuProduct.name || 'Featured Product'}
                                       className='w-full h-full object-cover group-hover/product:scale-110 transition-transform duration-300'
-                                      onError={(e) => {
+                                      onError={e => {
                                         console.error('Failed to load product image:', megaMenuProduct.mainImage);
                                         (e.target as HTMLImageElement).style.display = 'none';
                                       }}
@@ -1074,18 +1086,6 @@ function HomeHeaderContent() {
                                 Give your wrists the much-needed makeover.
                               </p>
                             </Link>
-                            <div className='flex flex-col sm:flex-row lg:flex-col xl:flex-row gap-2'>
-                              <Link
-                                href={`/jewellery?category=${encodeURIComponent(category.name)}&subcategory=Bangles`}
-                                className='block w-full text-center text-xs sm:text-sm lg:text-xs xl:text-sm font-semibold text-[#1F3B29] hover:text-[#C8A15B] underline transition-colors duration-200'>
-                                VIEW ALL BANGLES
-                              </Link>
-                              <Link
-                                href={`/jewellery?category=${encodeURIComponent(category.name)}&subcategory=Bracelets`}
-                                className='block w-full text-center text-xs sm:text-sm lg:text-xs xl:text-sm font-semibold text-[#1F3B29] hover:text-[#C8A15B] underline transition-colors duration-200'>
-                                VIEW ALL BRACELETS
-                              </Link>
-                            </div>
                           </div>
                         ) : (
                           <div>
