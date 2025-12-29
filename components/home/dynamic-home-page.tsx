@@ -516,7 +516,7 @@ export const HomePage = () => {
   return (
     <>
       <div className='flex-col gap-0 pt-4 sm:pt-6 md:pt-8 lg:pt-10'>
-      <div className={'mx-auto max-w-[1440px] w-full px-4 sm:px-6 md:px-8 lg:px-12 mb-4 sm:mb-5 md:mb-6'}>
+        <div className={'mx-auto w-full mb-4 sm:mb-5 md:mb-6'}>
           <HeroBannerSlider banners={sectionsData.hero} isLoading={isLoading} />
         </div>
         {errorMessage && (
@@ -726,8 +726,14 @@ const Hero = ({ slides = defaultHeroSlides, isLoading = false }: { slides?: Hero
                         }}
                       />
                       <div className='relative z-10 space-y-2 sm:space-y-4'>
-                        {slide.main.subtitle && <p className='text-[10px] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.3em] text-white/80'>{slide.main.subtitle}</p>}
-                        <h1 className='text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight'>{slide.main.title}</h1>
+                        {slide.main.subtitle && (
+                          <p className='text-[10px] sm:text-xs uppercase tracking-[0.2em] sm:tracking-[0.3em] text-white/80'>
+                            {slide.main.subtitle}
+                          </p>
+                        )}
+                        <h1 className='text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight'>
+                          {slide.main.title}
+                        </h1>
                         <p className='max-w-lg text-xs sm:text-sm md:text-base text-white/90'>{slide.main.description}</p>
                         <Link
                           href={slide.link || '/products'}
@@ -753,7 +759,9 @@ const Hero = ({ slides = defaultHeroSlides, isLoading = false }: { slides?: Hero
                       />
                       <div className='relative z-10 space-y-1 sm:space-y-2'>
                         {slide.side.subtitle && (
-                          <p className='text-[10px] sm:text-[11px] uppercase tracking-[0.2em] sm:tracking-[0.3em] text-white/80'>{slide.side.subtitle}</p>
+                          <p className='text-[10px] sm:text-[11px] uppercase tracking-[0.2em] sm:tracking-[0.3em] text-white/80'>
+                            {slide.side.subtitle}
+                          </p>
                         )}
                         <h2 className='text-lg sm:text-xl md:text-2xl font-semibold text-white'>{slide.side.title}</h2>
                         <p className='text-[10px] sm:text-xs text-white/80'>{slide.side.description}</p>
@@ -1080,7 +1088,9 @@ const CollectionsSection = ({ dazzleData, isLoading = false }: { dazzleData: Daz
           // First card: image on left, content on right
           if (index === 0) {
             return (
-              <div key={card._id} className='flex flex-col items-center gap-4 sm:gap-6 rounded-2xl bg-[#F3F5F7] p-4 sm:p-6 md:p-8 md:flex-row'>
+              <div
+                key={card._id}
+                className='flex flex-col items-center gap-4 sm:gap-6 rounded-2xl bg-[#F3F5F7] p-4 sm:p-6 md:p-8 md:flex-row'>
                 {card.image && (
                   <img
                     src={card.image}
@@ -1091,7 +1101,9 @@ const CollectionsSection = ({ dazzleData, isLoading = false }: { dazzleData: Daz
 
                 <div className='flex flex-col justify-center w-full md:w-1/2 md:pl-6'>
                   {card.subtitle && <h3 className='text-xl sm:text-2xl md:text-3xl font-semibold text-[#1C1F1A]'>{card.subtitle}</h3>}
-                  {card.description && <p className='mt-2 sm:mt-3 md:mt-4 text-xs sm:text-sm md:text-base text-[#4F3A2E]'>{card.description}</p>}
+                  {card.description && (
+                    <p className='mt-2 sm:mt-3 md:mt-4 text-xs sm:text-sm md:text-base text-[#4F3A2E]'>{card.description}</p>
+                  )}
 
                   <Link
                     href={card.buttonLink || '/products'}
@@ -1108,7 +1120,9 @@ const CollectionsSection = ({ dazzleData, isLoading = false }: { dazzleData: Daz
             <div key={card._id} className='flex flex-col gap-3 sm:gap-4 md:gap-5 rounded-2xl bg-[#F3F5F7] p-4 sm:p-6 md:p-8'>
               <div>
                 {card.title && <h3 className='text-lg sm:text-xl md:text-2xl font-semibold text-[#1C1F1A]'>{card.title}</h3>}
-                {card.description && <p className='mt-2 sm:mt-3 md:mt-4 text-xs sm:text-sm md:text-base text-[#4F3A2E]'>{card.description}</p>}
+                {card.description && (
+                  <p className='mt-2 sm:mt-3 md:mt-4 text-xs sm:text-sm md:text-base text-[#4F3A2E]'>{card.description}</p>
+                )}
 
                 <Link
                   href={card.buttonLink || '/products'}
@@ -1118,7 +1132,11 @@ const CollectionsSection = ({ dazzleData, isLoading = false }: { dazzleData: Daz
               </div>
 
               {card.image && (
-                <img src={card.image} className='h-48 sm:h-64 md:h-[280px] lg:h-[330px] w-full rounded-xl object-cover' alt={card.title || 'Collection image'} />
+                <img
+                  src={card.image}
+                  className='h-48 sm:h-64 md:h-[280px] lg:h-[330px] w-full rounded-xl object-cover'
+                  alt={card.title || 'Collection image'}
+                />
               )}
             </div>
           );
@@ -1331,7 +1349,9 @@ const Subscribe = () => {
             className='flex-1 rounded-full bg-transparent px-3 sm:px-4 md:px-5 py-2 sm:py-2.5 text-xs sm:text-sm md:text-base text-[#1F3B29] placeholder:text-[#4F3A2E] focus:outline-none'
           />
 
-          <button type='button' className='cursor-pointer rounded-full bg-[#1F3B29] px-6 sm:px-7 md:px-9 lg:px-10 py-2.5 sm:py-3 md:py-3.5 lg:py-4 text-xs sm:text-sm md:text-base font-semibold text-white whitespace-nowrap transition-colors hover:bg-[#2a4d3a]'>
+          <button
+            type='button'
+            className='cursor-pointer rounded-full bg-[#1F3B29] px-6 sm:px-7 md:px-9 lg:px-10 py-2.5 sm:py-3 md:py-3.5 lg:py-4 text-xs sm:text-sm md:text-base font-semibold text-white whitespace-nowrap transition-colors hover:bg-[#2a4d3a]'>
             Subscribe
           </button>
         </div>
@@ -1408,11 +1428,15 @@ const NewArrivalsSection = ({
           <h2 className='text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-semibold'>{bannerData.title}</h2>
 
           {bannerData.subtitle && (
-            <div className='mt-2 sm:mt-3 md:mt-4 bg-white/30 text-white px-3 sm:px-4 md:px-5 py-1 md:py-1.5 rounded-full w-fit backdrop-blur-md text-xs sm:text-sm md:text-base'>{bannerData.subtitle}</div>
+            <div className='mt-2 sm:mt-3 md:mt-4 bg-white/30 text-white px-3 sm:px-4 md:px-5 py-1 md:py-1.5 rounded-full w-fit backdrop-blur-md text-xs sm:text-sm md:text-base'>
+              {bannerData.subtitle}
+            </div>
           )}
 
           {bannerData.description && (
-            <p className='mt-3 sm:mt-4 md:mt-5 text-sm sm:text-base md:text-lg lg:text-xl max-w-[600px] leading-relaxed whitespace-pre-line'>{bannerData.description}</p>
+            <p className='mt-3 sm:mt-4 md:mt-5 text-sm sm:text-base md:text-lg lg:text-xl max-w-[600px] leading-relaxed whitespace-pre-line'>
+              {bannerData.description}
+            </p>
           )}
         </div>
       </div>
