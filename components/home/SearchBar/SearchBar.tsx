@@ -61,7 +61,7 @@ const SearchBar = () => {
   return (
     <div ref={containerRef} className='w-full relative'>
       <form onSubmit={handleSearch} className='w-full'>
-        <div className='flex items-center w-full rounded-full border border-gray-200 bg-white pl-4 pr-2 py-2.5 sm:py-3 text-sm shadow-sm hover:border-gray-300 transition-colors'>
+        <div className='flex items-center w-full rounded-full border border-gray-300 bg-white pl-4 pr-2 py-2.5 sm:py-2 text-sm  hover:border-gray-300 transition-colors'>
           <Search size={18} className='text-[#1F3B29] shrink-0 mr-2' />
           <input
             type='text'

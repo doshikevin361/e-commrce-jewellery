@@ -515,7 +515,7 @@ export const HomePage = () => {
 
   return (
     <>
-      <div className='flex-col gap-0 pt-4 sm:pt-6 md:pt-8 lg:pt-10'>
+      <div className='flex-col gap-0 pt-4'>
         <div className={'mx-auto w-full mb-4 sm:mb-5 md:mb-6'}>
           <HeroBannerSlider banners={sectionsData.hero} isLoading={isLoading} />
         </div>

@@ -89,7 +89,7 @@ function HomeHeaderContent() {
   const [megaMenuProducts, setMegaMenuProducts] = useState<Record<string, any>>({});
   const [logo, setLogo] = useState<{ imageUrl: string; altText: string; width: number; height: number } | null>(null);
 
-  const PRODUCT_TYPE_ICONS: Record<string, JSX.Element> = {
+  const PRODUCT_TYPE_ICONS: Record<string, React.ReactElement> = {
     Diamonds: <Diamond size={16} className='text-blue-500' strokeWidth={1.5} />,
     Gold: <Star size={16} className='text-yellow-400' strokeWidth={1.5} />,
     Silver: <Circle size={16} className='text-gray-400' strokeWidth={1.5} />,
@@ -104,7 +104,7 @@ function HomeHeaderContent() {
     // Use Circle with decorative styling for earrings
     if (name.includes('earring'))
       return <Circle size={16} className='text-gray-700' strokeWidth={2} fill='currentColor' fillOpacity={0.2} />;
-    if (name.includes('ring')) return <Ring size={16} className='text-gray-700' strokeWidth={1.5} />;
+    if (name.includes('ring')) return <Circle size={16} className='text-gray-700' strokeWidth={1.5} fill='none' />;
     if (name.includes('gift') || name.includes('gifting')) return <Gift size={16} className='text-gray-700' strokeWidth={1.5} />;
     if (name.includes('diamond')) return <Diamond size={16} className='text-gray-700' strokeWidth={1.5} />;
     if (name.includes('gold')) return <Star size={16} className='text-gray-700' strokeWidth={1.5} />;
@@ -114,9 +114,9 @@ function HomeHeaderContent() {
   // Helper function to get icon for menu item
   const getMenuItemIcon = (itemName: string) => {
     const name = itemName.toLowerCase();
-    if (name.includes('all jewellery') || name.includes('all')) return <Grid2x2CheckIcon size={16} className='text-gray-700' />;
+    if (name.includes('all jewellery') || name.includes('all')) return '';
     if (name.includes('collection')) return <Grid2x2CheckIcon size={16} className='text-gray-700' />;
-    if (name.includes('wedding')) return <Ring size={16} className='text-gray-700' strokeWidth={1.5} />;
+    if (name.includes('wedding')) return <Circle size={16} className='text-gray-700' strokeWidth={1.5} fill='none' />;
     if (name.includes('gift') || name.includes('gifting')) return <Gift size={16} className='text-gray-700' strokeWidth={1.5} />;
     return null;
   };
@@ -525,13 +525,6 @@ function HomeHeaderContent() {
           {/* Right Side Icons - Tanishq Style */}
           <div className='flex items-center gap-2 sm:gap-3 md:gap-4 text-[#1F3B29]'>
             {/* Diamond Icon */}
-            <Link
-              href='/jewellery?productType=Diamonds'
-              className='hidden md:flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-full transition-all duration-300 hover:bg-gray-100 active:scale-95'
-              aria-label='Diamonds'>
-              <Diamond size={20} className='sm:w-5 sm:h-5 text-[#1F3B29]' />
-            </Link>
-
             {/* Store Icon */}
             <Link
               href='/contact'
@@ -879,7 +872,7 @@ function HomeHeaderContent() {
             return (
               <div
                 key={category._id}
-                className='absolute top-full left-0 right-0 w-full bg-white shadow-2xl border-t border-gray-200/60 z-50 animate-in fade-in slide-in-from-top-3 duration-300'
+                className='absolute top-full left-0 right-0 w-full bg-white border-t border-gray-200/60 z-50 animate-in fade-in slide-in-from-top-3 duration-300'
                 style={{ marginTop: '-1px' }}
                 onMouseEnter={() => {
                   // Clear any pending close timeout
@@ -896,13 +889,13 @@ function HomeHeaderContent() {
                     closeTimeoutRef.current = null;
                   }, 150);
                 }}>
-                <div className='mx-auto w-full max-w-[1440px] px-4 sm:px-6 md:px-8 lg:px-12 py-6 lg:py-8'>
-                  <div className='grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8'>
+                <div className='mx-auto w-full max-w-[1440px] px-6 sm:px-8 md:px-10 lg:px-12 py-8 lg:py-10'>
+                  <div className='grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-8 xl:gap-10'>
                     {/* Column 1: SHOP BY STYLE - Only show if subcategories exist */}
                     {category.children && category.children.length > 0 && (
-                      <div className='lg:col-span-3 xl:col-span-4'>
-                        <p className='text-[11px] font-semibold text-[#1F3B29] mb-4 uppercase tracking-wider'>SHOP BY STYLE</p>
-                        <div className='grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4 gap-3 lg:gap-2.5'>
+                      <div className='lg:col-span-4'>
+                        <h3 className='text-xs font-bold text-[#1F3B29] mb-5 uppercase tracking-wider'>SHOP BY STYLE</h3>
+                        <div className='grid grid-cols-4 sm:grid-cols-5 lg:grid-cols-4 gap-3 lg:gap-3'>
                           {category.children.slice(0, 12).map((item, idx) => {
                             const styleName = item.name;
                             const styleId = item._id;
@@ -918,6 +911,13 @@ function HomeHeaderContent() {
                                 href={`/jewellery?category=${encodeURIComponent(category.name)}&subcategory=${encodeURIComponent(
                                   styleName
                                 )}`}
+                                onClick={() => {
+                                  setOpenCategoryDropdown(null);
+                                  if (closeTimeoutRef.current) {
+                                    clearTimeout(closeTimeoutRef.current);
+                                    closeTimeoutRef.current = null;
+                                  }
+                                }}
                                 onMouseEnter={() => {
                                   setHoveredSubcategory({ category: category.name, subcategory: styleName });
                                   fetchFeaturedProduct(category.name, styleName, PRODUCT_TYPES[0], GENDERS[0]);
@@ -926,17 +926,21 @@ function HomeHeaderContent() {
                                     fetchStyleImage(category.name, styleName);
                                   }
                                 }}
-                                className='group/style flex flex-col items-center gap-2 p-2 rounded-lg hover:bg-[#F5EEE5]/50 transition-all duration-200'>
-                                <div className='relative w-16 h-16 sm:w-20 sm:h-20 lg:w-14 lg:h-14 xl:w-16 xl:h-16 rounded-lg overflow-hidden bg-[#F5EEE5] border border-[#C8A15B]/20'>
+                                className='group/style flex flex-col items-center gap-2.5 p-2.5 rounded-lg hover:bg-[#F5EEE5]/50 transition-all duration-200'>
+                                <div className='relative w-16 h-16 sm:w-18 sm:h-18 lg:w-14 lg:h-14 rounded-lg overflow-hidden bg-gradient-to-br from-[#F5EEE5] to-[#F0E6D8] border border-[#C8A15B]/10 shadow-sm group-hover/style:shadow transition-shadow duration-200'>
                                   {hasImage ? (
-                                    <img src={hasImage} alt={styleName} className='w-full h-full object-cover' />
+                                    <img
+                                      src={hasImage}
+                                      alt={styleName}
+                                      className='w-full h-full object-cover group-hover/style:scale-105 transition-transform duration-200'
+                                    />
                                   ) : (
                                     <div className='w-full h-full flex items-center justify-center'>
-                                      <Diamond size={20} className='text-[#C8A15B]/60' strokeWidth={1.5} />
+                                      <Diamond size={20} className='text-[#C8A15B]/40' strokeWidth={1.5} />
                                     </div>
                                   )}
                                 </div>
-                                <span className='text-[11px] sm:text-[12px] lg:text-[10px] xl:text-[11px] font-medium text-[#1F3B29] text-center leading-tight group-hover/style:text-[#C8A15B] transition-colors duration-200'>
+                                <span className='text-[11px] font-medium text-[#1F3B29] text-center leading-tight group-hover/style:text-[#C8A15B] transition-colors duration-200'>
                                   {styleName}
                                 </span>
                               </Link>
@@ -947,9 +951,9 @@ function HomeHeaderContent() {
                     )}
 
                     {/* Column 2: SHOP BY MATERIAL */}
-                    <div className='lg:col-span-2'>
-                      <p className='text-[11px] font-semibold text-[#1F3B29] mb-4 uppercase tracking-wider'>SHOP BY MATERIAL</p>
-                      <div className='flex flex-col gap-3'>
+                    <div className='lg:col-span-2 justify-center'>
+                      <h3 className='text-xs font-bold text-[#1F3B29] mb-5 uppercase tracking-wider'>SHOP BY MATERIAL</h3>
+                      <div className='flex flex-col gap-2.5'>
                         {PRODUCT_TYPES.map(material => {
                           const imageKey = `${category.name}-${material}`;
                           const hasImage = materialImages[imageKey]; // only dynamic images
@@ -958,15 +962,22 @@ function HomeHeaderContent() {
                             <Link
                               key={material}
                               href={`/jewellery?category=${encodeURIComponent(category.name)}&productType=${encodeURIComponent(material)}`}
+                              onClick={() => {
+                                setOpenCategoryDropdown(null);
+                                if (closeTimeoutRef.current) {
+                                  clearTimeout(closeTimeoutRef.current);
+                                  closeTimeoutRef.current = null;
+                                }
+                              }}
                               onMouseEnter={() => {
                                 if (!materialImages[imageKey]) {
                                   fetchMaterialImage(category.name, material); // fetch only if not loaded
                                 }
                               }}
-                              className='group/material flex items-center gap-3 p-2 rounded-lg hover:bg-[#F5EEE5]/50 transition-all duration-200'>
+                              className='group/material flex items-center gap-3 px-2.5 py-2 rounded-lg hover:bg-[#F5EEE5]/50 transition-all duration-200'>
                               <div
                                 className={cn(
-                                  'w-8 h-8 sm:w-9 sm:h-9 lg:w-7 lg:h-7 rounded-full flex items-center justify-center flex-shrink-0',
+                                  'w-9 h-9 rounded-full flex items-center justify-center shrink-0 shadow-sm group-hover/material:shadow transition-shadow duration-200',
                                   material === 'Diamonds' && 'bg-blue-50',
                                   material === 'Platinum' && 'bg-gray-100',
                                   material === 'Gemstone' && 'bg-purple-50',
@@ -976,17 +987,13 @@ function HomeHeaderContent() {
                                   !['Diamonds', 'Platinum', 'Gemstone', 'Gold', 'Silver', 'Imitation'].includes(material) && 'bg-gray-50'
                                 )}>
                                 {hasImage ? (
-                                  <img
-                                    src={hasImage}
-                                    alt={material}
-                                    className='w-5 h-5 sm:w-6 sm:h-6 lg:w-16 lg:h-10 rounded-full object-cover'
-                                  />
+                                  <img src={hasImage} alt={material} className='w-5 h-5 rounded-full object-cover' />
                                 ) : (
-                                  PRODUCT_TYPE_ICONS[material] || <div className='w-4 h-4 rounded-full bg-gray-200' />
+                                  PRODUCT_TYPE_ICONS[material] || <div className='w-5 h-5 rounded-full bg-gray-200' />
                                 )}
                               </div>
 
-                              <span className='text-[12px] sm:text-[13px] lg:text-[11px] font-medium text-[#1F3B29] group-hover/material:text-[#C8A15B] transition-colors duration-200'>
+                              <span className='text-sm font-medium text-[#1F3B29] group-hover/material:text-[#C8A15B] transition-colors duration-200'>
                                 {material}
                               </span>
                             </Link>
@@ -997,25 +1004,39 @@ function HomeHeaderContent() {
 
                     {/* Column 3: SHOP FOR */}
                     <div className='lg:col-span-2'>
-                      <p className='text-[11px] font-semibold text-[#1F3B29] mb-4 uppercase tracking-wider'>SHOP FOR</p>
-                      <div className='flex flex-col gap-2 mb-4'>
+                      <h3 className='text-xs font-bold text-[#1F3B29] mb-5 uppercase tracking-wider'>SHOP FOR</h3>
+                      <div className='flex flex-col gap-2.5 mb-5'>
                         {PRICE_RANGES.map(range => (
                           <Link
                             key={range.value}
                             href={`/jewellery?category=${encodeURIComponent(category.name)}&minPrice=${
                               range.value.split('-')[0]
                             }&maxPrice=${range.value.split('-')[1]}`}
-                            className='text-[12px] sm:text-[13px] lg:text-[11px] font-medium text-[#1F3B29] hover:text-[#C8A15B] transition-colors duration-200'>
+                            onClick={() => {
+                              setOpenCategoryDropdown(null);
+                              if (closeTimeoutRef.current) {
+                                clearTimeout(closeTimeoutRef.current);
+                                closeTimeoutRef.current = null;
+                              }
+                            }}
+                            className='text-sm font-medium text-[#1F3B29] hover:text-[#C8A15B] transition-colors duration-200 py-1'>
                             {range.label}
                           </Link>
                         ))}
                       </div>
-                      <div className='flex flex-col gap-2 pt-3 border-t border-gray-100'>
+                      <div className='flex flex-col gap-2.5 pt-4 border-t border-gray-100'>
                         {GENDERS.map(gender => (
                           <Link
                             key={gender}
                             href={`/jewellery?category=${encodeURIComponent(category.name)}&gender=${encodeURIComponent(gender)}`}
-                            className='text-[12px] sm:text-[13px] lg:text-[11px] font-medium text-[#1F3B29] hover:text-[#C8A15B] transition-colors duration-200'>
+                            onClick={() => {
+                              setOpenCategoryDropdown(null);
+                              if (closeTimeoutRef.current) {
+                                clearTimeout(closeTimeoutRef.current);
+                                closeTimeoutRef.current = null;
+                              }
+                            }}
+                            className='text-sm font-medium text-[#1F3B29] hover:text-[#C8A15B] transition-colors duration-200 py-1'>
                             {gender.toUpperCase()}
                           </Link>
                         ))}
@@ -1023,9 +1044,9 @@ function HomeHeaderContent() {
                     </div>
 
                     {/* Column 4: SHOP BY OCCASION */}
-                    <div className='lg:col-span-2'>
-                      <p className='text-[11px] font-semibold text-[#1F3B29] mb-4 uppercase tracking-wider'>SHOP BY OCCASION</p>
-                      <div className='grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 gap-3'>
+                    <div className='lg:col-span-2 lg:justify-start'>
+                      <h3 className='text-xs font-bold text-[#1F3B29] mb-5 uppercase tracking-wider text-center'>SHOP BY OCCASION</h3>
+                      <div className='grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 gap-3'>
                         {((category as any).occasions &&
                         Array.isArray((category as any).occasions) &&
                         (category as any).occasions.length > 0
@@ -1045,6 +1066,13 @@ function HomeHeaderContent() {
                                   ? `/products/${occasionProductId}`
                                   : `/jewellery?category=${encodeURIComponent(category.name)}&occasion=${encodeURIComponent(occasionName)}`
                               }
+                              onClick={() => {
+                                setOpenCategoryDropdown(null);
+                                if (closeTimeoutRef.current) {
+                                  clearTimeout(closeTimeoutRef.current);
+                                  closeTimeoutRef.current = null;
+                                }
+                              }}
                               onMouseEnter={() => {
                                 setHoveredSubcategory({ category: category.name, subcategory: occasionName });
                                 fetchFeaturedProduct(category.name, occasionName, PRODUCT_TYPES[0], GENDERS[0]);
@@ -1053,17 +1081,21 @@ function HomeHeaderContent() {
                                   fetchOccasionImage(category.name, occasionName);
                                 }
                               }}
-                              className='group/occasion flex flex-col items-center gap-2 p-2 rounded-lg hover:bg-[#F5EEE5]/50 transition-all duration-200'>
-                              <div className='relative w-14 h-14 sm:w-16 sm:h-16 lg:w-12 lg:h-12 xl:w-14 xl:h-14 rounded-lg overflow-hidden bg-[#F5EEE5] border border-[#C8A15B]/20'>
+                              className='group/occasion flex flex-col items-center gap-2.5 p-2.5 rounded-lg hover:bg-[#F5EEE5]/50 transition-all duration-200'>
+                              <div className='relative w-14 h-14 sm:w-16 sm:h-16 lg:w-12 lg:h-12 rounded-lg overflow-hidden bg-gradient-to-br from-[#F5EEE5] to-[#F0E6D8] border border-[#C8A15B]/10 shadow-sm group-hover/occasion:shadow transition-shadow duration-200'>
                                 {hasImage ? (
-                                  <img src={hasImage} alt={occasionName} className='w-full h-full object-cover' />
+                                  <img
+                                    src={hasImage}
+                                    alt={occasionName}
+                                    className='w-full h-full object-cover group-hover/occasion:scale-105 transition-transform duration-200'
+                                  />
                                 ) : (
                                   <div className='w-full h-full flex items-center justify-center'>
-                                    <Diamond size={18} className='text-[#C8A15B]/60' strokeWidth={1.5} />
+                                    <Diamond size={18} className='text-[#C8A15B]/40' strokeWidth={1.5} />
                                   </div>
                                 )}
                               </div>
-                              <span className='text-[11px] sm:text-[12px] lg:text-[10px] xl:text-[11px] font-medium text-[#1F3B29] text-center leading-tight group-hover/occasion:text-[#C8A15B] transition-colors duration-200'>
+                              <span className='text-[11px] font-medium text-[#1F3B29] text-center leading-tight group-hover/occasion:text-[#C8A15B] transition-colors duration-200'>
                                 {occasionName}
                               </span>
                             </Link>
@@ -1073,24 +1105,34 @@ function HomeHeaderContent() {
                     </div>
 
                     {/* Column 5: Featured Product (Rightmost) */}
-                    <div className='lg:col-span-3 xl:col-span-2'>
+                    <div className='lg:col-span-2'>
                       {(() => {
                         // Check if megaMenuProductId is set and product is loaded
                         const megaMenuProductId = (category as any).megaMenuProductId;
                         const megaMenuProduct = megaMenuProductId ? megaMenuProducts[megaMenuProductId] : null;
 
+                        const handleCloseMenu = () => {
+                          setOpenCategoryDropdown(null);
+                          if (closeTimeoutRef.current) {
+                            clearTimeout(closeTimeoutRef.current);
+                            closeTimeoutRef.current = null;
+                          }
+                        };
+
                         if (megaMenuProduct) {
                           return (
                             <div>
+                              <h3 className='text-xs font-bold text-[#1F3B29] mb-5 uppercase tracking-wider'>FEATURED</h3>
                               <Link
                                 href={`/products/${megaMenuProduct.urlSlug || megaMenuProduct._id}`}
-                                className='block group/product mb-3'>
-                                <div className='relative w-full aspect-square rounded-lg overflow-hidden bg-[#1F3B29] mb-3'>
+                                onClick={handleCloseMenu}
+                                className='block group/product'>
+                                <div className='relative w-full aspect-square rounded-lg overflow-hidden bg-gradient-to-br from-[#1F3B29] to-[#2d4d3a] mb-3 shadow-md group-hover/product:shadow-lg transition-shadow duration-200'>
                                   {megaMenuProduct.mainImage ? (
                                     <img
                                       src={megaMenuProduct.mainImage}
                                       alt={megaMenuProduct.name || 'Featured Product'}
-                                      className='w-full h-full object-cover group-hover/product:scale-110 transition-transform duration-300'
+                                      className='w-full h-full object-cover group-hover/product:scale-105 transition-transform duration-300'
                                       onError={e => {
                                         console.error('Failed to load product image:', megaMenuProduct.mainImage);
                                         (e.target as HTMLImageElement).style.display = 'none';
@@ -1098,11 +1140,11 @@ function HomeHeaderContent() {
                                     />
                                   ) : (
                                     <div className='w-full h-full flex items-center justify-center'>
-                                      <Diamond size={50} className='text-white/20' />
+                                      <Diamond size={40} className='text-white/20' />
                                     </div>
                                   )}
                                 </div>
-                                <p className='text-sm sm:text-base lg:text-xs xl:text-sm font-medium text-[#1F3B29] mb-3 text-center leading-snug'>
+                                <p className='text-sm font-medium text-[#1F3B29] text-center leading-relaxed group-hover/product:text-[#C8A15B] transition-colors duration-200'>
                                   {megaMenuProduct.shortDescription || megaMenuProduct.name || 'Featured Product'}
                                 </p>
                               </Link>
@@ -1127,42 +1169,49 @@ function HomeHeaderContent() {
 
                         return featuredProduct ? (
                           <div>
-                            <Link href={`/products/${featuredProduct.urlSlug || featuredProduct._id}`} className='block group/product mb-3'>
-                              <div className='relative w-full aspect-square rounded-lg overflow-hidden bg-[#1F3B29] mb-3'>
+                            <h3 className='text-xs font-bold text-[#1F3B29] mb-5 uppercase tracking-wider'>FEATURED</h3>
+                            <Link
+                              href={`/products/${featuredProduct.urlSlug || featuredProduct._id}`}
+                              onClick={handleCloseMenu}
+                              className='block group/product'>
+                              <div className='relative w-full aspect-square rounded-lg overflow-hidden bg-gradient-to-br from-[#1F3B29] to-[#2d4d3a] mb-3 shadow-md group-hover/product:shadow-lg transition-shadow duration-200'>
                                 {featuredProduct.mainImage ? (
                                   <img
                                     src={featuredProduct.mainImage}
                                     alt={featuredProduct.name}
-                                    className='w-full h-full object-cover group-hover/product:scale-110 transition-transform duration-300'
+                                    className='w-full h-full object-cover group-hover/product:scale-105 transition-transform duration-300'
                                   />
                                 ) : (
                                   <div className='w-full h-full flex items-center justify-center'>
-                                    <Diamond size={50} className='text-white/20' />
+                                    <Diamond size={40} className='text-white/20' />
                                   </div>
                                 )}
                               </div>
-                              <p className='text-sm sm:text-base lg:text-xs xl:text-sm font-medium text-[#1F3B29] mb-3 text-center leading-snug'>
+                              <p className='text-sm font-medium text-[#1F3B29] text-center leading-relaxed group-hover/product:text-[#C8A15B] transition-colors duration-200'>
                                 Give your wrists the much-needed makeover.
                               </p>
                             </Link>
                           </div>
                         ) : (
                           <div>
-                            <div className='relative w-full aspect-square rounded-lg overflow-hidden bg-[#1F3B29] mb-3 animate-pulse'>
+                            <h3 className='text-xs font-bold text-[#1F3B29] mb-5 uppercase tracking-wider'>FEATURED</h3>
+                            <div className='relative w-full aspect-square rounded-lg overflow-hidden bg-gradient-to-br from-[#1F3B29] to-[#2d4d3a] mb-3 shadow-md animate-pulse'>
                               <div className='w-full h-full flex items-center justify-center'>
-                                <Diamond size={50} className='text-white/15' />
+                                <Diamond size={40} className='text-white/15' />
                               </div>
                             </div>
                             <div className='h-4 bg-gray-200 rounded mb-3 animate-pulse'></div>
-                            <div className='flex flex-col sm:flex-row lg:flex-col xl:flex-row gap-2'>
+                            <div className='flex flex-col gap-2'>
                               <Link
                                 href={`/jewellery?category=${encodeURIComponent(category.name)}`}
-                                className='block w-full text-center text-xs sm:text-sm lg:text-xs xl:text-sm font-semibold text-[#1F3B29] hover:text-[#C8A15B] underline transition-colors duration-200'>
+                                onClick={handleCloseMenu}
+                                className='block w-full text-center text-xs font-medium text-[#1F3B29] hover:text-[#C8A15B] underline transition-colors duration-200 py-1.5'>
                                 VIEW ALL BANGLES
                               </Link>
                               <Link
                                 href={`/jewellery?category=${encodeURIComponent(category.name)}`}
-                                className='block w-full text-center text-xs sm:text-sm lg:text-xs xl:text-sm font-semibold text-[#1F3B29] hover:text-[#C8A15B] underline transition-colors duration-200'>
+                                onClick={handleCloseMenu}
+                                className='block w-full text-center text-xs font-medium text-[#1F3B29] hover:text-[#C8A15B] underline transition-colors duration-200 py-1.5'>
                                 VIEW ALL BRACELETS
                               </Link>
                             </div>
