@@ -306,6 +306,10 @@ export function Sidebar() {
 
   const cmsSubmenu = [
     {
+      label: 'Logo',
+      href: '/admin/cms/logos',
+    },
+    {
       label: 'Homepage Banners',
       href: '/admin/cms/banners',
     },
