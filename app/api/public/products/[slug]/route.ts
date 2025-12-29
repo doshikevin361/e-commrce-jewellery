@@ -31,6 +31,17 @@ export async function GET(
 
     const productId = product._id;
 
+    // Fetch category name if category is an ObjectId
+    let categoryName = product.category;
+    if (product.category && ObjectId.isValid(product.category)) {
+      const categoryDoc = await db.collection("categories").findOne({
+        _id: new ObjectId(product.category)
+      });
+      if (categoryDoc) {
+        categoryName = categoryDoc.name;
+      }
+    }
+
     // Increment view count for trending calculation
     await db.collection("products").updateOne(
       { _id: productId },
@@ -73,6 +84,7 @@ export async function GET(
     const productData = {
       ...product,
       _id: product._id.toString(),
+      categoryName: categoryName, // Add the resolved category name
       // Ensure arrays are properly formatted
       tags: Array.isArray(product.tags) ? product.tags : [],
       galleryImages: Array.isArray(product.galleryImages) ? product.galleryImages : [],
