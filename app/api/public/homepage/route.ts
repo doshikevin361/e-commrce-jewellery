@@ -1,6 +1,7 @@
 import { connectToDatabase } from '@/lib/mongodb';
 import { NextRequest, NextResponse } from 'next/server';
 import { getActiveHomepageFeatures } from '@/lib/constants/features';
+import { calculateProductPrice } from '@/lib/utils/price-calculator';
 
 const DEFAULT_IMAGE = 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=1200&q=80';
 const DEFAULT_CATEGORY_IMAGE = 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=800&q=80';
@@ -31,18 +32,14 @@ const PRODUCT_PROJECTION = {
   metalCost: 1,
   makingChargeAmount: 1,
   gstAmount: 1,
+  price: 1,
+  subTotal: 1,
+  totalAmount: 1,
 };
 
 const serializeProduct = (product: any, fallbackIndex = 0) => {
   const id = product?._id?.toString() ?? `product-${fallbackIndex}`;
-  const sellingPrice = typeof product?.sellingPrice === 'number'
-    ? product.sellingPrice
-    : typeof product?.regularPrice === 'number'
-      ? product.regularPrice
-      : 0;
-  const regularPrice = typeof product?.regularPrice === 'number'
-    ? product.regularPrice
-    : sellingPrice;
+  const { sellingPrice, regularPrice } = calculateProductPrice(product);
 
   return {
     _id: id,

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
 import { getCustomerFromRequest } from '@/lib/auth';
 import { ObjectId } from 'mongodb';
+import { formatProductPrice } from '@/lib/utils/price-calculator';
 
 // Get wishlist items
 export async function GET(request: NextRequest) {
@@ -33,26 +34,29 @@ export async function GET(request: NextRequest) {
     }).toArray();
 
     // Format products for frontend
-    const formattedProducts = products.map(product => ({
-      _id: product._id.toString(),
-      id: product._id.toString(), // Use string ID for consistency
-      name: product.name,
-      title: product.name,
-      category: product.category || '',
-      price: `₹${product.sellingPrice?.toLocaleString() || product.regularPrice?.toLocaleString() || '0'}`,
-      originalPrice: product.regularPrice && product.regularPrice > (product.sellingPrice || 0)
-        ? `₹${product.regularPrice.toLocaleString()}`
-        : undefined,
-      image: product.mainImage || 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=600&q=80',
-      rating: 4.5,
-      reviews: 0,
-      badge: product.featured ? 'Featured' : product.trending ? 'Trending' : undefined,
-      displayPrice: product.sellingPrice || product.regularPrice || 0,
-      originalPriceNum: product.regularPrice || 0,
-      stock: product.stock || 0,
-      inStock: (product.stock || 0) > 0,
-      urlSlug: product.urlSlug || product._id.toString(),
-    }));
+    const formattedProducts = products.map(product => {
+      const priceData = formatProductPrice(product);
+      return {
+        _id: product._id.toString(),
+        id: product._id.toString(), // Use string ID for consistency
+        name: product.name,
+        title: product.name,
+        category: product.category || '',
+        price: `₹${priceData.displayPrice.toLocaleString()}`,
+        originalPrice: priceData.hasDiscount && priceData.originalPrice > priceData.displayPrice
+          ? `₹${priceData.originalPrice.toLocaleString()}`
+          : undefined,
+        image: product.mainImage || 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=600&q=80',
+        rating: 4.5,
+        reviews: 0,
+        badge: product.featured ? 'Featured' : product.trending ? 'Trending' : undefined,
+        displayPrice: priceData.displayPrice,
+        originalPriceNum: priceData.originalPrice,
+        stock: product.stock || 0,
+        inStock: (product.stock || 0) > 0,
+        urlSlug: product.urlSlug || product._id.toString(),
+      };
+    });
 
     return NextResponse.json({ products: formattedProducts });
   } catch (error) {

@@ -1,5 +1,6 @@
 import { connectToDatabase } from "@/lib/mongodb";
 import { NextRequest, NextResponse } from "next/server";
+import { formatProductPrice } from "@/lib/utils/price-calculator";
 
 export async function GET(request: NextRequest) {
   try {
@@ -56,6 +57,13 @@ export async function GET(request: NextRequest) {
         subcategory: 1,
         product_type: 1,
         gender: 1,
+        price: 1,
+        subTotal: 1,
+        totalAmount: 1,
+        livePriceEnabled: 1,
+        metalCost: 1,
+        makingChargeAmount: 1,
+        gstAmount: 1,
       })
       .toArray();
 
@@ -64,13 +72,19 @@ export async function GET(request: NextRequest) {
     }
 
     const featuredProduct = product[0];
+    const priceData = formatProductPrice(featuredProduct);
 
     return NextResponse.json({
       product: {
         ...featuredProduct,
         _id: featuredProduct._id.toString(),
-        displayPrice: featuredProduct.sellingPrice || featuredProduct.regularPrice || 0,
-        originalPrice: featuredProduct.mrp || featuredProduct.regularPrice || 0,
+        displayPrice: priceData.displayPrice,
+        originalPrice: priceData.originalPrice,
+        sellingPrice: priceData.sellingPrice,
+        regularPrice: priceData.regularPrice,
+        mrp: priceData.mrp,
+        hasDiscount: priceData.hasDiscount,
+        discountPercent: priceData.discountPercent,
       }
     });
   } catch (error) {

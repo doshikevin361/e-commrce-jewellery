@@ -1,6 +1,7 @@
 import { connectToDatabase } from "@/lib/mongodb";
 import { NextRequest, NextResponse } from "next/server";
 import { ObjectId } from "mongodb";
+import { formatProductPrice } from "@/lib/utils/price-calculator";
 
 export async function GET(
   request: NextRequest,
@@ -56,8 +57,18 @@ export async function GET(
         rating: 1,
         reviewCount: 1,
         urlSlug: 1,
+        price: 1,
+        subTotal: 1,
+        totalAmount: 1,
+        livePriceEnabled: 1,
+        metalCost: 1,
+        makingChargeAmount: 1,
+        gstAmount: 1,
       })
       .toArray();
+
+    // Calculate prices using the price calculator
+    const priceData = formatProductPrice(product);
 
     const productData = {
       ...product,
@@ -69,28 +80,34 @@ export async function GET(
         ...v,
         options: Array.isArray(v.options) ? v.options : []
       })) : [],
-      // Format pricing
-      displayPrice: product.sellingPrice || product.regularPrice || 0,
-      originalPrice: product.mrp || product.regularPrice || 0,
-      hasDiscount: (product.mrp || product.regularPrice) > (product.sellingPrice || product.regularPrice),
-      discountPercent: product.discount || 0,
+      // Format pricing using calculated prices
+      displayPrice: priceData.displayPrice,
+      originalPrice: priceData.originalPrice,
+      sellingPrice: priceData.sellingPrice,
+      regularPrice: priceData.regularPrice,
+      mrp: priceData.mrp,
+      hasDiscount: priceData.hasDiscount,
+      discountPercent: priceData.discountPercent,
       // Related products
-      relatedProducts: relatedProducts.map(rp => ({
-        id: rp._id.toString(),
-        _id: rp._id.toString(),
-        title: rp.name || 'Untitled Product',
-        category: product.category || 'Jewellery',
-        price: `₹${(rp.sellingPrice || rp.regularPrice || 0).toLocaleString()}`,
-        originalPrice: rp.mrp && rp.mrp > (rp.sellingPrice || rp.regularPrice) 
-          ? `₹${rp.mrp.toLocaleString()}` 
-          : undefined,
-        rating: rp.rating || 4.5,
-        reviews: rp.reviewCount || 0,
-        image: rp.mainImage || 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=600&q=80',
-        displayPrice: rp.sellingPrice || rp.regularPrice || 0,
-        originalPriceValue: rp.mrp || rp.regularPrice || 0,
-        urlSlug: rp.urlSlug || rp._id.toString(),
-      })),
+      relatedProducts: relatedProducts.map(rp => {
+        const rpPriceData = formatProductPrice(rp);
+        return {
+          id: rp._id.toString(),
+          _id: rp._id.toString(),
+          title: rp.name || 'Untitled Product',
+          category: product.category || 'Jewellery',
+          price: `₹${rpPriceData.displayPrice.toLocaleString()}`,
+          originalPrice: rpPriceData.hasDiscount && rpPriceData.originalPrice > rpPriceData.displayPrice
+            ? `₹${rpPriceData.originalPrice.toLocaleString()}` 
+            : undefined,
+          rating: rp.rating || 4.5,
+          reviews: rp.reviewCount || 0,
+          image: rp.mainImage || 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=600&q=80',
+          displayPrice: rpPriceData.displayPrice,
+          originalPriceValue: rpPriceData.originalPrice,
+          urlSlug: rp.urlSlug || rp._id.toString(),
+        };
+      }),
     };
 
     return NextResponse.json(productData);

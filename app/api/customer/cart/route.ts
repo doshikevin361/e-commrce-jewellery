@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
 import { getCustomerFromRequest } from '@/lib/auth';
 import { ObjectId } from 'mongodb';
+import { formatProductPrice } from '@/lib/utils/price-calculator';
 
 // Get cart items
 export async function GET(request: NextRequest) {
@@ -42,18 +43,20 @@ export async function GET(request: NextRequest) {
         const product = productMap.get(item.productId);
         if (!product) return null; // Skip if product not found
 
+        const priceData = formatProductPrice(product);
+
         return {
           _id: product._id.toString(),
           id: product._id.toString(),
           name: product.name,
           title: product.name,
           category: product.category || '',
-          price: `₹${(product.sellingPrice || product.regularPrice || 0).toLocaleString()}`,
+          price: `₹${priceData.displayPrice.toLocaleString()}`,
           image: product.mainImage || 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=600&q=80',
           quantity: item.quantity || 1,
           urlSlug: product.urlSlug || product._id.toString(),
-          displayPrice: product.sellingPrice || product.regularPrice || 0,
-          originalPriceNum: product.regularPrice || 0,
+          displayPrice: priceData.displayPrice,
+          originalPriceNum: priceData.originalPrice,
           stock: product.stock || 0,
         };
       })

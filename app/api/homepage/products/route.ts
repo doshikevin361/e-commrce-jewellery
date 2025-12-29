@@ -1,5 +1,6 @@
 import { connectToDatabase } from '@/lib/mongodb';
 import { NextRequest, NextResponse } from 'next/server';
+import { formatProductPrice } from '@/lib/utils/price-calculator';
 
 export async function GET(request: NextRequest) {
   try {
@@ -27,18 +28,23 @@ export async function GET(request: NextRequest) {
       .toArray();
 
     return NextResponse.json(
-      products.map(product => ({
-        _id: product._id.toString(),
-        name: product.name,
-        category: product.category,
-        regularPrice: product.regularPrice,
-        sellingPrice: product.sellingPrice,
-        mainImage: product.mainImage,
-        shortDescription: product.shortDescription,
-        urlSlug: product.urlSlug,
-        featured: product.featured,
-        trending: product.trending,
-      }))
+      products.map(product => {
+        const priceData = formatProductPrice(product);
+        return {
+          _id: product._id.toString(),
+          name: product.name,
+          category: product.category,
+          regularPrice: priceData.regularPrice,
+          sellingPrice: priceData.sellingPrice,
+          displayPrice: priceData.displayPrice,
+          originalPrice: priceData.originalPrice,
+          mainImage: product.mainImage,
+          shortDescription: product.shortDescription,
+          urlSlug: product.urlSlug,
+          featured: product.featured,
+          trending: product.trending,
+        };
+      })
     );
   } catch (error) {
     console.error('[v0] Failed to fetch homepage products:', error);

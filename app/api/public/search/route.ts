@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
+import { formatProductPrice } from '@/lib/utils/price-calculator';
 
 export async function GET(request: NextRequest) {
   try {
@@ -131,21 +132,24 @@ export async function GET(request: NextRequest) {
         name: attr.name,
         values: attr.values || [],
       })),
-      products: products.map(product => ({
-        _id: product._id.toString(),
-        name: product.name,
-        category: product.category,
-        brand: product.brand,
-        mainImage: product.mainImage,
-        displayPrice: product.sellingPrice || product.regularPrice || 0,
-        originalPrice: product.mrp || product.regularPrice || 0,
-        hasDiscount: (product.mrp || product.regularPrice) > (product.sellingPrice || product.regularPrice),
-        discountPercent: product.discount || 0,
-        slug: product.urlSlug || product._id.toString(),
-        metalType: product.metalType,
-        metalPurity: product.metalPurity,
-        stoneType: product.stoneType,
-      })),
+      products: products.map(product => {
+        const priceData = formatProductPrice(product);
+        return {
+          _id: product._id.toString(),
+          name: product.name,
+          category: product.category,
+          brand: product.brand,
+          mainImage: product.mainImage,
+          displayPrice: priceData.displayPrice,
+          originalPrice: priceData.originalPrice,
+          hasDiscount: priceData.hasDiscount,
+          discountPercent: priceData.discountPercent,
+          slug: product.urlSlug || product._id.toString(),
+          metalType: product.metalType,
+          metalPurity: product.metalPurity,
+          stoneType: product.stoneType,
+        };
+      }),
     });
   } catch (error) {
     console.error('[v0] Error in search API:', error);
