@@ -2,38 +2,10 @@
 
 import { useCategories } from '@/contexts/CategoriesContext';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { ChevronRight, Diamond, Gem, Link2, CircleDot, Sparkles } from 'lucide-react';
+import { ChevronRight, Diamond } from 'lucide-react';
 import { useState, useEffect } from 'react';
-
-const sidebarCategories = [
-  'Rings',
-  'Necklace',
-  'Earring',
-  'Bracelet',
-  'Brooch',
-  'Gold Jewellery',
-  'Cufflink',
-  'Pearls',
-  'Piercing',
-  'Platinum',
-  'Navratna',
-  'Chain',
-];
-
-const categoryIcons: Record<string, React.ReactElement> = {
-  Rings: <Diamond size={18} />,
-  Necklace: <Gem size={18} />,
-  Earring: <CircleDot size={18} />,
-  Bracelet: <Link2 size={18} />,
-  Brooch: <Sparkles size={18} />,
-  'Gold Jewellery': <Diamond size={18} />,
-  Cufflink: <Link2 size={18} />,
-  Pearls: <Gem size={18} />,
-  Piercing: <CircleDot size={18} />,
-  Platinum: <Diamond size={18} />,
-  Navratna: <Gem size={18} />,
-  Chain: <Link2 size={18} />,
-};
+import Image from 'next/image';
+import Link from 'next/link';
 
 // Grid2x2CheckIcon component
 const Grid2x2CheckIcon = ({ size, className }: { size: number; className?: string }) => (
@@ -54,7 +26,7 @@ const Grid2x2CheckIcon = ({ size, className }: { size: number; className?: strin
 );
 
 export function CategoriesSidebar() {
-  const { sidebarOpen, setSidebarOpen, mobileCategoriesOpen, setMobileCategoriesOpen } = useCategories();
+  const { sidebarOpen, setSidebarOpen, mobileCategoriesOpen, setMobileCategoriesOpen, categories } = useCategories();
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -101,15 +73,27 @@ export function CategoriesSidebar() {
               </button>
             </div>
             <ul className='space-y-2 sm:space-y-3 text-xs sm:text-sm font-semibold text-[#1C1F1A]'>
-              {sidebarCategories.map((category, index) => (
+              {categories.map((category) => (
                 <li
-                  key={category}
+                  key={category._id}
                   className='flex items-center justify-between rounded-xl sm:rounded-2xl px-1 py-1.5 sm:py-2 transition-all duration-300 hover:bg-[#F5EEE5]/60 hover:translate-x-2 hover:shadow-md cursor-pointer'
                   onClick={() => setSidebarOpen(false)}>
-                  <div className='flex items-center gap-1.5 sm:gap-2 text-[#3F5C45]'>
-                    <span className='transition-transform duration-300'>{categoryIcons[category]}</span>
-                    <span className='truncate'>{category}</span>
-                  </div>
+                  <Link
+                    href={`/products?category=${encodeURIComponent(category.slug || category.name)}`}
+                    className='flex items-center gap-1.5 sm:gap-2 text-[#3F5C45] flex-1'>
+                    {category.icon ? (
+                      <Image
+                        src={category.icon}
+                        alt={category.name}
+                        width={18}
+                        height={18}
+                        className="object-contain flex-shrink-0 transition-transform duration-300"
+                      />
+                    ) : (
+                      <span className='transition-transform duration-300'><Diamond size={18} /></span>
+                    )}
+                    <span className='truncate'>{category.name}</span>
+                  </Link>
                   <ChevronRight size={14} className='sm:w-4 sm:h-4 text-[#3F5C45] transition-transform duration-300 flex-shrink-0' />
                 </li>
               ))}
@@ -131,15 +115,27 @@ export function CategoriesSidebar() {
           </SheetTitle>
         </SheetHeader>
         <ul className='p-3 sm:p-4 space-y-1 sm:space-y-2'>
-          {sidebarCategories.map((category) => (
+          {categories.map((category) => (
             <li
-              key={category}
+              key={category._id}
               className='flex items-center justify-between rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3 transition-all duration-300 hover:bg-[#F5EEE5]/60 hover:translate-x-2 hover:shadow-md cursor-pointer active:scale-95'
               onClick={() => setMobileCategoriesOpen(false)}>
-              <div className='flex items-center gap-2 sm:gap-3 text-[#3F5C45] flex-1'>
-                <span className='transition-transform duration-300 flex-shrink-0'>{categoryIcons[category]}</span>
-                <span className='text-sm sm:text-base font-semibold text-[#1C1F1A]'>{category}</span>
-              </div>
+              <Link
+                href={`/products?category=${encodeURIComponent(category.slug || category.name)}`}
+                className='flex items-center gap-2 sm:gap-3 text-[#3F5C45] flex-1'>
+                {category.icon ? (
+                  <Image
+                    src={category.icon}
+                    alt={category.name}
+                    width={18}
+                    height={18}
+                    className="object-contain flex-shrink-0 transition-transform duration-300"
+                  />
+                ) : (
+                  <span className='transition-transform duration-300 flex-shrink-0'><Diamond size={18} /></span>
+                )}
+                <span className='text-sm sm:text-base font-semibold text-[#1C1F1A]'>{category.name}</span>
+              </Link>
               <ChevronRight size={18} className='sm:w-5 sm:h-5 text-[#3F5C45] transition-transform duration-300 flex-shrink-0' />
             </li>
           ))}

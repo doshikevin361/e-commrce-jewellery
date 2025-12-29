@@ -12,6 +12,7 @@ export interface Category {
   featured?: boolean;
   status?: string;
   productCount?: number;
+  children?: Category[];
 }
 
 interface CategoriesContextType {

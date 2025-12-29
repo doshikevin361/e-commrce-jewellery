@@ -1,22 +1,10 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronRight, Diamond, Gem, CircleDot, Link2, Sparkles } from 'lucide-react';
+import { Diamond } from 'lucide-react';
 import Link from 'next/link';
 import { useCategories, Category } from '@/contexts/CategoriesContext';
-
-// Icon mapping for categories
-const getCategoryIcon = (categoryName: string) => {
-  const name = categoryName.toLowerCase();
-  if (name.includes('ring')) return <Diamond size={18} />;
-  if (name.includes('necklace')) return <Gem size={18} />;
-  if (name.includes('earring')) return <CircleDot size={18} />;
-  if (name.includes('bracelet')) return <Link2 size={18} />;
-  if (name.includes('brooch')) return <Sparkles size={18} />;
-  if (name.includes('gold')) return <Diamond size={18} />;
-  if (name.includes('cufflink')) return <Link2 size={18} />;
-  return <Diamond size={18} />;
-};
+import Image from 'next/image';
 
 interface CategoriesDropdownProps {
   isOpen: boolean;
@@ -104,9 +92,19 @@ export function CategoriesDropdown({ isOpen, onClose, position = 'left', classNa
                     href={`/products?category=${encodeURIComponent(category.slug || category.name)}`}
                     onClick={() => handleCategoryClick(category)}
                     className="block px-4 py-2.5 text-sm text-[#1F3B29] hover:bg-[#F5EEE5]/60 transition-colors duration-200 font-medium flex items-center gap-2 group">
-                    <span className="text-[#3F5C45] group-hover:text-[#1F3B29] transition-colors">
-                      {getCategoryIcon(category.name)}
-                    </span>
+                    {category.icon ? (
+                      <Image
+                        src={category.icon}
+                        alt={category.name}
+                        width={18}
+                        height={18}
+                        className="object-contain flex-shrink-0"
+                      />
+                    ) : (
+                      <span className="text-[#3F5C45] group-hover:text-[#1F3B29] transition-colors">
+                        <Diamond size={18} />
+                      </span>
+                    )}
                     <span className="flex-1">{category.name}</span>
                     {category.productCount !== undefined && category.productCount > 0 && (
                       <span className="text-xs text-gray-400">({category.productCount})</span>
