@@ -170,35 +170,6 @@ const defaultHeroSlides: HeroSlide[] = [
   },
 ];
 
-const sidebarCategories = [
-  'Rings',
-  'Necklace',
-  'Earring',
-  'Bracelet',
-  'Brooch',
-  'Gold Jewellery',
-  'Cufflink',
-  // 'Pearls',
-  // 'Piercing',
-  // 'Platinum',
-  // 'Navratna',
-  // 'Chain',
-];
-
-const categoryIcons: Record<string, JSX.Element> = {
-  Rings: <Diamond size={18} />,
-  Necklace: <Gem size={18} />,
-  Earring: <CircleDot size={18} />,
-  Bracelet: <Link2 size={18} />,
-  Brooch: <Sparkles size={18} />,
-  'Gold Jewellery': <Diamond size={18} />,
-  Cufflink: <Link2 size={18} />,
-  Pearls: <Gem size={18} />,
-  Piercing: <CircleDot size={18} />,
-  Platinum: <Diamond size={18} />,
-  Navratna: <Gem size={18} />,
-  Chain: <Link2 size={18} />,
-};
 
 const testimonials = [
   {
@@ -638,7 +609,17 @@ const Hero = ({ slides = defaultHeroSlides, isLoading = false }: { slides?: Hero
                   <Link
                     href={`/products?category=${encodeURIComponent(category.slug || category.name)}`}
                     className='flex items-center gap-3 text-[#3F5C45] flex-1'>
-                    <span>{categoryIcons[category.name] || <Diamond size={18} />}</span>
+                    {category.icon ? (
+                      <Image
+                        src={category.icon}
+                        alt={category.name}
+                        width={18}
+                        height={18}
+                        className="object-contain flex-shrink-0"
+                      />
+                    ) : (
+                      <Diamond size={18} />
+                    )}
                     <span>{category.name}</span>
                   </Link>
                   <ChevronRight size={18} className='text-[#3F5C45]' />
@@ -674,7 +655,17 @@ const Hero = ({ slides = defaultHeroSlides, isLoading = false }: { slides?: Hero
                       <Link
                         href={`/products?category=${encodeURIComponent(category.slug || category.name)}`}
                         className='flex items-center gap-2 text-[#3F5C45] flex-1'>
-                        <span>{categoryIcons[category.name] || <Diamond size={14} />}</span>
+                        {category.icon ? (
+                          <Image
+                            src={category.icon}
+                            alt={category.name}
+                            width={14}
+                            height={14}
+                            className="object-contain flex-shrink-0"
+                          />
+                        ) : (
+                          <Diamond size={14} />
+                        )}
                         <span>{category.name}</span>
                       </Link>
                       <ChevronRight size={14} className='text-[#3F5C45]' />

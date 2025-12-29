@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import SearchBar from './SearchBar/SearchBar';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import React, { useState, useEffect, useRef, useCallback, Suspense } from 'react';
 import { AuthModal } from '@/components/auth/auth-modal';
@@ -74,7 +75,14 @@ function HomeHeaderContent() {
   const accountDropdownRef = useRef<HTMLDivElement>(null);
   const searchParams = useSearchParams();
   const [categories, setCategories] = useState<
-    Array<{ _id: string; name: string; slug: string; children?: Array<{ _id: string; name: string; slug: string }> }>
+    Array<{
+      _id: string;
+      name: string;
+      slug: string;
+      image?: string;
+      icon?: string;
+      children?: Array<{ _id: string; name: string; slug: string; image?: string; icon?: string }>;
+    }>
   >([]);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [openCategoryDropdown, setOpenCategoryDropdown] = useState<string | null>(null);
@@ -96,19 +104,6 @@ function HomeHeaderContent() {
     Platinum: <Zap size={16} className='text-gray-300' strokeWidth={1.5} />,
     Gemstone: <Gem size={16} className='text-purple-500' strokeWidth={1.5} />,
     Imitation: <Coffee size={16} className='text-pink-400' strokeWidth={1.5} />,
-  };
-
-  // Helper function to get icon for category
-  const getCategoryIcon = (categoryName: string) => {
-    const name = categoryName.toLowerCase();
-    // Use Circle with decorative styling for earrings
-    if (name.includes('earring'))
-      return <Circle size={16} className='text-gray-700' strokeWidth={2} fill='currentColor' fillOpacity={0.2} />;
-    if (name.includes('ring')) return <Circle size={16} className='text-gray-700' strokeWidth={1.5} fill='none' />;
-    if (name.includes('gift') || name.includes('gifting')) return <Gift size={16} className='text-gray-700' strokeWidth={1.5} />;
-    if (name.includes('diamond')) return <Diamond size={16} className='text-gray-700' strokeWidth={1.5} />;
-    if (name.includes('gold')) return <Star size={16} className='text-gray-700' strokeWidth={1.5} />;
-    return <Diamond size={16} className='text-gray-700' strokeWidth={1.5} />;
   };
 
   // Helper function to get icon for menu item
@@ -690,11 +685,22 @@ function HomeHeaderContent() {
                                 }
                               }}
                               className={cn(
-                                'flex-1 block w-full text-left px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg text-sm sm:text-base font-medium transition-all duration-300 hover:bg-white/15 hover:translate-x-2 active:bg-white/20',
+                                'flex-1 w-full text-left px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg text-sm sm:text-base font-medium transition-all duration-300 hover:bg-white/15 hover:translate-x-2 active:bg-white/20 flex items-center gap-2',
                                 isActive && 'bg-white/25 font-semibold shadow-sm',
                                 hasSubcategories && isExpanded && 'bg-white/15'
                               )}>
-                              {category.name}
+                              {category.icon ? (
+                                <Image
+                                  src={category.icon}
+                                  alt={category.name}
+                                  width={20}
+                                  height={20}
+                                  className='object-contain flex-shrink-0'
+                                />
+                              ) : (
+                                <Diamond size={20} className='text-white/80' strokeWidth={1.5} />
+                              )}
+                              <span>{category.name}</span>
                             </Link>
                             {hasSubcategories && (
                               <button
@@ -799,7 +805,17 @@ function HomeHeaderContent() {
                             isActive && 'bg-gray-100 shadow-sm',
                             isDropdownOpen && 'bg-gray-50'
                           )}>
-                          {getCategoryIcon(category.name)}
+                          {category.icon ? (
+                            <Image
+                              src={category.icon}
+                              alt={category.name}
+                              width={16}
+                              height={16}
+                              className='object-contain flex-shrink-0'
+                            />
+                          ) : (
+                            <Diamond size={16} className='text-gray-700' strokeWidth={1.5} />
+                          )}
                           <span className='relative z-10 text-gray-700'>{category.name}</span>
                           {hasSubcategories && (
                             <ChevronDown
