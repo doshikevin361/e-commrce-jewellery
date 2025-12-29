@@ -2,14 +2,12 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useState, useEffect, useRef } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useState } from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
-import { Autoplay, Navigation, Pagination } from 'swiper/modules';
+import { Autoplay } from 'swiper/modules';
 import type { Swiper as SwiperType } from 'swiper';
+
 import 'swiper/css';
-import 'swiper/css/navigation';
-import 'swiper/css/pagination';
 
 interface HeroBanner {
   _id: string;
@@ -19,110 +17,65 @@ interface HeroBanner {
   image: string;
   link?: string;
   buttonText?: string;
-  backgroundColor?: string;
   displayOrder?: number;
 }
 
 interface HeroBannerSliderProps {
   banners?: HeroBanner[];
-  isLoading?: boolean;
 }
 
-export function HeroBannerSlider({ banners = [], isLoading = false }: HeroBannerSliderProps) {
+export function HeroBannerSlider({ banners = [] }: HeroBannerSliderProps) {
   const [swiper, setSwiper] = useState<SwiperType | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
-  const prevButtonRef = useRef<HTMLButtonElement>(null);
-  const nextButtonRef = useRef<HTMLButtonElement>(null);
 
-  // Filter only active banners and sort by displayOrder
-  const activeBanners = banners
-    .filter(banner => banner.image) // Only show banners with images
-    .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
+  const activeBanners = banners.filter(b => b.image).sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0));
 
-  useEffect(() => {
-    if (swiper && prevButtonRef.current && nextButtonRef.current) {
-      swiper.navigation.init();
-      swiper.navigation.update();
-    }
-  }, [swiper, activeBanners.length]);
-
-  if (isLoading && activeBanners.length === 0) {
-    return (
-      <div className='w-full h-[280px] sm:h-[350px] md:h-[400px] lg:h-[450px] rounded-2xl bg-gray-100 flex items-center justify-center'>
-        {/* <p className='text-gray-500'>Loading banners...</p> */}
-      </div>
-    );
-  }
-
-  if (activeBanners.length === 0) {
-    return null;
-  }
+  if (!activeBanners.length) return null;
 
   return (
-    <div className='relative w-full rounded-2xl overflow-hidden bg-white'>
+    <div className='relative w-full h-[480px] md:h-[540px] lg:h-[620px]'>
+      {/* ================= SWIPER ================= */}
       <Swiper
-        modules={[Autoplay, Navigation, Pagination]}
-        spaceBetween={0}
-        slidesPerView={1}
+        modules={[Autoplay]}
+        slidesPerView='auto'
+        centeredSlides
+        spaceBetween={32}
         loop={activeBanners.length > 1}
+        speed={700}
         autoplay={{
-          delay: 3000,
+          delay: 4000,
           disableOnInteraction: false,
-          pauseOnMouseEnter: false,
-        }}
-        pagination={{
-          clickable: true,
-          dynamicBullets: false,
-        }}
-        navigation={{
-          prevEl: prevButtonRef.current,
-          nextEl: nextButtonRef.current,
         }}
         onSwiper={setSwiper}
-        onSlideChange={swiper => setActiveIndex(swiper.realIndex)}
-        className='hero-banner-swiper w-full h-[280px] sm:h-[350px] md:h-[400px] lg:h-[450px]'>
-        {activeBanners.map(banner => (
-          <SwiperSlide key={banner._id}>
-            <div className='relative w-full h-full'>
-              {/* Full Background Image */}
-              <Image
-                src={banner.image}
-                alt={banner.title}
-                fill
-                sizes='100vw'
-                className='object-cover'
-                priority={activeBanners.indexOf(banner) === 0}
-              />
+        onSlideChange={s => setActiveIndex(s.realIndex)}
+        className='w-full h-full px-6 lg:px-12 overflow-hidden'>
+        {activeBanners.map((banner, index) => (
+          <SwiperSlide key={banner._id} className='!w-[85%] md:!w-[70%] lg:!w-[80%]'>
+            <div className='relative w-full h-[420px] md:h-[480px] lg:h-[520px] rounded-2xl overflow-hidden'>
+              {/* Background Image */}
+              <Image src={banner.image} alt={banner.title} fill className='object-cover' priority={index === 0} />
 
-              {/* Overlay for better text readability */}
-              <div className='absolute inset-0 bg-gradient-to-r from-black/60 via-black/40 to-transparent' />
+              {/* Overlay */}
+              <div className='absolute inset-0 bg-black/40' />
 
-              {/* Right Side - Text Content Overlay */}
-              <div className='relative h-full flex flex-col justify-center items-center sm:items-end px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 py-6 sm:py-8 md:py-12'>
-                <div className='w-full max-w-2xl sm:pl-10 flex flex-col justify-center text-center sm:text-right md:text-left'>
-                  {/* Brand/Logo Area - Optional */}
+              {/* Content */}
+              <div className='absolute inset-0 z-10 flex items-center'>
+                <div className='px-8 max-w-xl text-white'>
                   {banner.subtitle && (
-                    <p className='text-[10px] sm:text-xs md:text-sm font-semibold text-white/90 mb-1 sm:mb-2 md:mb-3 uppercase tracking-wider'>{banner.subtitle}</p>
+                    <span className='inline-block mb-3 px-4 py-1.5 bg-white/20 rounded-full text-xs tracking-wide uppercase'>
+                      {banner.subtitle}
+                    </span>
                   )}
 
-                  {/* Main Title */}
-                  <h1 className='text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold text-white mb-3 sm:mb-4 md:mb-6 leading-tight drop-shadow-lg'>
-                    {banner.title}
-                  </h1>
+                  <h2 className='text-2xl md:text-4xl lg:text-5xl font-bold mb-4'>{banner.title}</h2>
 
-                  {/* Description */}
-                  {banner.description && (
-                    <p className='text-xs sm:text-sm md:text-base lg:text-lg text-white/90 mb-4 sm:mb-6 md:mb-8 max-w-2xl drop-shadow-md'>
-                      {banner.description}
-                    </p>
-                  )}
+                  {banner.description && <p className='text-sm md:text-lg text-white/90 mb-6'>{banner.description}</p>}
 
-                  {/* CTA Button */}
-                  {banner.buttonText && (
-                    <Link
-                      href={banner.link || '/products'}
-                      className='inline-flex items-center justify-center bg-white text-web px-6 sm:px-7 md:px-9 lg:px-10 py-2.5 sm:py-3 md:py-3.5 lg:py-4 rounded-full font-semibold text-xs sm:text-sm md:text-base transition-colors duration-200 w-fit mx-auto sm:mx-0 shadow-lg whitespace-nowrap hover:bg-[#F5EEE5]'>
-                      {banner.buttonText}
+                  {banner.buttonText && banner.link && (
+                    <Link href={banner.link}>
+                      <button className='px-8 py-3 bg-white text-gray-900 font-semibold rounded-full hover:bg-gray-100 transition'>
+                        {banner.buttonText}
+                      </button>
                     </Link>
                   )}
                 </div>
@@ -132,23 +85,19 @@ export function HeroBannerSlider({ banners = [], isLoading = false }: HeroBanner
         ))}
       </Swiper>
 
-      {/* Navigation Arrows */}
-      {activeBanners.length > 1 && (
-        <>
+      {/* ================= DIAMOND DOTS ================= */}
+      <div className='absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-3 z-[999]'>
+        {activeBanners.map((_, index) => (
           <button
-            ref={prevButtonRef}
-            className='cursor-pointer absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-10 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full bg-white/90 backdrop-blur-sm border border-gray-200 flex items-center justify-center hover:bg-white hover:border-[#1F3B29] transition-all shadow-lg'
-            aria-label='Previous slide'>
-            <ChevronLeft className='w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-[#1F3B29]' />
-          </button>
-          <button
-            ref={nextButtonRef}
-            className='cursor-pointer absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-10 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full bg-white/90 backdrop-blur-sm border border-gray-200 flex items-center justify-center hover:bg-white hover:border-[#1F3B29] transition-all shadow-lg'
-            aria-label='Next slide'>
-            <ChevronRight className='w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-[#1F3B29]' />
-          </button>
-        </>
-      )}
+            key={index}
+            onClick={() => swiper?.slideToLoop(index)}
+            aria-label={`Go to slide ${index + 1}`}
+            className={`w-3 h-3 rotate-45 transition-all duration-300 ${
+              index === activeIndex ? 'bg-white scale-125' : 'bg-white/40 hover:bg-white/70'
+            }`}
+          />
+        ))}
+      </div>
     </div>
   );
 }

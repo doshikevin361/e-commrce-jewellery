@@ -1,5 +1,6 @@
 import { connectToDatabase } from "@/lib/mongodb";
 import { NextRequest, NextResponse } from "next/server";
+import { formatProductPrice } from "@/lib/utils/price-calculator";
 
 export async function GET(request: NextRequest) {
   try {
@@ -73,6 +74,9 @@ export async function GET(request: NextRequest) {
         metalCost: 1,
         makingChargeAmount: 1,
         gstAmount: 1,
+        price: 1,
+        subTotal: 1,
+        totalAmount: 1,
       })
       .toArray();
 
@@ -80,15 +84,21 @@ export async function GET(request: NextRequest) {
     const total = await db.collection("products").countDocuments(query);
 
     return NextResponse.json({
-      products: products.map((product) => ({
-        ...product,
-        _id: product._id.toString(),
-        // Format price display
-        displayPrice: product.sellingPrice || product.regularPrice || 0,
-        originalPrice: product.mrp || product.regularPrice || 0,
-        hasDiscount: (product.mrp || product.regularPrice) > (product.sellingPrice || product.regularPrice),
-        discountPercent: product.discount || 0,
-      })),
+      products: products.map((product) => {
+        const priceData = formatProductPrice(product);
+        return {
+          ...product,
+          _id: product._id.toString(),
+          // Format price display using calculated prices
+          displayPrice: priceData.displayPrice,
+          originalPrice: priceData.originalPrice,
+          sellingPrice: priceData.sellingPrice,
+          regularPrice: priceData.regularPrice,
+          mrp: priceData.mrp,
+          hasDiscount: priceData.hasDiscount,
+          discountPercent: priceData.discountPercent,
+        };
+      }),
       pagination: {
         total,
         page,
