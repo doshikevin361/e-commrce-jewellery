@@ -81,13 +81,27 @@ export async function GET(
     // Calculate prices using the price calculator
     const priceData = formatProductPrice(product);
 
+    // Handle both images and galleryImages fields for backward compatibility
+    const galleryImages = Array.isArray(product.galleryImages) && product.galleryImages.length > 0
+      ? product.galleryImages
+      : (Array.isArray(product.images) && product.images.length > 0 ? product.images : []);
+
+    console.log('[v0] Product images debug:', {
+      hasGalleryImages: Array.isArray(product.galleryImages),
+      galleryImagesCount: Array.isArray(product.galleryImages) ? product.galleryImages.length : 0,
+      hasImages: Array.isArray(product.images),
+      imagesCount: Array.isArray(product.images) ? product.images.length : 0,
+      finalGalleryImagesCount: galleryImages.length,
+      productId: product._id.toString(),
+    });
+
     const productData = {
       ...product,
       _id: product._id.toString(),
       categoryName: categoryName, // Add the resolved category name
       // Ensure arrays are properly formatted
       tags: Array.isArray(product.tags) ? product.tags : [],
-      galleryImages: Array.isArray(product.galleryImages) ? product.galleryImages : [],
+      galleryImages: galleryImages,
       variants: Array.isArray(product.variants) ? product.variants.map((v: any) => ({
         ...v,
         options: Array.isArray(v.options) ? v.options : []

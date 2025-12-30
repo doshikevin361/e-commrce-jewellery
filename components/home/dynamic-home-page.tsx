@@ -23,7 +23,7 @@ import 'swiper/css';
 import 'swiper/css/pagination';
 // Removed dummyData imports - using API data instead
 import { Pagination } from 'swiper/modules';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback, memo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCategories } from '@/contexts/CategoriesContext';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
@@ -32,6 +32,15 @@ import Link from 'next/link';
 import { getActiveHomepageFeatures } from '@/lib/constants/features';
 import { ProductCard, ProductCardData } from './common/product-card';
 import { HeroBannerSlider } from './hero-banner-slider';
+import {
+  ProductSliderSkeleton,
+  ProductGridSkeleton,
+  CategoryStripSkeleton,
+  NewArrivalsSkeleton,
+  CollectionsSkeleton,
+  GallerySkeleton,
+  WhyChooseUsSkeleton,
+} from './common/skeleton-loaders';
 
 type HeroSlide = {
   id: string | number;
@@ -314,24 +323,21 @@ export const HomePage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  useEffect(() => {
-    const controller = new AbortController();
+  const fetchHomepageSections = useCallback(async (signal: AbortSignal) => {
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/public/homepage', {
+        cache: 'no-store',
+        signal,
+      });
 
-    const fetchHomepageSections = async () => {
-      setIsLoading(true);
-      try {
-        const response = await fetch('/api/public/homepage', {
-          cache: 'no-store',
-          signal: controller.signal,
-        });
+      if (!response.ok) {
+        throw new Error('Failed to fetch homepage sections');
+      }
 
-        if (!response.ok) {
-          throw new Error('Failed to fetch homepage sections');
-        }
-
-        const payload = await response.json();
-        const incomingSections = Array.isArray(payload?.sections) ? payload.sections : [];
-        const nextState = createDefaultSectionsState();
+      const payload = await response.json();
+      const incomingSections = Array.isArray(payload?.sections) ? payload.sections : [];
+      const nextState = createDefaultSectionsState();
 
         incomingSections.forEach((section: any) => {
           if (!section || typeof section !== 'object') {
@@ -461,28 +467,29 @@ export const HomePage = () => {
           }
         });
 
-        if (!controller.signal.aborted) {
+        if (!signal.aborted) {
           setSectionsData(nextState);
           setErrorMessage(null);
         }
       } catch (error) {
-        if (controller.signal.aborted) {
+        if (signal.aborted) {
           return;
         }
         console.error('[v0] Failed to load homepage data:', error);
         setSectionsData(prev => prev);
         setErrorMessage('We could not load the latest homepage data. Showing default content.');
       } finally {
-        if (!controller.signal.aborted) {
+        if (!signal.aborted) {
           setIsLoading(false);
         }
       }
-    };
+    }, []);
 
-    fetchHomepageSections();
-
+  useEffect(() => {
+    const controller = new AbortController();
+    fetchHomepageSections(controller.signal);
     return () => controller.abort();
-  }, []);
+  }, [fetchHomepageSections]);
 
   return (
     <>
@@ -774,34 +781,17 @@ const Hero = ({ slides = defaultHeroSlides, isLoading = false }: { slides?: Hero
   );
 };
 
-const CategoryStrip = ({ categoriesData, isLoading = false }: { categoriesData?: CategoryStripItem[]; isLoading?: boolean }) => {
-  const items = categoriesData && categoriesData.length > 0 ? categoriesData : [];
+const CategoryStrip = memo(({ categoriesData, isLoading = false }: { categoriesData?: CategoryStripItem[]; isLoading?: boolean }) => {
+  const items = useMemo(() => (categoriesData && categoriesData.length > 0 ? categoriesData : []), [categoriesData]);
   const showSkeleton = isLoading && (!categoriesData || categoriesData.length === 0);
-  const skeletonItems = Array.from({ length: 6 });
 
   return (
     <section className='w-full space-y-6 bg-white'>
-      {/* <div className='mb-6 text-center'>
-        <div className='mb-3 flex items-center justify-center gap-2'>
-          <div className='h-px w-8 bg-[#E6D3C2]' />
-          <Diamond size={16} className='text-[#C8A15B]' />
-          <div className='h-px w-8 bg-[#E6D3C2]' />
-        </div>
-        <h2 className='mb-3 text-2xl font-bold tracking-tight text-[#1F3B29] sm:text-3xl md:text-4xl'>SHOP BY CATEGORY</h2>
-        <p className='mx-auto max-w-xl text-sm font-normal leading-relaxed text-[#3F5C45] sm:text-base md:text-lg'>
-          Explore our diverse selections. Find your style.
-        </p>
-      </div> */}
-
-      <div className='mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 sm:gap-4 md:gap-6 pt-6 sm:pt-8'>
-        {showSkeleton
-          ? skeletonItems.map((_, index) => (
-              <div key={`category-skeleton-${index}`} className='flex flex-col items-center gap-3 rounded-full animate-pulse'>
-                <div className='aspect-square w-full rounded-full bg-[#F5EEE5]' />
-                <div className='h-3 w-16 rounded-full bg-[#F5EEE5]' />
-              </div>
-            ))
-          : items.map(item => (
+      {showSkeleton ? (
+        <CategoryStripSkeleton />
+      ) : (
+        <div className='mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 sm:gap-4 md:gap-6 pt-6 sm:pt-8'>
+          {items.map(item => (
               <Link
                 key={`${item.slug || item.name}-${item.image}`}
                 href={`/products?category=${encodeURIComponent(item.slug || item.name)}`}
@@ -819,7 +809,8 @@ const CategoryStrip = ({ categoriesData, isLoading = false }: { categoriesData?:
                 </h3>
               </Link>
             ))}
-      </div>
+        </div>
+      )}
 
       {/* <div className='text-center'>
         <button
@@ -836,13 +827,14 @@ const CategoryStrip = ({ categoriesData, isLoading = false }: { categoriesData?:
       </div> */}
     </section>
   );
-};
+});
+CategoryStrip.displayName = 'CategoryStrip';
 
-const FeaturedSlider = ({ products, isLoading = false }: { products?: ProductCardData[]; isLoading?: boolean }) => {
+const FeaturedSlider = memo(({ products, isLoading = false }: { products?: ProductCardData[]; isLoading?: boolean }) => {
   const swiperRef = useRef<SwiperType | null>(null);
   const prevButtonRef = useRef<HTMLButtonElement>(null);
   const nextButtonRef = useRef<HTMLButtonElement>(null);
-  const resolvedProducts = products && products.length > 0 ? products : [];
+  const resolvedProducts = useMemo(() => (products && products.length > 0 ? products : []), [products]);
   const showLoading = isLoading && (!products || products.length === 0);
 
   useEffect(() => {
@@ -895,9 +887,7 @@ const FeaturedSlider = ({ products, isLoading = false }: { products?: ProductCar
         <SectionHeader title='New Products' rightSlot={rightSlot} />
       </div>
       {showLoading ? (
-        <div className='flex items-center justify-center py-8'>
-          <p className='text-gray-500'>Loading products...</p>
-        </div>
+        <ProductSliderSkeleton count={6} />
       ) : resolvedProducts.length === 0 ? (
         <div className='flex items-center justify-center py-8'>
           <p className='text-gray-500'>No products available</p>
@@ -940,10 +930,11 @@ const FeaturedSlider = ({ products, isLoading = false }: { products?: ProductCar
       )}
     </section>
   );
-};
+});
+FeaturedSlider.displayName = 'FeaturedSlider';
 
-const TrendingProducts = ({ products, isLoading = false }: { products?: ProductCardData[]; isLoading?: boolean }) => {
-  const resolvedProducts = products && products.length > 0 ? products : [];
+const TrendingProducts = memo(({ products, isLoading = false }: { products?: ProductCardData[]; isLoading?: boolean }) => {
+  const resolvedProducts = useMemo(() => (products && products.length > 0 ? products : []), [products]);
   const showLoading = isLoading && (!products || products.length === 0);
 
   const rightSlot = (
@@ -975,9 +966,7 @@ const TrendingProducts = ({ products, isLoading = false }: { products?: ProductC
         <SectionHeader title='Trending Products' rightSlot={rightSlot} />
       </div>
       {showLoading ? (
-        <div className='flex items-center justify-center py-8'>
-          <p className='text-gray-500'>Loading trending products...</p>
-        </div>
+        <ProductGridSkeleton count={4} />
       ) : resolvedProducts.length === 0 ? (
         <div className='flex items-center justify-center py-8'>
           <p className='text-gray-500'>No trending products available</p>
@@ -991,9 +980,10 @@ const TrendingProducts = ({ products, isLoading = false }: { products?: ProductC
       )}
     </section>
   );
-};
+});
+TrendingProducts.displayName = 'TrendingProducts';
 
-const PromoShowcase = () => {
+const PromoShowcase = memo(() => {
   return (
     <section className='w-full bg-[#F3F5F7]'>
       <div className='mx-auto grid items-center gap-6 md:grid-cols-2 w-full max-w-[1440px] px-4 sm:px-6 md:px-8 lg:px-12 py-8 sm:py-10 md:py-12'>
@@ -1028,19 +1018,14 @@ const PromoShowcase = () => {
       </div>
     </section>
   );
-};
+});
+PromoShowcase.displayName = 'PromoShowcase';
 
-const CollectionsSection = ({ dazzleData, isLoading = false }: { dazzleData: DazzleCard[]; isLoading?: boolean }) => {
+const CollectionsSection = memo(({ dazzleData, isLoading = false }: { dazzleData: DazzleCard[]; isLoading?: boolean }) => {
   const router = useRouter();
 
   if (isLoading && dazzleData.length === 0) {
-    return (
-      <section className='w-full'>
-        <div className='flex items-center justify-center py-8'>
-          <p className='text-gray-500'>Loading section...</p>
-        </div>
-      </section>
-    );
+    return <CollectionsSkeleton />;
   }
 
   const cardsToShow =
@@ -1083,11 +1068,15 @@ const CollectionsSection = ({ dazzleData, isLoading = false }: { dazzleData: Daz
                 key={card._id}
                 className='flex flex-col items-center gap-4 sm:gap-6 rounded-2xl bg-[#F3F5F7] p-4 sm:p-6 md:p-8 md:flex-row'>
                 {card.image && (
-                  <img
-                    src={card.image}
-                    className='h-48 sm:h-64 md:h-[300px] w-full rounded-xl object-cover md:h-full md:w-1/2'
-                    alt={card.subtitle || card.title || 'Collection image'}
-                  />
+                  <div className='relative h-48 sm:h-64 md:h-[300px] w-full rounded-xl overflow-hidden md:h-full md:w-1/2'>
+                    <Image
+                      src={card.image}
+                      alt={card.subtitle || card.title || 'Collection image'}
+                      fill
+                      className='object-cover'
+                      sizes='(max-width: 768px) 100vw, 50vw'
+                    />
+                  </div>
                 )}
 
                 <div className='flex flex-col justify-center w-full md:w-1/2 md:pl-6'>
@@ -1123,11 +1112,15 @@ const CollectionsSection = ({ dazzleData, isLoading = false }: { dazzleData: Daz
               </div>
 
               {card.image && (
-                <img
-                  src={card.image}
-                  className='h-48 sm:h-64 md:h-[280px] lg:h-[330px] w-full rounded-xl object-cover'
-                  alt={card.title || 'Collection image'}
-                />
+                <div className='relative h-48 sm:h-64 md:h-[280px] lg:h-[330px] w-full rounded-xl overflow-hidden'>
+                  <Image
+                    src={card.image}
+                    alt={card.title || 'Collection image'}
+                    fill
+                    className='object-cover'
+                    sizes='(max-width: 768px) 100vw, 50vw'
+                  />
+                </div>
               )}
             </div>
           );
@@ -1135,9 +1128,10 @@ const CollectionsSection = ({ dazzleData, isLoading = false }: { dazzleData: Daz
       </div>
     </section>
   );
-};
+});
+CollectionsSection.displayName = 'CollectionsSection';
 
-const UpdatesSection = ({ newsItems, isLoading = false }: { newsItems: NewsItem[]; isLoading?: boolean }) => {
+const UpdatesSection = memo(({ newsItems, isLoading = false }: { newsItems: NewsItem[]; isLoading?: boolean }) => {
   const router = useRouter();
 
   if (isLoading && newsItems.length === 0) {
@@ -1192,17 +1186,12 @@ const UpdatesSection = ({ newsItems, isLoading = false }: { newsItems: NewsItem[
       </div>
     </section>
   );
-};
+});
+UpdatesSection.displayName = 'UpdatesSection';
 
-const GallerySection = ({ galleryItems, isLoading = false }: { galleryItems: GalleryItem[]; isLoading?: boolean }) => {
+const GallerySection = memo(({ galleryItems, isLoading = false }: { galleryItems: GalleryItem[]; isLoading?: boolean }) => {
   if (isLoading && galleryItems.length === 0) {
-    return (
-      <section className='w-full'>
-        <div className='flex items-center justify-center py-8'>
-          <p className='text-gray-500'>Loading gallery...</p>
-        </div>
-      </section>
-    );
+    return <GallerySkeleton />;
   }
 
   const itemsToShow = galleryItems.length > 0 ? galleryItems : [];
@@ -1213,17 +1202,21 @@ const GallerySection = ({ galleryItems, isLoading = false }: { galleryItems: Gal
 
       <div className='mt-6 sm:mt-8 grid grid-cols-2 gap-3 sm:gap-4 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 md:gap-5'>
         {itemsToShow.map(item => (
-          <div key={`gallery-image-${item._id}`} className='overflow-hidden rounded-xl shadow-sm hover:shadow-md transition-shadow'>
-            <img src={item.image} className='h-32 sm:h-40 md:h-56 w-full object-cover lg:h-64' alt='Gallery image' />
+          <div key={`gallery-image-${item._id}`} className='relative overflow-hidden rounded-xl shadow-sm hover:shadow-md transition-shadow h-32 sm:h-40 md:h-56 lg:h-64'>
+            <Image src={item.image} alt='Gallery image' fill className='object-cover' sizes='(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw' />
           </div>
         ))}
       </div>
     </section>
   );
-};
+});
+GallerySection.displayName = 'GallerySection';
 
-const WhyChooseUs = ({ features, isLoading = false }: { features?: HomepageFeatureItem[]; isLoading?: boolean }) => {
-  const resolvedFeatures = features && features.length > 0 ? features : fallbackFeatureData;
+const WhyChooseUs = memo(({ features, isLoading = false }: { features?: HomepageFeatureItem[]; isLoading?: boolean }) => {
+  const resolvedFeatures = useMemo(
+    () => (features && features.length > 0 ? features : fallbackFeatureData),
+    [features]
+  );
   const isPending = isLoading && (!features || features.length === 0);
 
   return (
@@ -1254,10 +1247,12 @@ const WhyChooseUs = ({ features, isLoading = false }: { features?: HomepageFeatu
       </div>
     </section>
   );
-};
+});
+WhyChooseUs.displayName = 'WhyChooseUs';
 
-const BestSellers = ({ products, isLoading = false }: { products?: ProductCardData[]; isLoading?: boolean }) => {
-  const items = products && products.length > 0 ? products : [];
+const BestSellers = memo(({ products, isLoading = false }: { products?: ProductCardData[]; isLoading?: boolean }) => {
+  const router = useRouter();
+  const items = useMemo(() => (products && products.length > 0 ? products : []), [products]);
   const showLoading = isLoading && (!products || products.length === 0);
 
   return (
@@ -1271,9 +1266,7 @@ const BestSellers = ({ products, isLoading = false }: { products?: ProductCardDa
         />
       </div>
       {showLoading ? (
-        <div className='flex items-center justify-center py-8'>
-          <p className='text-gray-500'>Loading featured products...</p>
-        </div>
+        <ProductGridSkeleton count={4} />
       ) : (
         <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-4 md:gap-5 lg:gap-6'>
           {items.map(product => (
@@ -1283,9 +1276,10 @@ const BestSellers = ({ products, isLoading = false }: { products?: ProductCardDa
       )}
     </section>
   );
-};
+});
+BestSellers.displayName = 'BestSellers';
 
-const Testimonials = () => {
+const Testimonials = memo(() => {
   return (
     <section className='w-full'>
       <SectionHeader
@@ -1315,9 +1309,10 @@ const Testimonials = () => {
       </div>
     </section>
   );
-};
+});
+Testimonials.displayName = 'Testimonials';
 
-const Subscribe = () => {
+const Subscribe = memo(() => {
   return (
     <section className='relative w-full py-12 sm:py-16 md:py-20 lg:py-24 overflow-hidden'>
       {/* Background Video */}
@@ -1349,9 +1344,10 @@ const Subscribe = () => {
       </div>
     </section>
   );
-};
+});
+Subscribe.displayName = 'Subscribe';
 
-const NewArrivalsSection = ({
+const NewArrivalsSection = memo(({
   banner,
   cards,
   isLoading = false,
@@ -1371,13 +1367,7 @@ const NewArrivalsSection = ({
   isLoading?: boolean;
 }) => {
   if (isLoading && !banner && cards.length === 0) {
-    return (
-      <section className='relative w-full'>
-        <div className='flex items-center justify-center py-8'>
-          <p className='text-gray-500'>Loading...</p>
-        </div>
-      </section>
-    );
+    return <NewArrivalsSkeleton />;
   }
 
   const bannerData = banner || {
@@ -1449,4 +1439,5 @@ const NewArrivalsSection = ({
       )}
     </section>
   );
-};
+});
+NewArrivalsSection.displayName = 'NewArrivalsSection';

@@ -45,6 +45,8 @@ const normalizeProductPayload = (payload: any) => {
     jewelleryMakingCharges: typeof payload.jewelleryMakingCharges === 'number' ? payload.jewelleryMakingCharges : (typeof payload.makingCharges === 'number' ? payload.makingCharges : 0),
     jewelleryCertification: payload.jewelleryCertification ?? payload.certification ?? '',
     stoneWeight: typeof payload.stoneWeight === 'number' ? payload.stoneWeight : (payload.hasDiamond ? payload.diamondCarat : 0),
+    // Map images to galleryImages for consistency
+    galleryImages: Array.isArray(payload.galleryImages) ? payload.galleryImages : (Array.isArray(payload.images) ? payload.images : []),
   };
 };
 
@@ -172,11 +174,16 @@ export async function GET(
       return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }
 
+    // Handle both images and galleryImages fields for backward compatibility
+    const galleryImages = Array.isArray(product.galleryImages) && product.galleryImages.length > 0
+      ? product.galleryImages
+      : (Array.isArray(product.images) && product.images.length > 0 ? product.images : []);
+
     const productData = {
       ...product,
       _id: product._id.toString(),
       tags: Array.isArray(product.tags) ? product.tags : [],
-      galleryImages: Array.isArray(product.galleryImages) ? product.galleryImages : [],
+      galleryImages: galleryImages,
       variants: Array.isArray(product.variants) ? product.variants.map((v: any) => ({
         ...v,
         options: Array.isArray(v.options) ? v.options : []

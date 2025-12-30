@@ -44,6 +44,8 @@ const normalizeProductPayload = (payload: any) => {
     jewelleryMakingCharges: typeof payload.jewelleryMakingCharges === 'number' ? payload.jewelleryMakingCharges : (typeof payload.makingCharges === 'number' ? payload.makingCharges : 0),
     jewelleryCertification: payload.jewelleryCertification ?? payload.certification ?? '',
     stoneWeight: typeof payload.stoneWeight === 'number' ? payload.stoneWeight : (payload.hasDiamond ? payload.diamondCarat : 0),
+    // Map images to galleryImages for consistency
+    galleryImages: Array.isArray(payload.galleryImages) ? payload.galleryImages : (Array.isArray(payload.images) ? payload.images : []),
   };
 };
 

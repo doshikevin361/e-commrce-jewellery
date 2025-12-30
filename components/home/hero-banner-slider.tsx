@@ -2,10 +2,11 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay } from 'swiper/modules';
 import type { Swiper as SwiperType } from 'swiper';
+import { HeroBannerSkeleton } from './common/skeleton-loaders';
 
 import 'swiper/css';
 
@@ -22,13 +23,21 @@ interface HeroBanner {
 
 interface HeroBannerSliderProps {
   banners?: HeroBanner[];
+  isLoading?: boolean;
 }
 
-export function HeroBannerSlider({ banners = [] }: HeroBannerSliderProps) {
+export function HeroBannerSlider({ banners = [], isLoading = false }: HeroBannerSliderProps) {
   const [swiper, setSwiper] = useState<SwiperType | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
 
-  const activeBanners = banners.filter(b => b.image).sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0));
+  const activeBanners = useMemo(
+    () => banners.filter(b => b.image).sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0)),
+    [banners]
+  );
+
+  if (isLoading) {
+    return <HeroBannerSkeleton />;
+  }
 
   if (!activeBanners.length) return null;
 
