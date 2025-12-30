@@ -536,7 +536,7 @@ function HomeHeaderContent() {
               <div className='relative flex-shrink-0'>
                 <Heart size={20} className='sm:w-5 sm:h-5 text-[#1F3B29]' />
                 {wishlistCount > 0 && (
-                  <span className='absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold rounded-full w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center shadow-sm leading-none'>
+                  <span className='absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center shadow-sm leading-none'>
                     {wishlistCount > 99 ? '99+' : wishlistCount}
                   </span>
                 )}
@@ -621,7 +621,7 @@ function HomeHeaderContent() {
               <div className='relative flex-shrink-0'>
                 <ShoppingCart size={20} className='sm:w-5 sm:h-5 text-[#1F3B29]' />
                 {cartCount > 0 && (
-                  <span className='absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold rounded-full w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center shadow-sm leading-none'>
+                  <span className='absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center shadow-sm leading-none'>
                     {cartCount > 99 ? '99+' : cartCount}
                   </span>
                 )}

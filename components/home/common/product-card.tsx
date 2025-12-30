@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo } from 'react';
 import { ShoppingCart, Star, Heart, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useCart } from '@/contexts/CartContext';
@@ -37,7 +37,7 @@ type ProductCardProps = {
   onDelete?: () => void; // Callback for delete action (for wishlist page)
 };
 
-export const ProductCard = ({
+export const ProductCard = memo(({
   product,
   className,
   actionLabel = 'Add to cart',
@@ -236,4 +236,16 @@ export const ProductCard = ({
       </div>
     </article>
   );
-};
+}, (prevProps, nextProps) => {
+  // Custom comparison function for better memoization
+  return (
+    prevProps.product.id === nextProps.product.id &&
+    prevProps.product.price === nextProps.product.price &&
+    prevProps.product.image === nextProps.product.image &&
+    prevProps.product.title === nextProps.product.title &&
+    prevProps.className === nextProps.className &&
+    prevProps.actionLabel === nextProps.actionLabel &&
+    prevProps.showDeleteIcon === nextProps.showDeleteIcon
+  );
+});
+ProductCard.displayName = 'ProductCard';
