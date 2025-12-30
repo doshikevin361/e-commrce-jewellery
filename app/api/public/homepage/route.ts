@@ -2,6 +2,7 @@ import { connectToDatabase } from '@/lib/mongodb';
 import { NextRequest, NextResponse } from 'next/server';
 import { getActiveHomepageFeatures } from '@/lib/constants/features';
 import { calculateProductPrice } from '@/lib/utils/price-calculator';
+import { ObjectId } from 'mongodb';
 
 const DEFAULT_IMAGE = 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=1200&q=80';
 const DEFAULT_CATEGORY_IMAGE = 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=800&q=80';
@@ -37,14 +38,30 @@ const PRODUCT_PROJECTION = {
   totalAmount: 1,
 };
 
-const serializeProduct = (product: any, fallbackIndex = 0) => {
+const serializeProduct = (product: any, fallbackIndex = 0, categoryMap?: Map<string, string>) => {
   const id = product?._id?.toString() ?? `product-${fallbackIndex}`;
   const { sellingPrice, regularPrice } = calculateProductPrice(product);
+
+  // Resolve category name if category is an ObjectId
+  let categoryName = product?.category ?? 'Jewellery';
+  if (product?.category) {
+    // Check if category is an ObjectId (string or ObjectId instance)
+    const categoryValue = product.category;
+    const categoryIdStr = typeof categoryValue === 'string' ? categoryValue : categoryValue?.toString();
+    
+    if (categoryIdStr && ObjectId.isValid(categoryIdStr)) {
+      // It's an ObjectId, look up the category name
+      categoryName = categoryMap?.get(categoryIdStr) || categoryName;
+    } else if (typeof categoryValue === 'string') {
+      // It's already a string (category name), use it directly
+      categoryName = categoryValue;
+    }
+  }
 
   return {
     _id: id,
     name: product?.name ?? 'Untitled Product',
-    category: product?.category ?? 'Jewellery',
+    category: categoryName,
     sellingPrice,
     regularPrice,
     mainImage: product?.mainImage || DEFAULT_IMAGE,
@@ -207,6 +224,51 @@ export async function GET(request: NextRequest) {
       safeQuery(newArrivalsCardsPromise, 'new arrivals cards', [] as any[]),
     ]);
 
+    // Build category map for resolving category IDs to names
+    const categoryMap = new Map<string, string>();
+    rawCategories.forEach((cat: any) => {
+      const catId = cat._id?.toString();
+      if (catId && cat.name) {
+        categoryMap.set(catId, cat.name);
+      }
+    });
+
+    // Also fetch all categories by ID to handle cases where products reference categories by ObjectId
+    const allProductCategories = [
+      ...rawFeatured.map((p: any) => p?.category).filter(Boolean),
+      ...rawTrending.map((p: any) => p?.category).filter(Boolean),
+      ...rawNew.map((p: any) => p?.category).filter(Boolean),
+    ];
+    
+    // Extract unique category IDs that are ObjectIds
+    const categoryIds = new Set<string>();
+    allProductCategories.forEach((cat: any) => {
+      const catIdStr = typeof cat === 'string' ? cat : cat?.toString();
+      if (catIdStr && ObjectId.isValid(catIdStr)) {
+        categoryIds.add(catIdStr);
+      }
+    });
+
+    // Fetch categories by ID if we have any ObjectId references
+    if (categoryIds.size > 0) {
+      const categoryObjectIds = Array.from(categoryIds).map(id => new ObjectId(id));
+      const categoriesById = await safeQuery(
+        db.collection('categories')
+          .find({ _id: { $in: categoryObjectIds } })
+          .project({ _id: 1, name: 1 })
+          .toArray(),
+        'categories by ID',
+        [] as any[]
+      );
+      
+      categoriesById.forEach((cat: any) => {
+        const catId = cat._id?.toString();
+        if (catId && cat.name) {
+          categoryMap.set(catId, cat.name);
+        }
+      });
+    }
+
     const serializeDazzleCard = (card: any, index: number) => ({
       _id: card?._id?.toString() ?? `dazzle-${index}`,
       title: card?.title || '',
@@ -277,7 +339,7 @@ export async function GET(request: NextRequest) {
         type: 'newProducts',
         order: 3,
         data: {
-          products: rawNew.map(serializeProduct),
+          products: rawNew.map((product, index) => serializeProduct(product, index, categoryMap)),
         },
       },
       {
@@ -285,7 +347,7 @@ export async function GET(request: NextRequest) {
         order: 4,
         data: {
           products: rawFeatured.map((product, index) => ({
-            ...serializeProduct(product, index),
+            ...serializeProduct(product, index, categoryMap),
             badge: 'Featured',
           })),
         },
@@ -295,7 +357,7 @@ export async function GET(request: NextRequest) {
         order: 5,
         data: {
           products: rawTrending.map((product, index) => ({
-            ...serializeProduct(product, index),
+            ...serializeProduct(product, index, categoryMap),
             badge: 'Trending',
           })),
         },
