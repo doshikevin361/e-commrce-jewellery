@@ -21,6 +21,9 @@ import {
   Gem,
   Coffee,
   Loader2,
+  Phone,
+  MessageCircle,
+  MapPin,
 } from 'lucide-react';
 import SearchBar from './SearchBar/SearchBar';
 import Link from 'next/link';
@@ -96,6 +99,7 @@ function HomeHeaderContent() {
   const [fetchingProducts, setFetchingProducts] = useState<Set<string>>(new Set());
   const [megaMenuProducts, setMegaMenuProducts] = useState<Record<string, any>>({});
   const [logo, setLogo] = useState<{ imageUrl: string; altText: string; width: number; height: number } | null>(null);
+  const [pinCode, setPinCode] = useState('');
 
   const PRODUCT_TYPE_ICONS: Record<string, React.ReactElement> = {
     Diamonds: <Diamond size={16} className='text-blue-500' strokeWidth={1.5} />,
@@ -470,8 +474,55 @@ function HomeHeaderContent() {
 
   return (
     <React.Fragment>
+      {/* Top Navigation Bar - Hidden on mobile */}
+      <div className='hidden md:block fixed top-0 left-0 right-0 bg-gray-50 z-50'>
+        <div className='mx-auto flex w-full max-w-[1440px] items-center justify-center px-4 sm:px-6 md:px-8 lg:px-12 py-2 relative'>
+          {/* Center - Policies */}
+          <div className='flex items-center gap-4 lg:gap-6 text-xs lg:text-sm text-gray-600'>
+            <Link href='/refund-and-return' className='hover:text-[#1F3B29] transition-colors duration-200 hover:underline'>
+              7day easy return Policy
+            </Link>
+            <Link href='/shipping-policy' className='hover:text-[#1F3B29] transition-colors duration-200 hover:underline font-medium text-[#1F3B29]'>
+              Free Delivery service
+            </Link>
+            <Link href='/contact' className='hover:text-[#1F3B29] transition-colors duration-200 hover:underline'>
+              Franchise
+            </Link>
+            <Link href='#gold-rate' className='hover:text-[#1F3B29] transition-colors duration-200 hover:underline'>
+              Gold Rate
+            </Link>
+          </div>
+          {/* Right Side - Login/Register */}
+          <div className='flex items-center gap-2 text-xs lg:text-sm absolute right-4 md:right-8 lg:right-12'>
+            {isLoggedIn ? (
+              <span className='text-gray-600'>Welcome, {customerName}</span>
+            ) : (
+              <>
+                <button
+                  onClick={() => {
+                    setAuthMode('login');
+                    setAuthModalOpen(true);
+                  }}
+                  className='text-gray-600 hover:text-[#1F3B29] transition-colors duration-200 hover:underline'>
+                  login
+                </button>
+                <span className='text-gray-400'>_</span>
+                <button
+                  onClick={() => {
+                    setAuthMode('register');
+                    setAuthModalOpen(true);
+                  }}
+                  className='text-gray-600 hover:text-[#1F3B29] transition-colors duration-200 hover:underline'>
+                  Register
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+
       {/* Top bar with logo, search, and account/cart - Fixed Sticky */}
-      <div className='fixed top-0 left-0 right-0 bg-white z-50'>
+      <div className='fixed top-0 left-0 right-0 bg-white z-50 md:top-[38px] border-t border-gray-200 shadow-sm'>
         <div className='mx-auto flex w-full max-w-[1440px] items-center justify-between gap-2 sm:gap-3 md:gap-4 px-4 sm:px-6 md:px-8 lg:px-12 py-3 sm:py-3.5 md:py-4'>
           {/* Mobile Menu Button - In top bar for better visibility, hidden on desktop (1024px+) */}
           <button
@@ -519,7 +570,66 @@ function HomeHeaderContent() {
 
           {/* Right Side Icons - Tanishq Style */}
           <div className='flex items-center gap-2 sm:gap-3 md:gap-4 text-[#1F3B29]'>
-            {/* Diamond Icon */}
+            {/* Current Offers - Hidden on mobile */}
+            <Link
+              href='/trending'
+              className='hidden lg:flex items-center gap-1 text-xs lg:text-sm text-red-600 hover:text-red-700 transition-colors duration-200 font-medium underline whitespace-nowrap'>
+              currents offers
+            </Link>
+
+            {/* Wishlist */}
+            <Link
+              href='/wishlist'
+              className='flex items-center gap-1 transition-all duration-300 hover:text-[#C8A15B] active:scale-95'
+              aria-label='Wishlist'>
+              <div className='relative flex-shrink-0'>
+                <Heart size={20} className='sm:w-5 sm:h-5' />
+                {wishlistCount > 0 && (
+                  <span className='absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center shadow-sm leading-none'>
+                    {wishlistCount > 99 ? '99+' : wishlistCount}
+                  </span>
+                )}
+              </div>
+              <span className='hidden lg:inline text-xs font-medium'>Wishlist</span>
+            </Link>
+
+            {/* Your Cart */}
+            <Link
+              href='/cart'
+              className='flex items-center gap-1 transition-all duration-300 hover:text-[#C8A15B] active:scale-95'
+              aria-label='Cart'>
+              <div className='relative flex-shrink-0'>
+                <ShoppingCart size={20} className='sm:w-5 sm:h-5' />
+                {cartCount > 0 && (
+                  <span className='absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center shadow-sm leading-none'>
+                    {cartCount > 99 ? '99+' : cartCount}
+                  </span>
+                )}
+              </div>
+              <span className='hidden lg:inline text-xs font-medium'>yourcart</span>
+            </Link>
+
+            {/* Call us/Chat/WhatsApp - Hidden on mobile */}
+            <div className='hidden lg:flex items-center gap-2 border-l border-gray-200 pl-4'>
+              <a
+                href='tel:+919876543210'
+                className='flex items-center gap-1 text-xs hover:text-[#C8A15B] transition-colors duration-200'
+                aria-label='Call us'>
+                <Phone size={16} />
+                <span>call us</span>
+              </a>
+              <span className='text-gray-400'>/</span>
+              <a
+                href='https://wa.me/919876543210'
+                target='_blank'
+                rel='noopener noreferrer'
+                className='flex items-center gap-1 text-xs hover:text-[#C8A15B] transition-colors duration-200'
+                aria-label='WhatsApp'>
+                <MessageCircle size={16} />
+                <span>chat/whatsup</span>
+              </a>
+            </div>
+
             {/* Store Icon */}
             <Link
               href='/contact'
@@ -528,20 +638,18 @@ function HomeHeaderContent() {
               <Store size={20} className='sm:w-5 sm:h-5 text-[#1F3B29]' />
             </Link>
 
-            {/* Wishlist */}
-            <Link
-              href='/wishlist'
-              className='flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-full transition-all duration-300 hover:bg-gray-100 active:scale-95 relative'
-              aria-label='Wishlist'>
-              <div className='relative flex-shrink-0'>
-                <Heart size={20} className='sm:w-5 sm:h-5 text-[#1F3B29]' />
-                {wishlistCount > 0 && (
-                  <span className='absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center shadow-sm leading-none'>
-                    {wishlistCount > 99 ? '99+' : wishlistCount}
-                  </span>
-                )}
-              </div>
-            </Link>
+            {/* Pin Code Search - Hidden on mobile */}
+            <div className='hidden lg:flex items-center gap-2 px-3 py-1.5 border border-gray-300 rounded-md hover:border-[#1F3B29] transition-colors duration-200 bg-gray-50'>
+              <MapPin size={16} className='text-gray-500 flex-shrink-0' />
+              <input
+                type='text'
+                value={pinCode}
+                onChange={e => setPinCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                placeholder='pin code'
+                className='w-20 text-xs outline-none bg-transparent placeholder:text-gray-500'
+              />
+            </div>
+
             {/* Account Dropdown */}
             <div className='relative' ref={accountDropdownRef}>
               {isLoggedIn ? (
@@ -613,20 +721,6 @@ function HomeHeaderContent() {
                 </>
               )}
             </div>
-            {/* Cart */}
-            <Link
-              href='/cart'
-              className='flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-full transition-all duration-300 hover:bg-gray-100 active:scale-95 relative'
-              aria-label='Cart'>
-              <div className='relative flex-shrink-0'>
-                <ShoppingCart size={20} className='sm:w-5 sm:h-5 text-[#1F3B29]' />
-                {cartCount > 0 && (
-                  <span className='absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center shadow-sm leading-none'>
-                    {cartCount > 99 ? '99+' : cartCount}
-                  </span>
-                )}
-              </div>
-            </Link>
           </div>
         </div>
         {/* Mobile Search Bar - Below main bar */}
@@ -636,7 +730,7 @@ function HomeHeaderContent() {
 
         {/* Mobile/Tablet Menu Dropdown - Positioned from top bar, hidden on desktop (1024px+) */}
         {mobileMenuOpen && (
-          <div className='lg:hidden fixed top-[70px] sm:top-[75px] md:top-[80px] left-0 right-0 w-full bg-[#1F3B29] border-t-2 border-white/20 shadow-2xl z-50 max-h-[75vh] overflow-y-auto'>
+          <div className='lg:hidden fixed top-[70px] sm:top-[75px] left-0 right-0 w-full bg-[#1F3B29] border-t-2 border-white/20 shadow-2xl z-50 max-h-[75vh] overflow-y-auto'>
             <div className='px-4 sm:px-6 md:px-8 py-4 sm:py-5'>
               <ul className='flex flex-col gap-1 sm:gap-2'>
                 {menuLoading || categoriesLoading ? (
@@ -754,7 +848,7 @@ function HomeHeaderContent() {
       {/* Main Header with Navigation */}
       <header className='bg-white'>
         {/* Spacer to account for fixed header */}
-        <div className='h-[70px] sm:h-[75px] md:h-[80px] lg:h-[85px]' />
+        <div className='h-[70px] sm:h-[75px] md:h-[120px] lg:h-[125px]' />
 
         {/* Navigation Menu Bar - Hidden on mobile/tablet, shown on desktop */}
         <nav className='hidden lg:block w-full bg-white border-b border-gray-200 text-gray-700 duration-700 relative z-40 min-h-[56px]'>
