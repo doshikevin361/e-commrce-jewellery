@@ -522,8 +522,8 @@ function HomeHeaderContent() {
       </div>
 
       {/* Top bar with logo, search, and account/cart - Fixed Sticky */}
-      <div className='fixed top-0 left-0 right-0 bg-white z-50 md:top-[38px] border-t border-gray-200 shadow-sm'>
-        <div className='mx-auto flex w-full max-w-[1440px] items-center justify-between gap-2 sm:gap-3 md:gap-4 px-4 sm:px-6 md:px-8 lg:px-12 py-3 sm:py-3.5 md:py-4'>
+       <div className='fixed top-0 left-0 right-0 bg-white z-50 md:top-[35px] border-t border-gray-200 shadow-sm'>
+        <div className='mx-auto flex w-full max-w-[1440px] items-center justify-between gap-1 sm:gap-2 md:gap-3 lg:gap-4 px-4 sm:px-6 md:px-8 lg:px-12 py-3 sm:py-3.5 md:py-4'>
           {/* Mobile Menu Button - In top bar for better visibility, hidden on desktop (1024px+) */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -564,12 +564,12 @@ function HomeHeaderContent() {
           </Link>
 
           {/* Search Bar - Hidden on mobile, shown on tablet+ */}
-          <div className='hidden sm:flex mx-2 sm:mx-3 md:mx-4 lg:mx-5 flex-1 max-w-xs sm:max-w-sm md:max-w-lg lg:max-w-2xl'>
+          <div className='hidden sm:flex ml-2 md:ml-4 lg:ml-6 flex-1 max-w-xs sm:max-w-sm md:max-w-lg lg:max-w-2xl'>
             <SearchBar />
           </div>
 
           {/* Right Side Icons - Tanishq Style */}
-          <div className='flex items-center gap-2 sm:gap-3 md:gap-4 text-[#1F3B29]'>
+          <div className='flex items-center gap-1.5 sm:gap-2 md:gap-3 lg:gap-3 text-[#1F3B29]'>
             {/* Current Offers - Hidden on mobile */}
             <Link
               href='/trending'
@@ -639,7 +639,7 @@ function HomeHeaderContent() {
             </Link>
 
             {/* Pin Code Search - Hidden on mobile */}
-            <div className='hidden lg:flex items-center gap-2 px-3 py-1.5 border border-gray-300 rounded-md hover:border-[#1F3B29] transition-colors duration-200 bg-gray-50'>
+            <div className='hidden lg:flex items-center gap-1.5 px-3 py-1.5 border border-gray-300 rounded-md hover:border-[#1F3B29] transition-colors duration-200 bg-gray-50'>
               <MapPin size={16} className='text-gray-500 flex-shrink-0' />
               <input
                 type='text'
