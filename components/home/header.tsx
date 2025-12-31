@@ -65,6 +65,7 @@ function HomeHeaderContent() {
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [accountDropdownOpen, setAccountDropdownOpen] = useState(false);
+  const [topNavDropdownOpen, setTopNavDropdownOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -76,6 +77,7 @@ function HomeHeaderContent() {
   const [resetToken, setResetToken] = useState<string | undefined>(undefined);
   const { menuItems, menuLoading } = useMenuItems();
   const accountDropdownRef = useRef<HTMLDivElement>(null);
+  const topNavDropdownRef = useRef<HTMLDivElement>(null);
   const searchParams = useSearchParams();
   const [categories, setCategories] = useState<
     Array<{
@@ -440,12 +442,15 @@ function HomeHeaderContent() {
       if (accountDropdownRef.current && !accountDropdownRef.current.contains(event.target as Node)) {
         setAccountDropdownOpen(false);
       }
+      if (topNavDropdownRef.current && !topNavDropdownRef.current.contains(event.target as Node)) {
+        setTopNavDropdownOpen(false);
+      }
     };
-    if (accountDropdownOpen) {
+    if (accountDropdownOpen || topNavDropdownOpen) {
       document.addEventListener('mousedown', handleClickOutside);
       return () => document.removeEventListener('mousedown', handleClickOutside);
     }
-  }, [accountDropdownOpen]);
+  }, [accountDropdownOpen, topNavDropdownOpen]);
 
   // Toggle mobile category expansion
   const toggleMobileCategory = (categoryId: string) => {
@@ -466,6 +471,7 @@ function HomeHeaderContent() {
     setIsLoggedIn(false);
     setCustomerName('');
     setAccountDropdownOpen(false);
+    setTopNavDropdownOpen(false);
     // Trigger custom event for header update
     window.dispatchEvent(new Event('authChange'));
     router.push('/');
@@ -475,7 +481,7 @@ function HomeHeaderContent() {
   return (
     <React.Fragment>
       {/* Top Navigation Bar - Hidden on mobile */}
-      <div className='hidden md:block fixed top-0 left-0 right-0 bg-gray-50 z-50'>
+      <div className='hidden md:block fixed top-0 left-0 right-0 bg-gray-50 z-[100]'>
         <div className='mx-auto flex w-full max-w-[1440px] items-center justify-center px-4 sm:px-6 md:px-8 lg:px-12 py-2 relative'>
           {/* Center - Policies */}
           <div className='flex items-center gap-4 lg:gap-6 text-xs lg:text-sm text-gray-600'>
@@ -493,9 +499,42 @@ function HomeHeaderContent() {
             </Link>
           </div>
           {/* Right Side - Login/Register */}
-          <div className='flex items-center gap-2 text-xs lg:text-sm absolute right-4 md:right-8 lg:right-12'>
+          <div className='absolute right-4 md:right-8 lg:right-12 flex items-center gap-2 text-xs lg:text-sm'>
             {isLoggedIn ? (
-              <span className='text-gray-600'>Welcome, {customerName}</span>
+              <div className='relative z-[150]' ref={topNavDropdownRef}>
+                <button
+                  onClick={() => setTopNavDropdownOpen(!topNavDropdownOpen)}
+                  className='flex items-center gap-1 text-gray-600 hover:text-[#1F3B29] transition-colors duration-200 py-1 px-2'
+                  aria-label='Account Menu'>
+                  <User size={16} className='text-gray-600' />
+                  <span className='text-xs'>{customerName}</span>
+                  <ChevronDown size={14} className={cn('transition-transform duration-200', topNavDropdownOpen && 'rotate-180')} />
+                </button>
+                {topNavDropdownOpen && (
+                  <div className='absolute right-0 top-[calc(100%+4px)] w-48 bg-white rounded-lg shadow-2xl border border-gray-200 py-2 z-[200] animate-in fade-in slide-in-from-top-2 duration-200'>
+                    <Link
+                      href='/customer-profile'
+                      onClick={() => setTopNavDropdownOpen(false)}
+                      className='flex items-center gap-2 px-4 py-2.5 text-sm text-[#1F3B29] hover:bg-gray-50 transition-colors duration-200 font-medium'>
+                      <Settings size={16} />
+                      My Profile
+                    </Link>
+                    <Link
+                      href='/my-orders'
+                      onClick={() => setTopNavDropdownOpen(false)}
+                      className='flex items-center gap-2 px-4 py-2.5 text-sm text-[#1F3B29] hover:bg-gray-50 transition-colors duration-200 font-medium'>
+                      <ShoppingBag size={16} />
+                      My Orders
+                    </Link>
+                    <button
+                      onClick={handleLogout}
+                      className='w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors duration-200 font-medium text-left'>
+                      <LogOut size={16} />
+                      Logout
+                    </button>
+                  </div>
+                )}
+              </div>
             ) : (
               <>
                 <button
