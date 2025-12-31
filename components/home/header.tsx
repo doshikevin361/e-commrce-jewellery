@@ -116,9 +116,9 @@ function HomeHeaderContent() {
   const getMenuItemIcon = (itemName: string) => {
     const name = itemName.toLowerCase();
     if (name.includes('all jewellery') || name.includes('all')) return '';
-    if (name.includes('collection')) return <Grid2x2CheckIcon size={16} className='text-gray-700' />;
-    if (name.includes('wedding')) return <Circle size={16} className='text-gray-700' strokeWidth={1.5} fill='none' />;
-    if (name.includes('gift') || name.includes('gifting')) return <Gift size={16} className='text-gray-700' strokeWidth={1.5} />;
+    if (name.includes('collection')) return <Grid2x2CheckIcon size={16} className='text-white' />;
+    if (name.includes('wedding')) return <Circle size={16} className='text-white' strokeWidth={1.5} fill='none' />;
+    if (name.includes('gift') || name.includes('gifting')) return <Gift size={16} className='text-white' strokeWidth={1.5} />;
     return null;
   };
   // Your existing product types array
@@ -481,20 +481,20 @@ function HomeHeaderContent() {
   return (
     <React.Fragment>
       {/* Top Navigation Bar - Hidden on mobile */}
-      <div className='hidden md:block fixed top-0 left-0 right-0 bg-gray-50 z-[100]'>
+      <div className='hidden md:block fixed top-0 left-0 right-0 bg-gradient-to-r from-[#7B1450] via-[#A02866] to-[#C8488C] z-[100]'>
         <div className='mx-auto flex w-full max-w-[1440px] items-center justify-center px-4 sm:px-6 md:px-8 lg:px-12 py-2 relative'>
           {/* Center - Policies */}
-          <div className='flex items-center gap-4 lg:gap-6 text-xs lg:text-sm text-gray-600'>
-            <Link href='/refund-and-return' className='hover:text-[#1F3B29] transition-colors duration-200 hover:underline'>
+          <div className='flex items-center gap-4 lg:gap-6 text-xs lg:text-sm text-white'>
+            <Link href='/refund-and-return' className='hover:text-white/90 transition-colors duration-200 hover:underline'>
               7day easy return Policy
             </Link>
-            <Link href='/shipping-policy' className='hover:text-[#1F3B29] transition-colors duration-200 hover:underline font-medium text-[#1F3B29]'>
+            <Link href='/shipping-policy' className='hover:text-white/90 transition-colors duration-200 hover:underline font-medium'>
               Free Delivery service
             </Link>
-            <Link href='/contact' className='hover:text-[#1F3B29] transition-colors duration-200 hover:underline'>
+            <Link href='/contact' className='hover:text-white/90 transition-colors duration-200 hover:underline'>
               Franchise
             </Link>
-            <Link href='#gold-rate' className='hover:text-[#1F3B29] transition-colors duration-200 hover:underline'>
+            <Link href='#gold-rate' className='hover:text-white/90 transition-colors duration-200 hover:underline'>
               Gold Rate
             </Link>
           </div>
@@ -504,9 +504,9 @@ function HomeHeaderContent() {
               <div className='relative z-[150]' ref={topNavDropdownRef}>
                 <button
                   onClick={() => setTopNavDropdownOpen(!topNavDropdownOpen)}
-                  className='flex items-center gap-1 text-gray-600 hover:text-[#1F3B29] transition-colors duration-200 py-1 px-2'
+                  className='flex items-center gap-1 text-white hover:text-white/90 transition-colors duration-200 py-1 px-2'
                   aria-label='Account Menu'>
-                  <User size={16} className='text-gray-600' />
+                  <User size={16} className='text-white' />
                   <span className='text-xs'>{customerName}</span>
                   <ChevronDown size={14} className={cn('transition-transform duration-200', topNavDropdownOpen && 'rotate-180')} />
                 </button>
@@ -542,16 +542,16 @@ function HomeHeaderContent() {
                     setAuthMode('login');
                     setAuthModalOpen(true);
                   }}
-                  className='text-gray-600 hover:text-[#1F3B29] transition-colors duration-200 hover:underline'>
+                  className='text-white hover:text-white/90 transition-colors duration-200 hover:underline'>
                   login
                 </button>
-                <span className='text-gray-400'>_</span>
+                <span className='text-white/70'>_</span>
                 <button
                   onClick={() => {
                     setAuthMode('register');
                     setAuthModalOpen(true);
                   }}
-                  className='text-gray-600 hover:text-[#1F3B29] transition-colors duration-200 hover:underline'>
+                  className='text-white hover:text-white/90 transition-colors duration-200 hover:underline'>
                   Register
                 </button>
               </>
@@ -561,12 +561,12 @@ function HomeHeaderContent() {
       </div>
 
       {/* Top bar with logo, search, and account/cart - Fixed Sticky */}
-       <div className='fixed top-0 left-0 right-0 bg-white z-50 md:top-[35px] border-t border-gray-200 shadow-sm'>
+      <div className='fixed top-0 left-0 right-0 bg-gradient-to-r from-[#7B1450] via-[#A02866] to-[#C8488C] z-50 md:top-[38px]'>
         <div className='mx-auto flex w-full max-w-[1440px] items-center justify-between gap-1 sm:gap-2 md:gap-3 lg:gap-4 px-4 sm:px-6 md:px-8 lg:px-12 py-3 sm:py-3.5 md:py-4'>
           {/* Mobile Menu Button - In top bar for better visibility, hidden on desktop (1024px+) */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className='flex lg:hidden items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-lg transition-all duration-300 hover:bg-[#1F3B29]/10 active:scale-95 bg-[#1F3B29] text-white shadow-lg flex-shrink-0'
+            className='flex lg:hidden items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-lg transition-all duration-300 hover:bg-white/10 active:scale-95 bg-white/20 text-white shadow-lg flex-shrink-0'
             aria-label='Menu'
             type='button'>
             {mobileMenuOpen ? (
@@ -594,8 +594,8 @@ function HomeHeaderContent() {
               />
             ) : (
               <>
-                <Diamond size={18} className='sm:w-5 sm:h-5 md:w-6 md:h-6 text-[#1F3B29]' />
-                <span className='text-base sm:text-lg md:text-xl lg:text-2xl font-bold tracking-wide text-[#1F3B29] whitespace-nowrap'>
+                <Diamond size={18} className='sm:w-5 sm:h-5 md:w-6 md:h-6 text-white' />
+                <span className='text-base sm:text-lg md:text-xl lg:text-2xl font-bold tracking-wide text-white whitespace-nowrap'>
                   Jewellery
                 </span>
               </>
@@ -608,18 +608,18 @@ function HomeHeaderContent() {
           </div>
 
           {/* Right Side Icons - Tanishq Style */}
-          <div className='flex items-center gap-1.5 sm:gap-2 md:gap-3 lg:gap-3 text-[#1F3B29]'>
+          <div className='flex items-center gap-1.5 sm:gap-2 md:gap-3 lg:gap-3 text-white'>
             {/* Current Offers - Hidden on mobile */}
             <Link
               href='/trending'
-              className='hidden lg:flex items-center gap-1 text-xs lg:text-sm text-red-600 hover:text-red-700 transition-colors duration-200 font-medium underline whitespace-nowrap'>
+              className='hidden lg:flex items-center gap-1 text-xs lg:text-sm text-white hover:text-white/90 transition-colors duration-200 font-medium underline whitespace-nowrap'>
               currents offers
             </Link>
 
             {/* Wishlist */}
             <Link
               href='/wishlist'
-              className='flex items-center gap-1 transition-all duration-300 hover:text-[#C8A15B] active:scale-95'
+              className='flex items-center gap-1 transition-all duration-300 hover:text-white/90 active:scale-95'
               aria-label='Wishlist'>
               <div className='relative flex-shrink-0'>
                 <Heart size={20} className='sm:w-5 sm:h-5' />
@@ -635,7 +635,7 @@ function HomeHeaderContent() {
             {/* Your Cart */}
             <Link
               href='/cart'
-              className='flex items-center gap-1 transition-all duration-300 hover:text-[#C8A15B] active:scale-95'
+              className='flex items-center gap-1 transition-all duration-300 hover:text-white/90 active:scale-95'
               aria-label='Cart'>
               <div className='relative flex-shrink-0'>
                 <ShoppingCart size={20} className='sm:w-5 sm:h-5' />
@@ -649,20 +649,20 @@ function HomeHeaderContent() {
             </Link>
 
             {/* Call us/Chat/WhatsApp - Hidden on mobile */}
-            <div className='hidden lg:flex items-center gap-2 border-l border-gray-200 pl-4'>
+            <div className='hidden lg:flex items-center gap-2 border-l border-white/30 pl-4'>
               <a
                 href='tel:+919876543210'
-                className='flex items-center gap-1 text-xs hover:text-[#C8A15B] transition-colors duration-200'
+                className='flex items-center gap-1 text-xs hover:text-white/90 transition-colors duration-200'
                 aria-label='Call us'>
                 <Phone size={16} />
                 <span>call us</span>
               </a>
-              <span className='text-gray-400'>/</span>
+              <span className='text-white/70'>/</span>
               <a
                 href='https://wa.me/919876543210'
                 target='_blank'
                 rel='noopener noreferrer'
-                className='flex items-center gap-1 text-xs hover:text-[#C8A15B] transition-colors duration-200'
+                className='flex items-center gap-1 text-xs hover:text-white/90 transition-colors duration-200'
                 aria-label='WhatsApp'>
                 <MessageCircle size={16} />
                 <span>chat/whatsup</span>
@@ -672,20 +672,20 @@ function HomeHeaderContent() {
             {/* Store Icon */}
             <Link
               href='/contact'
-              className='hidden md:flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-full transition-all duration-300 hover:bg-gray-100 active:scale-95'
+              className='hidden md:flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-full transition-all duration-300 hover:bg-white/10 active:scale-95'
               aria-label='Stores'>
-              <Store size={20} className='sm:w-5 sm:h-5 text-[#1F3B29]' />
+              <Store size={20} className='sm:w-5 sm:h-5 text-white' />
             </Link>
 
             {/* Pin Code Search - Hidden on mobile */}
-            <div className='hidden lg:flex items-center gap-1.5 px-3 py-1.5 border border-gray-300 rounded-md hover:border-[#1F3B29] transition-colors duration-200 bg-gray-50'>
-              <MapPin size={16} className='text-gray-500 flex-shrink-0' />
+            <div className='hidden lg:flex items-center gap-1.5 px-3 py-1.5 border border-white/30 rounded-md hover:border-white/50 transition-colors duration-200 bg-white/10'>
+              <MapPin size={16} className='text-white flex-shrink-0' />
               <input
                 type='text'
                 value={pinCode}
                 onChange={e => setPinCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
                 placeholder='pin code'
-                className='w-20 text-xs outline-none bg-transparent placeholder:text-gray-500'
+                className='w-20 text-xs outline-none bg-transparent placeholder:text-white/70 text-white'
               />
             </div>
 
@@ -695,9 +695,9 @@ function HomeHeaderContent() {
                 <>
                   <button
                     onClick={() => setAccountDropdownOpen(!accountDropdownOpen)}
-                    className='flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-full transition-all duration-300 hover:bg-gray-100 active:scale-95'
+                    className='flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-full transition-all duration-300 hover:bg-white/10 active:scale-95'
                     aria-label='Account'>
-                    <User size={20} className='sm:w-5 sm:h-5 text-[#1F3B29] flex-shrink-0' />
+                    <User size={20} className='sm:w-5 sm:h-5 text-white flex-shrink-0' />
                   </button>
                   {accountDropdownOpen && (
                     <div className='absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-100 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200'>
@@ -731,9 +731,9 @@ function HomeHeaderContent() {
                 <>
                   <button
                     onClick={() => setAccountDropdownOpen(!accountDropdownOpen)}
-                    className='flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-full transition-all duration-300 hover:bg-gray-100 active:scale-95'
+                    className='flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-full transition-all duration-300 hover:bg-white/10 active:scale-95'
                     aria-label='Login'>
-                    <User size={20} className='sm:w-5 sm:h-5 text-[#1F3B29] flex-shrink-0' />
+                    <User size={20} className='sm:w-5 sm:h-5 text-white flex-shrink-0' />
                   </button>
                   {accountDropdownOpen && (
                     <div className='absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-100 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200'>
@@ -890,7 +890,7 @@ function HomeHeaderContent() {
         <div className='h-[70px] sm:h-[75px] md:h-[120px] lg:h-[125px]' />
 
         {/* Navigation Menu Bar - Hidden on mobile/tablet, shown on desktop */}
-        <nav className='hidden lg:block w-full bg-white border-b border-gray-200 text-gray-700 duration-700 relative z-40 min-h-[56px]'>
+        <nav className='hidden lg:block w-full bg-gradient-to-r from-[#7B1450] via-[#A02866] to-[#C8488C] text-white duration-700 relative z-40 min-h-[56px]'>
           <div className='mx-auto flex w-full max-w-[1440px] items-center justify-between px-4 sm:px-6 md:px-8 lg:px-12 py-3 sm:py-3.5 md:py-4 lg:py-4'>
             {/* Desktop Navigation */}
             <ul className='flex items-center gap-1 lg:gap-2 xl:gap-3 text-xs md:text-sm flex-wrap'>
@@ -934,9 +934,9 @@ function HomeHeaderContent() {
                         <Link
                           href={`/jewellery?category=${encodeURIComponent(category.name)}`}
                           className={cn(
-                            'relative flex items-center gap-1.5 px-3 md:px-4 lg:px-5 py-2 rounded-lg cursor-pointer transition-all duration-300 whitespace-nowrap font-medium group',
-                            isActive && 'bg-gray-100 shadow-sm',
-                            isDropdownOpen && 'bg-gray-50'
+                            'relative flex items-center gap-1.5 px-3 md:px-4 lg:px-5 py-2 rounded-lg cursor-pointer transition-all duration-300 whitespace-nowrap font-medium group text-white hover:bg-white/10',
+                            isActive && 'bg-white/10 shadow-sm',
+                            isDropdownOpen && 'bg-white/10'
                           )}>
                           {category.icon ? (
                             <Image
@@ -947,15 +947,15 @@ function HomeHeaderContent() {
                               className='object-contain flex-shrink-0'
                             />
                           ) : (
-                            <Diamond size={16} className='text-gray-700' strokeWidth={1.5} />
+                            <Diamond size={16} className='text-white' strokeWidth={1.5} />
                           )}
-                          <span className='relative z-10 text-gray-700'>{category.name}</span>
+                          <span className='relative z-10 text-white'>{category.name}</span>
                           {hasSubcategories && (
                             <ChevronDown
                               size={14}
                               className={cn(
-                                'transition-all duration-300 text-gray-500 group-hover:text-gray-700',
-                                isDropdownOpen && 'rotate-180 text-gray-700'
+                                'transition-all duration-300 text-white/70 group-hover:text-white',
+                                isDropdownOpen && 'rotate-180 text-white'
                               )}
                             />
                           )}
@@ -963,7 +963,7 @@ function HomeHeaderContent() {
                           {/* Animated underline - always visible if active */}
                           <span
                             className={cn(
-                              'pointer-events-none absolute bottom-0 left-4 right-4 h-[2px] bg-[#1F3B29] transition-transform duration-300',
+                              'pointer-events-none absolute bottom-0 left-4 right-4 h-[2px] bg-white transition-transform duration-300',
                               isActive ? 'scale-x-100' : 'scale-x-0 origin-left group-hover:scale-x-100'
                             )}
                           />
@@ -977,12 +977,12 @@ function HomeHeaderContent() {
                       <li key={item.name} className='relative' style={{ animationDelay: `${index * 50}ms` }}>
                         <Link
                           href={item.href}
-                          className='relative flex items-center gap-1.5 px-3 md:px-4 lg:px-5 py-2 rounded-lg cursor-pointer transition-all duration-300 whitespace-nowrap font-medium group'>
+                          className='relative flex items-center gap-1.5 px-3 md:px-4 lg:px-5 py-2 rounded-lg cursor-pointer transition-all duration-300 whitespace-nowrap font-medium text-white hover:bg-white/10 group'>
                           {itemIcon}
-                          <span className='relative z-10 text-gray-700'>{item.name}</span>
+                          <span className='relative z-10'>{item.name}</span>
 
                           {/* Animated underline */}
-                          <span className='pointer-events-none absolute bottom-0 left-4 right-4 h-[2px] bg-[#1F3B29] scale-x-0 origin-left group-hover:scale-x-100 transition-transform duration-300' />
+                          <span className='pointer-events-none absolute bottom-0 left-4 right-4 h-[2px] bg-white scale-x-0 origin-left group-hover:scale-x-100 transition-transform duration-300' />
                         </Link>
                       </li>
                     );
@@ -991,10 +991,10 @@ function HomeHeaderContent() {
                   <li className='relative'>
                     <Link
                       href='/jewellery'
-                      className='relative flex items-center gap-1.5 px-3 md:px-4 lg:px-5 py-2 rounded-lg cursor-pointer transition-all duration-300 whitespace-nowrap font-medium group'>
-                      <MoreHorizontal size={16} className='text-gray-700' strokeWidth={1.5} />
-                      <span className='relative z-10 text-gray-700'>More</span>
-                      <span className='pointer-events-none absolute bottom-0 left-4 right-4 h-[2px] bg-[#1F3B29] scale-x-0 origin-left group-hover:scale-x-100 transition-transform duration-300' />
+                      className='relative flex items-center gap-1.5 px-3 md:px-4 lg:px-5 py-2 rounded-lg cursor-pointer transition-all duration-300 whitespace-nowrap font-medium text-white hover:bg-white/10 group'>
+                      <MoreHorizontal size={16} className='text-white' strokeWidth={1.5} />
+                      <span className='relative z-10'>More</span>
+                      <span className='pointer-events-none absolute bottom-0 left-4 right-4 h-[2px] bg-white scale-x-0 origin-left group-hover:scale-x-100 transition-transform duration-300' />
                     </Link>
                   </li>
                 </>

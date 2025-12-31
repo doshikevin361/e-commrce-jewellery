@@ -16,7 +16,6 @@ export const generateMenuItems = (
   return [
     { name: 'All Jewellery', href: '/jewellery' },
     { name: 'Custom Jewellery', href: '/custom-jewellery' },
-    { name: 'Contact Us', href: '/contact' },
   ];
 };
 
