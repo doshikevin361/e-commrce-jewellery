@@ -482,7 +482,7 @@ function HomeHeaderContent() {
     <React.Fragment>
       {/* Top Navigation Bar - Hidden on mobile */}
       <div className='hidden md:block fixed top-0 left-0 right-0 bg-gradient-to-r from-[#7B1450] via-[#A02866] to-[#C8488C] z-[100]'>
-        <div className='mx-auto flex w-full max-w-[1440px] items-center justify-center px-4 sm:px-6 md:px-8 lg:px-12 py-2 relative'>
+        <div className='mx-auto flex w-full max-w-[1440px] items-center justify-center px-4 sm:px-6 md:px-8 lg:px-12 py-[10px] relative'>
           {/* Center - Policies */}
           <div className='flex items-center gap-4 lg:gap-6 text-xs lg:text-sm text-white'>
             <Link href='/refund-and-return' className='hover:text-white/90 transition-colors duration-200 hover:underline'>
