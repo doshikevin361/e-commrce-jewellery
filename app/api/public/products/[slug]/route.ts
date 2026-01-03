@@ -48,35 +48,80 @@ export async function GET(
       { $inc: { views: 1 } }
     );
 
-    // Fetch related products from same category
-    const relatedProducts = await db
-      .collection("products")
-      .find({
-        category: product.category,
-        _id: { $ne: productId },
-        status: "active",
-        stock: { $gt: 0 },
-      })
-      .limit(8)
-      .project({
-        name: 1,
-        shortDescription: 1,
-        mainImage: 1,
-        sellingPrice: 1,
-        regularPrice: 1,
-        mrp: 1,
-        rating: 1,
-        reviewCount: 1,
-        urlSlug: 1,
-        price: 1,
-        subTotal: 1,
-        totalAmount: 1,
-        livePriceEnabled: 1,
-        metalCost: 1,
-        makingChargeAmount: 1,
-        gstAmount: 1,
-      })
-      .toArray();
+    // Fetch related products - prioritize manually selected related products
+    let relatedProducts = [];
+    
+    // First, try to fetch manually selected related products
+    if (product.relatedProducts && Array.isArray(product.relatedProducts) && product.relatedProducts.length > 0) {
+      const relatedProductIds = product.relatedProducts
+        .filter((id: any) => ObjectId.isValid(id))
+        .map((id: any) => new ObjectId(id));
+      
+      if (relatedProductIds.length > 0) {
+        relatedProducts = await db
+          .collection("products")
+          .find({
+            _id: { $in: relatedProductIds },
+            status: "active",
+          })
+          .limit(8)
+          .project({
+            name: 1,
+            shortDescription: 1,
+            mainImage: 1,
+            sellingPrice: 1,
+            regularPrice: 1,
+            mrp: 1,
+            rating: 1,
+            reviewCount: 1,
+            urlSlug: 1,
+            price: 1,
+            subTotal: 1,
+            totalAmount: 1,
+            livePriceEnabled: 1,
+            metalCost: 1,
+            makingChargeAmount: 1,
+            gstAmount: 1,
+            stock: 1,
+          })
+          .toArray();
+      }
+    }
+    
+    // If no manually selected related products or less than 4, fill with products from same category
+    if (relatedProducts.length < 4) {
+      const additionalProducts = await db
+        .collection("products")
+        .find({
+          category: product.category,
+          _id: { $ne: productId },
+          status: "active",
+          stock: { $gt: 0 },
+        })
+        .limit(8 - relatedProducts.length)
+        .project({
+          name: 1,
+          shortDescription: 1,
+          mainImage: 1,
+          sellingPrice: 1,
+          regularPrice: 1,
+          mrp: 1,
+          rating: 1,
+          reviewCount: 1,
+          urlSlug: 1,
+          price: 1,
+          subTotal: 1,
+          totalAmount: 1,
+          livePriceEnabled: 1,
+          metalCost: 1,
+          makingChargeAmount: 1,
+          gstAmount: 1,
+          stock: 1,
+        })
+        .toArray();
+      
+      relatedProducts = [...relatedProducts, ...additionalProducts];
+    }
 
     // Calculate prices using the price calculator
     const priceData = formatProductPrice(product);
