@@ -334,6 +334,9 @@ interface ProductFormData {
   remarks: string;
   gemstoneDescription: string;
 
+  // Related Products
+  relatedProducts: string[];
+
   // Images
   mainImage: string;
   certificateImages: string[];
@@ -395,6 +398,11 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
   const [uploadingProductImages, setUploadingProductImages] = useState(false);
   const [uploadingMainThumbnail, setUploadingMainThumbnail] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [productSearchQuery, setProductSearchQuery] = useState('');
+  const [allProducts, setAllProducts] = useState<any[]>([]);
+  const [displayedProducts, setDisplayedProducts] = useState<any[]>([]);
+  const [selectedRelatedProducts, setSelectedRelatedProducts] = useState<string[]>([]);
+  const [loadingProducts, setLoadingProducts] = useState(false);
 
   const isDiamondComplete = (d: Diamond) =>
     !!(
@@ -447,6 +455,50 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
     } finally {
       setUploadingMainThumbnail(false);
     }
+  };
+
+  const fetchAllProducts = async () => {
+    setLoadingProducts(true);
+    try {
+      const response = await fetch(`/api/admin/products/search?query=&all=true${productId ? `&excludeId=${productId}` : ''}`);
+      if (response.ok) {
+        const data = await response.json();
+        const products = data.products || [];
+        setAllProducts(products);
+        setDisplayedProducts(products);
+      }
+    } catch (error) {
+      console.error('Failed to fetch products:', error);
+    } finally {
+      setLoadingProducts(false);
+    }
+  };
+
+  const handleProductSearch = (value: string) => {
+    setProductSearchQuery(value);
+    
+    if (!value.trim()) {
+      setDisplayedProducts(allProducts);
+    } else {
+      const filtered = allProducts.filter(product =>
+        product.name.toLowerCase().includes(value.toLowerCase())
+      );
+      setDisplayedProducts(filtered);
+    }
+  };
+
+  const toggleProductSelection = (productId: string) => {
+    setSelectedRelatedProducts(prev => {
+      if (prev.includes(productId)) {
+        return prev.filter(id => id !== productId);
+      } else {
+        return [...prev, productId];
+      }
+    });
+  };
+
+  const clearAllRelatedProducts = () => {
+    setSelectedRelatedProducts([]);
   };
 
   const removeMainThumbnail = () => {
@@ -654,6 +706,7 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
     otherCharges: 0,
     gstRate: 3,
     customMetalRate: undefined,
+    relatedProducts: [],
   });
 
   useEffect(() => {
@@ -670,6 +723,7 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
     fetchCertifiedLabs();
     fetchGemstoneNames();
     fetchLivePrices();
+    fetchAllProducts(); // Fetch all products for related products selection
     if (productId) {
       fetchProduct();
     }
@@ -1054,7 +1108,13 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
           gstRate: product.gstRate ?? 3,
           customMetalRate: product.customMetalRate ?? undefined,
           diamonds: product.diamonds || [],
+          relatedProducts: product.relatedProducts || [],
         });
+        
+        // Set selected related products for the UI
+        if (product.relatedProducts && Array.isArray(product.relatedProducts)) {
+          setSelectedRelatedProducts(product.relatedProducts);
+        }
       }
     } catch (error) {
       console.error('Failed to fetch product:', error);
@@ -1157,6 +1217,7 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
         seoDescription: formData.seoDescription,
         seoTags: formData.seoTags,
         hsnCode: formData.hsnCode,
+        relatedProducts: selectedRelatedProducts, // Include selected related products
         isB2C: true,
         status: 'active', // Default status is active
         hasGold: ['Gold', 'Platinum'].includes(formData.productType),
@@ -2867,6 +2928,87 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
               error={errors.seoDescription}
             />
           </div>
+        </Card>
+
+        {/* Related Products */}
+        <Card className='p-6'>
+          <h2 className='text-xl font-semibold mb-2'>Related Products</h2>
+          <p className='text-sm text-gray-600 mb-4'>
+            Select products that are related to this product. These will be shown on the product details page.
+          </p>
+          
+          {/* Search Input */}
+          <div className='relative mb-4'>
+            <Input
+              type='text'
+              placeholder='Search products by name...'
+              value={productSearchQuery}
+              onChange={e => handleProductSearch(e.target.value)}
+              className='w-full'
+            />
+            {loadingProducts && (
+              <div className='absolute right-3 top-1/2 -translate-y-1/2'>
+                <Loader2 className='w-4 h-4 animate-spin text-gray-400' />
+              </div>
+            )}
+          </div>
+
+          {/* Product List */}
+          <div className='border rounded-lg overflow-hidden'>
+            <div className='max-h-[400px] overflow-y-auto'>
+              {displayedProducts.length === 0 && !loadingProducts && (
+                <div className='p-8 text-center text-gray-500'>
+                  {productSearchQuery.trim() ? 'No products found' : 'No products available'}
+                </div>
+              )}
+              {displayedProducts.map(product => (
+                <div
+                  key={product._id}
+                  className='flex items-center gap-3 p-3 border-b last:border-b-0 hover:bg-gray-50 transition-colors'>
+                  <input
+                    type='checkbox'
+                    checked={selectedRelatedProducts.includes(product._id)}
+                    onChange={() => toggleProductSelection(product._id)}
+                    className='w-4 h-4 rounded border-gray-300 text-[#1F3B29] focus:ring-[#1F3B29] cursor-pointer'
+                  />
+                  <div className='w-12 h-12 shrink-0 rounded overflow-hidden bg-gray-100'>
+                    {product.mainImage ? (
+                      <img
+                        src={product.mainImage}
+                        alt={product.name}
+                        className='w-full h-full object-cover'
+                      />
+                    ) : (
+                      <div className='w-full h-full flex items-center justify-center'>
+                        <Package className='w-6 h-6 text-gray-400' />
+                      </div>
+                    )}
+                  </div>
+                  <div className='flex-1 min-w-0'>
+                    <p className='text-sm font-medium text-gray-900 truncate'>{product.name}</p>
+                    {product.sku && (
+                      <p className='text-xs text-gray-500'>{product.sku}</p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Selected Count */}
+          {selectedRelatedProducts.length > 0 && (
+            <div className='mt-4 flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg'>
+              <span className='text-sm font-medium text-green-800'>
+                {selectedRelatedProducts.length} product{selectedRelatedProducts.length !== 1 ? 's' : ''} selected
+              </span>
+              <button
+                type='button'
+                onClick={clearAllRelatedProducts}
+                className='text-sm font-medium text-red-600 hover:text-red-700 transition-colors'>
+                Clear All
+              </button>
+            </div>
+          )}
         </Card>
 
         {/* Metal Calculation (Live) */}
