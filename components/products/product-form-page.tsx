@@ -3154,11 +3154,29 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
               <FormField
                 label=''
                 value={formData.discount}
-                onChange={e => updateField('discount', parseFloat(e.target.value) || 0)}
+                onChange={e => {
+                  const value = parseFloat(e.target.value) || 0;
+                  // Validate discount is between 0 and 100
+                  if (value > 100) {
+                    toast({
+                      title: 'Invalid Discount',
+                      description: 'Discount percentage cannot exceed 100%',
+                      variant: 'destructive',
+                    });
+                    updateField('discount', 100);
+                  } else if (value < 0) {
+                    updateField('discount', 0);
+                  } else {
+                    updateField('discount', value);
+                  }
+                }}
                 type='number'
                 placeholder='Example: 5'
+                min='0'
+                max='100'
+                step='0.01'
               />
-              <p className='text-xs text-gray-500 mt-1'>Stored for invoice calculation (website)</p>
+              <p className='text-xs text-gray-500 mt-1'>Enter percentage (0-100%). Stored for invoice calculation</p>
             </div>
             
             {/* GST field for all product types */}

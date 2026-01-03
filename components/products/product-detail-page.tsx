@@ -690,7 +690,7 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
                     <span className='font-bold text-[#1F3B29]'>₹{diamondValue.toLocaleString()}</span>
                   </div>
                 )}
-                {product.gemstonePrice && product.gemstonePrice > 0 && (
+                {product.gemstonePrice > 0 && (
                   <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
                     <span className='text-[#4F3A2E]/70 font-medium'>Gemstone Value</span>
                     <span className='font-bold text-[#1F3B29]'>₹{product.gemstonePrice.toLocaleString()}</span>
@@ -712,7 +712,7 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
                   <span className='text-[#4F3A2E] font-semibold'>Subtotal</span>
                   <span className='font-bold text-lg text-[#1F3B29]'>₹{subTotal.toLocaleString()}</span>
                 </div>
-                {discountAmount > 0 && (
+                {product.discount > 0 && product.discount <= 100 && discountAmount > 0 && (
                   <div className='flex justify-between items-center py-3 text-red-600'>
                     <span className='font-medium'>Discount ({product.discount}%)</span>
                     <span className='font-bold'>-₹{discountAmount.toLocaleString()}</span>
