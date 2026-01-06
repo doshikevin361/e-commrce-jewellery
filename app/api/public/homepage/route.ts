@@ -8,34 +8,23 @@ const DEFAULT_IMAGE = 'https://images.unsplash.com/photo-1605100804763-247f67b35
 const DEFAULT_CATEGORY_IMAGE = 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=800&q=80';
 const DEFAULT_BANNER_IMAGE = 'https://images.unsplash.com/photo-1601121141461-9d6647bca1ed?w=1200&q=85';
 
+// Only essential fields for customer display
 const PRODUCT_PROJECTION = {
+  _id: 1,
   name: 1,
-  shortDescription: 1,
   category: 1,
-  brand: 1,
   mainImage: 1,
   regularPrice: 1,
   sellingPrice: 1,
-  mrp: 1,
-  discount: 1,
-  rating: 1,
-  reviewCount: 1,
-  stock: 1,
-  featured: 1,
-  trending: 1,
-  tags: 1,
-  createdAt: 1,
-  views: 1,
-  urlSlug: 1,
-  metalType: 1,
-  metalPurity: 1,
-  livePriceEnabled: 1,
-  metalCost: 1,
-  makingChargeAmount: 1,
-  gstAmount: 1,
   price: 1,
   subTotal: 1,
   totalAmount: 1,
+  discount: 1, // Discount percentage
+  featured: 1,
+  trending: 1,
+  urlSlug: 1,
+  rating: 1,
+  reviewCount: 1,
 };
 
 const serializeProduct = (product: any, fallbackIndex = 0, categoryMap?: Map<string, string>) => {
@@ -58,17 +47,40 @@ const serializeProduct = (product: any, fallbackIndex = 0, categoryMap?: Map<str
     }
   }
 
+  // Get base price from various fields
+  const basePrice = product?.price > 0 
+    ? product.price 
+    : (product?.subTotal > 0 ? product.subTotal : (product?.totalAmount > 0 ? product.totalAmount : 0));
+  
+  // Determine original price (regularPrice or basePrice)
+  const originalPrice = regularPrice > 0 
+    ? regularPrice 
+    : (sellingPrice > 0 ? sellingPrice : basePrice);
+
+  // Apply discount if discount percentage is set
+  const discountPercent = typeof product?.discount === 'number' && product.discount > 0 && product.discount <= 100
+    ? product.discount
+    : 0;
+  
+  // Calculate final prices: regularPrice is original, sellingPrice is after discount
+  const finalRegularPrice = originalPrice;
+  const finalSellingPrice = discountPercent > 0 && originalPrice > 0
+    ? Math.max(0, Math.round(originalPrice * (1 - discountPercent / 100)))
+    : (sellingPrice > 0 ? sellingPrice : originalPrice);
+
+  // Only return fields needed for customer display
   return {
     _id: id,
-    name: product?.name ?? 'Untitled Product',
+    name: product?.name || product?.title || 'Untitled Product',
     category: categoryName,
-    sellingPrice,
-    regularPrice,
+    sellingPrice: finalSellingPrice,
+    regularPrice: finalRegularPrice,
+    discount: discountPercent,
     mainImage: product?.mainImage || DEFAULT_IMAGE,
-    featured: !!product?.featured,
-    trending: !!product?.trending,
     badge: product?.featured ? 'Featured' : product?.trending ? 'Trending' : undefined,
     urlSlug: product?.urlSlug || id,
+    rating: product?.rating,
+    reviewCount: product?.reviewCount,
   };
 };
 
@@ -81,7 +93,6 @@ const serializeBanner = (banner: any, index: number) => ({
   image: banner?.image || DEFAULT_BANNER_IMAGE,
   link: banner?.link || '/products',
   backgroundColor: banner?.backgroundColor || '#000000',
-  type: banner?.type || 'main',
   displayOrder: typeof banner?.displayOrder === 'number' ? banner.displayOrder : index,
 });
 
@@ -90,8 +101,6 @@ const serializeCategory = (category: any, index: number) => ({
   name: category?.name ?? 'Jewellery',
   slug: category?.slug ?? '',
   image: category?.image || DEFAULT_CATEGORY_IMAGE,
-  featured: !!category?.featured,
-  productCount: category?.productCount ?? 0,
 });
 
 const safeQuery = async <T>(promise: Promise<T>, label: string, fallback: T) => {
@@ -103,6 +112,10 @@ const safeQuery = async <T>(promise: Promise<T>, label: string, fallback: T) => 
   }
 };
 
+// Cache for 60 seconds, revalidate in background
+export const revalidate = 60;
+export const dynamic = 'force-dynamic'; // Allow dynamic rendering with caching
+
 export async function GET(request: NextRequest) {
   try {
     const { db } = await connectToDatabase();
@@ -113,37 +126,32 @@ export async function GET(request: NextRequest) {
       .find({ status: 'active' })
       .sort({ displayOrder: 1, createdAt: -1 })
       .limit(10)
+      .project({
+        _id: 1,
+        title: 1,
+        subtitle: 1,
+        description: 1,
+        image: 1,
+        link: 1,
+        buttonText: 1,
+        backgroundColor: 1,
+        displayOrder: 1,
+      })
       .toArray();
 
+    // Optimized categories query - removed expensive lookup, count separately if needed
     const categoriesPromise = db
       .collection('categories')
-      .aggregate([
-        { $match: { status: 'active' } },
-        {
-          $lookup: {
-            from: 'products',
-            localField: 'name',
-            foreignField: 'category',
-            pipeline: [{ $match: { status: 'active' } }],
-            as: 'products',
-          },
-        },
-        { $addFields: { productCount: { $size: '$products' } } },
-        {
-          $project: {
-            _id: 1,
-            name: 1,
-            slug: 1,
-            description: 1,
-            image: 1,
-            featured: 1,
-            productCount: 1,
-            createdAt: 1,
-          },
-        },
-        { $sort: { featured: -1, createdAt: -1 } },
-        { $limit: 20 },
-      ])
+      .find({ status: 'active' })
+      .sort({ featured: -1, createdAt: -1 })
+      .limit(20)
+      .project({
+        _id: 1,
+        name: 1,
+        slug: 1,
+        image: 1,
+        featured: 1,
+      })
       .toArray();
 
     const productsCollection = db.collection('products');
@@ -175,6 +183,15 @@ export async function GET(request: NextRequest) {
       .find({})
       .sort({ displayOrder: 1, createdAt: -1 })
       .limit(10)
+      .project({
+        _id: 1,
+        title: 1,
+        subtitle: 1,
+        description: 1,
+        buttonText: 1,
+        buttonLink: 1,
+        image: 1,
+      })
       .toArray();
 
     const galleryPromise = db
@@ -182,6 +199,10 @@ export async function GET(request: NextRequest) {
       .find({})
       .sort({ displayOrder: 1, createdAt: -1 })
       .limit(20)
+      .project({
+        _id: 1,
+        image: 1,
+      })
       .toArray();
 
     const newsPromise = db
@@ -202,13 +223,30 @@ export async function GET(request: NextRequest) {
 
     const newArrivalsBannerPromise = db
       .collection('homepage_new_arrivals_banner')
-      .findOne({});
+      .findOne(
+        {},
+        {
+          projection: {
+            title: 1,
+            subtitle: 1,
+            badgeText: 1,
+            description: 1,
+            backgroundImage: 1,
+          },
+        }
+      );
 
     const newArrivalsCardsPromise = db
       .collection('homepage_new_arrivals_cards')
       .find({})
       .sort({ displayOrder: 1, createdAt: -1 })
       .limit(10)
+      .project({
+        _id: 1,
+        title: 1,
+        image: 1,
+        type: 1,
+      })
       .toArray();
 
     const [rawBanners, rawCategories, rawFeatured, rawTrending, rawNew, rawDazzle, rawGallery, rawNews, rawNewArrivalsBanner, rawNewArrivalsCards] = await Promise.all([
@@ -315,17 +353,7 @@ export async function GET(request: NextRequest) {
         type: 'hero',
         order: 1,
         data: {
-          banners: rawBanners.map((banner, index) => ({
-            _id: banner._id.toString(),
-            title: banner.title || 'Discover Timeless Pieces',
-            subtitle: banner.subtitle || '',
-            description: banner.description || '',
-            image: banner.image || DEFAULT_BANNER_IMAGE,
-            link: banner.link || '/products',
-            buttonText: banner.buttonText || 'Shop Now',
-            backgroundColor: banner.backgroundColor || '#f5f5f5',
-            displayOrder: banner.displayOrder ?? index,
-          })),
+          banners: rawBanners.map((banner, index) => serializeBanner(banner, index)),
         },
       },
       {
@@ -400,10 +428,14 @@ export async function GET(request: NextRequest) {
       },
     ];
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       sections,
-      fetchedAt: new Date().toISOString(),
     });
+
+    // Add caching headers for better performance
+    response.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');
+    
+    return response;
   } catch (error) {
     console.error('[v0] Failed to fetch homepage data:', error);
     return NextResponse.json(

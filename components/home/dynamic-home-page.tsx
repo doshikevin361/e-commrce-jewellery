@@ -263,15 +263,23 @@ const mapProductsFromApi = (incoming?: any[], defaultBadge?: string): ProductCar
   }
 
   return incoming.map((product, index) => {
-    const sellingPrice =
-      typeof product?.sellingPrice === 'number'
-        ? product.sellingPrice
-        : typeof product?.regularPrice === 'number'
-        ? product.regularPrice
-        : 0;
-    const regularPrice = typeof product?.regularPrice === 'number' ? product.regularPrice : sellingPrice;
+    // Use sellingPrice and regularPrice from API (already calculated with discount)
+    const sellingPrice = typeof product?.sellingPrice === 'number' && product.sellingPrice > 0
+      ? product.sellingPrice
+      : typeof product?.regularPrice === 'number' && product.regularPrice > 0
+      ? product.regularPrice
+      : 0;
+    
+    const regularPrice = typeof product?.regularPrice === 'number' && product.regularPrice > 0
+      ? product.regularPrice
+      : sellingPrice;
 
-    const hasDiscount = regularPrice > sellingPrice && regularPrice !== 0;
+    // Check if discount exists (either from discount field or price difference)
+    const discountPercent = typeof product?.discount === 'number' && product.discount > 0 && product.discount <= 100
+      ? product.discount
+      : 0;
+    
+    const hasDiscount = discountPercent > 0 || (regularPrice > sellingPrice && regularPrice > 0 && sellingPrice > 0);
 
     const productId = typeof product?._id === 'string' ? product._id : product?._id?.toString?.() ?? `product-${index}`;
 
@@ -280,8 +288,8 @@ const mapProductsFromApi = (incoming?: any[], defaultBadge?: string): ProductCar
       _id: productId, // Ensure _id is set for ProductCard component
       title: product?.name || 'Untitled Product',
       category: product?.category || 'Jewellery',
-      price: formatCurrency(sellingPrice),
-      originalPrice: hasDiscount ? formatCurrency(regularPrice) : undefined,
+      price: formatCurrency(sellingPrice), // This is the discounted price
+      originalPrice: hasDiscount && regularPrice > sellingPrice ? formatCurrency(regularPrice) : undefined,
       rating: typeof product?.rating === 'number' ? product.rating : 4.8,
       reviews: typeof product?.reviewCount === 'number' ? product.reviewCount : 0,
       image: product?.mainImage || DEFAULT_PRODUCT_IMAGE,
@@ -327,7 +335,7 @@ export const HomePage = () => {
     setIsLoading(true);
     try {
       const response = await fetch('/api/public/homepage', {
-        cache: 'no-store',
+        next: { revalidate: 60 }, // Cache for 60 seconds, revalidate in background
         signal,
       });
 
@@ -716,6 +724,7 @@ const Hero = ({ slides = defaultHeroSlides, isLoading = false }: { slides?: Hero
                         fill
                         sizes='(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 65vw'
                         className='object-cover'
+                        priority
                       />
                       <div
                         className='absolute inset-0'
@@ -748,6 +757,7 @@ const Hero = ({ slides = defaultHeroSlides, isLoading = false }: { slides?: Hero
                         fill
                         sizes='(max-width: 1024px) 50vw, 35vw'
                         className='object-cover'
+                        loading='lazy'
                       />
                       <div
                         className='absolute inset-0'
@@ -797,10 +807,13 @@ const CategoryStrip = memo(({ categoriesData, isLoading = false }: { categoriesD
                 href={`/products?category=${encodeURIComponent(item.slug || item.name)}`}
                 className='group flex flex-col items-center gap-3 transition-transform duration-300 hover:scale-105'>
                 <div className='relative aspect-square w-full overflow-hidden rounded-full bg-linear-to-br from-[#F5EEE5] to-white shadow-lg ring-2 ring-[#E6D3C2] transition-shadow duration-300 group-hover:shadow-xl group-hover:ring-[#C8A15B]'>
-                  <img
+                  <Image
                     src={item.image}
                     alt={item.name}
-                    className='h-full w-full object-cover transition-transform duration-300 group-hover:scale-110'
+                    fill
+                    sizes='(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 16vw'
+                    className='object-cover transition-transform duration-300 group-hover:scale-110'
+                    loading='lazy'
                   />
                   <div className='absolute inset-0 bg-linear-to-t from-black/20 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100' />
                 </div>
@@ -988,16 +1001,26 @@ const PromoShowcase = memo(() => {
     <section className='w-full bg-[#F3F5F7]'>
       <div className='mx-auto grid items-center gap-6 md:grid-cols-2 w-full max-w-[1440px] px-4 sm:px-6 md:px-8 lg:px-12 py-8 sm:py-10 md:py-12'>
         <div className='flex gap-4'>
-          <img
-            src='https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1200&q=80'
-            alt='Model 1'
-            className='h-64 w-1/2 rounded-2xl object-cover lg:h-[420px]'
-          />
-          <img
-            src='https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1200&q=80'
-            alt='Model 2'
-            className='mt-8 h-64 w-1/2 rounded-2xl object-cover lg:h-[350px]'
-          />
+          <div className='relative h-64 w-1/2 rounded-2xl overflow-hidden lg:h-[420px]'>
+            <Image
+              src='https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1200&q=80'
+              alt='Model 1'
+              fill
+              sizes='50vw'
+              className='object-cover'
+              loading='lazy'
+            />
+          </div>
+          <div className='relative mt-8 h-64 w-1/2 rounded-2xl overflow-hidden lg:h-[350px]'>
+            <Image
+              src='https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1200&q=80'
+              alt='Model 2'
+              fill
+              sizes='50vw'
+              className='object-cover'
+              loading='lazy'
+            />
+          </div>
         </div>
 
         <div>
@@ -1166,11 +1189,14 @@ const UpdatesSection = memo(({ newsItems, isLoading = false }: { newsItems: News
             key={item._id}
             href={item.slug ? `/blog/${item.slug}` : '/blog'}
             className='rounded-2xl border border-web/60 bg-[#F3F5F7] p-4 shadow-sm hover:shadow-md transition-shadow'>
-            <div className='overflow-hidden rounded-xl'>
-              <img
+            <div className='relative overflow-hidden rounded-xl h-56 w-full'>
+              <Image
                 src={item.image || 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=800&q=80'}
                 alt={item.title}
-                className='h-56 w-full object-cover'
+                fill
+                sizes='(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw'
+                className='object-cover'
+                loading='lazy'
               />
             </div>
 
@@ -1298,7 +1324,9 @@ const Testimonials = memo(() => {
             </div>
             <p className='mb-4 sm:mb-6 text-xs sm:text-sm text-[#4F3A2E] italic'>&ldquo;{testimonial.comment}&rdquo;</p>
             <div className='flex items-center gap-3 sm:gap-4'>
-              <img src={testimonial.image} alt={testimonial.name} className='h-12 w-12 sm:h-14 sm:w-14 rounded-full object-cover' />
+              <div className='relative h-12 w-12 sm:h-14 sm:w-14 rounded-full overflow-hidden flex-shrink-0'>
+                <Image src={testimonial.image} alt={testimonial.name} fill sizes='56px' className='object-cover' loading='lazy' />
+              </div>
               <div>
                 <h4 className='text-xs sm:text-sm font-semibold text-[#1F3B29]'>{testimonial.name}</h4>
                 <p className='text-[10px] sm:text-xs text-[#4F3A2E]'>{testimonial.role}</p>
@@ -1401,7 +1429,7 @@ const NewArrivalsSection = memo(({
     <section className='relative w-full'>
       {/* Background Banner */}
       <div className='relative h-[280px] sm:h-[320px] md:h-[380px] lg:h-[420px] w-full'>
-        <Image src={bannerData.backgroundImage} alt='New Arrivals Banner' fill className='object-cover' />
+        <Image src={bannerData.backgroundImage} alt='New Arrivals Banner' fill className='object-cover' priority sizes='100vw' />
 
         <div className='absolute inset-0 bg-black/20'></div>
 
@@ -1429,7 +1457,7 @@ const NewArrivalsSection = memo(({
             {displayCards.map(card => (
               <div key={card._id} className='bg-white rounded-xl overflow-hidden shadow-lg'>
                 <div className='relative h-[240px] sm:h-[280px] md:h-[320px] lg:h-[350px]'>
-                  <Image src={card.image} alt={card.title} fill className='object-cover' />
+                  <Image src={card.image} alt={card.title} fill className='object-cover' sizes='(max-width: 640px) 100vw, 50vw' loading='lazy' />
                 </div>
                 <p className='px-4 sm:px-6 md:px-8 py-3 sm:py-4 md:py-5 text-base sm:text-lg md:text-xl font-medium'>{card.title}</p>
               </div>

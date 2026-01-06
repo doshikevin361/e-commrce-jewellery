@@ -403,6 +403,7 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
   const [displayedProducts, setDisplayedProducts] = useState<any[]>([]);
   const [selectedRelatedProducts, setSelectedRelatedProducts] = useState<string[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(false);
+  const [originalPrice, setOriginalPrice] = useState<number | null>(null); // Store original price when editing
 
   const isDiamondComplete = (d: Diamond) =>
     !!(
@@ -1111,6 +1112,11 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
           relatedProducts: product.relatedProducts || [],
         });
         
+        // Store original price to preserve it when editing
+        // Prefer price, then subTotal, then totalAmount
+        const savedPrice = product.price || product.subTotal || product.totalAmount || null;
+        setOriginalPrice(savedPrice);
+        
         // Set selected related products for the UI
         if (product.relatedProducts && Array.isArray(product.relatedProducts)) {
           setSelectedRelatedProducts(product.relatedProducts);
@@ -1229,9 +1235,11 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
         regularPrice: 0,
         sellingPrice: 0,
         costPrice: 0,
-        price: subTotal, // Original price without GST (same as subTotal)
-        subTotal: subTotal, // Original price without GST
-        totalAmount: subTotal, // Original price without GST (GST will be calculated on website for invoice)
+        // When editing, preserve original price if it exists, otherwise use calculated subTotal
+        // This prevents price from changing automatically when live prices change
+        price: (productId && originalPrice !== null) ? originalPrice : subTotal, // Preserve original price when editing
+        subTotal: (productId && originalPrice !== null) ? originalPrice : subTotal, // Preserve original price when editing
+        totalAmount: (productId && originalPrice !== null) ? originalPrice : subTotal, // Preserve original price when editing
         goldWeight,
         goldRatePerGram,
         silverWeight,

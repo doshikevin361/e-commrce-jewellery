@@ -118,6 +118,13 @@ interface ProductDetail {
   bis_hallmark?: boolean;
   certificationNumber?: string;
   gender?: string;
+  // Other product details
+  occasion?: string;
+  dimension?: string;
+  collection?: string;
+  designType?: string;
+  size?: string;
+  thickness?: number;
 }
 
 // Premium Accordion component
@@ -179,6 +186,7 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
     const fetchProduct = async () => {
       try {
         setLoading(true);
+        // API has Cache-Control headers, browser will cache automatically
         const response = await fetch(`/api/public/products/${productSlug}`);
 
         if (!response.ok) {
@@ -730,46 +738,78 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
             </PremiumAccordion>
 
             {/* Metal Details Accordion */}
-            {(product.hasGold || product.hasSilver || product.metalType) && (
-              <PremiumAccordion title='Metal Details' icon={Package}>
-                <div className='grid grid-cols-1 sm:grid-cols-2 gap-6 text-sm'>
-                  {(product.metalType || product.hasGold) && (
-                    <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
-                      <span className='text-[#4F3A2E]/70 font-medium'>Metal Type</span>
-                      <span className='font-bold text-[#1F3B29]'>{product.metalType || (product.hasGold ? 'Gold' : 'Silver')}</span>
-                    </div>
-                  )}
-                  {(product.goldPurity || product.silverPurity || product.metalPurity) && (
-                    <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
-                      <span className='text-[#4F3A2E]/70 font-medium'>Purity</span>
-                      <span className='font-bold text-[#1F3B29]'>{product.goldPurity || product.silverPurity || product.metalPurity}</span>
-                    </div>
-                  )}
-                  {(product.goldWeight || product.silverWeight || product.metalWeight) && (
-                    <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
-                      <span className='text-[#4F3A2E]/70 font-medium'>Weight</span>
-                      <span className='font-bold text-[#1F3B29]'>
-                        {(product.goldWeight || product.silverWeight || product.metalWeight)?.toFixed(2)}g
-                      </span>
-                    </div>
-                  )}
-                  {(product.goldRatePerGram || product.silverRatePerGram) && (
-                    <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
-                      <span className='text-[#4F3A2E]/70 font-medium'>Rate per gram</span>
-                      <span className='font-bold text-[#1F3B29]'>
-                        ₹{(product.goldRatePerGram || product.silverRatePerGram)?.toLocaleString()}
-                      </span>
-                    </div>
-                  )}
-                  {product.hallmarked && (
-                    <div className='col-span-1 sm:col-span-2 flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
-                      <span className='text-[#4F3A2E]/70 font-medium'>Hallmark</span>
-                      <span className='font-bold text-[#1F3B29]'>{product.bis_hallmark ? 'BIS Hallmarked' : 'Hallmarked'}</span>
-                    </div>
-                  )}
-                </div>
-              </PremiumAccordion>
-            )}
+            {(() => {
+              // Helper function to check if a value is valid
+              const isValid = (value: any): boolean => {
+                if (value === null || value === undefined) return false;
+                if (typeof value === 'string') return value.trim().length > 0;
+                if (typeof value === 'number') return value > 0;
+                if (typeof value === 'boolean') return value === true;
+                return true;
+              };
+
+              // Check if any metal field is valid
+              const hasValidFields = 
+                product.hasGold ||
+                product.hasSilver ||
+                isValid(product.metalType) ||
+                isValid(product.goldPurity) ||
+                isValid(product.silverPurity) ||
+                isValid(product.metalPurity) ||
+                isValid(product.goldWeight) ||
+                isValid(product.silverWeight) ||
+                isValid(product.metalWeight) ||
+                isValid(product.goldRatePerGram) ||
+                isValid(product.silverRatePerGram) ||
+                product.hallmarked;
+
+              if (!hasValidFields) return null;
+
+              return (
+                <PremiumAccordion title='Metal Details' icon={Package}>
+                  <div className='grid grid-cols-1 sm:grid-cols-2 gap-6 text-sm'>
+                    {(isValid(product.metalType) || product.hasGold || product.hasSilver) && (
+                      <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
+                        <span className='text-[#4F3A2E]/70 font-medium'>Metal Type</span>
+                        <span className='font-bold text-[#1F3B29]'>
+                          {product.metalType || (product.hasGold ? 'Gold' : product.hasSilver ? 'Silver' : '—')}
+                        </span>
+                      </div>
+                    )}
+                    {(isValid(product.goldPurity) || isValid(product.silverPurity) || isValid(product.metalPurity)) && (
+                      <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
+                        <span className='text-[#4F3A2E]/70 font-medium'>Purity</span>
+                        <span className='font-bold text-[#1F3B29]'>
+                          {product.goldPurity || product.silverPurity || product.metalPurity}
+                        </span>
+                      </div>
+                    )}
+                    {(isValid(product.goldWeight) || isValid(product.silverWeight) || isValid(product.metalWeight)) && (
+                      <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
+                        <span className='text-[#4F3A2E]/70 font-medium'>Weight</span>
+                        <span className='font-bold text-[#1F3B29]'>
+                          {(product.goldWeight || product.silverWeight || product.metalWeight)?.toFixed(2)}g
+                        </span>
+                      </div>
+                    )}
+                    {(isValid(product.goldRatePerGram) || isValid(product.silverRatePerGram)) && (
+                      <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
+                        <span className='text-[#4F3A2E]/70 font-medium'>Rate per gram</span>
+                        <span className='font-bold text-[#1F3B29]'>
+                          ₹{(product.goldRatePerGram || product.silverRatePerGram)?.toLocaleString()}
+                        </span>
+                      </div>
+                    )}
+                    {product.hallmarked && (
+                      <div className='col-span-1 sm:col-span-2 flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
+                        <span className='text-[#4F3A2E]/70 font-medium'>Hallmark</span>
+                        <span className='font-bold text-[#1F3B29]'>{product.bis_hallmark ? 'BIS Hallmarked' : 'Hallmarked'}</span>
+                      </div>
+                    )}
+                  </div>
+                </PremiumAccordion>
+              );
+            })()}
 
             {/* Diamond Details Accordion */}
             {(product.hasDiamond || product.diamonds) &&
@@ -895,36 +935,102 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
               )}
 
             {/* Other Material Details Accordion */}
-            {(product.gemstoneName || product.brand || product.gender || product.certificationNumber) && (
-              <PremiumAccordion title='Other Material Details' icon={Sparkles}>
-                <div className='grid grid-cols-1 sm:grid-cols-2 gap-6 text-sm'>
-                  {product.gemstoneName && (
-                    <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
-                      <span className='text-[#4F3A2E]/70 font-medium'>Gemstone</span>
-                      <span className='font-bold text-[#1F3B29]'>{product.gemstoneName}</span>
-                    </div>
-                  )}
-                  {product.brand && (
-                    <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
-                      <span className='text-[#4F3A2E]/70 font-medium'>Brand</span>
-                      <span className='font-bold text-[#1F3B29]'>{product.brand}</span>
-                    </div>
-                  )}
-                  {product.gender && (
-                    <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
-                      <span className='text-[#4F3A2E]/70 font-medium'>Gender</span>
-                      <span className='font-bold text-[#1F3B29]'>{product.gender}</span>
-                    </div>
-                  )}
-                  {product.certificationNumber && (
-                    <div className='col-span-1 sm:col-span-2 flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
-                      <span className='text-[#4F3A2E]/70 font-medium'>Certification Number</span>
-                      <span className='font-bold text-[#1F3B29]'>{product.certificationNumber}</span>
-                    </div>
-                  )}
-                </div>
-              </PremiumAccordion>
-            )}
+            {(() => {
+              // Helper function to check if a value is valid (not empty, not null, not undefined)
+              const isValid = (value: any): boolean => {
+                if (value === null || value === undefined) return false;
+                if (typeof value === 'string') return value.trim().length > 0;
+                if (Array.isArray(value)) return value.length > 0 && value.some(v => v && (typeof v === 'string' ? v.trim().length > 0 : true));
+                if (typeof value === 'number') return value > 0;
+                return true;
+              };
+
+              // Check if any field is valid
+              const hasValidFields = 
+                isValid(product.gemstoneName) ||
+                isValid(product.brand) ||
+                isValid(product.gender) ||
+                isValid(product.certificationNumber) ||
+                isValid(product.occasion) ||
+                isValid(product.dimension) ||
+                isValid(product.collection) ||
+                isValid(product.designType) ||
+                isValid(product.size) ||
+                isValid(product.thickness);
+
+              if (!hasValidFields) return null;
+
+              return (
+                <PremiumAccordion title='Other Material Details' icon={Sparkles}>
+                  <div className='grid grid-cols-1 sm:grid-cols-2 gap-6 text-sm'>
+                    {isValid(product.gemstoneName) && (
+                      <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
+                        <span className='text-[#4F3A2E]/70 font-medium'>Gemstone</span>
+                        <span className='font-bold text-[#1F3B29]'>{product.gemstoneName}</span>
+                      </div>
+                    )}
+                    {isValid(product.brand) && (
+                      <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
+                        <span className='text-[#4F3A2E]/70 font-medium'>Brand</span>
+                        <span className='font-bold text-[#1F3B29]'>{product.brand}</span>
+                      </div>
+                    )}
+                    {isValid(product.gender) && (
+                      <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
+                        <span className='text-[#4F3A2E]/70 font-medium'>Gender</span>
+                        <span className='font-bold text-[#1F3B29]'>
+                          {Array.isArray(product.gender) 
+                            ? product.gender.filter(g => g && g.trim().length > 0).join(', ') 
+                            : product.gender}
+                        </span>
+                      </div>
+                    )}
+                    {isValid(product.designType) && (
+                      <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
+                        <span className='text-[#4F3A2E]/70 font-medium'>Design Type</span>
+                        <span className='font-bold text-[#1F3B29]'>{product.designType}</span>
+                      </div>
+                    )}
+                    {isValid(product.size) && (
+                      <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
+                        <span className='text-[#4F3A2E]/70 font-medium'>Size</span>
+                        <span className='font-bold text-[#1F3B29]'>{product.size}</span>
+                      </div>
+                    )}
+                    {isValid(product.collection) && (
+                      <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
+                        <span className='text-[#4F3A2E]/70 font-medium'>Collection</span>
+                        <span className='font-bold text-[#1F3B29]'>{product.collection}</span>
+                      </div>
+                    )}
+                    {isValid(product.occasion) && (
+                      <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
+                        <span className='text-[#4F3A2E]/70 font-medium'>Occasion</span>
+                        <span className='font-bold text-[#1F3B29]'>{product.occasion}</span>
+                      </div>
+                    )}
+                    {isValid(product.dimension) && (
+                      <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
+                        <span className='text-[#4F3A2E]/70 font-medium'>Dimension</span>
+                        <span className='font-bold text-[#1F3B29]'>{product.dimension}</span>
+                      </div>
+                    )}
+                    {isValid(product.thickness) && (
+                      <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
+                        <span className='text-[#4F3A2E]/70 font-medium'>Thickness</span>
+                        <span className='font-bold text-[#1F3B29]'>{product.thickness}mm</span>
+                      </div>
+                    )}
+                    {isValid(product.certificationNumber) && (
+                      <div className='col-span-1 sm:col-span-2 flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
+                        <span className='text-[#4F3A2E]/70 font-medium'>Certification Number</span>
+                        <span className='font-bold text-[#1F3B29]'>{product.certificationNumber}</span>
+                      </div>
+                    )}
+                  </div>
+                </PremiumAccordion>
+              );
+            })()}
           </div>
         </div>
 

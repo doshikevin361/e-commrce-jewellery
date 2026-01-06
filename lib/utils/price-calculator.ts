@@ -66,14 +66,36 @@ export function calculateProductPrice(product: any): {
 export function formatProductPrice(product: any) {
   const { sellingPrice, regularPrice, mrp } = calculateProductPrice(product);
   
+  // Get base original price
+  const baseOriginalPrice = mrp || regularPrice || sellingPrice || 0;
+  
+  // Get discount percentage
+  const discountPercent = typeof product.discount === 'number' && product.discount > 0 && product.discount <= 100
+    ? product.discount
+    : 0;
+  
+  // Calculate discounted price if discount exists
+  const discountedPrice = discountPercent > 0 && baseOriginalPrice > 0
+    ? Math.max(0, Math.round(baseOriginalPrice * (1 - discountPercent / 100)))
+    : (sellingPrice || baseOriginalPrice);
+  
+  // Original price is the base price before discount
+  const finalOriginalPrice = baseOriginalPrice;
+  
+  // Display price is the discounted price
+  const finalDisplayPrice = discountedPrice;
+  
+  // Check if there's a discount
+  const hasDiscount = discountPercent > 0 && finalOriginalPrice > finalDisplayPrice;
+  
   return {
-    displayPrice: sellingPrice || regularPrice || 0,
-    originalPrice: mrp || regularPrice || 0,
-    sellingPrice,
-    regularPrice,
-    mrp,
-    hasDiscount: (mrp || regularPrice) > (sellingPrice || regularPrice),
-    discountPercent: product.discount || 0,
+    displayPrice: finalDisplayPrice,
+    originalPrice: finalOriginalPrice,
+    sellingPrice: finalDisplayPrice,
+    regularPrice: finalOriginalPrice,
+    mrp: finalOriginalPrice,
+    hasDiscount,
+    discountPercent,
   };
 }
 
