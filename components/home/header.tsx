@@ -538,6 +538,12 @@ function HomeHeaderContent() {
             ) : (
               <>
                 <button
+                  onClick={() => router.push('/become-vendor')}
+                  className='text-white hover:text-white/90 transition-colors duration-200 hover:underline'>
+                  Become a Member
+                </button>
+                <span className='text-white/50'>|</span>
+                <button
                   onClick={() => {
                     setAuthMode('login');
                     setAuthModalOpen(true);
