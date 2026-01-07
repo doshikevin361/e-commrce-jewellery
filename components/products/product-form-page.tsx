@@ -1209,11 +1209,35 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
       const silverRatePerGram = purityMetalRate || metalLiveRate || (formData as any).silverRatePerGram || 0;
       const makingCharges = Math.max(0, (formData.makingChargePerGram || 0) * (goldWeight || silverWeight));
 
+      // Store current live price in customMetalRate if no custom rate provided
+      // This prevents price discrepancies when editing product later with different live prices
+      const storedCustomMetalRate = formData.customMetalRate ?? liveMetalRate;
+
+      // Process diamonds array: store live price in customMetalRate for each diamond if not provided
+      const processedDiamonds = formData.diamonds.map(diamond => {
+        if (diamond.metalType) {
+          const diamondLiveRate = diamond.metalType === 'Silver'
+            ? livePrices?.silver ?? 0
+            : diamond.metalType === 'Platinum'
+            ? livePrices?.platinum ?? 0
+            : livePrices?.gold ?? 0;
+          
+          // Store current live price if no custom rate provided
+          return {
+            ...diamond,
+            customMetalRate: diamond.customMetalRate ?? diamondLiveRate
+          };
+        }
+        return diamond;
+      });
+
       const payload = {
         ...formData,
         product_type: formData.productType,
         sku: computedSku,
         urlSlug: computedSlug,
+        customMetalRate: storedCustomMetalRate,
+        diamonds: processedDiamonds,
         shortDescription: formData.shortDescription || formData.description.substring(0, 200),
         longDescription: formData.description,
         specifications: formData.specifications,
@@ -3042,10 +3066,10 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                 <p className='text-sm text-gray-600 mb-2'>Metal Rate (24K) per gram</p>
                 <FormField
                   label=''
-                  value={formData.customMetalRate ?? liveMetalRate}
+                  value={metalLiveRate}
                   onChange={e => {
                     const value = parseFloat(e.target.value) || 0;
-                    // If value equals live rate, clear custom rate
+                    // If value equals current live rate, clear custom rate
                     if (value === liveMetalRate) {
                       updateField('customMetalRate', undefined);
                     } else {
@@ -3056,7 +3080,7 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                   placeholder={liveMetalRate.toString()}
                 />
                 <p className='text-xs text-gray-500 mt-1'>
-                  {formData.customMetalRate ? 'Custom rate' : `Live: ${formatINR(liveMetalRate)}`}
+                  {formData.customMetalRate ? `Stored rate${liveMetalRate !== formData.customMetalRate ? ` · Live: ${formatINR(liveMetalRate)}` : ''}` : `Live: ${formatINR(liveMetalRate)}`}
                 </p>
               </div>
               <div className='p-3 bg-gray-50 rounded border'>

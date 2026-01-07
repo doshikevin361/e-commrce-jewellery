@@ -543,9 +543,8 @@ function HomeHeaderContent() {
                     setAuthModalOpen(true);
                   }}
                   className='text-white hover:text-white/90 transition-colors duration-200 hover:underline'>
-                  login
+                  Login
                 </button>
-                <span className='text-white/70'>_</span>
                 <button
                   onClick={() => {
                     setAuthMode('register');
