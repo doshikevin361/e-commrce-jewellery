@@ -611,8 +611,8 @@ function HomeHeaderContent() {
             {/* Current Offers - Hidden on mobile */}
             <Link
               href='/trending'
-              className='hidden lg:flex items-center gap-1 text-xs lg:text-sm text-white hover:text-white/90 transition-colors duration-200 font-medium underline whitespace-nowrap'>
-              currents offers
+              className='hidden lg:flex items-center gap-1 text-xs lg:text-sm text-white hover:text-white/90 transition-colors duration-200 font-medium whitespace-nowrap'>
+              Current Offers
             </Link>
 
             {/* Wishlist */}
@@ -644,7 +644,7 @@ function HomeHeaderContent() {
                   </span>
                 )}
               </div>
-              <span className='hidden lg:inline text-xs font-medium'>yourcart</span>
+              <span className='hidden lg:inline text-xs font-medium'>Cart</span>
             </Link>
 
             {/* Call us/Chat/WhatsApp - Hidden on mobile */}
@@ -654,7 +654,7 @@ function HomeHeaderContent() {
                 className='flex items-center gap-1 text-xs hover:text-white/90 transition-colors duration-200'
                 aria-label='Call us'>
                 <Phone size={16} />
-                <span>call us</span>
+                <span>Call Us</span>
               </a>
               <span className='text-white/70'>/</span>
               <a
@@ -664,7 +664,7 @@ function HomeHeaderContent() {
                 className='flex items-center gap-1 text-xs hover:text-white/90 transition-colors duration-200'
                 aria-label='WhatsApp'>
                 <MessageCircle size={16} />
-                <span>chat/whatsup</span>
+                <span>Chat/WhatsApp</span>
               </a>
             </div>
 
