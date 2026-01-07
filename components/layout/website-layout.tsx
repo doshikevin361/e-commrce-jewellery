@@ -7,8 +7,8 @@ import { HomeFooter } from '@/components/home/footer';
 export function WebsiteLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   
-  // Don't show header/footer for admin routes, login, or vendor routes
-  const isAdminRoute = pathname?.startsWith('/admin') || pathname?.startsWith('/login') || pathname?.startsWith('/vendors');
+  // Don't show header/footer for admin routes, login, vendor routes, or become-vendor page
+  const isAdminRoute = pathname?.startsWith('/admin') || pathname?.startsWith('/login') || pathname?.startsWith('/vendors') || pathname?.startsWith('/become-vendor');
   
   if (isAdminRoute) {
     return <>{children}</>;
