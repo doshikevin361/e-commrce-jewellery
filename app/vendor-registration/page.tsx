@@ -183,20 +183,46 @@ export default function VendorRegistrationPage() {
 
     setIsSubmitting(true);
     try {
-      // TODO: Submit vendor registration to API
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
+      const response = await fetch('/api/vendor-registration', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to submit registration');
+      }
+
+      // Show success message with credentials
       toast({
-        title: 'Success',
-        description: 'Vendor registration submitted successfully! We will review and get back to you.',
+        title: 'Registration Successful!',
+        description: data.message,
         variant: 'default',
       });
+
+      // Show credentials in an alert (in production, this should be sent via email)
+      if (data.credentials) {
+        alert(
+          `Registration Successful!\n\n` +
+          `Your login credentials:\n` +
+          `Username: ${data.credentials.username}\n` +
+          `Password: ${data.credentials.password}\n` +
+          `Email: ${data.credentials.email}\n\n` +
+          `Please save these credentials. You will receive a confirmation email shortly.`
+        );
+      }
       
+      // Redirect to become-vendor page
       router.push('/become-vendor');
     } catch (error) {
+      console.error('Registration error:', error);
       toast({
         title: 'Error',
-        description: 'Failed to submit registration',
+        description: error instanceof Error ? error.message : 'Failed to submit registration',
         variant: 'destructive',
       });
     } finally {
