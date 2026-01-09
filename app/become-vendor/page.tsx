@@ -188,7 +188,9 @@ export default function BecomeVendorPage() {
             <Link href='/login'>
               <Button variant='outline'>Vendor Login</Button>
             </Link>
-            <Button className='bg-[#1F3B29] hover:bg-[#2d5a3f]'>Start Selling</Button>
+            <Link href='/vendor-registration'>
+              <Button className='bg-[#1F3B29] hover:bg-[#2d5a3f]'>Start Selling</Button>
+            </Link>
           </div>
         </div>
       </header>
@@ -216,9 +218,11 @@ export default function BecomeVendorPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 className='max-w-md text-gray-900'
               />
-              <Button size='lg' className='bg-white text-[#1F3B29] hover:bg-gray-100 font-semibold'>
-                Start Selling Now <ArrowRight className='ml-2 w-5 h-5' />
-              </Button>
+              <Link href='/vendor-registration'>
+                <Button size='lg' className='bg-white text-[#1F3B29] hover:bg-gray-100 font-semibold'>
+                  Start Selling Now <ArrowRight className='ml-2 w-5 h-5' />
+                </Button>
+              </Link>
             </div>
             <p className='text-sm text-white/80'>
               <Award className='inline w-4 h-4 mr-1' />
@@ -359,9 +363,11 @@ export default function BecomeVendorPage() {
           <p className='text-xl mb-8 text-white/90'>
             Join thousands of successful vendors already selling on our platform
           </p>
-          <Button size='lg' className='bg-white text-[#1F3B29] hover:bg-gray-100 font-semibold text-lg px-8'>
-            Start Selling Today <ArrowRight className='ml-2 w-6 h-6' />
-          </Button>
+          <Link href='/vendor-registration'>
+            <Button size='lg' className='bg-white text-[#1F3B29] hover:bg-gray-100 font-semibold text-lg px-8'>
+              Start Selling Today <ArrowRight className='ml-2 w-6 h-6' />
+            </Button>
+          </Link>
         </div>
       </section>
 
