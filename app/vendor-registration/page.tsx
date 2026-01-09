@@ -6,6 +6,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { 
   CheckCircle2, 
   MapPin, 
@@ -39,6 +47,8 @@ interface FormData {
   supplierName: string;
   supplierEmail: string;
   supplierPhone: string;
+  password: string;
+  confirmPassword: string;
 }
 
 export default function VendorRegistrationPage() {
@@ -47,6 +57,7 @@ export default function VendorRegistrationPage() {
   const [currentStep, setCurrentStep] = useState(1);
   const [isVerifying, setIsVerifying] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   
   const [formData, setFormData] = useState<FormData>({
     hasGST: true,
@@ -66,6 +77,8 @@ export default function VendorRegistrationPage() {
     supplierName: '',
     supplierEmail: '',
     supplierPhone: '',
+    password: '',
+    confirmPassword: '',
   });
 
   const steps = [
@@ -161,6 +174,22 @@ export default function VendorRegistrationPage() {
           });
           return false;
         }
+        if (!formData.password || formData.password.length < 6) {
+          toast({
+            title: 'Error',
+            description: 'Password must be at least 6 characters long',
+            variant: 'destructive',
+          });
+          return false;
+        }
+        if (formData.password !== formData.confirmPassword) {
+          toast({
+            title: 'Error',
+            description: 'Passwords do not match',
+            variant: 'destructive',
+          });
+          return false;
+        }
         return true;
       
       default:
@@ -197,27 +226,8 @@ export default function VendorRegistrationPage() {
         throw new Error(data.error || 'Failed to submit registration');
       }
 
-      // Show success message with credentials
-      toast({
-        title: 'Registration Successful!',
-        description: data.message,
-        variant: 'default',
-      });
-
-      // Show credentials in an alert (in production, this should be sent via email)
-      if (data.credentials) {
-        alert(
-          `Registration Successful!\n\n` +
-          `Your login credentials:\n` +
-          `Username: ${data.credentials.username}\n` +
-          `Password: ${data.credentials.password}\n` +
-          `Email: ${data.credentials.email}\n\n` +
-          `Please save these credentials. You will receive a confirmation email shortly.`
-        );
-      }
-      
-      // Redirect to become-vendor page
-      router.push('/become-vendor');
+      // Show success dialog
+      setShowSuccessDialog(true);
     } catch (error) {
       console.error('Registration error:', error);
       toast({
@@ -527,6 +537,28 @@ export default function VendorRegistrationPage() {
                       placeholder='Enter contact phone number'
                     />
                   </div>
+
+                  <div className='space-y-2'>
+                    <Label htmlFor='password'>Password *</Label>
+                    <Input
+                      id='password'
+                      type='password'
+                      value={formData.password}
+                      onChange={(e) => handleInputChange('password', e.target.value)}
+                      placeholder='Enter password (min 6 characters)'
+                    />
+                  </div>
+
+                  <div className='space-y-2'>
+                    <Label htmlFor='confirmPassword'>Confirm Password *</Label>
+                    <Input
+                      id='confirmPassword'
+                      type='password'
+                      value={formData.confirmPassword}
+                      onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
+                      placeholder='Confirm your password'
+                    />
+                  </div>
                 </div>
               </div>
             )}
@@ -569,6 +601,35 @@ export default function VendorRegistrationPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Success Dialog */}
+      <Dialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
+        <DialogContent className='sm:max-w-md'>
+          <DialogHeader>
+            <div className='flex justify-center mb-4'>
+              <div className='w-16 h-16 bg-green-100 rounded-full flex items-center justify-center'>
+                <CheckCircle2 className='w-10 h-10 text-green-600' />
+              </div>
+            </div>
+            <DialogTitle className='text-center text-2xl'>Registration Successful!</DialogTitle>
+            <DialogDescription className='text-center text-base pt-2'>
+              Thank you for registering as a vendor. Your application has been submitted successfully.
+              <br /><br />
+              Please wait for admin approval. You will receive an email notification once your account is approved.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className='sm:justify-center'>
+            <Button
+              onClick={() => {
+                setShowSuccessDialog(false);
+                router.push('/become-vendor');
+              }}
+              className='bg-[#1F3B29] hover:bg-[#2d5a3f]'>
+              Back to Home
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

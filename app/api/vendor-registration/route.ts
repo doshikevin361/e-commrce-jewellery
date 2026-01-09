@@ -8,7 +8,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
 
     // Validate required fields
-    const requiredFields = ['businessName', 'businessEmail', 'businessPhone', 'addressLine1', 'city', 'state', 'pincode'];
+    const requiredFields = ['businessName', 'businessEmail', 'businessPhone', 'addressLine1', 'city', 'state', 'pincode', 'password'];
     for (const field of requiredFields) {
       if (!body[field]) {
         return NextResponse.json(
@@ -16,6 +16,14 @@ export async function POST(request: NextRequest) {
           { status: 400 }
         );
       }
+    }
+
+    // Validate password length
+    if (body.password.length < 6) {
+      return NextResponse.json(
+        { error: 'Password must be at least 6 characters long' },
+        { status: 400 }
+      );
     }
 
     // Check if vendor with email already exists
@@ -27,15 +35,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate username from business name
-    const username = body.businessName
+    // Generate username from business email (part before @)
+    const emailPrefix = body.businessEmail.split('@')[0];
+    const username = emailPrefix
       .toLowerCase()
       .replace(/[^a-z0-9]/g, '')
       .substring(0, 20) + Math.floor(Math.random() * 1000);
 
-    // Generate random password
-    const randomPassword = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8).toUpperCase();
-    const hashedPassword = await hashVendorPassword(randomPassword);
+    // Hash the provided password
+    const hashedPassword = await hashVendorPassword(body.password);
 
     // Generate store slug from business name
     const storeSlug = body.businessName
@@ -103,21 +111,11 @@ export async function POST(request: NextRequest) {
 
     const result = await db.collection('vendors').insertOne(vendorData);
 
-    // TODO: Send welcome email with credentials
-    // For now, we'll just return success
-
     return NextResponse.json(
       { 
         success: true,
-        message: 'Vendor registration submitted successfully. We will review your application and contact you soon.',
+        message: 'Vendor registration submitted successfully. Please wait for admin approval.',
         vendorId: result.insertedId.toString(),
-        // In production, don't send password in response. Send via email instead.
-        // For demo purposes:
-        credentials: {
-          username: username,
-          password: randomPassword,
-          email: body.businessEmail,
-        },
       },
       { status: 201 }
     );
