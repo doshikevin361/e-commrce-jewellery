@@ -1,17 +1,48 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB, connectToDatabase } from '@/lib/mongodb';
 import Order from '@/lib/models/Order';
-import { getUserFromRequest, isAdmin } from '@/lib/auth';
+import { getUserFromRequest, isAdminOrVendor, isVendor } from '@/lib/auth';
 import { ObjectId } from 'mongodb';
 
 export async function GET(request: NextRequest) {
   try {
     const user = getUserFromRequest(request);
-    if (!user || !isAdmin(user)) {
+    if (!user || !isAdminOrVendor(user)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     await connectDB();
+    
+    // For vendors, get their products to filter orders
+    let vendorProductIds: ObjectId[] = [];
+    if (isVendor(user)) {
+      try {
+        const { db } = await connectToDatabase();
+        const vendorProducts = await db.collection('products')
+          .find({ vendor: user.email })
+          .project({ _id: 1 })
+          .toArray();
+        vendorProductIds = vendorProducts.map(p => p._id);
+        console.log('[Admin Orders] Vendor product IDs:', vendorProductIds.length);
+        
+        if (vendorProductIds.length === 0) {
+          // Vendor has no products, return empty list
+          return NextResponse.json({
+            orders: [],
+            total: 0,
+            pagination: {
+              page: 1,
+              limit: 50,
+              total: 0,
+              pages: 0,
+            },
+          });
+        }
+      } catch (vendorError) {
+        console.error('[Admin Orders] Error fetching vendor products:', vendorError);
+        return NextResponse.json({ error: 'Failed to fetch vendor products' }, { status: 500 });
+      }
+    }
     
     // Debug: Check total orders count using Mongoose
     const totalOrdersCount = await Order.countDocuments({});
@@ -59,6 +90,11 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '50');
 
     const filter: any = {};
+
+    // For vendors, filter orders that contain their products
+    if (isVendor(user) && vendorProductIds.length > 0) {
+      filter['items.product'] = { $in: vendorProductIds };
+    }
 
     if (search) {
       filter.$or = [

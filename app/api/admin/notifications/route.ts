@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
-import { getUserFromRequest, isAdmin } from '@/lib/auth';
+import { getUserFromRequest, isAdmin, isAdminOrVendor } from '@/lib/auth';
 
 // GET - Fetch all notifications for admin
 export async function GET(request: NextRequest) {
   try {
     const user = getUserFromRequest(request);
-    if (!user || !isAdmin(user)) {
+    if (!user || !isAdminOrVendor(user)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const user = getUserFromRequest(request);
-    if (!user || !isAdmin(user)) {
+    if (!user || !isAdminOrVendor(user)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -95,7 +95,7 @@ export async function PUT(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     const user = getUserFromRequest(request);
-    if (!user || !isAdmin(user)) {
+    if (!user || !isAdminOrVendor(user)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 

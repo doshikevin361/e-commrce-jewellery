@@ -78,11 +78,12 @@ export function Sidebar() {
     setIsOpen(savedOpen);
 
     const userStr = localStorage.getItem('adminUser');
+    let parsedUser = null;
     if (userStr) {
       try {
-        const user = JSON.parse(userStr);
-        setUserData(user);
-        console.log('[v0] User data loaded:', user.name);
+        parsedUser = JSON.parse(userStr);
+        setUserData(parsedUser);
+        console.log('[v0] User data loaded:', parsedUser.name);
       } catch (error) {
         console.error('[v0] Error parsing user data:', error);
       }
@@ -90,6 +91,11 @@ export function Sidebar() {
 
     const fetchPendingVendorCount = async () => {
       try {
+        // Only fetch pending vendor count for admins, not vendors
+        if (parsedUser && parsedUser.role === 'vendor') {
+          return; // Vendors don't need to see pending vendor count
+        }
+        
         const response = await fetch('/api/admin/vendors?status=pending');
         const data = await response.json();
         setPendingVendorCount(data.vendors?.filter((v: any) => v.status === 'pending').length || 0);
