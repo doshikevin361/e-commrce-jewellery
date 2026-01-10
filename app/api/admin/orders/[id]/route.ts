@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB, connectToDatabase } from '@/lib/mongodb';
 import Order from '@/lib/models/Order';
-import { getUserFromRequest, isAdmin } from '@/lib/auth';
+import { getUserFromRequest, isAdminOrVendor, isVendor } from '@/lib/auth';
 import { ObjectId } from 'mongodb';
 import { sendEmail, emailTemplates } from '@/lib/email';
 
@@ -11,7 +11,7 @@ export async function GET(
 ) {
   try {
     const user = getUserFromRequest(request);
-    if (!user || !isAdmin(user)) {
+    if (!user || !isAdminOrVendor(user)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -22,6 +22,35 @@ export async function GET(
 
     if (!order) {
       return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+    }
+
+    // For vendors, check if this order contains their products
+    if (isVendor(user)) {
+      try {
+        const { db } = await connectToDatabase();
+        const vendorProducts = await db.collection('products')
+          .find({ vendor: user.email })
+          .project({ _id: 1 })
+          .toArray();
+        const vendorProductIds = vendorProducts.map(p => p._id.toString());
+        
+        // Check if any order item belongs to vendor
+        const hasVendorProduct = order.items.some(item => 
+          vendorProductIds.includes(item.product.toString())
+        );
+        
+        if (!hasVendorProduct) {
+          return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+        }
+        
+        // Filter items to only show vendor's products
+        order.items = order.items.filter(item => 
+          vendorProductIds.includes(item.product.toString())
+        );
+      } catch (vendorError) {
+        console.error('[Order API] Error checking vendor products:', vendorError);
+        return NextResponse.json({ error: 'Failed to verify order access' }, { status: 500 });
+      }
     }
 
     // Try to enrich with customer data from MongoDB
@@ -71,13 +100,43 @@ export async function PUT(
 ) {
   try {
     const user = getUserFromRequest(request);
-    if (!user || !isAdmin(user)) {
+    if (!user || !isAdminOrVendor(user)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     await connectDB();
     const { id } = await params;
     const body = await request.json();
+
+    // First, check if the order exists and if vendor has access
+    const existingOrder = await Order.findById(id).lean();
+    if (!existingOrder) {
+      return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+    }
+
+    // For vendors, check if this order contains their products
+    if (isVendor(user)) {
+      try {
+        const { db } = await connectToDatabase();
+        const vendorProducts = await db.collection('products')
+          .find({ vendor: user.email })
+          .project({ _id: 1 })
+          .toArray();
+        const vendorProductIds = vendorProducts.map(p => p._id.toString());
+        
+        // Check if any order item belongs to vendor
+        const hasVendorProduct = existingOrder.items.some(item => 
+          vendorProductIds.includes(item.product.toString())
+        );
+        
+        if (!hasVendorProduct) {
+          return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+        }
+      } catch (vendorError) {
+        console.error('[Order API] Error checking vendor products:', vendorError);
+        return NextResponse.json({ error: 'Failed to verify order access' }, { status: 500 });
+      }
+    }
 
     const { orderStatus, orderNotes, trackingNumber } = body;
 
@@ -186,11 +245,31 @@ export async function PUT(
     }
 
     // Serialize the order
+    let finalOrder = { ...order };
+    
+    // For vendors, filter items to only show their products
+    if (isVendor(user)) {
+      try {
+        const { db } = await connectToDatabase();
+        const vendorProducts = await db.collection('products')
+          .find({ vendor: user.email })
+          .project({ _id: 1 })
+          .toArray();
+        const vendorProductIds = vendorProducts.map(p => p._id.toString());
+        
+        finalOrder.items = order.items.filter(item => 
+          vendorProductIds.includes(item.product.toString())
+        );
+      } catch (vendorError) {
+        console.error('[Order API] Error filtering vendor items:', vendorError);
+      }
+    }
+    
     const serializedOrder = {
-      ...order,
-      _id: order._id?.toString(),
-      customer: customerData || (order.customer ? {
-        _id: typeof order.customer === 'string' ? order.customer : order.customer.toString(),
+      ...finalOrder,
+      _id: finalOrder._id?.toString(),
+      customer: customerData || (finalOrder.customer ? {
+        _id: typeof finalOrder.customer === 'string' ? finalOrder.customer : finalOrder.customer.toString(),
       } : null),
     };
 
