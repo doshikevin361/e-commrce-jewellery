@@ -1,11 +1,11 @@
 import { connectToDatabase } from "@/lib/mongodb";
 import { NextResponse } from "next/server";
-import { getUserFromRequest, isAdmin } from '@/lib/auth';
+import { getUserFromRequest, isAdmin, isAdminOrVendor } from '@/lib/auth';
 
 export async function GET(request: Request) {
   try {
     const user = getUserFromRequest(request as any);
-    if (!user || !isAdmin(user)) {
+    if (!user || !isAdminOrVendor(user)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 

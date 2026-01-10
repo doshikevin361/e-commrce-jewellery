@@ -97,3 +97,7 @@ export function isVendor(user: DecodedToken | null): boolean {
 export function isAdmin(user: DecodedToken | null): boolean {
   return user?.role === 'admin' || user?.role === 'superadmin';
 }
+
+export function isAdminOrVendor(user: DecodedToken | null): boolean {
+  return isAdmin(user) || isVendor(user);
+}
