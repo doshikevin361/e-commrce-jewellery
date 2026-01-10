@@ -41,6 +41,7 @@ import { cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Autoplay } from 'swiper/modules';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import 'swiper/css';
 import 'swiper/css/navigation';
 
@@ -424,100 +425,109 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
       {/* Back Button */}
       {/* Main Product Section - Premium Two Column Layout */}
       <div className='mx-auto w-full max-w-[1400px] px-4 sm:px-6 md:px-8 lg:px-12 pb-32 lg:pb-20 pt-8'>
-        <div className='grid grid-cols-1 lg:grid-cols-[1.2fr_1fr] gap-12 lg:gap-16 mb-20'>
-          {/* Left Column - Premium Image Gallery */}
-          <div className='relative'>
-            {/* Gallery Thumbnails - Top Left Corner */}
+        <div className='grid grid-cols-1 lg:grid-cols-[1.15fr_1fr] gap-8 lg:gap-12 xl:gap-16 mb-16 lg:mb-24'>
+          {/* Left Column - Premium Image Gallery with Side Thumbnails */}
+          <div className='flex flex-col lg:flex-row gap-4 lg:gap-6'>
+            {/* Gallery Thumbnails - Left Side (Desktop) / Bottom (Mobile) */}
             {images.length > 1 && (
-              <div className='absolute -top-2 -left-2 z-10 flex flex-col gap-2 max-h-[calc(100%-1rem)] overflow-y-auto scrollbar-hide'>
+              <div className='flex lg:flex-col gap-3 lg:gap-3 overflow-x-auto lg:overflow-y-auto lg:max-h-[600px] scrollbar-hide pb-2 lg:pb-0'>
                 {images.map((img, index) => (
                   <button
                     key={index}
                     onClick={() => setSelectedImage(index)}
                     className={cn(
-                      'relative w-16 h-16 overflow-hidden rounded-lg border-2 transition-all duration-300 hover:scale-110 bg-white shadow-md hover:shadow-lg',
-                      selectedImage === index ? 'border-web ring-2 ring-web/30 shadow-lg scale-105' : 'border-[#E6D3C2] hover:border-web/60'
+                      'relative flex-shrink-0 w-20 h-20 lg:w-24 lg:h-24 overflow-hidden rounded-xl border-2 transition-all duration-300 hover:scale-105 bg-white shadow-sm hover:shadow-md',
+                      selectedImage === index 
+                        ? 'border-web ring-2 ring-web/30 shadow-md scale-105' 
+                        : 'border-[#E6D3C2]/50 hover:border-web/60'
                     )}>
-                    <Image src={img} alt={`View ${index + 1}`} fill sizes='64px' className='object-cover' />
+                    <Image src={img} alt={`View ${index + 1}`} fill sizes='96px' className='object-cover' />
                   </button>
                 ))}
               </div>
             )}
 
-            {/* Main Image with Smooth Zoom - Smaller Size */}
-            <div
-              className='relative w-[90%] ml-auto overflow-hidden rounded-2xl bg-gradient-to-br from-[#F5EEE5] to-white border border-[#E6D3C2]/30 shadow-lg hover:shadow-2xl transition-all duration-500 group cursor-zoom-in'
-              onMouseEnter={() => setImageZoom(true)}
-              onMouseLeave={() => setImageZoom(false)}>
-              <div className='relative aspect-square'>
-                <Image
-                  src={images[selectedImage]}
-                  alt={product.name}
-                  fill
-                  sizes='(max-width: 1024px) 90vw, 54vw'
-                  className={cn('object-cover transition-transform duration-700 ease-out', imageZoom ? 'scale-110' : 'scale-100')}
-                  priority
-                />
-              </div>
-              {/* Premium Badges */}
-              <div className='absolute top-6 right-6 flex flex-col gap-3'>
-                {product.featured && (
-                  <span className='rounded-full bg-gradient-to-r from-web to-black px-4 py-2 text-xs font-bold text-white shadow-xl backdrop-blur-sm'>
-                    ✨ Featured
-                  </span>
-                )}
-                {product.trending && !product.featured && (
-                  <span className='rounded-full bg-gradient-to-r from-orange-500 to-red-500 px-4 py-2 text-xs font-bold text-white shadow-xl backdrop-blur-sm'>
-                    🔥 Trending
-                  </span>
-                )}
-                {product.hasDiscount && product.discountPercent > 0 && (
-                  <span className='rounded-full bg-gradient-to-r from-red-500 to-red-600 px-4 py-2 text-xs font-bold text-white shadow-xl backdrop-blur-sm'>
-                    {product.discountPercent}% OFF
-                  </span>
-                )}
-              </div>
-              {imageZoom && (
-                <div className='absolute inset-0 flex items-center justify-center bg-black/5 pointer-events-none'>
-                  <div className='p-3 bg-white/90 backdrop-blur-sm rounded-full shadow-lg'>
-                    <ZoomIn className='w-6 h-6 text-web' />
-                  </div>
+            {/* Main Image with Smooth Zoom */}
+            <div className='flex-1 relative group'>
+              <div
+                className='relative w-full overflow-hidden rounded-2xl bg-gradient-to-br from-[#F5EEE5] to-white border border-[#E6D3C2]/30 shadow-lg hover:shadow-2xl transition-all duration-500 cursor-zoom-in'
+                onMouseEnter={() => setImageZoom(true)}
+                onMouseLeave={() => setImageZoom(false)}>
+                <div className='relative aspect-square w-full'>
+                  <Image
+                    src={images[selectedImage]}
+                    alt={product.name}
+                    fill
+                    sizes='(max-width: 1024px) 100vw, 50vw'
+                    className={cn('object-cover transition-transform duration-700 ease-out', imageZoom ? 'scale-110' : 'scale-100')}
+                    priority
+                  />
                 </div>
-              )}
+                
+                {/* Premium Badges */}
+                <div className='absolute top-4 right-4 flex flex-col gap-2'>
+                  {product.featured && (
+                    <span className='inline-flex items-center justify-center rounded-full bg-gradient-to-r from-web to-[#1a2d1f] px-4 py-1.5 text-xs font-bold text-white shadow-xl backdrop-blur-sm whitespace-nowrap'>
+                      ✨ Featured
+                    </span>
+                  )}
+                  {product.trending && !product.featured && (
+                    <span className='inline-flex items-center justify-center rounded-full bg-gradient-to-r from-orange-500 to-red-500 px-4 py-1.5 text-xs font-bold text-white shadow-xl backdrop-blur-sm whitespace-nowrap'>
+                      🔥 Trending
+                    </span>
+                  )}
+                  {product.hasDiscount && product.discountPercent > 0 && (
+                    <span className='inline-flex items-center justify-center rounded-full bg-gradient-to-r from-red-500 to-red-600 px-4 py-1.5 text-xs font-bold text-white shadow-xl backdrop-blur-sm whitespace-nowrap'>
+                      {product.discountPercent}% OFF
+                    </span>
+                  )}
+                </div>
+                
+                {/* Zoom Indicator */}
+                {imageZoom && (
+                  <div className='absolute inset-0 flex items-center justify-center bg-black/5 pointer-events-none'>
+                    <div className='p-3 bg-white/90 backdrop-blur-sm rounded-full shadow-lg'>
+                      <ZoomIn className='w-6 h-6 text-web' />
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
           {/* Right Column - Premium Product Information */}
-          <div className='flex flex-col space-y-6 lg:pt-4'>
-            {/* Category Label - Premium Typography */}
-            {product.categoryName && <p className='text-xs uppercase tracking-[0.2em] text-web font-bold'>{product.categoryName}</p>}
+          <div className='flex flex-col space-y-5 lg:space-y-6 lg:pt-2'>
+            {/* Category Label */}
+            {product.categoryName && (
+              <p className='text-xs uppercase tracking-[0.25em] text-web font-bold mb-1'>{product.categoryName}</p>
+            )}
 
-            {/* Title with Wishlist & Share - Premium Layout */}
-            <div className='space-y-4'>
+            {/* Title with Wishlist & Share */}
+            <div className='space-y-3'>
               <div className='flex items-start justify-between gap-4'>
-                <h1 className='text-xl sm:text-2xl lg:text-3xl font-bold text-[#1F3B29] leading-tight flex-1 tracking-tight'>
+                <h1 className='text-2xl sm:text-3xl lg:text-4xl font-bold text-[#1F3B29] leading-[1.2] flex-1 tracking-tight'>
                   {product.name}
                 </h1>
-                <div className='flex items-center gap-3 flex-shrink-0'>
+                <div className='flex items-center gap-2 flex-shrink-0'>
                   <button
                     onClick={handleWishlistToggle}
                     disabled={wishlistLoading}
                     className={cn(
-                      'p-3 rounded-xl border-2 transition-all duration-300 hover:scale-110 active:scale-95',
+                      'p-2.5 lg:p-3 rounded-xl border-2 transition-all duration-300 hover:scale-110 active:scale-95',
                       isInWishlist
                         ? 'border-red-500 bg-red-50 hover:bg-red-100 shadow-md'
-                        : 'border-[#E6D3C2] hover:border-web hover:bg-[#FAF7F4] hover:shadow-md'
+                        : 'border-[#E6D3C2] hover:border-web hover:bg-[#FAF7F4] hover:shadow-md bg-white'
                     )}>
-                    <Heart size={22} className={cn('transition-colors', isInWishlist ? 'text-red-500 fill-red-500' : 'text-[#1F3B29]')} />
+                    <Heart size={20} className={cn('transition-colors', isInWishlist ? 'text-red-500 fill-red-500' : 'text-[#1F3B29]')} />
                   </button>
                   <div className='relative'>
                     <button
                       onClick={() => setShareMenuOpen(!shareMenuOpen)}
-                      className='p-3 rounded-xl border-2 border-[#E6D3C2] hover:border-web hover:bg-[#FAF7F4] transition-all duration-300 hover:scale-110 active:scale-95 hover:shadow-md'>
-                      <Share2 size={22} className='text-[#1F3B29]' />
+                      className='p-2.5 lg:p-3 rounded-xl border-2 border-[#E6D3C2] hover:border-web hover:bg-[#FAF7F4] bg-white transition-all duration-300 hover:scale-110 active:scale-95 hover:shadow-md'>
+                      <Share2 size={20} className='text-[#1F3B29]' />
                     </button>
                     {shareMenuOpen && (
-                      <div className='absolute right-0 top-full mt-3 bg-white rounded-2xl shadow-2xl border border-[#E6D3C2]/50 p-2 z-50 min-w-[200px] animate-in fade-in-50 slide-in-from-top-2'>
+                      <div className='absolute right-0 top-full mt-2 bg-white rounded-2xl shadow-2xl border border-[#E6D3C2]/50 p-2 z-50 min-w-[200px] animate-in fade-in-50 slide-in-from-top-2'>
                         <button
                           onClick={() => handleShare('whatsapp')}
                           className='w-full flex items-center gap-3 px-5 py-3 hover:bg-[#FAF7F4] rounded-xl text-sm text-left transition-colors'>
@@ -542,12 +552,16 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
                 </div>
               </div>
 
-              {/* Rating - Premium Style */}
+              {/* Rating */}
               {product.rating && product.rating > 0 && (
-                <div className='flex items-center gap-3'>
-                  <div className='flex items-center gap-1'>
+                <div className='flex items-center gap-2.5'>
+                  <div className='flex items-center gap-0.5'>
                     {[...Array(5)].map((_, i) => (
-                      <Star key={i} size={18} className={i < Math.floor(product.rating || 0) ? 'text-web fill-web' : 'text-[#E6D3C2]'} />
+                      <Star 
+                        key={i} 
+                        size={18} 
+                        className={i < Math.floor(product.rating || 0) ? 'text-amber-400 fill-amber-400' : 'text-[#E6D3C2]'} 
+                      />
                     ))}
                   </div>
                   <span className='text-base font-bold text-[#1F3B29]'>{product.rating.toFixed(1)}</span>
@@ -556,26 +570,26 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
               )}
             </div>
 
-            {/* Price - Premium Hierarchy */}
-            <div className='pb-6 border-b border-[#E6D3C2]/30'>
-              <div className='flex items-baseline gap-3 flex-wrap'>
-                <span className='text-2xl sm:text-3xl font-bold text-[#1F3B29] tracking-tight'>
+            {/* Price Section */}
+            <div className='pb-5 border-b border-[#E6D3C2]/30'>
+              <div className='flex items-baseline gap-3 flex-wrap mb-4'>
+                <span className='text-3xl sm:text-4xl font-bold text-[#1F3B29] tracking-tight'>
                   ₹{product.displayPrice.toLocaleString()}
                 </span>
                 {product.hasDiscount && product.discountPercent > 0 && (
                   <>
-                    <span className='text-lg sm:text-xl text-[#4F3A2E]/50 line-through decoration-[#4F3A2E]/50'>
+                    <span className='text-xl sm:text-2xl text-[#4F3A2E]/50 line-through decoration-[#4F3A2E]/50'>
                       ₹{product.originalPrice.toLocaleString()}
                     </span>
-                    <span className='text-xs sm:text-sm font-bold bg-gradient-to-r from-red-500 to-red-600 text-white px-3 py-1.5 rounded-full shadow-md'>
+                    <span className='text-sm font-bold bg-gradient-to-r from-red-500 to-red-600 text-white px-3 py-1.5 rounded-full shadow-md'>
                       {product.discountPercent}% OFF
                     </span>
                   </>
                 )}
               </div>
               {/* Stock Status */}
-              <div className='flex items-center gap-3 mt-5'>
-                <div className={cn('w-3 h-3 rounded-full shadow-sm', product.stock > 0 ? 'bg-green-500' : 'bg-red-500')}></div>
+              <div className='flex items-center gap-2.5'>
+                <div className={cn('w-2.5 h-2.5 rounded-full shadow-sm', product.stock > 0 ? 'bg-green-500' : 'bg-red-500')}></div>
                 <span className={cn('text-sm font-semibold', product.stock > 0 ? 'text-green-700' : 'text-red-600')}>
                   {product.stock > 0 ? `In Stock (${product.stock} available)` : 'Out of Stock'}
                 </span>
@@ -584,60 +598,60 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
 
             {/* Short Description */}
             {product.shortDescription && (
-              <div>
+              <div className='pt-1'>
                 <p className='text-base text-[#4F3A2E] leading-relaxed'>{product.shortDescription}</p>
               </div>
             )}
 
-            {/* Quantity Selector - Premium Style */}
-            <div className='flex items-center gap-4'>
-              <span className='text-xs font-bold text-[#1F3B29] uppercase tracking-wide'>Quantity:</span>
-              <div className='flex items-center border-2 border-[#E6D3C2] rounded-lg overflow-hidden shadow-sm'>
+            {/* Quantity Selector */}
+            <div className='flex items-center gap-4 pt-2'>
+              <span className='text-sm font-semibold text-[#1F3B29] uppercase tracking-wide'>Quantity:</span>
+              <div className='flex items-center border-2 border-[#E6D3C2] rounded-xl overflow-hidden shadow-sm bg-white'>
                 <button
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  className='p-2 hover:bg-[#FAF7F4] transition-colors disabled:opacity-50'
+                  className='p-2.5 lg:p-3 hover:bg-[#FAF7F4] transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
                   disabled={quantity <= 1}>
-                  <Minus size={16} className='text-[#1F3B29]' />
+                  <Minus size={18} className='text-[#1F3B29]' />
                 </button>
-                <span className='px-6 py-2 text-base font-bold text-[#1F3B29] min-w-[4rem] text-center border-x-2 border-[#E6D3C2] bg-white'>
+                <span className='px-6 lg:px-8 py-2.5 text-base font-bold text-[#1F3B29] min-w-[4rem] text-center border-x-2 border-[#E6D3C2] bg-white'>
                   {quantity}
                 </span>
                 <button
                   onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
-                  className='p-2 hover:bg-[#FAF7F4] transition-colors disabled:opacity-50'
+                  className='p-2.5 lg:p-3 hover:bg-[#FAF7F4] transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
                   disabled={quantity >= product.stock}>
-                  <Plus size={16} className='text-[#1F3B29]' />
+                  <Plus size={18} className='text-[#1F3B29]' />
                 </button>
               </div>
             </div>
 
-            {/* Premium Add to Cart & Buy Now Buttons */}
-            <div className='flex flex-col sm:flex-row gap-3 pt-2'>
+            {/* Add to Cart & Buy Now Buttons */}
+            <div className='flex flex-col sm:flex-row gap-3 pt-1'>
               <button
                 onClick={handleAddToCart}
                 disabled={cartButtonLoading || isInCart || product.stock === 0}
                 className={cn(
-                  'flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-semibold text-base transition-all duration-300 shadow-md hover:shadow-lg',
+                  'flex-1 flex items-center justify-center gap-2 px-6 py-3.5 lg:py-4 rounded-xl font-semibold text-base transition-all duration-300 shadow-md hover:shadow-lg',
                   isInCart
-                    ? 'bg-white text-black cursor-default'
+                    ? 'bg-green-500 text-white cursor-default'
                     : product.stock === 0
                     ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                     : 'bg-[#1F3B29] text-white hover:scale-[1.02] active:scale-[0.98] hover:bg-[#2a4d3a]'
                 )}>
                 {cartButtonLoading ? (
                   <>
-                    <div className='w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin' />
-                    Adding...
+                    <div className='w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin' />
+                    <span>Adding...</span>
                   </>
                 ) : isInCart ? (
                   <>
-                    <Check size={18} />
-                    In Cart
+                    <Check size={20} />
+                    <span>In Cart</span>
                   </>
                 ) : (
                   <>
-                    <ShoppingCart size={18} />
-                    Add to Cart
+                    <ShoppingCart size={20} />
+                    <span>Add to Cart</span>
                   </>
                 )}
               </button>
@@ -645,129 +659,165 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
                 onClick={handleBuyNow}
                 disabled={cartButtonLoading || product.stock === 0}
                 className={cn(
-                  'flex-1 px-6 py-3 rounded-lg font-semibold text-base border-2 transition-all duration-300 shadow-md hover:shadow-lg',
+                  'flex-1 px-6 py-3.5 lg:py-4 rounded-xl font-semibold text-base border-2 transition-all duration-300 shadow-md hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]',
                   product.stock === 0
-                    ? 'border-web text-gray-500 cursor-not-allowed bg-gray-100'
-                    : 'border-web text-web hover:bg-web hover:scale-[1.02] active:scale-[0.98]'
+                    ? 'border-gray-300 text-gray-500 cursor-not-allowed bg-gray-100'
+                    : 'border-web text-web hover:bg-web hover:text-white bg-white'
                 )}>
-                Buy Now
+                <span>Buy Now</span>
               </button>
             </div>
 
-            {/* Premium Trust Badges */}
-            <div className='grid grid-cols-3 gap-4 pt-6 border-t border-[#E6D3C2]/30'>
-              <div className='flex flex-col items-center gap-3 text-center p-4 rounded-xl bg-white/50 hover:bg-white transition-colors'>
-                <div className='p-3 rounded-full bg-[#F5EEE5]'>
-                  <Award className='w-6 h-6 text-web' />
+            {/* Trust Badges */}
+            <div className='grid grid-cols-3 gap-3 lg:gap-4 pt-6 border-t border-[#E6D3C2]/30'>
+              <div className='flex flex-col items-center gap-2 text-center p-3 lg:p-4 rounded-xl bg-white/60 hover:bg-white transition-colors cursor-default'>
+                <div className='p-2.5 rounded-full bg-[#F5EEE5]'>
+                  <Award className='w-5 h-5 lg:w-6 lg:h-6 text-web' />
                 </div>
-                <span className='text-xs text-[#4F3A2E] font-semibold'>Certified Gold</span>
+                <span className='text-xs text-[#4F3A2E] font-semibold leading-tight'>Certified Gold</span>
               </div>
-              <div className='flex flex-col items-center gap-3 text-center p-4 rounded-xl bg-white/50 hover:bg-white transition-colors'>
-                <div className='p-3 rounded-full bg-[#F5EEE5]'>
-                  <RotateCcw className='w-6 h-6 text-web' />
+              <div className='flex flex-col items-center gap-2 text-center p-3 lg:p-4 rounded-xl bg-white/60 hover:bg-white transition-colors cursor-default'>
+                <div className='p-2.5 rounded-full bg-[#F5EEE5]'>
+                  <RotateCcw className='w-5 h-5 lg:w-6 lg:h-6 text-web' />
                 </div>
-                <span className='text-xs text-[#4F3A2E] font-semibold'>Easy Returns</span>
+                <span className='text-xs text-[#4F3A2E] font-semibold leading-tight'>Easy Returns</span>
               </div>
-              <div className='flex flex-col items-center gap-3 text-center p-4 rounded-xl bg-white/50 hover:bg-white transition-colors'>
-                <div className='p-3 rounded-full bg-[#F5EEE5]'>
-                  <Lock className='w-6 h-6 text-web' />
+              <div className='flex flex-col items-center gap-2 text-center p-3 lg:p-4 rounded-xl bg-white/60 hover:bg-white transition-colors cursor-default'>
+                <div className='p-2.5 rounded-full bg-[#F5EEE5]'>
+                  <Lock className='w-5 h-5 lg:w-6 lg:h-6 text-web' />
                 </div>
-                <span className='text-xs text-[#4F3A2E] font-semibold'>Secure Payment</span>
+                <span className='text-xs text-[#4F3A2E] font-semibold leading-tight'>Secure Payment</span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Premium Details Panel */}
-        <div className='mb-20'>
-          <h2 className='text-xl sm:text-2xl font-bold text-[#1F3B29] mb-8 tracking-tight'>Product Information</h2>
+        {/* Product Details Tabs Section */}
+        <div className='mb-16 lg:mb-24'>
+          <Tabs defaultValue='description' className='w-full'>
+            <TabsList className='w-full justify-start bg-[#FAF7F4] p-1.5 rounded-2xl border border-[#E6D3C2]/30 mb-8'>
+              <TabsTrigger 
+                value='description' 
+                className='data-[state=active]:bg-white data-[state=active]:text-web data-[state=active]:shadow-sm px-6 py-3 rounded-xl font-semibold text-sm transition-all'>
+                Description
+              </TabsTrigger>
+              <TabsTrigger 
+                value='specifications' 
+                className='data-[state=active]:bg-white data-[state=active]:text-web data-[state=active]:shadow-sm px-6 py-3 rounded-xl font-semibold text-sm transition-all'>
+                Specifications
+              </TabsTrigger>
+              <TabsTrigger 
+                value='reviews' 
+                className='data-[state=active]:bg-white data-[state=active]:text-web data-[state=active]:shadow-sm px-6 py-3 rounded-xl font-semibold text-sm transition-all'>
+                Reviews
+              </TabsTrigger>
+            </TabsList>
 
-          <div className='space-y-6'>
-            {/* Price Breakup Accordion */}
-            <PremiumAccordion title='Price Breakup' icon={Coins} defaultOpen={true}>
-              <div className='space-y-4 text-sm'>
-                {metalValue > 0 && (
-                  <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
-                    <span className='text-[#4F3A2E]/70 font-medium'>Metal Value</span>
-                    <span className='font-bold text-[#1F3B29]'>₹{metalValue.toLocaleString()}</span>
+            {/* Description Tab */}
+            <TabsContent value='description' className='mt-0'>
+              <div className='bg-white rounded-2xl border border-[#E6D3C2]/30 shadow-sm p-6 lg:p-8'>
+                {product.longDescription ? (
+                  <div className='prose prose-sm lg:prose-base max-w-none'>
+                    <p className='text-[#4F3A2E] leading-relaxed whitespace-pre-line'>
+                      {product.longDescription}
+                    </p>
                   </div>
+                ) : product.shortDescription ? (
+                  <p className='text-base lg:text-lg text-[#4F3A2E] leading-relaxed'>{product.shortDescription}</p>
+                ) : (
+                  <p className='text-[#4F3A2E]/70 italic'>No description available for this product.</p>
                 )}
-                {diamondValue > 0 && (
-                  <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
-                    <span className='text-[#4F3A2E]/70 font-medium'>Diamond Value</span>
-                    <span className='font-bold text-[#1F3B29]'>₹{diamondValue.toLocaleString()}</span>
-                  </div>
-                )}
-                {product.gemstonePrice > 0 && (
-                  <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
-                    <span className='text-[#4F3A2E]/70 font-medium'>Gemstone Value</span>
-                    <span className='font-bold text-[#1F3B29]'>₹{product.gemstonePrice.toLocaleString()}</span>
-                  </div>
-                )}
-                {makingChargesValue > 0 && (
-                  <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
-                    <span className='text-[#4F3A2E]/70 font-medium'>Making Charges</span>
-                    <span className='font-bold text-[#1F3B29]'>₹{makingChargesValue.toLocaleString()}</span>
-                  </div>
-                )}
-                {otherCharges > 0 && (
-                  <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
-                    <span className='text-[#4F3A2E]/70 font-medium'>Other Charges</span>
-                    <span className='font-bold text-[#1F3B29]'>₹{otherCharges.toLocaleString()}</span>
-                  </div>
-                )}
-                <div className='flex justify-between items-center py-4 pt-5 border-t-2 border-[#E6D3C2]/30'>
-                  <span className='text-[#4F3A2E] font-semibold'>Subtotal</span>
-                  <span className='font-bold text-lg text-[#1F3B29]'>₹{subTotal.toLocaleString()}</span>
-                </div>
-                {product.discount > 0 && product.discount <= 100 && discountAmount > 0 && (
-                  <div className='flex justify-between items-center py-3 text-red-600'>
-                    <span className='font-medium'>Discount ({product.discount}%)</span>
-                    <span className='font-bold'>-₹{discountAmount.toLocaleString()}</span>
-                  </div>
-                )}
-                <div className='flex justify-between items-center py-3'>
-                  <span className='text-[#4F3A2E]/70 font-medium'>GST ({product.taxRate || 3}%)</span>
-                  <span className='font-bold text-[#1F3B29]'>₹{gstAmount.toLocaleString()}</span>
-                </div>
-                <div className='flex justify-between items-center py-5 pt-6 border-t-2 border-web/30 bg-gradient-to-r from-[#FAF7F4] to-white -mx-2 px-4 rounded-xl'>
-                  <span className='font-bold text-xl text-[#1F3B29]'>Grand Total</span>
-                  <span className='font-bold text-2xl text-[#1F3B29]'>₹{grandTotal.toLocaleString()}</span>
-                </div>
               </div>
-            </PremiumAccordion>
+            </TabsContent>
 
-            {/* Metal Details Accordion */}
-            {(() => {
-              // Helper function to check if a value is valid
-              const isValid = (value: any): boolean => {
-                if (value === null || value === undefined) return false;
-                if (typeof value === 'string') return value.trim().length > 0;
-                if (typeof value === 'number') return value > 0;
-                if (typeof value === 'boolean') return value === true;
-                return true;
-              };
+            {/* Specifications Tab */}
+            <TabsContent value='specifications' className='mt-0'>
+              <div className='space-y-6'>
+                {/* Price Breakup Accordion */}
+                <PremiumAccordion title='Price Breakup' icon={Coins} defaultOpen={true}>
+                  <div className='space-y-4 text-sm'>
+                    {metalValue > 0 && (
+                      <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
+                        <span className='text-[#4F3A2E]/70 font-medium'>Metal Value</span>
+                        <span className='font-bold text-[#1F3B29]'>₹{metalValue.toLocaleString()}</span>
+                      </div>
+                    )}
+                    {diamondValue > 0 && (
+                      <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
+                        <span className='text-[#4F3A2E]/70 font-medium'>Diamond Value</span>
+                        <span className='font-bold text-[#1F3B29]'>₹{diamondValue.toLocaleString()}</span>
+                      </div>
+                    )}
+                    {product.gemstonePrice && product.gemstonePrice > 0 && (
+                      <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
+                        <span className='text-[#4F3A2E]/70 font-medium'>Gemstone Value</span>
+                        <span className='font-bold text-[#1F3B29]'>₹{product.gemstonePrice.toLocaleString()}</span>
+                      </div>
+                    )}
+                    {makingChargesValue > 0 && (
+                      <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
+                        <span className='text-[#4F3A2E]/70 font-medium'>Making Charges</span>
+                        <span className='font-bold text-[#1F3B29]'>₹{makingChargesValue.toLocaleString()}</span>
+                      </div>
+                    )}
+                    {otherCharges > 0 && (
+                      <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
+                        <span className='text-[#4F3A2E]/70 font-medium'>Other Charges</span>
+                        <span className='font-bold text-[#1F3B29]'>₹{otherCharges.toLocaleString()}</span>
+                      </div>
+                    )}
+                    <div className='flex justify-between items-center py-4 pt-5 border-t-2 border-[#E6D3C2]/30'>
+                      <span className='text-[#4F3A2E] font-semibold'>Subtotal</span>
+                      <span className='font-bold text-lg text-[#1F3B29]'>₹{subTotal.toLocaleString()}</span>
+                    </div>
+                    {product.discount && product.discount > 0 && product.discount <= 100 && discountAmount > 0 && (
+                      <div className='flex justify-between items-center py-3 text-red-600'>
+                        <span className='font-medium'>Discount ({product.discount}%)</span>
+                        <span className='font-bold'>-₹{discountAmount.toLocaleString()}</span>
+                      </div>
+                    )}
+                    <div className='flex justify-between items-center py-3'>
+                      <span className='text-[#4F3A2E]/70 font-medium'>GST ({product.taxRate || 3}%)</span>
+                      <span className='font-bold text-[#1F3B29]'>₹{gstAmount.toLocaleString()}</span>
+                    </div>
+                    <div className='flex justify-between items-center py-5 pt-6 border-t-2 border-web/30 bg-gradient-to-r from-[#FAF7F4] to-white rounded-xl px-4 -mx-2'>
+                      <span className='font-bold text-xl text-[#1F3B29]'>Grand Total</span>
+                      <span className='font-bold text-2xl text-[#1F3B29]'>₹{grandTotal.toLocaleString()}</span>
+                    </div>
+                  </div>
+                </PremiumAccordion>
 
-              // Check if any metal field is valid
-              const hasValidFields = 
-                product.hasGold ||
-                product.hasSilver ||
-                isValid(product.metalType) ||
-                isValid(product.goldPurity) ||
-                isValid(product.silverPurity) ||
-                isValid(product.metalPurity) ||
-                isValid(product.goldWeight) ||
-                isValid(product.silverWeight) ||
-                isValid(product.metalWeight) ||
-                isValid(product.goldRatePerGram) ||
-                isValid(product.silverRatePerGram) ||
-                product.hallmarked;
+                {/* Metal Details Accordion */}
+                {(() => {
+                  // Helper function to check if a value is valid
+                  const isValid = (value: any): boolean => {
+                    if (value === null || value === undefined) return false;
+                    if (typeof value === 'string') return value.trim().length > 0;
+                    if (typeof value === 'number') return value > 0;
+                    if (typeof value === 'boolean') return value === true;
+                    return true;
+                  };
 
-              if (!hasValidFields) return null;
+                  // Check if any metal field is valid
+                  const hasValidFields = 
+                    product.hasGold ||
+                    product.hasSilver ||
+                    isValid(product.metalType) ||
+                    isValid(product.goldPurity) ||
+                    isValid(product.silverPurity) ||
+                    isValid(product.metalPurity) ||
+                    isValid(product.goldWeight) ||
+                    isValid(product.silverWeight) ||
+                    isValid(product.metalWeight) ||
+                    isValid(product.goldRatePerGram) ||
+                    isValid(product.silverRatePerGram) ||
+                    product.hallmarked;
 
-              return (
-                <PremiumAccordion title='Metal Details' icon={Package}>
-                  <div className='grid grid-cols-1 sm:grid-cols-2 gap-6 text-sm'>
+                  if (!hasValidFields) return null;
+
+                  return (
+                    <PremiumAccordion title='Metal Details' icon={Package}>
+                      <div className='grid grid-cols-1 sm:grid-cols-2 gap-6 text-sm'>
                     {(isValid(product.metalType) || product.hasGold || product.hasSilver) && (
                       <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
                         <span className='text-[#4F3A2E]/70 font-medium'>Metal Type</span>
@@ -806,163 +856,161 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
                         <span className='font-bold text-[#1F3B29]'>{product.bis_hallmark ? 'BIS Hallmarked' : 'Hallmarked'}</span>
                       </div>
                     )}
-                  </div>
-                </PremiumAccordion>
-              );
-            })()}
+                      </div>
+                    </PremiumAccordion>
+                  );
+                })()}
 
-            {/* Diamond Details Accordion */}
-            {(product.hasDiamond || product.diamonds) &&
-              (product.diamonds?.some(
-                d =>
-                  d.diamondType ||
-                  d.diamondShape ||
-                  d.diamondClarity ||
-                  d.diamondColor ||
-                  d.diamondCut ||
-                  d.diamondCaratWeight ||
-                  d.numberOfDiamonds ||
-                  d.certification
-              ) ||
-                product.diamondCarat ||
-                product.numberOfStones ||
-                product.diamondShape ||
-                product.stoneClarity ||
-                product.stoneColor ||
-                product.diamondCut) && (
-                <PremiumAccordion title='Diamond & Stone Details' icon={Gem}>
-                  {product.diamonds && product.diamonds.length > 0 ? (
-                    <div className='space-y-6'>
-                      {product.diamonds.map((diamond, index) => (
-                        <div
-                          key={diamond.id || index}
-                          className='p-6 bg-gradient-to-br from-[#FAF7F4] to-white rounded-xl border border-[#E6D3C2]/30 shadow-sm'>
-                          <h4 className='text-sm font-bold text-[#1F3B29] mb-5 uppercase tracking-wider'>Diamond #{index + 1}</h4>
-                          <div className='grid grid-cols-1 sm:grid-cols-2 gap-5 text-sm'>
-                            {diamond.diamondType && (
-                              <div className='flex justify-between items-center py-2 border-b border-[#E6D3C2]/20'>
-                                <span className='text-[#4F3A2E]/70 font-medium'>Type</span>
-                                <span className='font-bold text-[#1F3B29]'>{diamond.diamondType}</span>
+                {/* Diamond Details Accordion */}
+                {(product.hasDiamond || product.diamonds) &&
+                  (product.diamonds?.some(
+                    d =>
+                      d.diamondType ||
+                      d.diamondShape ||
+                      d.diamondClarity ||
+                      d.diamondColor ||
+                      d.diamondCut ||
+                      d.diamondCaratWeight ||
+                      d.numberOfDiamonds ||
+                      d.certification
+                  ) ||
+                    product.diamondCarat ||
+                    product.numberOfStones ||
+                    product.diamondShape ||
+                    product.stoneClarity ||
+                    product.stoneColor ||
+                    product.diamondCut) && (
+                    <PremiumAccordion title='Diamond & Stone Details' icon={Gem}>
+                      {product.diamonds && product.diamonds.length > 0 ? (
+                        <div className='space-y-6'>
+                          {product.diamonds.map((diamond, index) => (
+                            <div
+                              key={diamond.id || index}
+                              className='p-5 lg:p-6 bg-gradient-to-br from-[#FAF7F4] to-white rounded-xl border border-[#E6D3C2]/30 shadow-sm'>
+                              <h4 className='text-sm font-bold text-[#1F3B29] mb-4 uppercase tracking-wider'>Diamond #{index + 1}</h4>
+                              <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm'>
+                                      <div className='flex justify-between items-center py-2 border-b border-[#E6D3C2]/20'>
+                                    <span className='text-[#4F3A2E]/70 font-medium'>Type</span>
+                                    <span className='font-bold text-[#1F3B29]'>{diamond.diamondType}</span>
+                                  </div>
+                                )}
+                                {diamond.diamondShape && (
+                                  <div className='flex justify-between items-center py-2 border-b border-[#E6D3C2]/20'>
+                                    <span className='text-[#4F3A2E]/70 font-medium'>Shape</span>
+                                    <span className='font-bold text-[#1F3B29]'>{diamond.diamondShape}</span>
+                                  </div>
+                                )}
+                                {diamond.diamondCaratWeight && (
+                                  <div className='flex justify-between items-center py-2 border-b border-[#E6D3C2]/20'>
+                                    <span className='text-[#4F3A2E]/70 font-medium'>Carat Weight</span>
+                                    <span className='font-bold text-[#1F3B29]'>{diamond.diamondCaratWeight}ct</span>
+                                  </div>
+                                )}
+                                {diamond.diamondClarity && (
+                                  <div className='flex justify-between items-center py-2 border-b border-[#E6D3C2]/20'>
+                                    <span className='text-[#4F3A2E]/70 font-medium'>Clarity</span>
+                                    <span className='font-bold text-[#1F3B29]'>{diamond.diamondClarity}</span>
+                                  </div>
+                                )}
+                                {diamond.diamondColor && (
+                                  <div className='flex justify-between items-center py-2 border-b border-[#E6D3C2]/20'>
+                                    <span className='text-[#4F3A2E]/70 font-medium'>Color</span>
+                                    <span className='font-bold text-[#1F3B29]'>{diamond.diamondColor}</span>
+                                  </div>
+                                )}
+                                {diamond.diamondCut && (
+                                  <div className='flex justify-between items-center py-2 border-b border-[#E6D3C2]/20'>
+                                    <span className='text-[#4F3A2E]/70 font-medium'>Cut</span>
+                                    <span className='font-bold text-[#1F3B29]'>{diamond.diamondCut}</span>
+                                  </div>
+                                )}
+                                {diamond.numberOfDiamonds && (
+                                  <div className='flex justify-between items-center py-2 border-b border-[#E6D3C2]/20'>
+                                    <span className='text-[#4F3A2E]/70 font-medium'>Number of Stones</span>
+                                    <span className='font-bold text-[#1F3B29]'>{diamond.numberOfDiamonds}</span>
+                                  </div>
+                                )}
+                                {diamond.certification && (
+                                  <div className='flex justify-between items-center py-2 border-b border-[#E6D3C2]/20'>
+                                    <span className='text-[#4F3A2E]/70 font-medium'>Certification</span>
+                                    <span className='font-bold text-[#1F3B29]'>{diamond.certification}</span>
+                                  </div>
+                                )}
                               </div>
-                            )}
-                            {diamond.diamondShape && (
-                              <div className='flex justify-between items-center py-2 border-b border-[#E6D3C2]/20'>
-                                <span className='text-[#4F3A2E]/70 font-medium'>Shape</span>
-                                <span className='font-bold text-[#1F3B29]'>{diamond.diamondShape}</span>
-                              </div>
-                            )}
-                            {diamond.diamondCaratWeight && (
-                              <div className='flex justify-between items-center py-2 border-b border-[#E6D3C2]/20'>
-                                <span className='text-[#4F3A2E]/70 font-medium'>Carat Weight</span>
-                                <span className='font-bold text-[#1F3B29]'>{diamond.diamondCaratWeight}ct</span>
-                              </div>
-                            )}
-                            {diamond.diamondClarity && (
-                              <div className='flex justify-between items-center py-2 border-b border-[#E6D3C2]/20'>
-                                <span className='text-[#4F3A2E]/70 font-medium'>Clarity</span>
-                                <span className='font-bold text-[#1F3B29]'>{diamond.diamondClarity}</span>
-                              </div>
-                            )}
-                            {diamond.diamondColor && (
-                              <div className='flex justify-between items-center py-2 border-b border-[#E6D3C2]/20'>
-                                <span className='text-[#4F3A2E]/70 font-medium'>Color</span>
-                                <span className='font-bold text-[#1F3B29]'>{diamond.diamondColor}</span>
-                              </div>
-                            )}
-                            {diamond.diamondCut && (
-                              <div className='flex justify-between items-center py-2 border-b border-[#E6D3C2]/20'>
-                                <span className='text-[#4F3A2E]/70 font-medium'>Cut</span>
-                                <span className='font-bold text-[#1F3B29]'>{diamond.diamondCut}</span>
-                              </div>
-                            )}
-                            {diamond.numberOfDiamonds && (
-                              <div className='flex justify-between items-center py-2 border-b border-[#E6D3C2]/20'>
-                                <span className='text-[#4F3A2E]/70 font-medium'>Number of Stones</span>
-                                <span className='font-bold text-[#1F3B29]'>{diamond.numberOfDiamonds}</span>
-                              </div>
-                            )}
-                            {diamond.certification && (
-                              <div className='flex justify-between items-center py-2 border-b border-[#E6D3C2]/20'>
-                                <span className='text-[#4F3A2E]/70 font-medium'>Certification</span>
-                                <span className='font-bold text-[#1F3B29]'>{diamond.certification}</span>
-                              </div>
-                            )}
-                          </div>
+                            </div>
+                          ))}
                         </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className='grid grid-cols-1 sm:grid-cols-2 gap-6 text-sm'>
-                      {product.diamondCarat && (
-                        <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
-                          <span className='text-[#4F3A2E]/70 font-medium'>Carat Weight</span>
-                          <span className='font-bold text-[#1F3B29]'>{product.diamondCarat}ct</span>
+                      ) : (
+                        <div className='grid grid-cols-1 sm:grid-cols-2 gap-6 text-sm'>
+                                <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
+                              <span className='text-[#4F3A2E]/70 font-medium'>Carat Weight</span>
+                              <span className='font-bold text-[#1F3B29]'>{product.diamondCarat}ct</span>
+                            </div>
+                          )}
+                          {product.numberOfStones && (
+                            <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
+                              <span className='text-[#4F3A2E]/70 font-medium'>Number of Stones</span>
+                              <span className='font-bold text-[#1F3B29]'>{product.numberOfStones}</span>
+                            </div>
+                          )}
+                          {product.diamondShape && (
+                            <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
+                              <span className='text-[#4F3A2E]/70 font-medium'>Shape</span>
+                              <span className='font-bold text-[#1F3B29]'>{product.diamondShape}</span>
+                            </div>
+                          )}
+                          {product.stoneClarity && (
+                            <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
+                              <span className='text-[#4F3A2E]/70 font-medium'>Clarity</span>
+                              <span className='font-bold text-[#1F3B29]'>{product.stoneClarity}</span>
+                            </div>
+                          )}
+                          {product.stoneColor && (
+                            <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
+                              <span className='text-[#4F3A2E]/70 font-medium'>Color</span>
+                              <span className='font-bold text-[#1F3B29]'>{product.stoneColor}</span>
+                            </div>
+                          )}
+                          {product.diamondCut && (
+                            <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
+                              <span className='text-[#4F3A2E]/70 font-medium'>Cut</span>
+                              <span className='font-bold text-[#1F3B29]'>{product.diamondCut}</span>
+                            </div>
+                          )}
                         </div>
                       )}
-                      {product.numberOfStones && (
-                        <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
-                          <span className='text-[#4F3A2E]/70 font-medium'>Number of Stones</span>
-                          <span className='font-bold text-[#1F3B29]'>{product.numberOfStones}</span>
-                        </div>
-                      )}
-                      {product.diamondShape && (
-                        <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
-                          <span className='text-[#4F3A2E]/70 font-medium'>Shape</span>
-                          <span className='font-bold text-[#1F3B29]'>{product.diamondShape}</span>
-                        </div>
-                      )}
-                      {product.stoneClarity && (
-                        <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
-                          <span className='text-[#4F3A2E]/70 font-medium'>Clarity</span>
-                          <span className='font-bold text-[#1F3B29]'>{product.stoneClarity}</span>
-                        </div>
-                      )}
-                      {product.stoneColor && (
-                        <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
-                          <span className='text-[#4F3A2E]/70 font-medium'>Color</span>
-                          <span className='font-bold text-[#1F3B29]'>{product.stoneColor}</span>
-                        </div>
-                      )}
-                      {product.diamondCut && (
-                        <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
-                          <span className='text-[#4F3A2E]/70 font-medium'>Cut</span>
-                          <span className='font-bold text-[#1F3B29]'>{product.diamondCut}</span>
-                        </div>
-                      )}
-                    </div>
+                    </PremiumAccordion>
                   )}
-                </PremiumAccordion>
-              )}
 
-            {/* Other Material Details Accordion */}
-            {(() => {
-              // Helper function to check if a value is valid (not empty, not null, not undefined)
-              const isValid = (value: any): boolean => {
-                if (value === null || value === undefined) return false;
-                if (typeof value === 'string') return value.trim().length > 0;
-                if (Array.isArray(value)) return value.length > 0 && value.some(v => v && (typeof v === 'string' ? v.trim().length > 0 : true));
-                if (typeof value === 'number') return value > 0;
-                return true;
-              };
+                {/* Other Material Details Accordion */}
+                {(() => {
+                  // Helper function to check if a value is valid (not empty, not null, not undefined)
+                  const isValid = (value: any): boolean => {
+                    if (value === null || value === undefined) return false;
+                    if (typeof value === 'string') return value.trim().length > 0;
+                    if (Array.isArray(value)) return value.length > 0 && value.some(v => v && (typeof v === 'string' ? v.trim().length > 0 : true));
+                    if (typeof value === 'number') return value > 0;
+                    return true;
+                  };
 
-              // Check if any field is valid
-              const hasValidFields = 
-                isValid(product.gemstoneName) ||
-                isValid(product.brand) ||
-                isValid(product.gender) ||
-                isValid(product.certificationNumber) ||
-                isValid(product.occasion) ||
-                isValid(product.dimension) ||
-                isValid(product.collection) ||
-                isValid(product.designType) ||
-                isValid(product.size) ||
-                isValid(product.thickness);
+                  // Check if any field is valid
+                  const hasValidFields = 
+                    isValid(product.gemstoneName) ||
+                    isValid(product.brand) ||
+                    isValid(product.gender) ||
+                    isValid(product.certificationNumber) ||
+                    isValid(product.occasion) ||
+                    isValid(product.dimension) ||
+                    isValid(product.collection) ||
+                    isValid(product.designType) ||
+                    isValid(product.size) ||
+                    isValid(product.thickness);
 
-              if (!hasValidFields) return null;
+                  if (!hasValidFields) return null;
 
-              return (
-                <PremiumAccordion title='Other Material Details' icon={Sparkles}>
-                  <div className='grid grid-cols-1 sm:grid-cols-2 gap-6 text-sm'>
+                  return (
+                    <PremiumAccordion title='Other Material Details' icon={Sparkles}>
+                      <div className='grid grid-cols-1 sm:grid-cols-2 gap-6 text-sm'>
                     {isValid(product.gemstoneName) && (
                       <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
                         <span className='text-[#4F3A2E]/70 font-medium'>Gemstone</span>
@@ -1027,11 +1075,41 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
                         <span className='font-bold text-[#1F3B29]'>{product.certificationNumber}</span>
                       </div>
                     )}
+                      </div>
+                    </PremiumAccordion>
+                  );
+                })()}
+              </div>
+            </TabsContent>
+
+            {/* Reviews Tab */}
+            <TabsContent value='reviews' className='mt-0'>
+              <div className='bg-white rounded-2xl border border-[#E6D3C2]/30 shadow-sm p-6 lg:p-8'>
+                <div className='text-center py-12'>
+                  <div className='inline-flex items-center justify-center w-16 h-16 rounded-full bg-[#F5EEE5] mb-4'>
+                    <Star className='w-8 h-8 text-web fill-web/30' />
                   </div>
-                </PremiumAccordion>
-              );
-            })()}
-          </div>
+                  <h3 className='text-xl font-bold text-[#1F3B29] mb-2'>No Reviews Yet</h3>
+                  <p className='text-[#4F3A2E]/70 mb-6'>
+                    {product.reviewCount && product.reviewCount > 0
+                      ? `Be the first to review this product!`
+                      : 'Be the first to review this product!'}
+                  </p>
+                  {product.rating && product.rating > 0 && (
+                    <div className='inline-flex items-center gap-2 px-6 py-3 bg-[#FAF7F4] rounded-xl'>
+                      <div className='flex items-center gap-1'>
+                        {[...Array(5)].map((_, i) => (
+                          <Star key={i} size={20} className={i < Math.floor(product.rating || 0) ? 'text-amber-400 fill-amber-400' : 'text-[#E6D3C2]'} />
+                        ))}
+                      </div>
+                      <span className='text-lg font-bold text-[#1F3B29]'>{product.rating.toFixed(1)}</span>
+                      <span className='text-sm text-[#4F3A2E]/70'>({product.reviewCount || 0} {product.reviewCount === 1 ? 'review' : 'reviews'})</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
         </div>
 
         {/* You May Also Like Section - Premium Slider */}
@@ -1091,34 +1169,34 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
         )}
       </div>
 
-      {/* Sticky Add to Cart Button for Mobile - Premium Style */}
-      <div className='lg:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-[#E6D3C2]/30 shadow-2xl z-50 p-3'>
+      {/* Sticky Add to Cart Button for Mobile */}
+      <div className='lg:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-[#E6D3C2]/30 shadow-2xl z-50 p-3 safe-area-bottom'>
         <div className='flex gap-2 max-w-[1400px] mx-auto'>
           <button
             onClick={handleAddToCart}
             disabled={cartButtonLoading || isInCart || product.stock === 0}
             className={cn(
-              'flex-1 flex items-center justify-center gap-2 px-5 py-3 rounded-lg font-semibold text-sm transition-all shadow-md',
+              'flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-semibold text-sm transition-all shadow-md hover:shadow-lg',
               isInCart
                 ? 'bg-green-500 text-white cursor-default'
                 : product.stock === 0
                 ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                : 'bg-[#1F3B29] text-white hover:bg-[#2a4d3a]'
+                : 'bg-[#1F3B29] text-white hover:bg-[#2a4d3a] active:scale-[0.98]'
             )}>
             {cartButtonLoading ? (
               <>
                 <div className='w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin' />
-                Adding...
+                <span>Adding...</span>
               </>
             ) : isInCart ? (
               <>
-                <Check size={16} />
-                In Cart
+                <Check size={18} />
+                <span>In Cart</span>
               </>
             ) : (
               <>
-                <ShoppingCart size={16} />
-                Add to Cart
+                <ShoppingCart size={18} />
+                <span>Add to Cart</span>
               </>
             )}
           </button>
@@ -1126,12 +1204,12 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
             onClick={handleBuyNow}
             disabled={cartButtonLoading || product.stock === 0}
             className={cn(
-              'px-5 py-3 rounded-lg font-semibold text-sm border-2 transition-all shadow-md',
+              'flex-1 px-4 py-3 rounded-xl font-semibold text-sm border-2 transition-all shadow-md hover:shadow-lg bg-white active:scale-[0.98]',
               product.stock === 0
                 ? 'border-gray-300 text-gray-500 cursor-not-allowed bg-gray-100'
                 : 'border-web text-web hover:bg-web hover:text-white'
             )}>
-            Buy Now
+            <span>Buy Now</span>
           </button>
         </div>
       </div>
