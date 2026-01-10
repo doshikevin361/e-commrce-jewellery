@@ -67,6 +67,18 @@ const PRODUCT_PROJECTION = {
   // Gemstone fields
   gemstoneName: 1,
   gemstonePrice: 1,
+  gemstoneColour: 1,
+  gemstoneShape: 1,
+  gemstoneWeight: 1,
+  ratti: 1,
+  specificGravity: 1,
+  hardness: 1,
+  refractiveIndex: 1,
+  magnification: 1,
+  remarks: 1,
+  gemstoneDescription: 1,
+  reportNo: 1,
+  gemstoneCertificateLab: 1,
   hallmarked: 1,
   bis_hallmark: 1,
   certificationNumber: 1,
@@ -150,18 +162,26 @@ export async function GET(
     
     // First, try to fetch manually selected related products
     if (product.relatedProducts && Array.isArray(product.relatedProducts) && product.relatedProducts.length > 0) {
+      // Convert all valid IDs to ObjectId format for comparison
       const relatedProductIds = product.relatedProducts
-        .filter((id: any) => ObjectId.isValid(id))
-        .map((id: any) => new ObjectId(id));
+        .filter((id: any) => id && ObjectId.isValid(id))
+        .map((id: any) => {
+          try {
+            return typeof id === 'string' ? new ObjectId(id) : id;
+          } catch {
+            return null;
+          }
+        })
+        .filter(Boolean) as ObjectId[];
       
       if (relatedProductIds.length > 0) {
-        relatedProducts = await db
+        // Fetch ALL manually selected related products without limit
+        // Include both active and inactive products for manually selected items (admin's choice)
+        const fetchedProducts = await db
           .collection("products")
           .find({
             _id: { $in: relatedProductIds },
-            status: "active",
           })
-          .limit(8)
           .project({
             _id: 1,
             name: 1,
@@ -175,13 +195,29 @@ export async function GET(
             reviewCount: 1,
             urlSlug: 1,
             category: 1,
+            status: 1,
           })
           .toArray();
+        
+        // Create a map for faster lookup
+        const productMap = new Map(
+          fetchedProducts.map(p => [p._id.toString(), p])
+        );
+        
+        // Maintain the order of selected products as they appear in the admin panel
+        // Filter to only include active products for display
+        relatedProducts = relatedProductIds
+          .map(id => {
+            const product = productMap.get(id.toString());
+            // Only include active products
+            return product && product.status === 'active' ? product : null;
+          })
+          .filter(Boolean) as any[];
       }
     }
     
-    // If no manually selected related products or less than 4, fill with products from same category
-    if (relatedProducts.length < 4) {
+    // Only fill with category products if NO manually selected products exist
+    if (relatedProducts.length === 0) {
       const additionalProducts = await db
         .collection("products")
         .find({
@@ -190,7 +226,7 @@ export async function GET(
           status: "active",
           stock: { $gt: 0 },
         })
-        .limit(8 - relatedProducts.length)
+        .limit(8)
         .project({
           _id: 1,
           name: 1,
@@ -206,7 +242,7 @@ export async function GET(
         })
         .toArray();
       
-      relatedProducts = [...relatedProducts, ...additionalProducts];
+      relatedProducts = additionalProducts;
     }
 
     // Calculate prices using the price calculator
@@ -290,10 +326,22 @@ export async function GET(
       ...(product.hallMarkingCharges && { hallMarkingCharges: product.hallMarkingCharges }),
       ...(product.insuranceCharges && { insuranceCharges: product.insuranceCharges }),
       ...(product.packingCharges && { packingCharges: product.packingCharges }),
-      // Gemstone fields (only if exists)
-      ...(product.gemstoneName && {
-        gemstoneName: product.gemstoneName,
-        gemstonePrice: product.gemstonePrice,
+      // Gemstone fields (include all if any gemstone field exists)
+      ...((product.gemstoneName || product.gemstoneColour || product.gemstoneShape || product.gemstoneWeight || product.gemstonePrice || product.ratti) && {
+        ...(product.gemstoneName && { gemstoneName: product.gemstoneName }),
+        ...(product.gemstonePrice && product.gemstonePrice > 0 && { gemstonePrice: product.gemstonePrice }),
+        ...(product.gemstoneColour && { gemstoneColour: product.gemstoneColour }),
+        ...(product.gemstoneShape && { gemstoneShape: product.gemstoneShape }),
+        ...(product.gemstoneWeight && product.gemstoneWeight > 0 && { gemstoneWeight: product.gemstoneWeight }),
+        ...(product.ratti && product.ratti > 0 && { ratti: product.ratti }),
+        ...(product.specificGravity && product.specificGravity > 0 && { specificGravity: product.specificGravity }),
+        ...(product.hardness && product.hardness > 0 && { hardness: product.hardness }),
+        ...(product.refractiveIndex && product.refractiveIndex > 0 && { refractiveIndex: product.refractiveIndex }),
+        ...(product.magnification && product.magnification > 0 && { magnification: product.magnification }),
+        ...(product.remarks && product.remarks.trim().length > 0 && { remarks: product.remarks }),
+        ...(product.gemstoneDescription && product.gemstoneDescription.trim().length > 0 && { gemstoneDescription: product.gemstoneDescription }),
+        ...(product.reportNo && product.reportNo.trim().length > 0 && { reportNo: product.reportNo }),
+        ...(product.gemstoneCertificateLab && product.gemstoneCertificateLab.trim().length > 0 && { gemstoneCertificateLab: product.gemstoneCertificateLab }),
       }),
       ...(product.hallmarked && { hallmarked: product.hallmarked }),
       ...(product.bis_hallmark && { bis_hallmark: product.bis_hallmark }),
@@ -304,14 +352,16 @@ export async function GET(
          (typeof product.gender === 'string' && product.gender.trim().length > 0)) && 
         { gender: product.gender }),
       // Other product details (only if exists)
-      ...(product.occasion && product.occasion.trim().length > 0 && { occasion: product.occasion }),
-      ...(product.dimension && product.dimension.trim().length > 0 && { dimension: product.dimension }),
-      ...(product.collection && product.collection.trim().length > 0 && { collection: product.collection }),
-      ...(designTypeName && designTypeName.trim().length > 0 && { designType: designTypeName }),
-      ...(product.size && product.size.trim().length > 0 && { size: product.size }),
-      ...(product.thickness && product.thickness > 0 && { thickness: product.thickness }),
-      // Specifications
-      specifications: product.specifications,
+      ...(product.occasion && (typeof product.occasion === 'string' ? product.occasion.trim().length > 0 : true) && { occasion: product.occasion }),
+      ...(product.dimension && (typeof product.dimension === 'string' ? product.dimension.trim().length > 0 : true) && { dimension: product.dimension }),
+      ...(product.collection && (typeof product.collection === 'string' ? product.collection.trim().length > 0 : true) && { collection: product.collection }),
+      ...(designTypeName && (typeof designTypeName === 'string' ? designTypeName.trim().length > 0 : true) && { designType: designTypeName }),
+      ...(product.size && ((typeof product.size === 'string' && product.size.trim().length > 0) || (typeof product.size === 'number' && product.size > 0)) && { size: product.size }),
+      ...(product.thickness && ((typeof product.thickness === 'number' && product.thickness > 0) || (typeof product.thickness === 'string' && product.thickness.trim().length > 0)) && { thickness: product.thickness }),
+      // Specifications - include if it's a valid array with at least one entry
+      ...(Array.isArray(product.specifications) && product.specifications.length > 0 && {
+        specifications: product.specifications.filter((spec: any) => spec && (spec.key || spec.value))
+      }),
       // Variants
       variants: Array.isArray(product.variants) ? product.variants.map((v: any) => ({
         id: v.id,

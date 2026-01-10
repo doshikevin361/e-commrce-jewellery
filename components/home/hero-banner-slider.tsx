@@ -96,7 +96,7 @@ export function HeroBannerSlider({ banners = [], isLoading = false }: HeroBanner
 
       {/* ================= DIAMOND DOTS ================= */}
       <div className='absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-3 z-[999]'>
-        {activeBanners.map((_, index) => (
+        {/* {activeBanners.map((_, index) => (
           <button
             key={index}
             onClick={() => swiper?.slideToLoop(index)}
@@ -105,7 +105,7 @@ export function HeroBannerSlider({ banners = [], isLoading = false }: HeroBanner
               index === activeIndex ? 'bg-white scale-125' : 'bg-white/40 hover:bg-white/70'
             }`}
           />
-        ))}
+        ))} */}
       </div>
     </div>
   );

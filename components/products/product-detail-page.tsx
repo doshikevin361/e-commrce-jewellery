@@ -32,6 +32,8 @@ import {
   Lock,
   Clock,
   Sparkle,
+  FileText,
+  Tag,
 } from 'lucide-react';
 import { ProductCardData, ProductCard } from '@/components/home/common/product-card';
 import { PageLoader } from '@/components/common/page-loader';
@@ -42,6 +44,9 @@ import toast from 'react-hot-toast';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Autoplay } from 'swiper/modules';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import rehypeRaw from 'rehype-raw';
 import 'swiper/css';
 import 'swiper/css/navigation';
 
@@ -115,6 +120,18 @@ interface ProductDetail {
   // Other material
   gemstoneName?: string;
   gemstonePrice?: number;
+  gemstoneColour?: string;
+  gemstoneShape?: string;
+  gemstoneWeight?: number;
+  ratti?: number;
+  specificGravity?: number;
+  hardness?: number;
+  refractiveIndex?: number;
+  magnification?: number;
+  remarks?: string;
+  gemstoneDescription?: string;
+  reportNo?: string;
+  gemstoneCertificateLab?: string;
   hallmarked?: boolean;
   bis_hallmark?: boolean;
   certificationNumber?: string;
@@ -125,7 +142,23 @@ interface ProductDetail {
   collection?: string;
   designType?: string;
   size?: string;
-  thickness?: number;
+  thickness?: number | string;
+  // Specifications array
+  specifications?: Array<{ key: string; value: string }>;
+  // Tags
+  tags?: string[];
+  // Variants
+  variants?: Array<{
+    id: string;
+    type: string;
+    options: Array<{
+      name: string;
+      sku: string;
+      price: number;
+      stock: number;
+      image: string;
+    }>;
+  }>;
 }
 
 // Premium Accordion component
@@ -603,6 +636,22 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
               </div>
             )}
 
+            {/* Tags */}
+            {product.tags && Array.isArray(product.tags) && product.tags.length > 0 && (
+              <div className='flex flex-wrap items-center gap-2 pt-2'>
+                <Tag size={16} className='text-[#4F3A2E]/70' />
+                <div className='flex flex-wrap gap-2'>
+                  {product.tags.map((tag, index) => (
+                    <span
+                      key={index}
+                      className='px-3 py-1 text-xs font-medium bg-[#F5EEE5] text-[#1F3B29] rounded-full border border-[#E6D3C2]/50'>
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Quantity Selector */}
             <div className='flex items-center gap-4 pt-2'>
               <span className='text-sm font-semibold text-[#1F3B29] uppercase tracking-wide'>Quantity:</span>
@@ -717,10 +766,23 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
             <TabsContent value='description' className='mt-0'>
               <div className='bg-white rounded-2xl border border-[#E6D3C2]/30 shadow-sm p-6 lg:p-8'>
                 {product.longDescription ? (
-                  <div className='prose prose-sm lg:prose-base max-w-none'>
-                    <p className='text-[#4F3A2E] leading-relaxed whitespace-pre-line'>
+                  <div className='prose prose-sm lg:prose-base max-w-none prose-headings:text-[#1F3B29] prose-headings:font-bold prose-headings:tracking-tight prose-headings:mb-4 prose-h1:text-2xl prose-h2:text-xl prose-h3:text-lg prose-p:text-[#4F3A2E] prose-p:leading-relaxed prose-p:mb-4 prose-strong:text-[#1F3B29] prose-strong:font-semibold prose-ul:text-[#4F3A2E] prose-ul:my-4 prose-ol:text-[#4F3A2E] prose-ol:my-4 prose-li:text-[#4F3A2E] prose-li:my-2 prose-li:pl-2 prose-a:text-web prose-a:font-medium prose-a:no-underline hover:prose-a:underline prose-a:transition-colors prose-img:rounded-xl prose-img:shadow-md prose-img:my-6 prose-img:w-full prose-img:max-w-full prose-hr:border-[#E6D3C2]/30 prose-hr:my-6 prose-blockquote:border-l-web prose-blockquote:border-l-4 prose-blockquote:bg-[#FAF7F4] prose-blockquote:py-2 prose-blockquote:px-4 prose-blockquote:rounded-r-lg prose-blockquote:my-4 prose-blockquote:text-[#4F3A2E] prose-code:text-[#1F3B29] prose-code:bg-[#F5EEE5] prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-pre:bg-[#F5EEE5] prose-pre:rounded-xl prose-pre:p-4 prose-pre:overflow-x-auto prose-table:w-full prose-table:my-4 prose-th:bg-[#FAF7F4] prose-th:text-[#1F3B29] prose-th:font-semibold prose-th:p-3 prose-th:border prose-th:border-[#E6D3C2]/30 prose-td:border prose-td:border-[#E6D3C2]/30 prose-td:p-3'>
+                    <ReactMarkdown 
+                      remarkPlugins={[remarkGfm]} 
+                      rehypePlugins={[rehypeRaw]}
+                      components={{
+                        // Customize link rendering
+                        a: ({node, ...props}) => (
+                          <a {...props} className="text-web font-medium no-underline hover:underline transition-colors" target="_blank" rel="noopener noreferrer" />
+                        ),
+                        // Customize image rendering
+                        img: ({node, ...props}) => (
+                          <img {...props} className="rounded-xl shadow-md my-6 w-full max-w-full h-auto" alt={props.alt || ''} />
+                        ),
+                      }}
+                    >
                       {product.longDescription}
-                    </p>
+                    </ReactMarkdown>
                   </div>
                 ) : product.shortDescription ? (
                   <p className='text-base lg:text-lg text-[#4F3A2E] leading-relaxed'>{product.shortDescription}</p>
@@ -889,7 +951,8 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
                               className='p-5 lg:p-6 bg-gradient-to-br from-[#FAF7F4] to-white rounded-xl border border-[#E6D3C2]/30 shadow-sm'>
                               <h4 className='text-sm font-bold text-[#1F3B29] mb-4 uppercase tracking-wider'>Diamond #{index + 1}</h4>
                               <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm'>
-                                      <div className='flex justify-between items-center py-2 border-b border-[#E6D3C2]/20'>
+                                {diamond.diamondType && (
+                                  <div className='flex justify-between items-center py-2 border-b border-[#E6D3C2]/20'>
                                     <span className='text-[#4F3A2E]/70 font-medium'>Type</span>
                                     <span className='font-bold text-[#1F3B29]'>{diamond.diamondType}</span>
                                   </div>
@@ -942,7 +1005,8 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
                         </div>
                       ) : (
                         <div className='grid grid-cols-1 sm:grid-cols-2 gap-6 text-sm'>
-                                <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
+                          {product.diamondCarat && (
+                            <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
                               <span className='text-[#4F3A2E]/70 font-medium'>Carat Weight</span>
                               <span className='font-bold text-[#1F3B29]'>{product.diamondCarat}ct</span>
                             </div>
@@ -982,6 +1046,144 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
                     </PremiumAccordion>
                   )}
 
+                {/* Specifications Table Accordion */}
+                {product.specifications && Array.isArray(product.specifications) && product.specifications.length > 0 && product.specifications.some((spec: any) => spec.key && spec.value) && (
+                  <PremiumAccordion title='Specifications' icon={FileText} defaultOpen={false}>
+                    <div className='space-y-3'>
+                      {product.specifications
+                        .filter((spec: any) => spec.key && spec.value && spec.key.trim() && spec.value.trim())
+                        .map((spec: any, index: number) => (
+                          <div key={index} className='flex justify-between items-start py-3 border-b border-[#E6D3C2]/20'>
+                            <span className='text-[#4F3A2E]/70 font-medium flex-1'>{spec.key}</span>
+                            <span className='font-bold text-[#1F3B29] text-right flex-1 ml-4'>{spec.value}</span>
+                          </div>
+                        ))}
+                    </div>
+                  </PremiumAccordion>
+                )}
+
+                {/* Gemstone Details Accordion */}
+                {(() => {
+                  // Helper function to check if a value is valid
+                  const isValid = (value: any): boolean => {
+                    if (value === null || value === undefined) return false;
+                    if (typeof value === 'string') return value.trim().length > 0;
+                    if (Array.isArray(value)) return value.length > 0 && value.some(v => v && (typeof v === 'string' ? v.trim().length > 0 : true));
+                    if (typeof value === 'number') return value > 0;
+                    return true;
+                  };
+
+                  // Check if any gemstone field is valid
+                  const hasGemstoneFields = 
+                    isValid(product.gemstoneName) ||
+                    isValid(product.gemstoneColour) ||
+                    isValid(product.gemstoneShape) ||
+                    isValid(product.gemstoneWeight) ||
+                    isValid(product.ratti) ||
+                    isValid(product.specificGravity) ||
+                    isValid(product.hardness) ||
+                    isValid(product.refractiveIndex) ||
+                    isValid(product.magnification) ||
+                    isValid(product.remarks) ||
+                    isValid(product.gemstoneDescription) ||
+                    isValid(product.reportNo) ||
+                    isValid(product.gemstoneCertificateLab) ||
+                    (product.gemstonePrice && product.gemstonePrice > 0);
+
+                  if (!hasGemstoneFields) return null;
+
+                  return (
+                    <PremiumAccordion title='Gemstone Details' icon={Sparkle}>
+                      <div className='grid grid-cols-1 sm:grid-cols-2 gap-6 text-sm'>
+                        {isValid(product.gemstoneName) && (
+                          <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
+                            <span className='text-[#4F3A2E]/70 font-medium'>Gemstone Name</span>
+                            <span className='font-bold text-[#1F3B29]'>{product.gemstoneName}</span>
+                          </div>
+                        )}
+                        {isValid(product.gemstoneColour) && (
+                          <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
+                            <span className='text-[#4F3A2E]/70 font-medium'>Colour</span>
+                            <span className='font-bold text-[#1F3B29]'>{product.gemstoneColour}</span>
+                          </div>
+                        )}
+                        {isValid(product.gemstoneShape) && (
+                          <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
+                            <span className='text-[#4F3A2E]/70 font-medium'>Shape</span>
+                            <span className='font-bold text-[#1F3B29]'>{product.gemstoneShape}</span>
+                          </div>
+                        )}
+                        {isValid(product.gemstoneWeight) && (
+                          <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
+                            <span className='text-[#4F3A2E]/70 font-medium'>Weight</span>
+                            <span className='font-bold text-[#1F3B29]'>{product.gemstoneWeight}g</span>
+                          </div>
+                        )}
+                        {isValid(product.ratti) && (
+                          <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
+                            <span className='text-[#4F3A2E]/70 font-medium'>Ratti</span>
+                            <span className='font-bold text-[#1F3B29]'>{product.ratti}</span>
+                          </div>
+                        )}
+                        {isValid(product.specificGravity) && (
+                          <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
+                            <span className='text-[#4F3A2E]/70 font-medium'>Specific Gravity</span>
+                            <span className='font-bold text-[#1F3B29]'>{product.specificGravity}</span>
+                          </div>
+                        )}
+                        {isValid(product.hardness) && (
+                          <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
+                            <span className='text-[#4F3A2E]/70 font-medium'>Hardness</span>
+                            <span className='font-bold text-[#1F3B29]'>{product.hardness}</span>
+                          </div>
+                        )}
+                        {isValid(product.refractiveIndex) && (
+                          <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
+                            <span className='text-[#4F3A2E]/70 font-medium'>Refractive Index</span>
+                            <span className='font-bold text-[#1F3B29]'>{product.refractiveIndex}</span>
+                          </div>
+                        )}
+                        {isValid(product.magnification) && (
+                          <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
+                            <span className='text-[#4F3A2E]/70 font-medium'>Magnification</span>
+                            <span className='font-bold text-[#1F3B29]'>{product.magnification}</span>
+                          </div>
+                        )}
+                        {isValid(product.reportNo) && (
+                          <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
+                            <span className='text-[#4F3A2E]/70 font-medium'>Report Number</span>
+                            <span className='font-bold text-[#1F3B29]'>{product.reportNo}</span>
+                          </div>
+                        )}
+                        {isValid(product.gemstoneCertificateLab) && (
+                          <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
+                            <span className='text-[#4F3A2E]/70 font-medium'>Certificate Lab</span>
+                            <span className='font-bold text-[#1F3B29]'>{product.gemstoneCertificateLab}</span>
+                          </div>
+                        )}
+                        {product.gemstonePrice && product.gemstonePrice > 0 && (
+                          <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
+                            <span className='text-[#4F3A2E]/70 font-medium'>Price</span>
+                            <span className='font-bold text-[#1F3B29]'>₹{product.gemstonePrice.toLocaleString()}</span>
+                          </div>
+                        )}
+                        {isValid(product.remarks) && (
+                          <div className='col-span-1 sm:col-span-2 flex flex-col py-3 border-b border-[#E6D3C2]/20'>
+                            <span className='text-[#4F3A2E]/70 font-medium mb-2'>Remarks</span>
+                            <span className='font-bold text-[#1F3B29]'>{product.remarks}</span>
+                          </div>
+                        )}
+                        {isValid(product.gemstoneDescription) && (
+                          <div className='col-span-1 sm:col-span-2 flex flex-col py-3 border-b border-[#E6D3C2]/20'>
+                            <span className='text-[#4F3A2E]/70 font-medium mb-2'>Description</span>
+                            <p className='text-[#1F3B29] leading-relaxed whitespace-pre-line'>{product.gemstoneDescription}</p>
+                          </div>
+                        )}
+                      </div>
+                    </PremiumAccordion>
+                  );
+                })()}
+
                 {/* Other Material Details Accordion */}
                 {(() => {
                   // Helper function to check if a value is valid (not empty, not null, not undefined)
@@ -993,9 +1195,8 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
                     return true;
                   };
 
-                  // Check if any field is valid
+                  // Check if any field is valid (excluding gemstone fields which are now separate)
                   const hasValidFields = 
-                    isValid(product.gemstoneName) ||
                     isValid(product.brand) ||
                     isValid(product.gender) ||
                     isValid(product.certificationNumber) ||
@@ -1009,14 +1210,8 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
                   if (!hasValidFields) return null;
 
                   return (
-                    <PremiumAccordion title='Other Material Details' icon={Sparkles}>
+                    <PremiumAccordion title='Other Product Details' icon={Sparkles}>
                       <div className='grid grid-cols-1 sm:grid-cols-2 gap-6 text-sm'>
-                    {isValid(product.gemstoneName) && (
-                      <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
-                        <span className='text-[#4F3A2E]/70 font-medium'>Gemstone</span>
-                        <span className='font-bold text-[#1F3B29]'>{product.gemstoneName}</span>
-                      </div>
-                    )}
                     {isValid(product.brand) && (
                       <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
                         <span className='text-[#4F3A2E]/70 font-medium'>Brand</span>
@@ -1066,7 +1261,9 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
                     {isValid(product.thickness) && (
                       <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
                         <span className='text-[#4F3A2E]/70 font-medium'>Thickness</span>
-                        <span className='font-bold text-[#1F3B29]'>{product.thickness}mm</span>
+                        <span className='font-bold text-[#1F3B29]'>
+                          {typeof product.thickness === 'number' ? `${product.thickness}mm` : product.thickness}
+                        </span>
                       </div>
                     )}
                     {isValid(product.certificationNumber) && (
@@ -1112,31 +1309,18 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
           </Tabs>
         </div>
 
-        {/* You May Also Like Section - Premium Slider */}
+        {/* You May Also Like Section - Grid View */}
         {product.relatedProducts && product.relatedProducts.length > 0 && (
           <div className='mt-20 pt-12 border-t border-[#E6D3C2]/30'>
             <div className='mb-8'>
               <h2 className='text-xl sm:text-2xl font-bold text-[#1F3B29] mb-2 tracking-tight'>You May Also Like</h2>
               <p className='text-sm text-[#4F3A2E]/70'>Discover More Favourites</p>
             </div>
-            <Swiper
-              modules={[Navigation, Autoplay]}
-              spaceBetween={24}
-              slidesPerView='auto'
-              navigation
-              autoplay={{ delay: 4000, disableOnInteraction: false }}
-              breakpoints={{
-                320: { spaceBetween: 16 },
-                640: { spaceBetween: 20 },
-                1024: { spaceBetween: 24 },
-              }}
-              className='pb-4'>
+            <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 lg:gap-8'>
               {product.relatedProducts.map(relatedProduct => (
-                <SwiperSlide key={relatedProduct.id} style={{ width: 'auto', minWidth: '280px', maxWidth: '320px' }}>
-                  <ProductCard product={relatedProduct} />
-                </SwiperSlide>
+                <ProductCard key={relatedProduct.id} product={relatedProduct} />
               ))}
-            </Swiper>
+            </div>
           </div>
         )}
 
