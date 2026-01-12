@@ -235,80 +235,93 @@ export function Sidebar() {
     },
   ];
 
-  const productsSubmenu = [
-    {
-      label: 'Add Product',
-      href: '/admin/products/add',
-    },
-    {
-      label: 'All Products',
-      href: '/admin/products',
-    },
-    // {
-    //   label: 'Attributes',
-    //   href: '/admin/attributes',
-    // },
-    {
-      label: 'Category',
-      href: '/admin/categories',
-    },
-    {
-      label: 'Subcategory',
-      href: '/admin/subcategories',
-    },
-    // {
-    //   label: 'Brand',
-    //   href: '/admin/brands',
-    // },
-    {
-      label: 'Tag',
-      href: '/admin/tags',
-    },
-    {
-      label: 'Design Type',
-      href: '/admin/design-types',
-    },
-    {
-      label: 'Diamond Type',
-      href: '/admin/diamond-types',
-    },
-    {
-      label: 'Karat',
-      href: '/admin/karats',
-    },
-    {
-      label: 'Purity',
-      href: '/admin/purities',
-    },
-    {
-      label: 'Metal Color',
-      href: '/admin/metal-colors',
-    },
-    {
-      label: 'Clarity',
-      href: '/admin/clarities',
-    },
-    {
-      label: 'Diamond Color',
-      href: '/admin/diamond-colors',
-    },
-    {
-      label: 'Diamond Shape',
-      href: '/admin/diamond-shapes',
-    },
-    {
-      label: 'Setting Type',
-      href: '/admin/setting-types',
-    },
-    {
-      label: 'Certified Labs',
-      href: '/admin/certified-labs',
-    },
-    {
-      label: 'Gemstone Names',
-      href: '/admin/gemstone-names',
-    },
-  ];
+  // Products submenu - different for vendors vs admins
+  const userRole = userData?.role || 'admin';
+  const productsSubmenu = userRole === 'vendor' 
+    ? [
+        {
+          label: 'Add Product',
+          href: '/admin/products/add',
+        },
+        {
+          label: 'All Products',
+          href: '/admin/products',
+        },
+      ]
+    : [
+        {
+          label: 'Add Product',
+          href: '/admin/products/add',
+        },
+        {
+          label: 'All Products',
+          href: '/admin/products',
+        },
+        // {
+        //   label: 'Attributes',
+        //   href: '/admin/attributes',
+        // },
+        {
+          label: 'Category',
+          href: '/admin/categories',
+        },
+        {
+          label: 'Subcategory',
+          href: '/admin/subcategories',
+        },
+        // {
+        //   label: 'Brand',
+        //   href: '/admin/brands',
+        // },
+        {
+          label: 'Tag',
+          href: '/admin/tags',
+        },
+        {
+          label: 'Design Type',
+          href: '/admin/design-types',
+        },
+        {
+          label: 'Diamond Type',
+          href: '/admin/diamond-types',
+        },
+        {
+          label: 'Karat',
+          href: '/admin/karats',
+        },
+        {
+          label: 'Purity',
+          href: '/admin/purities',
+        },
+        {
+          label: 'Metal Color',
+          href: '/admin/metal-colors',
+        },
+        {
+          label: 'Clarity',
+          href: '/admin/clarities',
+        },
+        {
+          label: 'Diamond Color',
+          href: '/admin/diamond-colors',
+        },
+        {
+          label: 'Diamond Shape',
+          href: '/admin/diamond-shapes',
+        },
+        {
+          label: 'Setting Type',
+          href: '/admin/setting-types',
+        },
+        {
+          label: 'Certified Labs',
+          href: '/admin/certified-labs',
+        },
+        {
+          label: 'Gemstone Names',
+          href: '/admin/gemstone-names',
+        },
+      ];
 
   const cmsSubmenu = [
     {
