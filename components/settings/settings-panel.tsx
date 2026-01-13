@@ -201,7 +201,7 @@ export function SettingsPanel() {
 
       toast({
         title: "Settings saved",
-        description: "Brand details updated successfully",
+        description: "Settings updated successfully",
         variant: "success",
       });
     } catch (error) {

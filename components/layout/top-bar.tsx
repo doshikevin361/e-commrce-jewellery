@@ -166,7 +166,7 @@ export function TopBar() {
     // Set up polling every 5 seconds
     pollingIntervalRef.current = setInterval(() => {
       fetchNotifications();
-    }, 5000);
+    }, 120000);
 
     // Cleanup on unmount
     return () => {
