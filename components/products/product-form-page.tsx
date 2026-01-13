@@ -373,6 +373,7 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
   const router = useRouter();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [userRole, setUserRole] = useState<string>('admin');
   const [categories, setCategories] = useState<any[]>([]);
   const [categoryOptions, setCategoryOptions] = useState<{ label: string; value: string }[]>([]);
   const [designTypes, setDesignTypes] = useState<{ label: string; value: string }[]>([]);
@@ -711,6 +712,19 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
   });
 
   useEffect(() => {
+    // Get user role from localStorage
+    const userStr = localStorage.getItem('adminUser');
+    let detectedRole = 'admin';
+    if (userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        detectedRole = user.role || 'admin';
+        setUserRole(detectedRole);
+      } catch (error) {
+        console.error('Failed to parse user data:', error);
+      }
+    }
+
     fetchCategories();
     fetchDesignTypes();
     fetchKarats();
@@ -725,10 +739,18 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
     fetchGemstoneNames();
     fetchLivePrices();
     fetchAllProducts(); // Fetch all products for related products selection
+    
+    // Always fetch admin's default vendor commission rate and pass the detected role
+    fetchAdminDefaultCommission(detectedRole);
+    
     if (productId) {
       fetchProduct();
     }
   }, [productId]);
+
+  useEffect(() => {
+    console.log('[DEBUG] platformCommissionRate changed to:', formData.platformCommissionRate);
+  }, [formData.platformCommissionRate]);
 
   useEffect(() => {
     // Calculate Net Gold Weight
@@ -982,6 +1004,66 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
     }
   };
 
+  const fetchAdminDefaultCommission = async (currentUserRole?: string) => {
+    try {
+      // Fetch admin's default vendor commission rate from site settings
+      const response = await fetch('/api/admin/settings');
+      if (response.ok) {
+        const data = await response.json();
+        console.log('[DEBUG] Fetched settings:', data);
+        console.log('[DEBUG] User role:', currentUserRole);
+        console.log('[DEBUG] defaultVendorCommissionRate:', data.defaultVendorCommissionRate);
+        
+        // Update the form with admin's default vendor commission rate
+        if (data.defaultVendorCommissionRate !== undefined) {
+          // Get user role if not provided
+          let roleToUse = currentUserRole;
+          if (!roleToUse) {
+            const userStr = localStorage.getItem('adminUser');
+            if (userStr) {
+              try {
+                const user = JSON.parse(userStr);
+                roleToUse = user.role || 'admin';
+              } catch (error) {
+                console.error('Failed to parse user data:', error);
+                roleToUse = 'admin';
+              }
+            } else {
+              roleToUse = 'admin';
+            }
+          }
+
+          console.log('[DEBUG] Final role to use:', roleToUse);
+          console.log('[DEBUG] Will set platformCommissionRate to:', roleToUse === 'vendor' ? data.defaultVendorCommissionRate : 'keep current');
+          console.log('[DEBUG] Current prev.platformCommissionRate would be:', 0); // Initial value
+
+          const updateData = {
+            vendorCommissionRate: data.defaultVendorCommissionRate,
+            platformCommissionRate: roleToUse === 'vendor' ? data.defaultVendorCommissionRate : 0,
+          };
+          
+          console.log('[DEBUG] About to update with:', updateData);
+
+          setFormData(prev => {
+            const newData = {
+              ...prev,
+              ...updateData,
+            };
+            console.log('[DEBUG] New formData will have platformCommissionRate:', newData.platformCommissionRate);
+            return newData;
+          });
+        } else {
+          console.log('[DEBUG] defaultVendorCommissionRate is undefined in response');
+        }
+      } else {
+        console.log('[DEBUG] Settings fetch failed with status:', response.status);
+      }
+    } catch (error) {
+      // Silently fail - settings might not be available
+      console.log('Could not fetch default vendor commission from settings:', error);
+    }
+  };
+
   const uploadCertificateImages = async (diamondId: string, files: FileList | null) => {
     if (!files || files.length === 0) return;
     setUploadingDiamondId(diamondId);
@@ -1121,6 +1203,9 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
         if (product.relatedProducts && Array.isArray(product.relatedProducts)) {
           setSelectedRelatedProducts(product.relatedProducts);
         }
+
+        // After loading product, apply admin's commission rate
+        fetchAdminDefaultCommission();
       }
     } catch (error) {
       console.error('Failed to fetch product:', error);
@@ -1318,7 +1403,8 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
           netGoldWeight: 0,
           goldPurity: '',
           silverPurity: '',
-          platformCommissionRate: 0,
+          // Don't reset platformCommissionRate for vendors - keep the admin's set value
+          platformCommissionRate: userRole === 'vendor' ? prev.platformCommissionRate : 0,
           otherCharges: 0,
           discount: 0,
         };
@@ -3111,17 +3197,22 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                 <p className='text-sm text-gray-600'>Metal Value</p>
                 <p className='text-lg font-semibold text-[#1F3B29]'>{formatINR(goldValue)}</p>
               </div>
-              <div className='p-3 bg-white rounded border'>
-                <p className='text-sm text-gray-600'>Vendor Wastage / Commission (%)</p>
-                <FormField
-                  label=''
-                  value={formData.vendorCommissionRate}
-                  onChange={e => updateField('vendorCommissionRate', parseFloat(e.target.value) || 0)}
-                  type='number'
-                  placeholder='5'
-                />
-                <p className='text-xs text-gray-500 mt-1'>Value: {formatINR(vendorCommissionValue)}</p>
-              </div>
+              {userRole !== 'vendor' && (
+                <div className='p-3 bg-white rounded border'>
+                  <p className='text-sm text-gray-600'>Vendor Wastage / Commission (%)</p>
+                  <FormField
+                    label=''
+                    value={formData.vendorCommissionRate}
+                    onChange={e => updateField('vendorCommissionRate', parseFloat(e.target.value) || 0)}
+                    type='number'
+                    placeholder='5'
+                    disabled={true}
+                    readOnly={true}
+                  />
+                  <p className='text-xs text-gray-500 mt-1'>Value: {formatINR(vendorCommissionValue)}</p>
+                  <p className='text-xs text-blue-600 mt-1'>Set in Admin Settings</p>
+                </div>
+              )}
               <div className='p-3 bg-white rounded border'>
                 <p className='text-sm text-gray-600'>Making Charges per gram</p>
                 <FormField
@@ -3233,9 +3324,14 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                 onChange={e => updateField('platformCommissionRate', parseFloat(e.target.value) || 0)}
                 type='number'
                 placeholder='0'
+                disabled={userRole === 'vendor'}
+                readOnly={userRole === 'vendor'}
               />
               {formData.platformCommissionRate > 0 && (
                 <p className='text-xs text-gray-500 mt-1'>Value: {formatINR(platformCommissionValue)}</p>
+              )}
+              {userRole === 'vendor' && (
+                <p className='text-xs text-blue-600 mt-1'>Set by Admin</p>
               )}
             </div>
           </div>
@@ -3302,10 +3398,6 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                 <div className='flex justify-between text-sm text-gray-700'>
                   <span>Metal Value</span>
                   <span>{formatINR(goldValue)}</span>
-                </div>
-                <div className='flex justify-between text-sm text-gray-700'>
-                  <span>Vendor Commission</span>
-                  <span>{formatINR(vendorCommissionValue)}</span>
                 </div>
                 <div className='flex justify-between text-sm text-gray-700'>
                   <span>Making Charges</span>

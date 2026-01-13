@@ -6,6 +6,7 @@ export type SiteSettings = {
   accentColor: string;
   logo: string;
   favicon: string;
+  defaultVendorCommissionRate: number;
 };
 
 export const defaultSiteSettings: SiteSettings = {
@@ -16,4 +17,5 @@ export const defaultSiteSettings: SiteSettings = {
   accentColor: "#0f172a",
   logo: "",
   favicon: "",
+  defaultVendorCommissionRate: 5,
 };

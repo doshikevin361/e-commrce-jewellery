@@ -188,6 +188,7 @@ export function SettingsPanel() {
         accentColor: formData.accentColor,
         logo: formData.logo,
         favicon: formData.favicon,
+        defaultVendorCommissionRate: formData.defaultVendorCommissionRate,
       };
       
       // Update local form state with the saved data
@@ -360,6 +361,24 @@ export function SettingsPanel() {
                   />
                 </FieldRow>
                 </div>
+
+              <FieldRow
+                label="Default Vendor Commission Rate (%)"
+                description="Default commission rate applied when admin adds products for vendors."
+              >
+                  <Input
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.01"
+                  value={formData.defaultVendorCommissionRate}
+                  onChange={(event) =>
+                    updateField("defaultVendorCommissionRate", parseFloat(event.target.value) || 0)
+                  }
+                  placeholder="5.0"
+                  className="h-12"
+                  />
+              </FieldRow>
             </div>
 
             <div className="flex flex-col gap-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/20 px-6 py-5 md:flex-row md:items-center md:justify-between">
