@@ -1485,7 +1485,7 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
       ? gemstoneValue 
       : formData.productType === 'Diamonds' && !hasMetalsInDiamonds
         ? diamondValueAuto
-        : goldValue + vendorCommissionValue + makingChargesValue + diamondValueAuto;
+        : goldValue + makingChargesValue + diamondValueAuto; // Removed vendorCommissionValue from base
   // Only calculate platform commission if rate is provided (> 0)
   const platformCommissionValue = (formData.platformCommissionRate > 0)
     ? platformCommissionBase * (formData.platformCommissionRate / 100)
@@ -1499,7 +1499,7 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
       ? diamondValueAuto // Now includes direct price
       : isSimpleProductType
         ? gemstoneValue + platformCommissionValue
-        : goldValue + vendorCommissionValue + makingChargesValue + diamondValueAuto + platformCommissionValue + extraCharges;
+        : goldValue + makingChargesValue + diamondValueAuto + platformCommissionValue + extraCharges; // Removed vendorCommissionValue
   // GST and discount are stored but NOT calculated here - will be calculated on website invoice
   const totalAmount = subTotal;
 

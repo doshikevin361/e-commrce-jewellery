@@ -151,6 +151,18 @@ export default function LoginPage() {
                 {loading ? 'Signing In...' : 'Sign In'}
               </Button>
             </form>
+
+            <div className='mt-6 text-center'>
+              <p className='text-sm text-slate-600 dark:text-slate-400'>
+                Don't have an account?{' '}
+                <a
+                  href='/vendor-registration'
+                  className='font-semibold hover:underline'
+                  style={{ color: primaryColor }}>
+                  Create your account
+                </a>
+              </p>
+            </div>
           </div>
         </Card>
       </div>
