@@ -1,9 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Phone, Video, MapPin, Heart, ShoppingCart, ChevronDown, Clock, Store } from 'lucide-react';
+import { Search, Phone, Video, MapPin, Heart, ShoppingCart, ChevronDown, Clock, Store, LogOut, User } from 'lucide-react';
+import { AuthModal } from '@/components/auth/auth-modal';
+import toast from 'react-hot-toast';
 
 const HomeHeader = () => {
   const [openDropdown, setOpenDropdown] = useState(null);
   const [isSticky, setIsSticky] = useState(false);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [customerName, setCustomerName] = useState<string>('');
 
   useEffect(() => {
     const handleScroll = () => {
@@ -18,6 +24,60 @@ const HomeHeader = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Check authentication status
+  useEffect(() => {
+    const checkAuth = () => {
+      if (typeof window !== 'undefined') {
+        const token = localStorage.getItem('customerToken');
+        const customerData = localStorage.getItem('currentCustomer');
+        
+        if (token && customerData) {
+          try {
+            const customer = JSON.parse(customerData);
+            setIsLoggedIn(true);
+            setCustomerName(customer.name || customer.email || 'User');
+          } catch (error) {
+            console.error('Error parsing customer data:', error);
+            setIsLoggedIn(false);
+            setCustomerName('');
+          }
+        } else {
+          setIsLoggedIn(false);
+          setCustomerName('');
+        }
+      }
+    };
+
+    checkAuth();
+    window.addEventListener('authChange', checkAuth);
+    return () => window.removeEventListener('authChange', checkAuth);
+  }, []);
+
+  const handleLoginClick = () => {
+    setAuthMode('login');
+    setAuthModalOpen(true);
+  };
+
+  const handleSignupClick = () => {
+    setAuthMode('register');
+    setAuthModalOpen(true);
+  };
+
+  const handleLogout = () => {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('customerToken');
+      localStorage.removeItem('currentCustomer');
+      setIsLoggedIn(false);
+      setCustomerName('');
+      window.dispatchEvent(new Event('authChange'));
+      toast.success('Logged out successfully');
+    }
+  };
+
+  const handleSwitchMode = () => {
+    setAuthMode(prev => prev === 'login' ? 'register' : 'login');
+  };
 
   const menuItems = [
     // { label: '10+1 MONTHLY PLANS', hasDropdown: true },
@@ -52,9 +112,38 @@ const HomeHeader = () => {
               <span>Video Call Cart</span>
             </button>
             <span className='h-3 w-px bg-gray-500'></span>
-            <button className='text-[#3579b8] hover:text-gray-900'>Login</button>
-            <span className='h-3 w-px bg-gray-500'></span>
-            <button className='text-[#3579b8] hover:text-gray-900'>Signup</button>
+            {isLoggedIn ? (
+              <>
+                <div className='flex items-center gap-2'>
+                  <User className='w-4 h-4 text-[#3579b8]' />
+                  <span className='text-[#3579b8] font-medium'>{customerName}</span>
+                </div>
+                <span className='h-3 w-px bg-gray-500'></span>
+                <button 
+                  onClick={handleLogout}
+                  className='text-[#3579b8] hover:text-gray-900 flex items-center gap-1'
+                >
+                  <LogOut className='w-4 h-4' />
+                  <span>Logout</span>
+                </button>
+              </>
+            ) : (
+              <>
+                <button 
+                  onClick={handleLoginClick}
+                  className='text-[#3579b8] hover:text-gray-900'
+                >
+                  Login
+                </button>
+                <span className='h-3 w-px bg-gray-500'></span>
+                <button 
+                  onClick={handleSignupClick}
+                  className='text-[#3579b8] hover:text-gray-900'
+                >
+                  Signup
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -153,6 +242,14 @@ const HomeHeader = () => {
           </div>
         </div>
       </div>
+
+      {/* Auth Modal */}
+      <AuthModal
+        open={authModalOpen}
+        onOpenChange={setAuthModalOpen}
+        mode={authMode}
+        onSwitchMode={handleSwitchMode}
+      />
     </div>
   );
 };

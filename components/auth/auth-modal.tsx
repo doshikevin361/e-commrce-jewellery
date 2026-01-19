@@ -376,64 +376,49 @@ export function AuthModal({ open, onOpenChange, mode, onSwitchMode, onSwitchToFo
   if (mode === 'register' && registerSuccess) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className='sm:max-w-4xl p-0 overflow-hidden' showCloseButton={true}>
-          <div className='grid md:grid-cols-2'>
-            {/* Left side - Image */}
-            <div className='hidden md:block relative bg-gradient-to-br from-[#F5EEE5] to-[#E8D5C4]'>
-              <div
-                className='absolute inset-0 bg-cover bg-center opacity-20'
-                style={{
-                  backgroundImage: "url('/login.jpg')",
-                }}></div>
-              <div className='relative h-full flex items-center justify-center p-6 lg:p-8'>
-                <div className='text-center text-[#1F3B29]'>
-                  <CheckCircle className='w-16 h-16 lg:w-20 lg:h-20 mx-auto mb-4 text-[#C8A15B]' />
-                  <h3 className='text-xl lg:text-2xl font-bold mb-2'>Welcome to LuxeLoom</h3>
-                  <p className='text-base lg:text-lg'>Your journey to elegance begins here</p>
+        <DialogContent className='sm:max-w-md p-0 overflow-hidden rounded-none' showCloseButton={true}>
+          <div className='flex items-center justify-center p-6 sm:p-8 bg-white'>
+            <div className='w-full space-y-4'>
+              <div className='text-center'>
+                <div className='w-12 h-12 bg-green-100 flex items-center justify-center mx-auto mb-3'>
+                  <CheckCircle className='w-6 h-6 text-green-600' />
                 </div>
-              </div>
-            </div>
-
-            {/* Right side - Success message */}
-            <div className='flex items-center justify-center p-6 sm:p-8 md:p-10 lg:p-12 bg-white'>
-              <div className='w-full max-w-md text-center'>
-                <div className='w-14 h-14 sm:w-16 sm:h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4'>
-                  <CheckCircle className='w-7 h-7 sm:w-8 sm:h-8 text-green-600' />
-                </div>
-                <h2 className='text-xl sm:text-2xl font-bold text-[#1F3B29] mb-2'>Registration Successful!</h2>
-                <p className='text-sm sm:text-base text-gray-600 mb-3 sm:mb-4'>
-                  We've sent a verification email to <strong className='break-all'>{formData.email}</strong>
+                <h2 className='text-xl font-bold text-[#001e38] mb-2'>Check Your Email</h2>
+                <p className='text-sm text-gray-600 mb-2'>
+                  We've sent a verification email to <strong className='break-all text-[#001e38]'>{formData.email}</strong>
                 </p>
-                <p className='text-xs sm:text-sm text-gray-500 mb-4 sm:mb-6'>
+                <p className='text-xs text-gray-500 mb-4'>
                   Please check your inbox and click the verification link to activate your account. You will not be able to login until you
                   verify your email.
                 </p>
+              </div>
 
-                {/* Resend Verification Button */}
-                <div className='mb-4 sm:mb-6'>
-                  <button
-                    onClick={handleResendVerification}
-                    disabled={resendLoading || cooldownSeconds > 0}
-                    className='w-full bg-[#C8A15B] text-white px-6 py-2.5 sm:py-3 rounded-lg text-sm sm:text-base font-semibold hover:bg-[#b8914a] transition-colors disabled:opacity-50 disabled:cursor-not-allowed mb-3'>
-                    {resendLoading
-                      ? 'Sending...'
-                      : cooldownSeconds > 0
-                      ? `Resend in ${Math.floor(cooldownSeconds / 60)}:${String(cooldownSeconds % 60).padStart(2, '0')}`
-                      : 'Resend Verification Email'}
-                  </button>
-                </div>
+              {/* Resend Verification Button */}
+              <div>
+                <button
+                  onClick={handleResendVerification}
+                  disabled={resendLoading || cooldownSeconds > 0}
+                  className='w-full bg-[#3579b8] text-white py-2.5 text-sm font-semibold hover:bg-[#2a6ba5] transition-colors disabled:opacity-50 disabled:cursor-not-allowed'>
+                  {resendLoading
+                    ? 'Sending...'
+                    : cooldownSeconds > 0
+                    ? `Resend in ${Math.floor(cooldownSeconds / 60)}:${String(cooldownSeconds % 60).padStart(2, '0')}`
+                    : 'Resend Verification Email'}
+                </button>
+              </div>
 
-                {onSwitchMode && (
+              {onSwitchMode && (
+                <div className='text-center pt-3 border-t border-gray-200'>
                   <button
                     onClick={() => {
                       onOpenChange(false);
                       onSwitchMode();
                     }}
-                    className='inline-block bg-[#1F3B29] text-white px-6 py-2.5 sm:py-3 rounded-lg text-sm sm:text-base font-semibold hover:bg-[#2a4d3a] transition-colors'>
+                    className='text-[#3579b8] font-semibold hover:text-[#2a6ba5] transition-colors text-sm pt-3'>
                     Go to Login
                   </button>
-                )}
-              </div>
+                </div>
+              )}
             </div>
           </div>
         </DialogContent>
@@ -443,321 +428,299 @@ export function AuthModal({ open, onOpenChange, mode, onSwitchMode, onSwitchToFo
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className='sm:max-w-5xl p-0 overflow-hidden animate-in fade-in-0 zoom-in-95 duration-300' showCloseButton={true}>
-        <div className='grid md:grid-cols-2'>
-          {/* Left side - Image */}
-          <div className='hidden md:block relative bg-gradient-to-br from-[#F5EEE5] to-[#E8D5C4] overflow-hidden'>
-            <div
-              className='absolute inset-0 bg-cover bg-center transition-transform duration-700 hover:scale-105'
-              style={{
-                backgroundImage: "url('/login.jpg')",
-              }}>
-              <div className='absolute inset-0 bg-gradient-to-t from-black/50 via-black/20 to-transparent'></div>
+      <DialogContent className='sm:max-w-md p-0 overflow-hidden animate-in fade-in-0 zoom-in-95 duration-300 rounded-none' showCloseButton={true}>
+        <div className='flex items-center justify-center p-6 sm:p-8 bg-white'>
+          <div className='w-full space-y-4'>
+            {/* Header */}
+            <div className='text-center mb-4'>
+              <h2 className='text-xl sm:text-2xl font-bold text-[#001e38] mb-1'>{mode === 'login' ? 'Login' : 'Create Account'}</h2>
+              <p className='text-gray-600 text-sm'>{mode === 'login' ? 'Enter your credentials to access your account' : 'Fill in your details to create a new account'}</p>
             </div>
-            <div className='relative h-full flex flex-col justify-end p-8 text-white animate-in slide-in-from-left-5 duration-500'>
-              <div className='space-y-4'>
-                <h2 className='text-3xl font-bold'>{mode === 'login' ? 'Welcome Back' : 'Join LuxeLoom'}</h2>
-                <p className='text-lg opacity-90'>
-                  {mode === 'login' ? 'Discover timeless elegance in every piece' : 'Experience luxury jewelry crafted with passion'}
-                </p>
-              </div>
-            </div>
-          </div>
 
-          {/* Right side - Form */}
-          <div className='flex items-center justify-center p-4 sm:p-6 md:p-8 lg:p-12 bg-white animate-in slide-in-from-right-5 duration-500'>
-            <div className='w-full max-w-md space-y-4 sm:space-y-5'>
-              {/* Mobile header */}
-              <div className='md:hidden text-center mb-6'>
-                <h2 className='text-2xl font-bold text-[#1F3B29]'>{mode === 'login' ? 'Welcome Back' : 'Create Account'}</h2>
-                <p className='text-gray-600 mt-1'>{mode === 'login' ? 'Login to your LuxeLoom account' : 'Join LuxeLoom Jewelry today'}</p>
+            {/* Error message */}
+            {error && (
+              <div className='p-3 bg-red-50 border border-red-200 flex items-start gap-2 text-red-700 text-xs'>
+                <AlertCircle className='w-4 h-4 shrink-0 mt-0.5' />
+                <span>{error}</span>
               </div>
+            )}
 
-              {/* Error message */}
-              {error && (
-                <div className='p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2 text-red-700 text-sm'>
-                  <AlertCircle className='w-5 h-5 flex-shrink-0 mt-0.5' />
-                  <span>{error}</span>
+            {/* Success message */}
+            {success && <div className='p-3 bg-green-50 border border-green-200 text-green-700 text-xs'>{success}</div>}
+
+            {mode === 'login' ? (
+              <form onSubmit={handleLogin} className='space-y-4'>
+                <div>
+                  <label className='block text-xs font-medium text-[#001e38] mb-1.5'>Email Address *</label>
+                  <div className='relative'>
+                    <Mail className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4' />
+                    <input
+                      type='email'
+                      value={email}
+                      onChange={handleLoginEmailChange}
+                      onBlur={() => {
+                        const emailError = validateEmail(email);
+                        setLoginErrors(prev => ({ ...prev, email: emailError }));
+                      }}
+                      required
+                      className={`w-full pl-10 pr-3 py-2.5 text-sm border-2 focus:ring-2 focus:ring-[#3579b8] focus:border-[#3579b8] transition-all ${
+                        loginErrors.email ? 'border-red-300 focus:ring-red-500' : 'border-[#e4e4e4]'
+                      }`}
+                      placeholder='Enter your email address'
+                    />
+                  </div>
+                  {loginErrors.email && (
+                    <p className='mt-1.5 text-xs text-red-600 flex items-center gap-1'>
+                      <AlertCircle className='w-3.5 h-3.5' />
+                      {loginErrors.email}
+                    </p>
+                  )}
                 </div>
-              )}
 
-              {/* Success message */}
-              {success && <div className='p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm'>{success}</div>}
-
-              {mode === 'login' ? (
-                <form onSubmit={handleLogin} className='space-y-3 sm:space-y-4'>
-                  <div>
-                    <label className='block text-sm font-medium text-gray-700 mb-1'>Email Address *</label>
-                    <div className='relative'>
-                      <Mail className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5' />
-                      <input
-                        type='email'
-                        value={email}
-                        onChange={handleLoginEmailChange}
-                        onBlur={() => {
-                          const emailError = validateEmail(email);
-                          setLoginErrors(prev => ({ ...prev, email: emailError }));
-                        }}
-                        required
-                        className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-[#C8A15B] focus:border-transparent transition-all ${
-                          loginErrors.email ? 'border-red-300 focus:ring-red-500' : 'border-gray-300'
-                        }`}
-                        placeholder='Enter your email'
-                      />
-                    </div>
-                    {loginErrors.email && (
-                      <p className='mt-1 text-xs text-red-600 flex items-center gap-1'>
-                        <AlertCircle className='w-3 h-3' />
-                        {loginErrors.email}
-                      </p>
-                    )}
+                <div>
+                  <label className='block text-xs font-medium text-[#001e38] mb-1.5'>Password *</label>
+                  <div className='relative'>
+                    <Lock className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4' />
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      value={password}
+                      onChange={e => {
+                        setPassword(e.target.value);
+                        // Clear password error when user starts typing
+                        if (loginErrors.password) {
+                          setLoginErrors(prev => ({ ...prev, password: undefined }));
+                        }
+                      }}
+                      onBlur={() => {
+                        if (!password || password.length < 6) {
+                          setLoginErrors(prev => ({
+                            ...prev,
+                            password: password.length === 0 ? 'Password is required' : 'Password must be at least 6 characters long',
+                          }));
+                        }
+                      }}
+                      required
+                      className={`w-full pl-10 pr-10 py-2.5 text-sm border-2 focus:ring-2 focus:ring-[#3579b8] focus:border-[#3579b8] transition-all ${
+                        loginErrors.password ? 'border-red-300 focus:ring-red-500' : 'border-[#e4e4e4]'
+                      }`}
+                      placeholder='Enter your password'
+                    />
+                    <button
+                      type='button'
+                      onClick={() => setShowPassword(!showPassword)}
+                      className='absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-[#3579b8] transition-colors'>
+                      {showPassword ? <EyeOff className='w-4 h-4' /> : <Eye className='w-4 h-4' />}
+                    </button>
                   </div>
+                  {loginErrors.password && (
+                    <p className='mt-1.5 text-xs text-red-600 flex items-center gap-1'>
+                      <AlertCircle className='w-3.5 h-3.5' />
+                      {loginErrors.password}
+                    </p>
+                  )}
+                </div>
 
-                  <div>
-                    <label className='block text-sm font-medium text-gray-700 mb-1'>Password *</label>
-                    <div className='relative'>
-                      <Lock className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5' />
-                      <input
-                        type={showPassword ? 'text' : 'password'}
-                        value={password}
-                        onChange={e => {
-                          setPassword(e.target.value);
-                          // Clear password error when user starts typing
-                          if (loginErrors.password) {
-                            setLoginErrors(prev => ({ ...prev, password: undefined }));
-                          }
-                        }}
-                        onBlur={() => {
-                          if (!password || password.length < 6) {
-                            setLoginErrors(prev => ({
-                              ...prev,
-                              password: password.length === 0 ? 'Password is required' : 'Password must be at least 6 characters long',
-                            }));
-                          }
-                        }}
-                        required
-                        className={`w-full pl-10 pr-12 py-3 border rounded-lg focus:ring-2 focus:ring-[#C8A15B] focus:border-transparent transition-all ${
-                          loginErrors.password ? 'border-red-300 focus:ring-red-500' : 'border-gray-300'
-                        }`}
-                        placeholder='Enter your password'
-                      />
-                      <button
-                        type='button'
-                        onClick={() => setShowPassword(!showPassword)}
-                        className='absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors'>
-                        {showPassword ? <EyeOff className='w-5 h-5' /> : <Eye className='w-5 h-5' />}
-                      </button>
-                    </div>
-                    {loginErrors.password && (
-                      <p className='mt-1 text-xs text-red-600 flex items-center gap-1'>
-                        <AlertCircle className='w-3 h-3' />
-                        {loginErrors.password}
-                      </p>
-                    )}
-                  </div>
+                <div className='flex items-center justify-between pt-1'>
+                  <label className='flex items-center cursor-pointer'>
+                    <input
+                      type='checkbox'
+                      checked={rememberMe}
+                      onChange={e => setRememberMe(e.target.checked)}
+                      className='w-3.5 h-3.5 border-gray-300 text-[#3579b8] focus:ring-[#3579b8] cursor-pointer'
+                    />
+                    <span className='ml-2 text-xs text-gray-700'>Remember me</span>
+                  </label>
+                  {onSwitchToForgotPassword && (
+                    <button
+                      type='button'
+                      onClick={() => {
+                        onOpenChange(false);
+                        onSwitchToForgotPassword();
+                      }}
+                      className='text-xs text-[#3579b8] hover:text-[#2a6ba5] font-medium transition-colors'>
+                      Forgot Password?
+                    </button>
+                  )}
+                </div>
 
-                  <div className='flex items-center justify-between'>
-                    <label className='flex items-center'>
-                      <input
-                        type='checkbox'
-                        checked={rememberMe}
-                        onChange={e => setRememberMe(e.target.checked)}
-                        className='rounded border-gray-300 text-[#C8A15B] focus:ring-[#C8A15B]'
-                      />
-                      <span className='ml-2 text-sm text-gray-600'>Remember me</span>
-                    </label>
-                    {onSwitchToForgotPassword && (
+                <div className='pt-2'>
+                  <button
+                    type='submit'
+                    disabled={loading || !!loginErrors.email || !!loginErrors.password}
+                    className='w-full bg-[#3579b8] text-white py-2.5 text-sm font-semibold hover:bg-[#2a6ba5] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed'>
+                    {loading ? 'Logging in...' : 'Login'}
+                  </button>
+                </div>
+
+                {onSwitchMode && (
+                  <div className='text-center pt-3 border-t border-gray-200'>
+                    <p className='text-gray-600 text-xs pt-3'>
+                      Don't have an account?{' '}
                       <button
                         type='button'
                         onClick={() => {
-                          onOpenChange(false);
-                          onSwitchToForgotPassword();
+                          onSwitchMode();
                         }}
-                        className='text-sm text-[#C8A15B] hover:underline font-medium'>
-                        Forgot Password?
+                        className='text-[#3579b8] font-semibold hover:text-[#2a6ba5] transition-colors'>
+                        Register here
                       </button>
-                    )}
+                    </p>
                   </div>
+                )}
+              </form>
+            ) : (
+              <form onSubmit={handleRegister} className='space-y-4'>
+                <div>
+                  <label className='block text-xs font-medium text-[#001e38] mb-1.5'>Full Name *</label>
+                  <div className='relative'>
+                    <User className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4' />
+                    <input
+                      type='text'
+                      name='name'
+                      value={formData.name}
+                      onChange={handleRegisterChange}
+                      required
+                      className='w-full pl-10 pr-3 py-2.5 text-sm border-2 border-[#e4e4e4] focus:ring-2 focus:ring-[#3579b8] focus:border-[#3579b8] transition-all'
+                      placeholder='Enter your full name'
+                    />
+                  </div>
+                </div>
 
-                  <div className='pt-2'>
+                <div>
+                  <label className='block text-xs font-medium text-[#001e38] mb-1.5'>Email Address *</label>
+                  <div className='relative'>
+                    <Mail className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4' />
+                    <input
+                      type='email'
+                      name='email'
+                      value={formData.email}
+                      onChange={handleRegisterChange}
+                      onBlur={() => {
+                        const emailError = validateEmail(formData.email);
+                        setRegisterErrors(prev => ({ ...prev, email: emailError }));
+                      }}
+                      required
+                      className={`w-full pl-10 pr-3 py-2.5 text-sm border-2 focus:ring-2 focus:ring-[#3579b8] focus:border-[#3579b8] transition-all ${
+                        registerErrors.email ? 'border-red-300 focus:ring-red-500' : 'border-[#e4e4e4]'
+                      }`}
+                      placeholder='Enter your email address'
+                    />
+                  </div>
+                  {registerErrors.email && (
+                    <p className='mt-1.5 text-xs text-red-600 flex items-center gap-1'>
+                      <AlertCircle className='w-3.5 h-3.5' />
+                      {registerErrors.email}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label className='block text-xs font-medium text-[#001e38] mb-1.5'>Phone Number *</label>
+                  <div className='relative'>
+                    <Phone className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4' />
+                    <input
+                      type='tel'
+                      name='phone'
+                      value={formData.phone}
+                      onChange={handleRegisterPhoneChange}
+                      onBlur={() => {
+                        const phoneError = validatePhone(formData.phone);
+                        setRegisterErrors(prev => ({ ...prev, phone: phoneError }));
+                      }}
+                      required
+                      inputMode='numeric'
+                      pattern='[0-9]*'
+                      className={`w-full pl-10 pr-3 py-2.5 text-sm border-2 focus:ring-2 focus:ring-[#3579b8] focus:border-[#3579b8] transition-all ${
+                        registerErrors.phone ? 'border-red-300 focus:ring-red-500' : 'border-[#e4e4e4]'
+                      }`}
+                      placeholder='Enter your phone number'
+                    />
+                  </div>
+                  {registerErrors.phone && (
+                    <p className='mt-1.5 text-xs text-red-600 flex items-center gap-1'>
+                      <AlertCircle className='w-3.5 h-3.5' />
+                      {registerErrors.phone}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label className='block text-xs font-medium text-[#001e38] mb-1.5'>Password *</label>
+                  <div className='relative'>
+                    <Lock className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4' />
+                    <input
+                      type={showRegisterPassword ? 'text' : 'password'}
+                      name='password'
+                      value={formData.password}
+                      onChange={handleRegisterChange}
+                      required
+                      className='w-full pl-10 pr-10 py-2.5 text-sm border-2 border-[#e4e4e4] focus:ring-2 focus:ring-[#3579b8] focus:border-[#3579b8] transition-all'
+                      placeholder='Enter your password'
+                    />
                     <button
-                      type='submit'
-                      disabled={loading || !!loginErrors.email || !!loginErrors.password}
-                      className='w-full bg-[#1F3B29] text-white py-3 rounded-lg font-semibold hover:bg-[#2a4d3a] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg'>
-                      {loading ? 'Logging in...' : 'Login'}
+                      type='button'
+                      onClick={() => setShowRegisterPassword(!showRegisterPassword)}
+                      className='absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-[#3579b8] transition-colors'>
+                      {showRegisterPassword ? <EyeOff className='w-4 h-4' /> : <Eye className='w-4 h-4' />}
                     </button>
                   </div>
+                </div>
 
-                  {onSwitchMode && (
-                    <div className='text-center pt-2'>
-                      <p className='text-gray-600 text-sm'>
-                        Don't have an account?{' '}
-                        <button
-                          type='button'
-                          onClick={() => {
-                            onSwitchMode();
-                          }}
-                          className='text-[#C8A15B] font-semibold hover:underline'>
-                          Register here
-                        </button>
-                      </p>
-                    </div>
-                  )}
-                </form>
-              ) : (
-                <form onSubmit={handleRegister} className='space-y-3 sm:space-y-4'>
-                  <div>
-                    <label className='block text-xs sm:text-sm font-medium text-gray-700 mb-1'>Full Name *</label>
-                    <div className='relative'>
-                      <User className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5' />
-                      <input
-                        type='text'
-                        name='name'
-                        value={formData.name}
-                        onChange={handleRegisterChange}
-                        required
-                        className='w-full pl-9 sm:pl-10 pr-4 py-2.5 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#C8A15B] focus:border-transparent transition-all'
-                        placeholder='Enter your full name'
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className='block text-xs sm:text-sm font-medium text-gray-700 mb-1'>Email Address *</label>
-                    <div className='relative'>
-                      <Mail className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5' />
-                      <input
-                        type='email'
-                        name='email'
-                        value={formData.email}
-                        onChange={handleRegisterChange}
-                        onBlur={() => {
-                          const emailError = validateEmail(formData.email);
-                          setRegisterErrors(prev => ({ ...prev, email: emailError }));
-                        }}
-                        required
-                        className={`w-full pl-9 sm:pl-10 pr-4 py-2.5 sm:py-3 text-sm sm:text-base border rounded-lg focus:ring-2 focus:ring-[#C8A15B] focus:border-transparent transition-all ${
-                          registerErrors.email ? 'border-red-300 focus:ring-red-500' : 'border-gray-300'
-                        }`}
-                        placeholder='Enter your email'
-                      />
-                    </div>
-                    {registerErrors.email && (
-                      <p className='mt-1 text-xs text-red-600 flex items-center gap-1'>
-                        <AlertCircle className='w-3 h-3' />
-                        {registerErrors.email}
-                      </p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className='block text-xs sm:text-sm font-medium text-gray-700 mb-1'>Phone Number *</label>
-                    <div className='relative'>
-                      <Phone className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5' />
-                      <input
-                        type='tel'
-                        name='phone'
-                        value={formData.phone}
-                        onChange={handleRegisterPhoneChange}
-                        onBlur={() => {
-                          const phoneError = validatePhone(formData.phone);
-                          setRegisterErrors(prev => ({ ...prev, phone: phoneError }));
-                        }}
-                        required
-                        inputMode='numeric'
-                        pattern='[0-9]*'
-                        className={`w-full pl-9 sm:pl-10 pr-4 py-2.5 sm:py-3 text-sm sm:text-base border rounded-lg focus:ring-2 focus:ring-[#C8A15B] focus:border-transparent transition-all ${
-                          registerErrors.phone ? 'border-red-300 focus:ring-red-500' : 'border-gray-300'
-                        }`}
-                        placeholder='Enter your phone number'
-                      />
-                    </div>
-                    {registerErrors.phone && (
-                      <p className='mt-1 text-xs text-red-600 flex items-center gap-1'>
-                        <AlertCircle className='w-3 h-3' />
-                        {registerErrors.phone}
-                      </p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className='block text-xs sm:text-sm font-medium text-gray-700 mb-1'>Password *</label>
-                    <div className='relative'>
-                      <Lock className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5' />
-                      <input
-                        type={showRegisterPassword ? 'text' : 'password'}
-                        name='password'
-                        value={formData.password}
-                        onChange={handleRegisterChange}
-                        required
-                        className='w-full pl-9 sm:pl-10 pr-10 sm:pr-12 py-2.5 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#C8A15B] focus:border-transparent transition-all'
-                        placeholder='Enter your password'
-                      />
-                      <button
-                        type='button'
-                        onClick={() => setShowRegisterPassword(!showRegisterPassword)}
-                        className='absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors'>
-                        {showRegisterPassword ? <EyeOff className='w-4 h-4 sm:w-5 sm:h-5' /> : <Eye className='w-4 h-4 sm:w-5 sm:h-5' />}
-                      </button>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className='block text-xs sm:text-sm font-medium text-gray-700 mb-1'>Confirm Password *</label>
-                    <div className='relative'>
-                      <Lock className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5' />
-                      <input
-                        type={showConfirmPassword ? 'text' : 'password'}
-                        name='confirmPassword'
-                        value={formData.confirmPassword}
-                        onChange={handleRegisterChange}
-                        required
-                        className='w-full pl-9 sm:pl-10 pr-10 sm:pr-12 py-2.5 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#C8A15B] focus:border-transparent transition-all'
-                        placeholder='Confirm your password'
-                      />
-                      <button
-                        type='button'
-                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        className='absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors'>
-                        {showConfirmPassword ? <EyeOff className='w-4 h-4 sm:w-5 sm:h-5' /> : <Eye className='w-4 h-4 sm:w-5 sm:h-5' />}
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className='pt-1 sm:pt-2'>
+                <div>
+                  <label className='block text-xs font-medium text-[#001e38] mb-1.5'>Confirm Password *</label>
+                  <div className='relative'>
+                    <Lock className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4' />
+                    <input
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      name='confirmPassword'
+                      value={formData.confirmPassword}
+                      onChange={handleRegisterChange}
+                      required
+                      className='w-full pl-10 pr-10 py-2.5 text-sm border-2 border-[#e4e4e4] focus:ring-2 focus:ring-[#3579b8] focus:border-[#3579b8] transition-all'
+                      placeholder='Confirm your password'
+                    />
                     <button
-                      type='submit'
-                      disabled={
-                        loading ||
-                        !!registerErrors.email ||
-                        !!registerErrors.phone ||
-                        !!registerErrors.password ||
-                        !!registerErrors.confirmPassword ||
-                        !!registerErrors.name
-                      }
-                      className='w-full bg-[#1F3B29] text-white py-2.5 sm:py-3 rounded-lg text-sm sm:text-base font-semibold hover:bg-[#2a4d3a] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg'>
-                      {loading ? 'Creating Account...' : 'Create Account'}
+                      type='button'
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className='absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-[#3579b8] transition-colors'>
+                      {showConfirmPassword ? <EyeOff className='w-4 h-4' /> : <Eye className='w-4 h-4' />}
                     </button>
                   </div>
+                </div>
 
-                  {onSwitchMode && (
-                    <div className='text-center pt-2'>
-                      <p className='text-gray-600 text-sm'>
-                        Already have an account?{' '}
-                        <button
-                          type='button'
-                          onClick={() => {
-                            onSwitchMode();
-                          }}
-                          className='text-[#C8A15B] font-semibold hover:underline'>
-                          Login here
-                        </button>
-                      </p>
-                    </div>
-                  )}
-                </form>
-              )}
-            </div>
+                <div className='pt-2'>
+                  <button
+                    type='submit'
+                    disabled={
+                      loading ||
+                      !!registerErrors.email ||
+                      !!registerErrors.phone ||
+                      !!registerErrors.password ||
+                      !!registerErrors.confirmPassword ||
+                      !!registerErrors.name
+                    }
+                    className='w-full bg-[#3579b8] text-white py-2.5 text-sm font-semibold hover:bg-[#2a6ba5] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed'>
+                    {loading ? 'Creating Account...' : 'Create Account'}
+                  </button>
+                </div>
+
+                {onSwitchMode && (
+                  <div className='text-center pt-3 border-t border-gray-200'>
+                    <p className='text-gray-600 text-xs pt-3'>
+                      Already have an account?{' '}
+                      <button
+                        type='button'
+                        onClick={() => {
+                          onSwitchMode();
+                        }}
+                        className='text-[#3579b8] font-semibold hover:text-[#2a6ba5] transition-colors'>
+                        Login here
+                      </button>
+                    </p>
+                  </div>
+                )}
+              </form>
+            )}
           </div>
         </div>
       </DialogContent>
