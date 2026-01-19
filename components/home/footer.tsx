@@ -1,150 +1,530 @@
-'use client';
+import React from 'react';
+import { Facebook, Twitter, Youtube, Instagram } from 'lucide-react';
 
-import { Mail, Phone, Globe, Twitter, Linkedin, Instagram, Facebook, Youtube } from 'lucide-react';
-import Link from 'next/link';
-
-const FooterSection = ({ title, items }: { title: string; items: { label: string; href: string }[] }) => (
-  <div>
-    <h3 className='mb-3 sm:mb-4 font-semibold text-sm sm:text-base text-[#1C1F1A]'>{title}</h3>
-    <ul className='space-y-1.5 sm:space-y-2'>
-      {items.map(item => (
-        <li key={item.label}>
-          <Link href={item.href} className='text-xs sm:text-sm text-[#4F3A2E] transition hover:text-[#1C1F1A]'>
-            {item.label}
-          </Link>
-        </li>
-      ))}
-    </ul>
-  </div>
-);
-
-const FooterPaymentItem = ({ children }: { children: React.ReactNode }) => (
-  <div className='flex items-center rounded border border-[#E6D3C2] bg-white px-2 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs uppercase text-[#1F3B29]'>{children}</div>
-);
-
-export function HomeFooter() {
-  const footerData = [
-    {
-      title: 'Quick Links',
-      items: [
-        { label: 'Home', href: '/' },
-        { label: 'Products', href: '/products' },
-        { label: 'Categories', href: '/categories' },
-        { label: 'Trending', href: '/trending' },
-        { label: 'About', href: '/about' },
-        { label: 'Blog', href: '/blog' },
-      ],
-    },
-    {
-      title: 'Customer Service',
-      items: [
-        { label: 'Contact Us', href: '/contact' },
-        { label: 'Size Guide', href: '/size-guide' },
-        { label: 'Jewelry Care', href: '/jewelry-care' },
-        { label: 'Gift Guide', href: '/gift-guide' },
-        { label: 'Shipping Policy', href: '/shipping-policy' },
-        { label: 'Refund & Return', href: '/refund-and-return' },
-      ],
-    },
-    {
-      title: 'Legal',
-      items: [
-        { label: 'Privacy Policy', href: '/privacy-policy' },
-        { label: 'Terms & Conditions', href: '/terms-and-conditions' },
-        { label: 'Cancellation Policy', href: '/cancellation-policy' },
-      ],
-    },
-    {
-      title: 'Support',
-      items: [
-        { label: 'Help Center', href: '/contact' },
-        { label: 'FAQs', href: '/contact' },
-        { label: 'Track Order', href: '/contact' },
-        { label: 'Size Guide', href: '/size-guide' },
-      ],
-    },
-  ];
-
-  const socialIcons = [
-    { id: 'twitter', icon: <Twitter size={18} /> },
-    { id: 'linkedin', icon: <Linkedin size={18} /> },
-    { id: 'instagram', icon: <Instagram size={18} /> },
-    { id: 'facebook', icon: <Facebook size={18} /> },
-    { id: 'youtube', icon: <Youtube size={18} /> },
-  ];
-
+export default function Footer() {
   return (
-    <footer className='bg-white overflow-hidden'>
-      <div className='mx-auto max-w-[1440px] px-4 sm:px-6 md:px-8 lg:px-12 py-8 sm:py-10 md:py-12'>
-        <div className='flex flex-col gap-8 sm:gap-10 lg:flex-row lg:items-start lg:justify-between'>
-          <div className='w-full sm:w-auto'>
-            <div className='mb-4 sm:mb-5 md:mb-6 flex items-center gap-2'>
-              <div className='flex h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9 items-center justify-center rounded bg-[#1F3B29]'>
-                <span className='text-white text-base sm:text-lg md:text-xl'>✤</span>
-              </div>
-              <h2 className='text-lg sm:text-xl md:text-2xl font-semibold text-[#1F3B29]'>LuxeLoom</h2>
-            </div>
+    <footer className='bg-[#272b65] text-white'>
+      {/* Main Footer Content */}
+      <div className='max-w-[1440px] mx-auto px-6 py-12'>
+        <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12'>
+          {/* About Us Section */}
+          <div>
+            <h3 className='text-sm font-semibold mb-4 tracking-wide'>ABOUT US</h3>
+            <ul className='space-y-2.5'>
+              <li>
+                <a href='#' className='text-gray-300 hover:text-white text-sm transition-colors'>
+                  Who we are?
+                </a>
+              </li>
+              <li>
+                <a href='#' className='text-gray-300 hover:text-white text-sm transition-colors'>
+                  Investor Relations
+                </a>
+              </li>
+              <li>
+                <a href='#' className='text-gray-300 hover:text-white text-sm transition-colors'>
+                  Design Philosophy
+                </a>
+              </li>
+            </ul>
 
-            <div className='space-y-2 sm:space-y-3 text-[#1C1F1A]'>
-              <div className='flex items-center gap-3 sm:gap-4'>
-                <Mail size={16} className='sm:w-[17px] sm:h-[17px] md:w-[18px] md:h-[18px] flex-shrink-0' />
-                <span className='text-xs sm:text-sm md:text-base font-semibold break-all'>oripiostudio@gmail.com</span>
-              </div>
-              <div className='flex items-center gap-3 sm:gap-4'>
-                <Phone size={16} className='sm:w-[17px] sm:h-[17px] md:w-[18px] md:h-[18px] flex-shrink-0' />
-                <span className='text-xs sm:text-sm md:text-base font-semibold'>+8801701253995</span>
-              </div>
-            </div>
+            <h3 className='text-sm font-semibold mt-8 mb-4 tracking-wide'>CUSTOMER DELIGHT</h3>
+            <ul className='space-y-2.5'>
+              <li>
+                <a href='#' className='text-gray-300 hover:text-white text-sm transition-colors'>
+                  Contact Us
+                </a>
+              </li>
+              <li>
+                <a href='#' className='text-gray-300 hover:text-white text-sm transition-colors'>
+                  FAQ
+                </a>
+              </li>
+              <li>
+                <a href='#' className='text-gray-300 hover:text-white text-sm transition-colors'>
+                  18004190066
+                </a>
+              </li>
+              <li>
+                <a href='#' className='text-gray-300 hover:text-white text-sm transition-colors'>
+                  cs@bluestone.com
+                </a>
+              </li>
+              <li>
+                <a href='#' className='text-gray-300 hover:text-white text-xs transition-colors'>
+                  (9 am-10 pm, 7 days a week)
+                </a>
+              </li>
+            </ul>
           </div>
 
-          <div className='grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 lg:flex lg:flex-row gap-6 sm:gap-8 md:gap-12 lg:gap-16 xl:gap-20'>
-            {footerData.map(section => (
-              <FooterSection key={section.title} title={section.title} items={section.items} />
-            ))}
+          {/* Policies Section */}
+          <div>
+            <h3 className='text-sm font-semibold mb-4 tracking-wide'>POLICIES</h3>
+            <ul className='space-y-2.5'>
+              <li>
+                <a href='#' className='text-gray-300 hover:text-white text-sm transition-colors'>
+                  30-Day Returns
+                </a>
+              </li>
+              <li>
+                <a href='#' className='text-gray-300 hover:text-white text-sm transition-colors'>
+                  Lifetime Exchange & Buy back
+                </a>
+              </li>
+              <li>
+                <a href='#' className='text-gray-300 hover:text-white text-sm transition-colors'>
+                  Privacy Policy
+                </a>
+              </li>
+              <li>
+                <a href='#' className='text-gray-300 hover:text-white text-sm transition-colors'>
+                  Terms & Conditions
+                </a>
+              </li>
+              <li>
+                <a href='#' className='text-gray-300 hover:text-white text-sm transition-colors'>
+                  Fraud Warning Disclaimer
+                </a>
+              </li>
+            </ul>
+
+            {/* <h3 className='text-sm font-semibold mt-8 mb-4 tracking-wide'>SHOP WITH CONFIDENCE</h3>
+            <ul className='space-y-2.5'>
+              <li>
+                <a href='#' className='text-gray-300 hover:text-white text-sm transition-colors'>
+                  Why Buy From Us?
+                </a>
+              </li>
+              <li>
+                <a href='#' className='text-gray-300 hover:text-white text-sm transition-colors'>
+                  Our Certifications
+                </a>
+              </li>
+              <li>
+                <a href='#' className='text-gray-300 hover:text-white text-sm transition-colors'>
+                  Press Room
+                </a>
+              </li>
+              <li>
+                <a href='#' className='text-gray-300 hover:text-white text-sm transition-colors'>
+                  Testimonials
+                </a>
+              </li>
+              <li className='pt-2'>
+                <a href='#' className='text-gray-300 hover:text-white text-sm transition-colors'>
+                  Corporate Gifting
+                </a>
+              </li>
+            </ul> */}
+          </div>
+
+          {/* Jewellery Guide Section */}
+          <div>
+            <h3 className='text-sm font-semibold mb-4 tracking-wide'>JEWELLERY GUIDE</h3>
+            <ul className='space-y-2.5'>
+              <li>
+                <a href='#' className='text-gray-300 hover:text-white text-sm transition-colors'>
+                  Buying and Price Guide
+                </a>
+              </li>
+              <li>
+                <a href='#' className='text-gray-300 hover:text-white text-sm transition-colors'>
+                  Certification Guide
+                </a>
+              </li>
+              <li>
+                <a href='#' className='text-gray-300 hover:text-white text-sm transition-colors'>
+                  Diamond and Solitaire Guide
+                </a>
+              </li>
+              <li>
+                <a href='#' className='text-gray-300 hover:text-white text-sm transition-colors'>
+                  Gemstone Guide
+                </a>
+              </li>
+              <li>
+                <a href='#' className='text-gray-300 hover:text-white text-sm transition-colors'>
+                  Gifting Guide
+                </a>
+              </li>
+              <li>
+                <a href='#' className='text-gray-300 hover:text-white text-sm transition-colors'>
+                  Jewellery Care Guide
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          {/* Download App Section */}
+          <div>
+            <h3 className='text-lg font-semibold mb-3'>Download App</h3>
+            <p className='text-gray-300 text-sm mb-4 leading-relaxed'>
+              Shining new app,
+              <br />
+              made just
+              <br />
+              for you! It's Free,
+              <br />
+              Easy & Smart.
+            </p>
+            <div className='space-y-3'>
+              <a href='#' className='block'>
+                <img
+                  src='https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg'
+                  alt='Get it on Google Play'
+                  className='h-10'
+                />
+              </a>
+              <a href='#' className='block'>
+                <img
+                  src='https://upload.wikimedia.org/wikipedia/commons/3/3c/Download_on_the_App_Store_Badge.svg'
+                  alt='Download on App Store'
+                  className='h-10'
+                />
+              </a>
+            </div>
           </div>
         </div>
 
-        <div className='my-6 sm:my-7 md:my-8 border-t border-[#1F3B29]/20' />
+        {/* Newsletter Section */}
+        <div className='mt-12 pt-8 border-t border-gray-600'>
+          <div className='flex flex-col md:flex-row md:items-center md:justify-between gap-6'>
+            <div className='flex items-center gap-3'>
+              <input
+                type='email'
+                placeholder='Enter email for our newsletter'
+                className='bg-transparent border border-gray-500 px-4 py-2.5 text-sm text-gray-300 placeholder-gray-400 focus:outline-none focus:border-gray-400 w-64'
+              />
+              <button className='bg-[#9babc4] hover:bg-gray-500 px-6 py-2.5 text-sm font-medium transition-colors'>SUBSCRIBE</button>
+            </div>
 
-        <div className='flex flex-col gap-3 sm:gap-4 md:flex-row md:items-center md:justify-between'>
-          <span className='text-[10px] sm:text-xs md:text-sm font-semibold tracking-[0.2em] sm:tracking-[0.3em] text-[#4F3A2E] uppercase'>WE ACCEPT</span>
-
-          <div className='flex flex-wrap items-center gap-2 sm:gap-3 md:gap-4'>
-            <FooterPaymentItem>VISA</FooterPaymentItem>
-            <FooterPaymentItem>
-              <div className='flex gap-1'>
-                <div className='h-2.5 w-2.5 sm:h-3 sm:w-3 md:h-3.5 md:w-3.5 rounded-full bg-red-600' />
-                <div className='-ml-1.5 h-2.5 w-2.5 sm:h-3 sm:w-3 md:h-3.5 md:w-3.5 rounded-full bg-orange-500' />
+            <div className='flex items-center gap-6'>
+              <span className='text-sm text-gray-400'>Follow us on</span>
+              <div className='flex items-center gap-4'>
+                <a href='#' className='text-gray-300 hover:text-white transition-colors'>
+                  <Facebook size={20} />
+                </a>
+                <a href='#' className='text-gray-300 hover:text-white transition-colors'>
+                  <Twitter size={20} />
+                </a>
+                <a href='#' className='text-gray-300 hover:text-white transition-colors'>
+                  <Youtube size={20} />
+                </a>
+                <a href='#' className='text-gray-300 hover:text-white transition-colors'>
+                  <svg className='w-5 h-5' viewBox='0 0 24 24' fill='currentColor'>
+                    <path d='M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z' />
+                  </svg>
+                </a>
               </div>
-            </FooterPaymentItem>
-            <FooterPaymentItem>AMEX</FooterPaymentItem>
-            <FooterPaymentItem>DISCOVER</FooterPaymentItem>
-            <FooterPaymentItem>PayPal</FooterPaymentItem>
+
+              <div className='flex items-center gap-2 ml-4'>
+                <div className='bg-white rounded px-2 py-1'>
+                  <span className='text-[#2c3e6f] font-bold text-xs'>VISA</span>
+                </div>
+                <div className='bg-white rounded px-2 py-1'>
+                  <span className='text-[#2c3e6f] font-bold text-xs'>MC</span>
+                </div>
+                <div className='bg-white rounded px-2 py-1'>
+                  <span className='text-[#2c3e6f] font-bold text-xs'>AMEX</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className='mt-6 text-right'>
+            <p className='text-xs text-gray-400'>© 2025. All Rights Reserved.</p>
+            <p className='text-xs text-gray-400'>CIN: L72900KA2011DSFS59678</p>
           </div>
         </div>
       </div>
 
-      <div className='bg-[#1F3B29] py-3 sm:py-4 md:py-5 text-white'>
-        <div className='mx-auto flex max-w-[1440px] flex-col items-center justify-between gap-3 sm:gap-4 px-4 sm:px-6 md:px-8 lg:px-12 text-xs sm:text-sm md:text-base text-white/80 md:flex-row'>
-          <p className='text-center md:text-left text-xs sm:text-sm'>
-            Copyright ©2024 <span className='text-white'>LuxeLoom</span>. All rights reserved.
-          </p>
+      <div className='bg-white'>
+        <div className='max-w-[1440px] mx-auto px-6 py-8'>
+          {/* Popular Searches */}
+          <div className='mb-8'>
+            <h4 className='text-[#2c3e6f] font-semibold text-base mb-3'>Popular Searches</h4>
+            <p className='text-[#2c3e6f] text-sm leading-relaxed'>
+              <a href='#' className='hover:underline'>
+                Rings
+              </a>{' '}
+              |{' '}
+              <a href='#' className='hover:underline'>
+                Earrings
+              </a>{' '}
+              |{' '}
+              <a href='#' className='hover:underline'>
+                Mangalsutra
+              </a>{' '}
+              |{' '}
+              <a href='#' className='hover:underline'>
+                Mangalsutra Bracelets
+              </a>{' '}
+              |{' '}
+              <a href='#' className='hover:underline'>
+                Bangles
+              </a>{' '}
+              |{' '}
+              <a href='#' className='hover:underline'>
+                Bracelets
+              </a>{' '}
+              |{' '}
+              <a href='#' className='hover:underline'>
+                Pendants
+              </a>{' '}
+              |{' '}
+              <a href='#' className='hover:underline'>
+                Necklaces
+              </a>{' '}
+              |{' '}
+              <a href='#' className='hover:underline'>
+                Couple Bands
+              </a>{' '}
+              |{' '}
+              <a href='#' className='hover:underline'>
+                Gold Coins
+              </a>{' '}
+              |{' '}
+              <a href='#' className='hover:underline'>
+                Chains
+              </a>{' '}
+              |{' '}
+              <a href='#' className='hover:underline'>
+                Watch Jewellery
+              </a>{' '}
+              |{' '}
+              <a href='#' className='hover:underline'>
+                Nose Pin
+              </a>{' '}
+              |{' '}
+              <a href='#' className='hover:underline'>
+                Dailywear Rings
+              </a>{' '}
+              |{' '}
+              <a href='#' className='hover:underline'>
+                Dailywear Bracelets
+              </a>
+            </p>
+          </div>
 
-          <div className='flex flex-col sm:flex-row items-center gap-3 sm:gap-4'>
-            <div className='flex items-center gap-2 sm:gap-3'>
-              {socialIcons.map(item => (
-                <div key={item.id} className='flex h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9 items-center justify-center rounded-full border border-white/60 transition-all duration-300 hover:bg-white/10 hover:scale-110 cursor-pointer'>
-                  {item.icon}
-                </div>
-              ))}
-            </div>
+          <hr className='border-gray-300 my-6' />
 
-            <span className='hidden sm:inline text-white/50'>|</span>
+          {/* Top Searches in Gold Jewellery */}
+          <div className='mb-8'>
+            <h4 className='text-[#2c3e6f] font-semibold text-base mb-3'>Top Searches in Gold Jewellery</h4>
+            <p className='text-[#2c3e6f] text-sm leading-relaxed'>
+              <a href='#' className='hover:underline'>
+                Gold Jewellery
+              </a>{' '}
+              |{' '}
+              <a href='#' className='hover:underline'>
+                Gold Rings
+              </a>{' '}
+              |{' '}
+              <a href='#' className='hover:underline'>
+                Gold Earrings
+              </a>{' '}
+              |{' '}
+              <a href='#' className='hover:underline'>
+                Gold Pendants
+              </a>{' '}
+              |{' '}
+              <a href='#' className='hover:underline'>
+                Gold Necklaces
+              </a>{' '}
+              |{' '}
+              <a href='#' className='hover:underline'>
+                Gold Mangalsutras
+              </a>{' '}
+              |{' '}
+              <a href='#' className='hover:underline'>
+                Gold Bangles
+              </a>{' '}
+              |{' '}
+              <a href='#' className='hover:underline'>
+                Women Gold Rings
+              </a>{' '}
+              |{' '}
+              <a href='#' className='hover:underline'>
+                Men's Gold Earrings
+              </a>{' '}
+              |{' '}
+              <a href='#' className='hover:underline'>
+                Gold Chains for Men
+              </a>{' '}
+              |{' '}
+              <a href='#' className='hover:underline'>
+                Dailywear Gold Earrings
+              </a>{' '}
+              |{' '}
+              <a href='#' className='hover:underline'>
+                Dailywear Gold Bangles
+              </a>
+            </p>
+          </div>
 
-            <button className='flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs md:text-sm font-semibold tracking-wide text-white transition-all duration-300 hover:scale-110'>
-              <Globe size={14} className='sm:w-[16px] sm:h-[16px] md:w-[18px] md:h-[18px]' />
-              ENGLISH
-            </button>
+          <hr className='border-gray-300 my-6' />
+
+          {/* Top Searches in Diamond Jewellery */}
+          <div className='mb-8'>
+            <h4 className='text-[#2c3e6f] font-semibold text-base mb-3'>Top Searches in Diamond Jewellery</h4>
+            <p className='text-[#2c3e6f] text-sm leading-relaxed'>
+              <a href='#' className='hover:underline'>
+                Diamond Jewellery
+              </a>{' '}
+              |{' '}
+              <a href='#' className='hover:underline'>
+                Diamond Rings
+              </a>{' '}
+              |{' '}
+              <a href='#' className='hover:underline'>
+                Diamond Earrings
+              </a>{' '}
+              |{' '}
+              <a href='#' className='hover:underline'>
+                Diamond Pendants
+              </a>{' '}
+              |{' '}
+              <a href='#' className='hover:underline'>
+                Diamond Necklaces
+              </a>{' '}
+              |{' '}
+              <a href='#' className='hover:underline'>
+                Diamond Mangalsutras
+              </a>{' '}
+              |{' '}
+              <a href='#' className='hover:underline'>
+                Diamond Bangles
+              </a>{' '}
+              |{' '}
+              <a href='#' className='hover:underline'>
+                Diamond Bracelets
+              </a>{' '}
+              |{' '}
+              <a href='#' className='hover:underline'>
+                Women Diamond Rings
+              </a>{' '}
+              |{' '}
+              <a href='#' className='hover:underline'>
+                Men's Diamond Earrings
+              </a>{' '}
+              |{' '}
+              <a href='#' className='hover:underline'>
+                Men's Diamond Rings
+              </a>{' '}
+              |{' '}
+              <a href='#' className='hover:underline'>
+                Men's Diamond Braclets
+              </a>
+            </p>
+          </div>
+
+          <hr className='border-gray-300 my-6' />
+
+          {/* Men's Jewellery Collection */}
+          <div className='mb-8'>
+            <h4 className='text-[#2c3e6f] font-semibold text-base mb-3'>Men's Jewellery Collection</h4>
+            <p className='text-[#2c3e6f] text-sm leading-relaxed'>
+              <a href='#' className='hover:underline'>
+                Men's Jewellery
+              </a>{' '}
+              |{' '}
+              <a href='#' className='hover:underline'>
+                Rings for Men
+              </a>{' '}
+              |{' '}
+              <a href='#' className='hover:underline'>
+                Earrings for Men
+              </a>{' '}
+              |{' '}
+              <a href='#' className='hover:underline'>
+                Men's Kada
+              </a>{' '}
+              |{' '}
+              <a href='#' className='hover:underline'>
+                Cufflinks for Men
+              </a>
+            </p>
+          </div>
+
+          <hr className='border-gray-300 my-6' />
+
+          {/* Women's Jewellery Collection */}
+          <div className='mb-8'>
+            <h4 className='text-[#2c3e6f] font-semibold text-base mb-3'>Women's Jewellery Collection</h4>
+            <p className='text-[#2c3e6f] text-sm leading-relaxed'>
+              <a href='#' className='hover:underline'>
+                Jewellery For Women
+              </a>{' '}
+              |{' '}
+              <a href='#' className='hover:underline'>
+                Rings for Women
+              </a>{' '}
+              |{' '}
+              <a href='#' className='hover:underline'>
+                Earrings for Women
+              </a>{' '}
+              |{' '}
+              <a href='#' className='hover:underline'>
+                Bangles for Women
+              </a>{' '}
+              |{' '}
+              <a href='#' className='hover:underline'>
+                Pendants for Women
+              </a>{' '}
+              |{' '}
+              <a href='#' className='hover:underline'>
+                Bracelets for Women
+              </a>{' '}
+              |{' '}
+              <a href='#' className='hover:underline'>
+                Necklaces for Women
+              </a>
+            </p>
+          </div>
+
+          <hr className='border-gray-300 my-6' />
+
+          {/* Jewellery by Occassion */}
+          <div>
+            <h4 className='text-[#2c3e6f] font-semibold text-base mb-3'>Jewellery by Occassion</h4>
+            <p className='text-[#2c3e6f] text-sm leading-relaxed'>
+              <a href='#' className='hover:underline'>
+                Engagement Ring
+              </a>{' '}
+              |{' '}
+              <a href='#' className='hover:underline'>
+                Engagement Ring For Women
+              </a>{' '}
+              |{' '}
+              <a href='#' className='hover:underline'>
+                Engagement Ring For Men
+              </a>{' '}
+              |{' '}
+              <a href='#' className='hover:underline'>
+                Gold Engagement Rings for Women
+              </a>{' '}
+              |{' '}
+              <a href='#' className='hover:underline'>
+                Gold Engagement Rings for Men
+              </a>{' '}
+              |{' '}
+              <a href='#' className='hover:underline'>
+                Diamond Engagement Rings
+              </a>{' '}
+              |{' '}
+              <a href='#' className='hover:underline'>
+                Diamond Engagement Rings for Women
+              </a>{' '}
+              |{' '}
+              <a href='#' className='hover:underline'>
+                Jewellery Gifts for Anniversary
+              </a>{' '}
+              |{' '}
+              <a href='#' className='hover:underline'>
+                Jewellery Gifts for Wedding
+              </a>
+            </p>
           </div>
         </div>
       </div>

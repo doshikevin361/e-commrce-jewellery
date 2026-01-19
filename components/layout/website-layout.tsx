@@ -1,15 +1,20 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import { HomeHeader } from '@/components/home/header';
-import { HomeFooter } from '@/components/home/footer';
+import HomeHeader from '../home/header';
+import Footer from '../home/footer';
 
 export function WebsiteLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  
+
   // Don't show header/footer for admin routes, login, vendor routes, or become-vendor page
-  const isAdminRoute = pathname?.startsWith('/admin') || pathname?.startsWith('/login') || pathname?.startsWith('/vendors') || pathname?.startsWith('/become-vendor') || pathname?.startsWith('/vendor-registration');
-  
+  const isAdminRoute =
+    pathname?.startsWith('/admin') ||
+    pathname?.startsWith('/login') ||
+    pathname?.startsWith('/vendors') ||
+    pathname?.startsWith('/become-vendor') ||
+    pathname?.startsWith('/vendor-registration');
+
   if (isAdminRoute) {
     return <>{children}</>;
   }
@@ -22,8 +27,7 @@ export function WebsiteLayout({ children }: { children: React.ReactNode }) {
         {/* Removed overflow-x-hidden from main - can break position: sticky */}
         {children}
       </main>
-      <HomeFooter />
+      <Footer />
     </div>
   );
 }
-
