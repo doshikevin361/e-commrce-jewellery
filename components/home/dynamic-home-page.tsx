@@ -15,6 +15,10 @@ import {
   Link2,
   CircleDot,
   Star,
+  RefreshCw,
+  Search,
+  ThumbsUp,
+  Video,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { Swiper, SwiperSlide } from 'swiper/react';
@@ -31,7 +35,6 @@ import { SectionHeader } from '@/components/home/common/section-header';
 import Link from 'next/link';
 import { getActiveHomepageFeatures } from '@/lib/constants/features';
 import { ProductCard, ProductCardData } from './common/product-card';
-import { HeroBannerSlider } from './hero-banner-slider';
 import {
   ProductSliderSkeleton,
   ProductGridSkeleton,
@@ -41,6 +44,9 @@ import {
   GallerySkeleton,
   WhyChooseUsSkeleton,
 } from './common/skeleton-loaders';
+import Categories, { HeroBanner, ScrollingOffer, Slider } from './hero-banner-slider';
+import ProductShowcase from './ProductShowcase';
+import TestimonialCard from '../testimonialCard/TestimonialCard';
 
 type HeroSlide = {
   id: string | number;
@@ -179,7 +185,6 @@ const defaultHeroSlides: HeroSlide[] = [
   },
 ];
 
-
 const testimonials = [
   {
     id: 1,
@@ -264,24 +269,21 @@ const mapProductsFromApi = (incoming?: any[], defaultBadge?: string): ProductCar
 
   return incoming.map((product, index) => {
     // Use sellingPrice and regularPrice from API (already calculated with discount)
-    const sellingPrice = typeof product?.sellingPrice === 'number' && product.sellingPrice > 0
-      ? product.sellingPrice
-      : typeof product?.regularPrice === 'number' && product.regularPrice > 0
-      ? product.regularPrice
-      : 0;
-    
-    const regularPrice = typeof product?.regularPrice === 'number' && product.regularPrice > 0
-      ? product.regularPrice
-      : sellingPrice;
+    const sellingPrice =
+      typeof product?.sellingPrice === 'number' && product.sellingPrice > 0
+        ? product.sellingPrice
+        : typeof product?.regularPrice === 'number' && product.regularPrice > 0
+          ? product.regularPrice
+          : 0;
+
+    const regularPrice = typeof product?.regularPrice === 'number' && product.regularPrice > 0 ? product.regularPrice : sellingPrice;
 
     // Check if discount exists (either from discount field or price difference)
-    const discountPercent = typeof product?.discount === 'number' && product.discount > 0 && product.discount <= 100
-      ? product.discount
-      : 0;
-    
+    const discountPercent = typeof product?.discount === 'number' && product.discount > 0 && product.discount <= 100 ? product.discount : 0;
+
     const hasDiscount = discountPercent > 0 || (regularPrice > sellingPrice && regularPrice > 0 && sellingPrice > 0);
 
-    const productId = typeof product?._id === 'string' ? product._id : product?._id?.toString?.() ?? `product-${index}`;
+    const productId = typeof product?._id === 'string' ? product._id : (product?._id?.toString?.() ?? `product-${index}`);
 
     return {
       id: productId,
@@ -347,151 +349,151 @@ export const HomePage = () => {
       const incomingSections = Array.isArray(payload?.sections) ? payload.sections : [];
       const nextState = createDefaultSectionsState();
 
-        incomingSections.forEach((section: any) => {
-          if (!section || typeof section !== 'object') {
-            return;
-          }
-
-          const { type, data } = section;
-          if (!data || typeof data !== 'object') {
-            return;
-          }
-
-          switch (type) {
-            case 'hero': {
-              const banners = (data as any).banners;
-              if (Array.isArray(banners) && banners.length > 0) {
-                nextState.hero = banners.map((banner: any) => ({
-                  _id: banner._id?.toString() || '',
-                  title: banner.title || '',
-                  subtitle: banner.subtitle || '',
-                  description: banner.description || '',
-                  image: banner.image || '',
-                  link: banner.link || '/products',
-                  buttonText: banner.buttonText || 'Shop Now',
-                  backgroundColor: banner.backgroundColor || '#f5f5f5',
-                  displayOrder: banner.displayOrder || 0,
-                }));
-              }
-              break;
-            }
-            case 'categories': {
-              const mappedCategories = mapCategoriesFromApi((data as any).categories);
-              if (mappedCategories.length > 0) {
-                nextState.categories = mappedCategories;
-              }
-              break;
-            }
-            case 'newProducts': {
-              const mappedProducts = mapProductsFromApi((data as any).products);
-              if (mappedProducts.length > 0) {
-                nextState.newProducts = mappedProducts;
-              }
-              break;
-            }
-            case 'featuredProducts': {
-              const mappedProducts = mapProductsFromApi((data as any).products, 'Featured');
-              if (mappedProducts.length > 0) {
-                nextState.featuredProducts = mappedProducts;
-              }
-              break;
-            }
-            case 'trendingProducts': {
-              const mappedProducts = mapProductsFromApi((data as any).products, 'Trending');
-              if (mappedProducts.length > 0) {
-                nextState.trendingProducts = mappedProducts;
-              }
-              break;
-            }
-            case 'features': {
-              const mappedFeatures = mapFeaturesFromApi((data as any).features);
-              if (mappedFeatures.length > 0) {
-                nextState.features = mappedFeatures;
-              }
-              break;
-            }
-            case 'dazzle': {
-              const dazzleCards = (data as any).cards;
-              if (Array.isArray(dazzleCards) && dazzleCards.length > 0) {
-                nextState.dazzle = dazzleCards.map((card: any) => ({
-                  _id: card._id || '',
-                  title: card.title || '',
-                  subtitle: card.subtitle || '',
-                  description: card.description || '',
-                  buttonText: card.buttonText || 'Explore More',
-                  buttonLink: card.buttonLink || '/products',
-                  image: card.image || '',
-                }));
-              }
-              break;
-            }
-            case 'gallery': {
-              const galleryItems = (data as any).items;
-              if (Array.isArray(galleryItems) && galleryItems.length > 0) {
-                nextState.gallery = galleryItems.map((item: any) => ({
-                  _id: item._id || '',
-                  image: item.image || '',
-                }));
-              }
-              break;
-            }
-            case 'news': {
-              const newsItems = (data as any).items;
-              if (Array.isArray(newsItems) && newsItems.length > 0) {
-                nextState.news = newsItems.map((item: any) => ({
-                  _id: item._id || '',
-                  title: item.title || '',
-                  excerpt: item.excerpt || '',
-                  image: item.image || '',
-                  publishDate: item.publishDate || new Date().toISOString(),
-                  slug: item.slug || '',
-                }));
-              }
-              break;
-            }
-            case 'newArrivals': {
-              const bannerData = (data as any).banner;
-              const cardsData = (data as any).cards;
-              if (bannerData && typeof bannerData === 'object') {
-                nextState.newArrivals.banner = {
-                  title: bannerData.title || 'New Arrivals',
-                  subtitle: bannerData.subtitle || '💎 500+ New Items',
-                  description: bannerData.description || '',
-                  backgroundImage: bannerData.backgroundImage || '',
-                };
-              }
-              if (Array.isArray(cardsData) && cardsData.length > 0) {
-                nextState.newArrivals.cards = cardsData.map((card: any) => ({
-                  _id: card._id || '',
-                  title: card.title || '',
-                  image: card.image || '',
-                  type: card.type || 'card',
-                }));
-              }
-              break;
-            }
-            default:
-              break;
-          }
-        });
-
-        if (!signal.aborted) {
-          setSectionsData(nextState);
-          setErrorMessage(null);
-        }
-      } catch (error) {
-        if (signal.aborted) {
+      incomingSections.forEach((section: any) => {
+        if (!section || typeof section !== 'object') {
           return;
         }
-        console.error('[v0] Failed to load homepage data:', error);
-        setSectionsData(prev => prev);
-        setErrorMessage('We could not load the latest homepage data. Showing default content.');
-      } finally {
-        if (!signal.aborted) {
-          setIsLoading(false);
+
+        const { type, data } = section;
+        if (!data || typeof data !== 'object') {
+          return;
         }
+
+        switch (type) {
+          case 'hero': {
+            const banners = (data as any).banners;
+            if (Array.isArray(banners) && banners.length > 0) {
+              nextState.hero = banners.map((banner: any) => ({
+                _id: banner._id?.toString() || '',
+                title: banner.title || '',
+                subtitle: banner.subtitle || '',
+                description: banner.description || '',
+                image: banner.image || '',
+                link: banner.link || '/products',
+                buttonText: banner.buttonText || 'Shop Now',
+                backgroundColor: banner.backgroundColor || '#f5f5f5',
+                displayOrder: banner.displayOrder || 0,
+              }));
+            }
+            break;
+          }
+          case 'categories': {
+            const mappedCategories = mapCategoriesFromApi((data as any).categories);
+            if (mappedCategories.length > 0) {
+              nextState.categories = mappedCategories;
+            }
+            break;
+          }
+          case 'newProducts': {
+            const mappedProducts = mapProductsFromApi((data as any).products);
+            if (mappedProducts.length > 0) {
+              nextState.newProducts = mappedProducts;
+            }
+            break;
+          }
+          case 'featuredProducts': {
+            const mappedProducts = mapProductsFromApi((data as any).products, 'Featured');
+            if (mappedProducts.length > 0) {
+              nextState.featuredProducts = mappedProducts;
+            }
+            break;
+          }
+          case 'trendingProducts': {
+            const mappedProducts = mapProductsFromApi((data as any).products, 'Trending');
+            if (mappedProducts.length > 0) {
+              nextState.trendingProducts = mappedProducts;
+            }
+            break;
+          }
+          case 'features': {
+            const mappedFeatures = mapFeaturesFromApi((data as any).features);
+            if (mappedFeatures.length > 0) {
+              nextState.features = mappedFeatures;
+            }
+            break;
+          }
+          case 'dazzle': {
+            const dazzleCards = (data as any).cards;
+            if (Array.isArray(dazzleCards) && dazzleCards.length > 0) {
+              nextState.dazzle = dazzleCards.map((card: any) => ({
+                _id: card._id || '',
+                title: card.title || '',
+                subtitle: card.subtitle || '',
+                description: card.description || '',
+                buttonText: card.buttonText || 'Explore More',
+                buttonLink: card.buttonLink || '/products',
+                image: card.image || '',
+              }));
+            }
+            break;
+          }
+          case 'gallery': {
+            const galleryItems = (data as any).items;
+            if (Array.isArray(galleryItems) && galleryItems.length > 0) {
+              nextState.gallery = galleryItems.map((item: any) => ({
+                _id: item._id || '',
+                image: item.image || '',
+              }));
+            }
+            break;
+          }
+          case 'news': {
+            const newsItems = (data as any).items;
+            if (Array.isArray(newsItems) && newsItems.length > 0) {
+              nextState.news = newsItems.map((item: any) => ({
+                _id: item._id || '',
+                title: item.title || '',
+                excerpt: item.excerpt || '',
+                image: item.image || '',
+                publishDate: item.publishDate || new Date().toISOString(),
+                slug: item.slug || '',
+              }));
+            }
+            break;
+          }
+          case 'newArrivals': {
+            const bannerData = (data as any).banner;
+            const cardsData = (data as any).cards;
+            if (bannerData && typeof bannerData === 'object') {
+              nextState.newArrivals.banner = {
+                title: bannerData.title || 'New Arrivals',
+                subtitle: bannerData.subtitle || '💎 500+ New Items',
+                description: bannerData.description || '',
+                backgroundImage: bannerData.backgroundImage || '',
+              };
+            }
+            if (Array.isArray(cardsData) && cardsData.length > 0) {
+              nextState.newArrivals.cards = cardsData.map((card: any) => ({
+                _id: card._id || '',
+                title: card.title || '',
+                image: card.image || '',
+                type: card.type || 'card',
+              }));
+            }
+            break;
+          }
+          default:
+            break;
+        }
+      });
+
+      if (!signal.aborted) {
+        setSectionsData(nextState);
+        setErrorMessage(null);
       }
-    }, []);
+    } catch (error) {
+      if (signal.aborted) {
+        return;
+      }
+      console.error('[v0] Failed to load homepage data:', error);
+      setSectionsData(prev => prev);
+      setErrorMessage('We could not load the latest homepage data. Showing default content.');
+    } finally {
+      if (!signal.aborted) {
+        setIsLoading(false);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -501,45 +503,33 @@ export const HomePage = () => {
 
   return (
     <>
-      <div className='flex-col gap-0 pt-4'>
-        <div className={'mx-auto w-full mb-4 sm:mb-5 md:mb-6'}>
-          <HeroBannerSlider banners={sectionsData.hero} isLoading={isLoading} />
+      <div className='flex-col gap-0'>
+        <div className={'mx-auto w-full'}>
+          <HeroBanner />
         </div>
-        {errorMessage && (
-          <div className='mt-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700'>{errorMessage}</div>
-        )}
-        <div className={SECTION_SPACING}>
-          <FeaturedSlider products={sectionsData.newProducts} isLoading={isLoading} />
+        <div className={'mx-auto w-full'}>
+          <Categories />
         </div>
-        <div className='mt-8 sm:mt-10 md:mt-12 lg:mt-20'>
-          <NewArrivalsSection banner={sectionsData.newArrivals.banner} cards={sectionsData.newArrivals.cards} isLoading={isLoading} />
+        <div>
+          <ScrollingOffer />
         </div>
-        <div className={SECTION_SPACING}>
-          <BestSellers products={sectionsData.featuredProducts} isLoading={isLoading} />
+        <div>
+          <Slider />
         </div>
-        <div className={SECTION_SPACING}>
-          <TrendingProducts products={sectionsData.trendingProducts} isLoading={isLoading} />
+        <div>
+          <ProductShowcase />
         </div>
-        <div className={SECTION_SPACING}>
-          <CollectionsSection dazzleData={sectionsData.dazzle} isLoading={isLoading} />
-        </div>
-        {/* <div className={SECTION_SPACING}>
-          <Testimonials />
-        </div> */}
-        <div className={SECTION_SPACING}>
-          <WhyChooseUs features={sectionsData.features} isLoading={isLoading} />
-        </div>
-        <div className={SECTION_SPACING}>
-          <GallerySection galleryItems={sectionsData.gallery} isLoading={isLoading} />
+        <div>
+          <TestimonialsSection />
         </div>
       </div>
       {/* Updates section - Full width */}
       {/* <div className={SECTION_SPACING}>
         <UpdatesSection newsItems={sectionsData.news} isLoading={isLoading} />
       </div> */}
-      <div className='mt-8 sm:mt-10 md:mt-12 lg:mt-20'>
+      {/* <div className='mt-8 sm:mt-10 md:mt-12 lg:mt-20'>
         <Subscribe />
-      </div>
+      </div> */}
     </>
   );
 };
@@ -625,13 +615,7 @@ const Hero = ({ slides = defaultHeroSlides, isLoading = false }: { slides?: Hero
                     href={`/products?category=${encodeURIComponent(category.slug || category.name)}`}
                     className='flex items-center gap-3 text-[#3F5C45] flex-1'>
                     {category.icon ? (
-                      <Image
-                        src={category.icon}
-                        alt={category.name}
-                        width={18}
-                        height={18}
-                        className="object-contain flex-shrink-0"
-                      />
+                      <Image src={category.icon} alt={category.name} width={18} height={18} className='object-contain flex-shrink-0' />
                     ) : (
                       <Diamond size={18} />
                     )}
@@ -671,13 +655,7 @@ const Hero = ({ slides = defaultHeroSlides, isLoading = false }: { slides?: Hero
                         href={`/products?category=${encodeURIComponent(category.slug || category.name)}`}
                         className='flex items-center gap-2 text-[#3F5C45] flex-1'>
                         {category.icon ? (
-                          <Image
-                            src={category.icon}
-                            alt={category.name}
-                            width={14}
-                            height={14}
-                            className="object-contain flex-shrink-0"
-                          />
+                          <Image src={category.icon} alt={category.name} width={14} height={14} className='object-contain flex-shrink-0' />
                         ) : (
                           <Diamond size={14} />
                         )}
@@ -802,26 +780,26 @@ const CategoryStrip = memo(({ categoriesData, isLoading = false }: { categoriesD
       ) : (
         <div className='mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 sm:gap-4 md:gap-6 pt-6 sm:pt-8'>
           {items.map(item => (
-              <Link
-                key={`${item.slug || item.name}-${item.image}`}
-                href={`/products?category=${encodeURIComponent(item.slug || item.name)}`}
-                className='group flex flex-col items-center gap-3 transition-transform duration-300 hover:scale-105'>
-                <div className='relative aspect-square w-full overflow-hidden rounded-full bg-linear-to-br from-[#F5EEE5] to-white shadow-lg ring-2 ring-[#E6D3C2] transition-shadow duration-300 group-hover:shadow-xl group-hover:ring-[#C8A15B]'>
-                  <Image
-                    src={item.image}
-                    alt={item.name}
-                    fill
-                    sizes='(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 16vw'
-                    className='object-cover transition-transform duration-300 group-hover:scale-110'
-                    loading='lazy'
-                  />
-                  <div className='absolute inset-0 bg-linear-to-t from-black/20 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100' />
-                </div>
-                <h3 className='text-center text-xs sm:text-sm font-semibold tracking-wide text-[#1F3B29] transition-colors duration-300 group-hover:text-[#C8A15B] md:text-base'>
-                  {item.name}
-                </h3>
-              </Link>
-            ))}
+            <Link
+              key={`${item.slug || item.name}-${item.image}`}
+              href={`/products?category=${encodeURIComponent(item.slug || item.name)}`}
+              className='group flex flex-col items-center gap-3 transition-transform duration-300 hover:scale-105'>
+              <div className='relative aspect-square w-full overflow-hidden rounded-full bg-linear-to-br from-[#F5EEE5] to-white shadow-lg ring-2 ring-[#E6D3C2] transition-shadow duration-300 group-hover:shadow-xl group-hover:ring-[#C8A15B]'>
+                <Image
+                  src={item.image}
+                  alt={item.name}
+                  fill
+                  sizes='(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 16vw'
+                  className='object-cover transition-transform duration-300 group-hover:scale-110'
+                  loading='lazy'
+                />
+                <div className='absolute inset-0 bg-linear-to-t from-black/20 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100' />
+              </div>
+              <h3 className='text-center text-xs sm:text-sm font-semibold tracking-wide text-[#1F3B29] transition-colors duration-300 group-hover:text-[#C8A15B] md:text-base'>
+                {item.name}
+              </h3>
+            </Link>
+          ))}
         </div>
       )}
 
@@ -1228,8 +1206,16 @@ const GallerySection = memo(({ galleryItems, isLoading = false }: { galleryItems
 
       <div className='mt-6 sm:mt-8 grid grid-cols-2 gap-3 sm:gap-4 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 md:gap-5'>
         {itemsToShow.map(item => (
-          <div key={`gallery-image-${item._id}`} className='relative overflow-hidden rounded-xl shadow-sm hover:shadow-md transition-shadow h-32 sm:h-40 md:h-56 lg:h-64'>
-            <Image src={item.image} alt='Gallery image' fill className='object-cover' sizes='(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw' />
+          <div
+            key={`gallery-image-${item._id}`}
+            className='relative overflow-hidden rounded-xl shadow-sm hover:shadow-md transition-shadow h-32 sm:h-40 md:h-56 lg:h-64'>
+            <Image
+              src={item.image}
+              alt='Gallery image'
+              fill
+              className='object-cover'
+              sizes='(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw'
+            />
           </div>
         ))}
       </div>
@@ -1239,10 +1225,7 @@ const GallerySection = memo(({ galleryItems, isLoading = false }: { galleryItems
 GallerySection.displayName = 'GallerySection';
 
 const WhyChooseUs = memo(({ features, isLoading = false }: { features?: HomepageFeatureItem[]; isLoading?: boolean }) => {
-  const resolvedFeatures = useMemo(
-    () => (features && features.length > 0 ? features : fallbackFeatureData),
-    [features]
-  );
+  const resolvedFeatures = useMemo(() => (features && features.length > 0 ? features : fallbackFeatureData), [features]);
   const isPending = isLoading && (!features || features.length === 0);
 
   return (
@@ -1375,97 +1358,162 @@ const Subscribe = memo(() => {
 });
 Subscribe.displayName = 'Subscribe';
 
-const NewArrivalsSection = memo(({
-  banner,
-  cards,
-  isLoading = false,
-}: {
-  banner: {
-    title: string;
-    subtitle: string;
-    description: string;
-    backgroundImage: string;
-  } | null;
-  cards: {
-    _id: string;
-    title: string;
-    image: string;
-    type: 'card' | 'banner';
-  }[];
-  isLoading?: boolean;
-}) => {
-  if (isLoading && !banner && cards.length === 0) {
-    return <NewArrivalsSkeleton />;
-  }
+const NewArrivalsSection = memo(
+  ({
+    banner,
+    cards,
+    isLoading = false,
+  }: {
+    banner: {
+      title: string;
+      subtitle: string;
+      description: string;
+      backgroundImage: string;
+    } | null;
+    cards: {
+      _id: string;
+      title: string;
+      image: string;
+      type: 'card' | 'banner';
+    }[];
+    isLoading?: boolean;
+  }) => {
+    if (isLoading && !banner && cards.length === 0) {
+      return <NewArrivalsSkeleton />;
+    }
 
-  const bannerData = banner || {
-    title: 'New Arrivals',
-    subtitle: '💎 500+ New Items',
-    description: 'New Arrivals Dropping Daily, Monday through Friday.\nExplore the Latest Launches Now!',
-    backgroundImage: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=1920&q=80',
-  };
+    const bannerData = banner || {
+      title: 'New Arrivals',
+      subtitle: '💎 500+ New Items',
+      description: 'New Arrivals Dropping Daily, Monday through Friday.\nExplore the Latest Launches Now!',
+      backgroundImage: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=1920&q=80',
+    };
 
-  // Filter cards to show only 'card' type items
-  const cardsToShow = cards.filter(card => card.type === 'card' || !card.type);
+    // Filter cards to show only 'card' type items
+    const cardsToShow = cards.filter(card => card.type === 'card' || !card.type);
 
-  const fallbackCards = [
+    const fallbackCards = [
+      {
+        _id: 'fallback-1',
+        title: 'Silver Idols',
+        image: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=600&q=80',
+        type: 'card' as const,
+      },
+      {
+        _id: 'fallback-2',
+        title: 'Floral Bloom',
+        image: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=600&q=80',
+        type: 'card' as const,
+      },
+    ];
+
+    const displayCards = cardsToShow.length > 0 ? cardsToShow : fallbackCards;
+
+    return (
+      <section className='relative w-full'>
+        {/* Background Banner */}
+        <div className='relative h-[280px] sm:h-[320px] md:h-[380px] lg:h-[420px] w-full'>
+          <Image src={bannerData.backgroundImage} alt='New Arrivals Banner' fill className='object-cover' priority sizes='100vw' />
+
+          <div className='absolute inset-0 bg-black/20'></div>
+
+          <div className='absolute inset-0 flex flex-col justify-center px-4 sm:px-6 md:px-8 lg:px-12 text-white'>
+            <h2 className='text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-semibold'>{bannerData.title}</h2>
+
+            {bannerData.subtitle && (
+              <div className='mt-2 sm:mt-3 md:mt-4 bg-white/30 text-white px-3 sm:px-4 md:px-5 py-1 md:py-1.5 rounded-full w-fit backdrop-blur-md text-xs sm:text-sm md:text-base'>
+                {bannerData.subtitle}
+              </div>
+            )}
+
+            {bannerData.description && (
+              <p className='mt-3 sm:mt-4 md:mt-5 text-sm sm:text-base md:text-lg lg:text-xl max-w-[600px] leading-relaxed whitespace-pre-line'>
+                {bannerData.description}
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* White Floating Cards */}
+        {displayCards.length > 0 && (
+          <div className='max-w-[1440px] mx-auto px-4 sm:px-6 md:px-8 lg:px-12 -mt-16 sm:-mt-20 md:-mt-24 relative z-10'>
+            <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 md:gap-6'>
+              {displayCards.map(card => (
+                <div key={card._id} className='bg-white rounded-xl overflow-hidden shadow-lg'>
+                  <div className='relative h-[240px] sm:h-[280px] md:h-[320px] lg:h-[350px]'>
+                    <Image
+                      src={card.image}
+                      alt={card.title}
+                      fill
+                      className='object-cover'
+                      sizes='(max-width: 640px) 100vw, 50vw'
+                      loading='lazy'
+                    />
+                  </div>
+                  <p className='px-4 sm:px-6 md:px-8 py-3 sm:py-4 md:py-5 text-base sm:text-lg md:text-xl font-medium'>{card.title}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </section>
+    );
+  },
+);
+NewArrivalsSection.displayName = 'NewArrivalsSection';
+
+const TestimonialsSection = () => {
+  // data/testimonials.js
+  const testimonials = [
     {
-      _id: 'fallback-1',
-      title: 'Silver Idols',
-      image: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=600&q=80',
-      type: 'card' as const,
+      id: 1,
+      name: 'Akanksha Khanna',
+      age: 27,
+      image: '/uploads/1765269917848-mttqdya63ws.jpg',
+      text: "Delighted with my engagement ring from BlueStone! It's my dream ring, fits perfectly and is stunning to look at. Thanks, BlueStone, for helping us find the perfect symbol of love!",
+      rotate: 'rotate-10',
     },
     {
-      _id: 'fallback-2',
-      title: 'Floral Bloom',
-      image: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=600&q=80',
-      type: 'card' as const,
+      id: 2,
+      name: 'Nutan Mishra',
+      age: 33,
+      image: '/uploads/1765272258145-ta6uom4xec.jpg',
+      text: "I got a Nazariya for my baby boy from BlueStone. It's so cute seeing it on my little one's wrist, and it gives me a sense of security knowing it's there.",
+      rotate: 'rotate-6',
+    },
+    {
+      id: 3,
+      name: 'Divya Mishra',
+      age: 26,
+      image: '/uploads/1765272281023-dyw5c7pvej.jpg',
+      text: "On Valentine's Day, my husband gifted me a necklace from BlueStone, and I haven't taken it off even once. Everyone asks me where it's from!",
+      rotate: '-rotate-6',
+    },
+    {
+      id: 4,
+      name: 'Anuska Ananya',
+      age: 24,
+      image: '/uploads/1765273359701-w2ybph2t48.webp',
+      text: 'BlueStone is my go-to place for jewellery. I love that I can wear their jewellery to work, dates, parties and brunches.',
+      rotate: '-rotate-10',
     },
   ];
 
-  const displayCards = cardsToShow.length > 0 ? cardsToShow : fallbackCards;
-
   return (
-    <section className='relative w-full'>
-      {/* Background Banner */}
-      <div className='relative h-[280px] sm:h-[320px] md:h-[380px] lg:h-[420px] w-full'>
-        <Image src={bannerData.backgroundImage} alt='New Arrivals Banner' fill className='object-cover' priority sizes='100vw' />
+    <section className='relative pb-20 bg-white overflow-hidden'>
+      <h2 className='text-center text-3xl font-serif text-[#001e38] mb-12'>Customer Testimonials</h2>
 
-        <div className='absolute inset-0 bg-black/20'></div>
+      {/* Rope */}
+      <svg className='absolute top-[80px] left-0 w-full z-0' height='120' viewBox='0 0 1200 120' preserveAspectRatio='none'>
+        <path d='M0 60 C 200 10, 50 90, 600 60 S 1000 30, 1200 60' stroke='#d1d5db' strokeWidth='3' fill='none' />
+      </svg>
 
-        <div className='absolute inset-0 flex flex-col justify-center px-4 sm:px-6 md:px-8 lg:px-12 text-white'>
-          <h2 className='text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-semibold'>{bannerData.title}</h2>
-
-          {bannerData.subtitle && (
-            <div className='mt-2 sm:mt-3 md:mt-4 bg-white/30 text-white px-3 sm:px-4 md:px-5 py-1 md:py-1.5 rounded-full w-fit backdrop-blur-md text-xs sm:text-sm md:text-base'>
-              {bannerData.subtitle}
-            </div>
-          )}
-
-          {bannerData.description && (
-            <p className='mt-3 sm:mt-4 md:mt-5 text-sm sm:text-base md:text-lg lg:text-xl max-w-[600px] leading-relaxed whitespace-pre-line'>
-              {bannerData.description}
-            </p>
-          )}
-        </div>
+      {/* Cards */}
+      <div className='relative z-10 flex justify-center gap-20'>
+        {testimonials.map(item => (
+          <TestimonialCard key={item.id} item={item} />
+        ))}
       </div>
-
-      {/* White Floating Cards */}
-      {displayCards.length > 0 && (
-        <div className='max-w-[1440px] mx-auto px-4 sm:px-6 md:px-8 lg:px-12 -mt-16 sm:-mt-20 md:-mt-24 relative z-10'>
-          <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 md:gap-6'>
-            {displayCards.map(card => (
-              <div key={card._id} className='bg-white rounded-xl overflow-hidden shadow-lg'>
-                <div className='relative h-[240px] sm:h-[280px] md:h-[320px] lg:h-[350px]'>
-                  <Image src={card.image} alt={card.title} fill className='object-cover' sizes='(max-width: 640px) 100vw, 50vw' loading='lazy' />
-                </div>
-                <p className='px-4 sm:px-6 md:px-8 py-3 sm:py-4 md:py-5 text-base sm:text-lg md:text-xl font-medium'>{card.title}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
     </section>
   );
-});
-NewArrivalsSection.displayName = 'NewArrivalsSection';
+};
