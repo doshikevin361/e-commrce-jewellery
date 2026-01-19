@@ -47,6 +47,7 @@ import {
 import Categories, { HeroBanner, ScrollingOffer, Slider } from './hero-banner-slider';
 import ProductShowcase from './ProductShowcase';
 import TestimonialCard from '../testimonialCard/TestimonialCard';
+import ElegantProductCard from '../elegantProductCard/ElegantProductCard';
 
 type HeroSlide = {
   id: string | number;
@@ -518,6 +519,9 @@ export const HomePage = () => {
         </div>
         <div>
           <ProductShowcase />
+        </div>
+        <div>
+          <JewelryProductsDemo />
         </div>
         <div>
           <TestimonialsSection />
@@ -1517,3 +1521,75 @@ const TestimonialsSection = () => {
     </section>
   );
 };
+
+const JewelryProductsDemo = () => {
+  const products = [
+    {
+      id: 1,
+      name: 'Diamond Elegance Ring',
+      price: '₹45,999',
+      originalPrice: '₹59,999',
+      rating: 4.8,
+      reviews: 127,
+      images: [
+        'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=600&q=80',
+        'https://images.unsplash.com/photo-1588444650733-d0762c5c8c5f?auto=format&fit=crop&w=600&q=80',
+      ],
+      discount: '23% OFF',
+    },
+    {
+      id: 2,
+      name: 'Gold Pearl Necklace',
+      price: '₹32,499',
+      originalPrice: '₹42,999',
+      rating: 4.9,
+      reviews: 89,
+      images: [
+        'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=600&q=80',
+        'https://images.unsplash.com/photo-1602526216432-bb2d8d5c7f2b?auto=format&fit=crop&w=600&q=80',
+      ],
+      discount: '24% OFF',
+    },
+    {
+      id: 3,
+      name: 'Sapphire Stud Earrings',
+      price: '₹28,999',
+      originalPrice: '₹35,999',
+      rating: 4.7,
+      reviews: 156,
+      images: [
+        'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=600&q=80',
+        'https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0?auto=format&fit=crop&w=600&q=80',
+      ],
+      discount: '19% OFF',
+    },
+    {
+      id: 4,
+      name: 'Emerald Tennis Bracelet',
+      price: '₹52,999',
+      originalPrice: '₹69,999',
+      rating: 5.0,
+      reviews: 203,
+      images: [
+        'https://images.unsplash.com/photo-1573408301185-9146fe634ad0?auto=format&fit=crop&w=600&q=80',
+        'https://images.unsplash.com/photo-1611591437281-460bfbe1220a?auto=format&fit=crop&w=600&q=80',
+      ],
+      discount: '24% OFF',
+    },
+  ];
+
+  return (
+    <div className='min-h-screen'>
+      <div className='max-w-7xl mx-auto'>
+        <h2 className='text-center text-3xl font-serif text-[#001e38] mb-12'>Elegant Jewelry Collection</h2>
+        <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 justify-items-center'>
+          {products.map(product => (
+            <ElegantProductCard key={product.id} product={product} />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default JewelryProductsDemo;
