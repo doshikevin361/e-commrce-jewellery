@@ -707,7 +707,7 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
                   'flex-1 px-6 py-3.5 lg:py-4 rounded-xl font-semibold text-base border-2 transition-all duration-300 shadow-md hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]',
                   product.stock === 0
                     ? 'border-gray-300 text-gray-500 cursor-not-allowed bg-gray-100'
-                    : 'border-web text-web hover:bg-web hover:text-white bg-white',
+                    : 'border-web text-web hover:bg-web bg-white',
                 )}>
                 <span>Buy Now</span>
               </button>
