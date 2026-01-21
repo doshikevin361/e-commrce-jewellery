@@ -35,10 +35,21 @@ type ProductCardProps = {
   onClick?: () => void;
   showDeleteIcon?: boolean;
   onDelete?: () => void;
+  actionSlot?: React.ReactNode;
+  hideDefaultAction?: boolean;
 };
 
 export const ProductCard = memo(
-  ({ product, className, actionLabel = 'Add to cart', onClick, showDeleteIcon = false, onDelete }: ProductCardProps) => {
+  ({
+    product,
+    className,
+    actionLabel = 'Add to cart',
+    onClick,
+    showDeleteIcon = false,
+    onDelete,
+    actionSlot,
+    hideDefaultAction = false,
+  }: ProductCardProps) => {
     const router = useRouter();
     const { addToCart, cartItems } = useCart();
     const { isProductInWishlist } = useWishlist();
@@ -217,19 +228,22 @@ export const ProductCard = memo(
               {product.originalPrice && <span className='text-sm text-gray-400 line-through'>{product.originalPrice}</span>}
             </div>
 
-            {/* Button */}
-            <button
-              onClick={handleAddToCart}
-              disabled={cartLoading || isInCart}
-              className={cn(
-                'flex w-full items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-semibold transition-all',
-                isInCart
-                  ? 'border border-gray-300 bg-gray-100 text-[#001e38]'
-                  : 'bg-[#001e38] text-white shadow-md hover:bg-[#002a52] hover:shadow-lg active:scale-[0.98]',
-              )}>
-              <ShoppingCart size={16} />
-              {cartLoading ? 'Adding...' : isInCart ? 'In Cart' : actionLabel}
-            </button>
+            {actionSlot ? (
+              actionSlot
+            ) : hideDefaultAction ? null : (
+              <button
+                onClick={handleAddToCart}
+                disabled={cartLoading || isInCart}
+                className={cn(
+                  'flex w-full items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-semibold transition-all',
+                  isInCart
+                    ? 'border border-gray-300 bg-gray-100 text-[#001e38]'
+                    : 'bg-[#001e38] text-white shadow-md hover:bg-[#002a52] hover:shadow-lg active:scale-[0.98]',
+                )}>
+                <ShoppingCart size={16} />
+                {cartLoading ? 'Adding...' : isInCart ? 'In Cart' : actionLabel}
+              </button>
+            )}
           </div>
         </div>
       </article>
@@ -243,7 +257,9 @@ export const ProductCard = memo(
       prevProps.product.title === nextProps.product.title &&
       prevProps.className === nextProps.className &&
       prevProps.actionLabel === nextProps.actionLabel &&
-      prevProps.showDeleteIcon === nextProps.showDeleteIcon
+      prevProps.showDeleteIcon === nextProps.showDeleteIcon &&
+      prevProps.hideDefaultAction === nextProps.hideDefaultAction &&
+      prevProps.actionSlot === nextProps.actionSlot
     );
   },
 );

@@ -3,6 +3,8 @@ import Link from 'next/link';
 import { Search, Phone, Video, MapPin, Heart, ShoppingCart, ChevronDown, Clock, Store, LogOut, User } from 'lucide-react';
 import { AuthModal } from '@/components/auth/auth-modal';
 import toast from 'react-hot-toast';
+import { useCart } from '@/contexts/CartContext';
+import { useWishlist } from '@/contexts/WishlistContext';
 
 const HomeHeader = () => {
   const [openDropdown, setOpenDropdown] = useState(null);
@@ -11,6 +13,8 @@ const HomeHeader = () => {
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [customerName, setCustomerName] = useState<string>('');
+  const { cartCount } = useCart();
+  const { wishlistCount } = useWishlist();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -32,7 +36,7 @@ const HomeHeader = () => {
       if (typeof window !== 'undefined') {
         const token = localStorage.getItem('customerToken');
         const customerData = localStorage.getItem('currentCustomer');
-        
+
         if (token && customerData) {
           try {
             const customer = JSON.parse(customerData);
@@ -77,7 +81,7 @@ const HomeHeader = () => {
   };
 
   const handleSwitchMode = () => {
-    setAuthMode(prev => prev === 'login' ? 'register' : 'login');
+    setAuthMode(prev => (prev === 'login' ? 'register' : 'login'));
   };
 
   const menuItems = [
@@ -120,27 +124,18 @@ const HomeHeader = () => {
                   <span className='text-[#3579b8] font-medium'>{customerName}</span>
                 </div>
                 <span className='h-3 w-px bg-gray-500'></span>
-                <button 
-                  onClick={handleLogout}
-                  className='text-[#3579b8] hover:text-gray-900 flex items-center gap-1'
-                >
+                <button onClick={handleLogout} className='text-[#3579b8] hover:text-gray-900 flex items-center gap-1'>
                   <LogOut className='w-4 h-4' />
                   <span>Logout</span>
                 </button>
               </>
             ) : (
               <>
-                <button 
-                  onClick={handleLoginClick}
-                  className='text-[#3579b8] hover:text-gray-900'
-                >
+                <button onClick={handleLoginClick} className='text-[#3579b8] hover:text-gray-900'>
                   Login
                 </button>
                 <span className='h-3 w-px bg-gray-500'></span>
-                <button 
-                  onClick={handleSignupClick}
-                  className='text-[#3579b8] hover:text-gray-900'
-                >
+                <button onClick={handleSignupClick} className='text-[#3579b8] hover:text-gray-900'>
                   Signup
                 </button>
               </>
@@ -190,18 +185,25 @@ const HomeHeader = () => {
 
             <span className='h-6 w-px bg-gray-500'></span>
 
-            <button className='text-gray-600 hover:text-[#001e38]'>
+            <Link href='/wishlist' className='relative text-gray-600 hover:text-[#001e38]' aria-label='Wishlist'>
               <Heart className='w-6 h-6' />
-            </button>
+              {wishlistCount > 0 && (
+                <span className='absolute -top-2 -right-2 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-[#C8A15B] px-1 text-[10px] font-semibold text-white'>
+                  {wishlistCount}
+                </span>
+              )}
+            </Link>
 
             <span className='h-6 w-px bg-gray-500'></span>
 
-            <button className='relative text-gray-600 hover:text-[#001e38]'>
+            <Link href='/cart' className='relative text-gray-600 hover:text-[#001e38]' aria-label='Cart'>
               <ShoppingCart className='w-6 h-6' />
-              <span className='absolute -top-2 -right-2 bg-gray-200 text-gray-700 text-xs w-5 h-5 rounded-full flex items-center justify-center'>
-                0
-              </span>
-            </button>
+              {cartCount > 0 && (
+                <span className='absolute -top-2 -right-2 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-[#C8A15B] px-1 text-[10px] font-semibold text-white'>
+                  {cartCount}
+                </span>
+              )}
+            </Link>
           </div>
         </div>
       </div>
@@ -245,12 +247,7 @@ const HomeHeader = () => {
       </div>
 
       {/* Auth Modal */}
-      <AuthModal
-        open={authModalOpen}
-        onOpenChange={setAuthModalOpen}
-        mode={authMode}
-        onSwitchMode={handleSwitchMode}
-      />
+      <AuthModal open={authModalOpen} onOpenChange={setAuthModalOpen} mode={authMode} onSwitchMode={handleSwitchMode} />
     </div>
   );
 };
