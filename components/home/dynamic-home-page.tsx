@@ -520,6 +520,9 @@ export const HomePage = () => {
           <ProductShowcase />
         </div>
         <div>
+          <JewelryProductsDemo products={sectionsData.newProducts} isLoading={isLoading} />
+        </div>
+        <div>
           <TestimonialsSection />
         </div>
       </div>
@@ -1501,7 +1504,7 @@ const TestimonialsSection = () => {
 
   return (
     <section className='relative pb-20 bg-white overflow-hidden'>
-      <h2 className='text-center text-3xl font-serif text-[#001e38] mb-12'>Customer Testimonials</h2>
+      <h2 className='text-center text-3xl font-serif text-[#001e38] my-12'>Customer Testimonials</h2>
 
       {/* Rope */}
       <svg className='absolute top-[80px] left-0 w-full z-0' height='120' viewBox='0 0 1200 120' preserveAspectRatio='none'>
@@ -1517,3 +1520,39 @@ const TestimonialsSection = () => {
     </section>
   );
 };
+
+const JewelryProductsDemo = ({ products, isLoading = false }: { products?: ProductCardData[]; isLoading?: boolean }) => {
+  const resolvedProducts = useMemo(() => (products && products.length > 0 ? products.slice(0, 8) : []), [products]);
+  const showLoading = isLoading && resolvedProducts.length === 0;
+
+  return (
+    <section className='w-full bg-white py-10 sm:py-12'>
+      <div className='mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8'>
+        <h2 className='text-center text-3xl font-serif text-[#001e38]'>Elegant Jewelry Collection</h2>
+        <p className='mt-3 text-center text-sm sm:text-base text-[#4F3A2E]'>Fresh picks curated from our latest additions</p>
+        {showLoading ? (
+          <div className='mt-10'>
+            <ProductGridSkeleton count={8} />
+          </div>
+        ) : (
+          <div className='mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4'>
+            {resolvedProducts.length === 0 ? (
+              <div className='col-span-full flex items-center justify-center py-10 text-sm text-gray-500'>No products available yet.</div>
+            ) : (
+              resolvedProducts.map(product => <ProductCard key={product.id} product={product} className='min-w-0 w-full max-w-none' />)
+            )}
+          </div>
+        )}
+        <div className='mt-10 flex justify-center'>
+          <Link
+            href='/jewellery'
+            className='inline-flex items-center justify-center rounded-lg border border-[#001e38] px-8 py-3 text-xs sm:text-sm font-semibold uppercase tracking-wide text-[#001e38] transition-colors hover:bg-[#001e38] hover:text-white'>
+            Explore More
+          </Link>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+export default JewelryProductsDemo;
