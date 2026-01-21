@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { Search, Phone, Video, MapPin, Heart, ShoppingCart, ChevronDown, Clock, Store, LogOut, User } from 'lucide-react';
 import { AuthModal } from '@/components/auth/auth-modal';
 import toast from 'react-hot-toast';
 import { useCart } from '@/contexts/CartContext';
 import { useWishlist } from '@/contexts/WishlistContext';
+import { useRouter } from 'next/navigation';
+import { SearchDialog } from '@/components/home/SearchBar/SearchDialog';
 
 const HomeHeader = () => {
   const [openDropdown, setOpenDropdown] = useState(null);
@@ -15,6 +17,10 @@ const HomeHeader = () => {
   const [customerName, setCustomerName] = useState<string>('');
   const { cartCount } = useCart();
   const { wishlistCount } = useWishlist();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchOpen, setSearchOpen] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -157,16 +163,52 @@ const HomeHeader = () => {
 
           {/* Search Bar */}
           <div className='flex-1 max-w-xl'>
-            <div className='relative'>
+            <form
+              className='relative'
+              onSubmit={event => {
+                event.preventDefault();
+                const trimmedQuery = searchQuery.trim();
+                if (!trimmedQuery) {
+                  return;
+                }
+                router.push(`/jewellery?search=${encodeURIComponent(trimmedQuery)}`);
+                setSearchOpen(false);
+              }}>
               <input
+                ref={searchInputRef}
                 type='text'
                 placeholder='Search for Jewellery'
+                value={searchQuery}
+                onChange={event => {
+                  setSearchQuery(event.target.value);
+                  setSearchOpen(true);
+                }}
+                onFocus={() => setSearchOpen(true)}
+                onKeyDown={event => {
+                  if (event.key === 'Escape') {
+                    setSearchOpen(false);
+                  }
+                }}
+                role='combobox'
+                aria-autocomplete='list'
+                aria-expanded={searchOpen}
+                aria-controls='header-search-suggestions'
+                aria-haspopup='listbox'
                 className='w-full px-4 py-[6px] pr-12 border-3 border-[#e4e4e4] focus:outline-none'
               />
-              <button className='absolute right-0 top-0 h-full border-l-0 border-3 border-[#e4e4e4]  px-6 bg-[#F05D4d] hover:bg-[#ff5533] text-white '>
+              <button
+                type='submit'
+                className='absolute right-0 top-0 h-full border-l-0 border-3 border-[#e4e4e4] px-6 bg-[#F05D4d] hover:bg-[#ff5533] text-white'>
                 <Search className='w-5 h-5' />
               </button>
-            </div>
+              <SearchDialog
+                open={searchOpen}
+                onOpenChange={setSearchOpen}
+                query={searchQuery}
+                inputRef={searchInputRef}
+                listboxId='header-search-suggestions'
+              />
+            </form>
           </div>
 
           {/* Right Icons */}
