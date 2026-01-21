@@ -65,6 +65,16 @@ const HomeHeader = () => {
     return () => window.removeEventListener('authChange', checkAuth);
   }, []);
 
+  useEffect(() => {
+    const handleOpenLoginModal = () => {
+      setAuthMode('login');
+      setAuthModalOpen(true);
+    };
+
+    window.addEventListener('openLoginModal', handleOpenLoginModal);
+    return () => window.removeEventListener('openLoginModal', handleOpenLoginModal);
+  }, []);
+
   const handleLoginClick = () => {
     setAuthMode('login');
     setAuthModalOpen(true);
@@ -227,25 +237,45 @@ const HomeHeader = () => {
 
             <span className='h-6 w-px bg-gray-500'></span>
 
-            <Link href='/wishlist' className='relative text-gray-600 hover:text-[#001e38]' aria-label='Wishlist'>
+            <button
+              type='button'
+              onClick={() => {
+                if (!isLoggedIn) {
+                  window.dispatchEvent(new Event('openLoginModal'));
+                  return;
+                }
+                router.push('/wishlist');
+              }}
+              className='relative text-gray-600 hover:text-[#001e38]'
+              aria-label='Wishlist'>
               <Heart className='w-6 h-6' />
               {wishlistCount > 0 && (
                 <span className='absolute -top-2 -right-2 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-[#C8A15B] px-1 text-[10px] font-semibold text-white'>
                   {wishlistCount}
                 </span>
               )}
-            </Link>
+            </button>
 
             <span className='h-6 w-px bg-gray-500'></span>
 
-            <Link href='/cart' className='relative text-gray-600 hover:text-[#001e38]' aria-label='Cart'>
+            <button
+              type='button'
+              onClick={() => {
+                if (!isLoggedIn) {
+                  window.dispatchEvent(new Event('openLoginModal'));
+                  return;
+                }
+                router.push('/cart');
+              }}
+              className='relative text-gray-600 hover:text-[#001e38]'
+              aria-label='Cart'>
               <ShoppingCart className='w-6 h-6' />
               {cartCount > 0 && (
                 <span className='absolute -top-2 -right-2 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-[#C8A15B] px-1 text-[10px] font-semibold text-white'>
                   {cartCount}
                 </span>
               )}
-            </Link>
+            </button>
           </div>
         </div>
       </div>

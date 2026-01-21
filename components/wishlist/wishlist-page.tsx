@@ -12,11 +12,29 @@ export function WishlistPage() {
   const [wishlistItems, setWishlistItems] = useState<ProductCardData[]>([]);
   const [loading, setLoading] = useState(true);
   const [removing, setRemoving] = useState<string | null>(null);
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
   const router = useRouter();
   const { toast } = useToast();
 
+  useEffect(() => {
+    const checkAuth = () => {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('customerToken') : null;
+      setIsLoggedIn(!!token);
+      if (!token) {
+        window.dispatchEvent(new Event('openLoginModal'));
+      }
+    };
+    checkAuth();
+    window.addEventListener('authChange', checkAuth);
+    return () => window.removeEventListener('authChange', checkAuth);
+  }, [router]);
+
   // Fetch wishlist items
   useEffect(() => {
+    if (isLoggedIn === false) {
+      return;
+    }
+
     const fetchWishlist = async () => {
       try {
         setLoading(true);
@@ -93,8 +111,29 @@ export function WishlistPage() {
     }
   };
 
-  if (loading) {
+  if (isLoggedIn === null || loading) {
     return <PageLoader message='Loading wishlist...' className='min-h-screen' />;
+  }
+
+  if (isLoggedIn === false) {
+    return (
+      <div className='mx-auto w-full max-w-[1440px] px-4 sm:px-6 md:px-8 lg:px-12 py-12 sm:py-16 md:py-20'>
+        <div className='text-center'>
+          <div className='w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-[#F5EEE5] flex items-center justify-center mx-auto mb-4 sm:mb-6'>
+            <Heart size={32} className='sm:w-10 sm:h-10 text-[#C8A15B]' />
+          </div>
+          <h1 className='text-xl sm:text-2xl md:text-3xl font-bold text-[#1F3B29] mb-3 sm:mb-4'>Login Required</h1>
+          <p className='text-xs sm:text-sm md:text-base text-[#4F3A2E] mb-6 sm:mb-8 max-w-md mx-auto px-4'>
+            Please log in to view your wishlist and saved items.
+          </p>
+          <Link
+            href='/'
+            className='inline-flex items-center gap-2 rounded-full bg-[#1F3B29] px-5 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base text-white font-semibold hover:bg-[#2a4d3a] transition-colors'>
+            Go to Home
+          </Link>
+        </div>
+      </div>
+    );
   }
 
   if (wishlistItems.length === 0) {

@@ -6,15 +6,34 @@ import { ShoppingCart, Minus, Plus, Trash2, ArrowRight, Loader2 } from 'lucide-r
 import { useCart } from '@/contexts/CartContext';
 import { PageLoader } from '@/components/common/page-loader';
 import { ProductCard, type ProductCardData } from '@/components/home/common/product-card';
+import { useRouter } from 'next/navigation';
 
 export function CartPage() {
   const { cartItems, isLoading, updateQuantity, removeFromCart, fetchCart } = useCart();
   const [updatingItems, setUpdatingItems] = useState<Set<string>>(new Set());
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
-    fetchCart();
+    const checkAuth = () => {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('customerToken') : null;
+      setIsLoggedIn(!!token);
+      if (!token) {
+        window.dispatchEvent(new Event('openLoginModal'));
+      }
+    };
+
+    checkAuth();
+    window.addEventListener('authChange', checkAuth);
+    return () => window.removeEventListener('authChange', checkAuth);
+  }, [router]);
+
+  useEffect(() => {
+    if (isLoggedIn) {
+      fetchCart();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [isLoggedIn]);
 
   const handleUpdateQuantity = async (productId: string, change: number) => {
     const item = cartItems.find(item => item._id === productId);
@@ -52,8 +71,29 @@ export function CartPage() {
     }
   }, [isLoading, initialLoad]);
 
-  if (isLoading && initialLoad) {
+  if (isLoggedIn === null || (isLoading && initialLoad)) {
     return <PageLoader message='Loading cart...' />;
+  }
+
+  if (isLoggedIn === false) {
+    return (
+      <div className='mx-auto w-full max-w-[1440px] px-4 sm:px-6 md:px-8 lg:px-12 py-12 sm:py-16 md:py-20'>
+        <div className='text-center'>
+          <div className='w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-[#F5EEE5] flex items-center justify-center mx-auto mb-4 sm:mb-6'>
+            <ShoppingCart size={32} className='sm:w-10 sm:h-10 text-[#C8A15B]' />
+          </div>
+          <h1 className='text-xl sm:text-2xl md:text-3xl font-bold text-[#1F3B29] mb-3 sm:mb-4'>Login Required</h1>
+          <p className='text-xs sm:text-sm md:text-base text-[#4F3A2E] mb-6 sm:mb-8 max-w-md mx-auto px-4'>
+            Please log in to view your cart and checkout items.
+          </p>
+          <Link
+            href='/'
+            className='inline-flex items-center gap-2 rounded-full bg-[#1F3B29] px-5 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base text-white font-semibold hover:bg-[#2a4d3a] transition-colors'>
+            Go to Home
+          </Link>
+        </div>
+      </div>
+    );
   }
 
   if (cartItems.length === 0) {

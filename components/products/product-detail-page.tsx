@@ -176,7 +176,7 @@ function PremiumAccordion({
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
-    <div className='border border-[#E6D3C2]/20 bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300'>
+    <div className='border border-web/20 bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300'>
       <button
         onClick={() => setIsOpen(!isOpen)}
         className='flex items-center justify-between w-full px-8 py-5 hover:bg-[#FAF7F4]/50 transition-colors group'>
@@ -454,25 +454,23 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
   const grandTotal = subTotal + gstAmount - discountAmount;
 
   return (
-    <div className='min-h-screen bg-gradient-to-b from-white to-[#FAF7F4]/30'>
+    <div className='min-h-screen bg-white'>
       {/* Back Button */}
       {/* Main Product Section - Premium Two Column Layout */}
-      <div className='mx-auto w-full max-w-[1400px] px-4 sm:px-6 md:px-8 lg:px-12 pb-32 lg:pb-20 pt-8'>
-        <div className='grid grid-cols-1 lg:grid-cols-[1.15fr_1fr] gap-8 lg:gap-12 xl:gap-16 mb-16 lg:mb-24'>
+      <div className='mx-auto w-full max-w-[1400px] pb-24 lg:pb-16 pt-6'>
+        <div className='grid grid-cols-1 lg:grid-cols-[1.1fr_1fr] gap-6 lg:gap-10 xl:gap-12 mb-12 lg:mb-16'>
           {/* Left Column - Premium Image Gallery with Side Thumbnails */}
           <div className='flex flex-col lg:flex-row gap-4 lg:gap-6'>
             {/* Gallery Thumbnails - Left Side (Desktop) / Bottom (Mobile) */}
             {images.length > 1 && (
-              <div className='flex lg:flex-col gap-3 lg:gap-3 overflow-x-auto lg:overflow-y-auto lg:max-h-[600px] scrollbar-hide pb-2 lg:pb-0'>
+              <div className='flex lg:flex-col gap-2 lg:gap-3 overflow-x-auto lg:overflow-y-auto lg:max-h-[600px] scrollbar-hide pb-2 lg:pb-0'>
                 {images.map((img, index) => (
                   <button
                     key={index}
                     onClick={() => setSelectedImage(index)}
                     className={cn(
-                      'relative flex-shrink-0 w-20 h-20 lg:w-24 lg:h-24 overflow-hidden rounded-xl border-2 transition-all duration-300 hover:scale-105 bg-white shadow-sm hover:shadow-md',
-                      selectedImage === index 
-                        ? 'border-web ring-2 ring-web/30 shadow-md scale-105' 
-                        : 'border-[#E6D3C2]/50 hover:border-web/60'
+                      'relative flex-shrink-0 w-20 h-20 lg:w-24 lg:h-24 overflow-hidden rounded-md border transition-all duration-200 bg-white',
+                      selectedImage === index ? 'border-[#001e38] ring-1 ring-[#001e38]/20' : 'border-web/70 hover:border-[#001e38]/40',
                     )}>
                     <Image src={img} alt={`View ${index + 1}`} fill sizes='96px' className='object-cover' />
                   </button>
@@ -481,9 +479,9 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
             )}
 
             {/* Main Image with Smooth Zoom */}
-            <div className='flex-1 relative group'>
+            <div className='flex-1 relative'>
               <div
-                className='relative w-full overflow-hidden rounded-2xl bg-gradient-to-br from-[#F5EEE5] to-white border border-[#E6D3C2]/30 shadow-lg hover:shadow-2xl transition-all duration-500 cursor-zoom-in'
+                className='relative w-full overflow-hidden rounded-md bg-white border border-web/70 shadow-sm transition-colors cursor-zoom-in'
                 onMouseEnter={() => setImageZoom(true)}
                 onMouseLeave={() => setImageZoom(false)}>
                 <div className='relative aspect-square w-full'>
@@ -496,7 +494,7 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
                     priority
                   />
                 </div>
-                
+
                 {/* Premium Badges */}
                 <div className='absolute top-4 right-4 flex flex-col gap-2'>
                   {product.featured && (
@@ -515,7 +513,7 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
                     </span>
                   )}
                 </div>
-                
+
                 {/* Zoom Indicator */}
                 {imageZoom && (
                   <div className='absolute inset-0 flex items-center justify-center bg-black/5 pointer-events-none'>
@@ -531,14 +529,12 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
           {/* Right Column - Premium Product Information */}
           <div className='flex flex-col space-y-5 lg:space-y-6 lg:pt-2'>
             {/* Category Label */}
-            {product.categoryName && (
-              <p className='text-xs uppercase tracking-[0.25em] text-web font-bold mb-1'>{product.categoryName}</p>
-            )}
+            {product.categoryName && <p className='text-xs uppercase tracking-[0.25em] text-web font-bold mb-1'>{product.categoryName}</p>}
 
             {/* Title with Wishlist & Share */}
             <div className='space-y-3'>
               <div className='flex items-start justify-between gap-4'>
-                <h1 className='text-2xl sm:text-3xl lg:text-4xl font-bold text-[#1F3B29] leading-[1.2] flex-1 tracking-tight'>
+                <h1 className='text-xl sm:text-2xl lg:text-3xl font-bold text-[#001e38] leading-[1.2] flex-1 tracking-tight'>
                   {product.name}
                 </h1>
                 <div className='flex items-center gap-2 flex-shrink-0'>
@@ -549,18 +545,18 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
                       'p-2.5 lg:p-3 rounded-xl border-2 transition-all duration-300 hover:scale-110 active:scale-95',
                       isInWishlist
                         ? 'border-red-500 bg-red-50 hover:bg-red-100 shadow-md'
-                        : 'border-[#E6D3C2] hover:border-web hover:bg-[#FAF7F4] hover:shadow-md bg-white'
+                        : 'border-webhover:border-web hover:bg-[#FAF7F4] hover:shadow-md bg-white',
                     )}>
                     <Heart size={20} className={cn('transition-colors', isInWishlist ? 'text-red-500 fill-red-500' : 'text-[#1F3B29]')} />
                   </button>
                   <div className='relative'>
                     <button
                       onClick={() => setShareMenuOpen(!shareMenuOpen)}
-                      className='p-2.5 lg:p-3 rounded-xl border-2 border-[#E6D3C2] hover:border-web hover:bg-[#FAF7F4] bg-white transition-all duration-300 hover:scale-110 active:scale-95 hover:shadow-md'>
+                      className='p-2.5 lg:p-3 rounded-xl border-2 border-webhover:border-web hover:bg-[#FAF7F4] bg-white transition-all duration-300 hover:scale-110 active:scale-95 hover:shadow-md'>
                       <Share2 size={20} className='text-[#1F3B29]' />
                     </button>
                     {shareMenuOpen && (
-                      <div className='absolute right-0 top-full mt-2 bg-white rounded-2xl shadow-2xl border border-[#E6D3C2]/50 p-2 z-50 min-w-[200px] animate-in fade-in-50 slide-in-from-top-2'>
+                      <div className='absolute right-0 top-full mt-2 bg-white rounded-2xl shadow-2xl border border-web/50 p-2 z-50 min-w-[200px] animate-in fade-in-50 slide-in-from-top-2'>
                         <button
                           onClick={() => handleShare('whatsapp')}
                           className='w-full flex items-center gap-3 px-5 py-3 hover:bg-[#FAF7F4] rounded-xl text-sm text-left transition-colors'>
@@ -590,23 +586,23 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
                 <div className='flex items-center gap-2.5'>
                   <div className='flex items-center gap-0.5'>
                     {[...Array(5)].map((_, i) => (
-                      <Star 
-                        key={i} 
-                        size={18} 
-                        className={i < Math.floor(product.rating || 0) ? 'text-amber-400 fill-amber-400' : 'text-[#E6D3C2]'} 
+                      <Star
+                        key={i}
+                        size={18}
+                        className={i < Math.floor(product.rating || 0) ? 'text-amber-400 fill-amber-400' : 'text-web'}
                       />
                     ))}
                   </div>
-                  <span className='text-base font-bold text-[#1F3B29]'>{product.rating.toFixed(1)}</span>
+                  <span className='text-base font-bold text-[#001e38]'>{product.rating.toFixed(1)}</span>
                   <span className='text-sm text-[#4F3A2E]/70'>({product.reviewCount || 0} reviews)</span>
                 </div>
               )}
             </div>
 
             {/* Price Section */}
-            <div className='pb-5 border-b border-[#E6D3C2]/30'>
+            <div className='pb-5 border-b border-web/30'>
               <div className='flex items-baseline gap-3 flex-wrap mb-4'>
-                <span className='text-3xl sm:text-4xl font-bold text-[#1F3B29] tracking-tight'>
+                <span className='text-3xl sm:text-4xl font-bold text-[#001e38] tracking-tight'>
                   ₹{product.displayPrice.toLocaleString()}
                 </span>
                 {product.hasDiscount && product.discountPercent > 0 && (
@@ -644,7 +640,7 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
                   {product.tags.map((tag, index) => (
                     <span
                       key={index}
-                      className='px-3 py-1 text-xs font-medium bg-[#F5EEE5] text-[#1F3B29] rounded-full border border-[#E6D3C2]/50'>
+                      className='px-3 py-1 text-xs font-medium bg-[#F5EEE5] text-[#1F3B29] rounded-full border border-web/50'>
                       {tag}
                     </span>
                   ))}
@@ -655,14 +651,14 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
             {/* Quantity Selector */}
             <div className='flex items-center gap-4 pt-2'>
               <span className='text-sm font-semibold text-[#1F3B29] uppercase tracking-wide'>Quantity:</span>
-              <div className='flex items-center border-2 border-[#E6D3C2] rounded-xl overflow-hidden shadow-sm bg-white'>
+              <div className='flex items-center border-2 border-web rounded-xl overflow-hidden shadow-sm bg-white'>
                 <button
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
                   className='p-2.5 lg:p-3 hover:bg-[#FAF7F4] transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
                   disabled={quantity <= 1}>
                   <Minus size={18} className='text-[#1F3B29]' />
                 </button>
-                <span className='px-6 lg:px-8 py-2.5 text-base font-bold text-[#1F3B29] min-w-[4rem] text-center border-x-2 border-[#E6D3C2] bg-white'>
+                <span className='px-6 lg:px-8 py-2.5 text-base font-bold text-[#1F3B29] min-w-[4rem] text-center border-x-2 border-webbg-white'>
                   {quantity}
                 </span>
                 <button
@@ -684,8 +680,8 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
                   isInCart
                     ? 'bg-green-500 text-white cursor-default'
                     : product.stock === 0
-                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                    : 'bg-[#1F3B29] text-white hover:scale-[1.02] active:scale-[0.98] hover:bg-[#2a4d3a]'
+                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                      : 'bg-[#001e38] text-white hover:scale-[1.02] active:scale-[0.98] hover:bg-[#002a52]',
                 )}>
                 {cartButtonLoading ? (
                   <>
@@ -711,15 +707,432 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
                   'flex-1 px-6 py-3.5 lg:py-4 rounded-xl font-semibold text-base border-2 transition-all duration-300 shadow-md hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]',
                   product.stock === 0
                     ? 'border-gray-300 text-gray-500 cursor-not-allowed bg-gray-100'
-                    : 'border-web text-web hover:bg-web hover:text-white bg-white'
+                    : 'border-web text-web hover:bg-web hover:text-white bg-white',
                 )}>
                 <span>Buy Now</span>
               </button>
             </div>
 
+            {/* Product Details Tabs Section */}
+            <div className='pt-6'>
+              <Tabs defaultValue='specifications' className='w-full'>
+                <TabsList className='w-full justify-start bg-[#FAF7F4] p-1.5 rounded-2xl border border-web/30 mb-6'>
+                  <TabsTrigger
+                    value='description'
+                    className='data-[state=active]:bg-white data-[state=active]:text-web data-[state=active]:shadow-sm px-6 py-3 rounded-xl font-semibold text-sm transition-all'>
+                    Description
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value='specifications'
+                    className='data-[state=active]:bg-white data-[state=active]:text-web data-[state=active]:shadow-sm px-6 py-3 rounded-xl font-semibold text-sm transition-all'>
+                    Specifications
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value='reviews'
+                    className='data-[state=active]:bg-white data-[state=active]:text-web data-[state=active]:shadow-sm px-6 py-3 rounded-xl font-semibold text-sm transition-all'>
+                    Reviews
+                  </TabsTrigger>
+                </TabsList>
+
+                {/* Description Tab */}
+                <TabsContent value='description' className='mt-0'>
+                  <div className='bg-white rounded-2xl border border-web/30 shadow-sm p-6 lg:p-8'>
+                    {product.longDescription ? (
+                      <div className='prose prose-sm lg:prose-base max-w-none prose-headings:text-[#1F3B29] prose-headings:font-bold prose-headings:tracking-tight prose-headings:mb-4 prose-h1:text-2xl prose-h2:text-xl prose-h3:text-lg prose-p:text-[#4F3A2E] prose-p:leading-relaxed prose-p:mb-4 prose-strong:text-[#1F3B29] prose-strong:font-semibold prose-ul:text-[#4F3A2E] prose-ul:my-4 prose-ol:text-[#4F3A2E] prose-ol:my-4 prose-li:text-[#4F3A2E] prose-li:my-2 prose-li:pl-2 prose-a:text-web prose-a:font-medium prose-a:no-underline hover:prose-a:underline prose-a:transition-colors prose-img:rounded-xl prose-img:shadow-md prose-img:my-6 prose-img:w-full prose-img:max-w-full prose-hr:border-web/30 prose-hr:my-6 prose-blockquote:border-l-web prose-blockquote:border-l-4 prose-blockquote:bg-[#FAF7F4] prose-blockquote:py-2 prose-blockquote:px-4 prose-blockquote:rounded-r-lg prose-blockquote:my-4 prose-blockquote:text-[#4F3A2E] prose-code:text-[#1F3B29] prose-code:bg-[#F5EEE5] prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-pre:bg-[#F5EEE5] prose-pre:rounded-xl prose-pre:p-4 prose-pre:overflow-x-auto prose-table:w-full prose-table:my-4 prose-th:bg-[#FAF7F4] prose-th:text-[#1F3B29] prose-th:font-semibold prose-th:p-3 prose-th:border prose-th:border-web/30 prose-td:border prose-td:border-web/30 prose-td:p-3'>
+                        <ReactMarkdown
+                          remarkPlugins={[remarkGfm]}
+                          rehypePlugins={[rehypeRaw]}
+                          components={{
+                            a: ({ node, ...props }) => (
+                              <a
+                                {...props}
+                                className='text-web font-medium no-underline hover:underline transition-colors'
+                                target='_blank'
+                                rel='noopener noreferrer'
+                              />
+                            ),
+                            img: ({ node, ...props }) => (
+                              <img {...props} className='rounded-xl shadow-md my-6 w-full max-w-full h-auto' alt={props.alt || ''} />
+                            ),
+                          }}>
+                          {product.longDescription}
+                        </ReactMarkdown>
+                      </div>
+                    ) : product.shortDescription ? (
+                      <p className='text-base lg:text-lg text-[#4F3A2E] leading-relaxed'>{product.shortDescription}</p>
+                    ) : (
+                      <p className='text-[#4F3A2E]/70 italic'>No description available for this product.</p>
+                    )}
+                  </div>
+                </TabsContent>
+
+                {/* Specifications Tab */}
+                <TabsContent value='specifications' className='mt-0'>
+                  <div className='space-y-6'>
+                    <PremiumAccordion title='Price Breakup' icon={Coins}>
+                      <div className='space-y-4 text-sm'>
+                        {metalValue > 0 && (
+                          <div className='flex justify-between items-center py-3 border-b border-web/20'>
+                            <span className='text-[#4F3A2E]/70 font-medium'>Metal Value</span>
+                            <span className='font-bold text-[#1F3B29]'>₹{metalValue.toLocaleString()}</span>
+                          </div>
+                        )}
+                        {diamondValue > 0 && (
+                          <div className='flex justify-between items-center py-3 border-b border-web/20'>
+                            <span className='text-[#4F3A2E]/70 font-medium'>Diamond Value</span>
+                            <span className='font-bold text-[#1F3B29]'>₹{diamondValue.toLocaleString()}</span>
+                          </div>
+                        )}
+                        {product.gemstonePrice && product.gemstonePrice > 0 && (
+                          <div className='flex justify-between items-center py-3 border-b border-web/20'>
+                            <span className='text-[#4F3A2E]/70 font-medium'>Gemstone Value</span>
+                            <span className='font-bold text-[#1F3B29]'>₹{product.gemstonePrice.toLocaleString()}</span>
+                          </div>
+                        )}
+                        {makingChargesValue > 0 && (
+                          <div className='flex justify-between items-center py-3'>
+                            <span className='text-[#4F3A2E]/70 font-medium'>Making Charges</span>
+                            <span className='font-bold text-[#1F3B29]'>₹{makingChargesValue.toLocaleString()}</span>
+                          </div>
+                        )}
+                        {otherCharges > 0 && (
+                          <div className='flex justify-between items-center py-3 border-b border-web/20'>
+                            <span className='text-[#4F3A2E]/70 font-medium'>Other Charges</span>
+                            <span className='font-bold text-[#1F3B29]'>₹{otherCharges.toLocaleString()}</span>
+                          </div>
+                        )}
+                        <div className='flex justify-between items-center py-4 pt-5 border-t-2 border-web/30'>
+                          <span className='text-[#4F3A2E] font-semibold'>Subtotal</span>
+                          <span className='font-bold text-lg text-[#1F3B29]'>₹{subTotal.toLocaleString()}</span>
+                        </div>
+                        {product.discount && product.discount > 0 && product.discount <= 100 && discountAmount > 0 && (
+                          <div className='flex justify-between items-center py-3 text-red-600'>
+                            <span className='font-medium'>Discount ({product.discount}%)</span>
+                            <span className='font-bold'>-₹{discountAmount.toLocaleString()}</span>
+                          </div>
+                        )}
+                        <div className='flex justify-between items-center py-3'>
+                          <span className='text-[#4F3A2E]/70 font-medium'>GST ({product.taxRate || 3}%)</span>
+                          <span className='font-bold text-[#1F3B29]'>₹{gstAmount.toLocaleString()}</span>
+                        </div>
+                        <div className='flex justify-between items-center py-5 pt-6 border-t-2 border-web/30 bg-gradient-to-r from-[#FAF7F4] to-white px-4 -mx-2'>
+                          <span className='font-bold text-xl text-[#1F3B29]'>Grand Total</span>
+                          <span className='font-bold text-2xl text-[#1F3B29]'>₹{grandTotal.toLocaleString()}</span>
+                        </div>
+                      </div>
+                    </PremiumAccordion>
+
+                    {(() => {
+                      const isValid = (value: any): boolean => {
+                        if (value === null || value === undefined) return false;
+                        if (typeof value === 'string') return value.trim().length > 0;
+                        if (typeof value === 'number') return value > 0;
+                        if (typeof value === 'boolean') return value === true;
+                        return true;
+                      };
+
+                      const hasValidFields =
+                        product.hasGold ||
+                        product.hasSilver ||
+                        isValid(product.metalType) ||
+                        isValid(product.goldPurity) ||
+                        isValid(product.silverPurity) ||
+                        isValid(product.metalPurity) ||
+                        isValid(product.goldWeight) ||
+                        isValid(product.silverWeight) ||
+                        isValid(product.metalWeight) ||
+                        isValid(product.goldRatePerGram) ||
+                        isValid(product.silverRatePerGram) ||
+                        product.hallmarked;
+
+                      if (!hasValidFields) return null;
+
+                      return (
+                        <PremiumAccordion title='Metal Details' icon={Package}>
+                          <div className='grid grid-cols-1 sm:grid-cols-2 gap-6 text-sm'>
+                            {(isValid(product.metalType) || product.hasGold || product.hasSilver) && (
+                              <div className='flex justify-between items-center py-3 border-b border-web/20'>
+                                <span className='text-[#4F3A2E]/70 font-medium'>Metal Type</span>
+                                <span className='font-bold text-[#1F3B29]'>
+                                  {product.metalType || (product.hasGold ? 'Gold' : product.hasSilver ? 'Silver' : '—')}
+                                </span>
+                              </div>
+                            )}
+                            {(isValid(product.goldPurity) || isValid(product.silverPurity) || isValid(product.metalPurity)) && (
+                              <div className='flex justify-between items-center py-3 border-b border-web/20'>
+                                <span className='text-[#4F3A2E]/70 font-medium'>Purity</span>
+                                <span className='font-bold text-[#1F3B29]'>
+                                  {product.goldPurity || product.silverPurity || product.metalPurity}
+                                </span>
+                              </div>
+                            )}
+                            {(isValid(product.goldWeight) || isValid(product.silverWeight) || isValid(product.metalWeight)) && (
+                              <div className='flex justify-between items-center py-3 border-b border-web/20'>
+                                <span className='text-[#4F3A2E]/70 font-medium'>Weight</span>
+                                <span className='font-bold text-[#1F3B29]'>
+                                  {(product.goldWeight || product.silverWeight || product.metalWeight)?.toFixed(2)}g
+                                </span>
+                              </div>
+                            )}
+                            {(isValid(product.goldRatePerGram) || isValid(product.silverRatePerGram)) && (
+                              <div className='flex justify-between items-center py-3 border-b border-web/20'>
+                                <span className='text-[#4F3A2E]/70 font-medium'>Rate per gram</span>
+                                <span className='font-bold text-[#1F3B29]'>
+                                  ₹{(product.goldRatePerGram || product.silverRatePerGram)?.toLocaleString()}
+                                </span>
+                              </div>
+                            )}
+                            {product.hallmarked && (
+                              <div className='col-span-1 sm:col-span-2 flex justify-between items-center py-3 border-b border-web/20'>
+                                <span className='text-[#4F3A2E]/70 font-medium'>Hallmark</span>
+                                <span className='font-bold text-[#1F3B29]'>{product.bis_hallmark ? 'BIS Hallmarked' : 'Hallmarked'}</span>
+                              </div>
+                            )}
+                          </div>
+                        </PremiumAccordion>
+                      );
+                    })()}
+
+                    {(product.hasDiamond || product.diamonds) &&
+                      (product.diamonds?.some(
+                        d =>
+                          d.diamondType ||
+                          d.diamondShape ||
+                          d.diamondClarity ||
+                          d.diamondColor ||
+                          d.diamondCut ||
+                          d.diamondCaratWeight ||
+                          d.numberOfDiamonds ||
+                          d.certification,
+                      ) ||
+                        product.diamondCarat ||
+                        product.numberOfStones ||
+                        product.diamondShape ||
+                        product.stoneClarity ||
+                        product.stoneColor ||
+                        product.diamondCut) && (
+                        <PremiumAccordion title='Diamond Details' icon={Diamond}>
+                          <div className='space-y-6'>
+                            {product.diamonds && product.diamonds.length > 0 ? (
+                              product.diamonds.map((diamond, index) => (
+                                <div key={diamond.id || index} className='border border-web/30 rounded-xl p-4'>
+                                  <h4 className='text-sm font-bold text-[#1F3B29] mb-4 uppercase tracking-wider'>Diamond #{index + 1}</h4>
+                                  <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm'>
+                                    {diamond.diamondType && (
+                                      <div className='flex justify-between items-center py-2 border-b border-web/20'>
+                                        <span className='text-[#4F3A2E]/70 font-medium'>Type</span>
+                                        <span className='font-bold text-[#1F3B29]'>{diamond.diamondType}</span>
+                                      </div>
+                                    )}
+                                    {diamond.diamondShape && (
+                                      <div className='flex justify-between items-center py-2 border-b border-web/20'>
+                                        <span className='text-[#4F3A2E]/70 font-medium'>Shape</span>
+                                        <span className='font-bold text-[#1F3B29]'>{diamond.diamondShape}</span>
+                                      </div>
+                                    )}
+                                    {diamond.diamondCaratWeight && (
+                                      <div className='flex justify-between items-center py-2 border-b border-web/20'>
+                                        <span className='text-[#4F3A2E]/70 font-medium'>Carat Weight</span>
+                                        <span className='font-bold text-[#1F3B29]'>{diamond.diamondCaratWeight}ct</span>
+                                      </div>
+                                    )}
+                                    {diamond.diamondClarity && (
+                                      <div className='flex justify-between items-center py-2 border-b border-web/20'>
+                                        <span className='text-[#4F3A2E]/70 font-medium'>Clarity</span>
+                                        <span className='font-bold text-[#1F3B29]'>{diamond.diamondClarity}</span>
+                                      </div>
+                                    )}
+                                    {diamond.diamondColor && (
+                                      <div className='flex justify-between items-center py-2 border-b border-web/20'>
+                                        <span className='text-[#4F3A2E]/70 font-medium'>Color</span>
+                                        <span className='font-bold text-[#1F3B29]'>{diamond.diamondColor}</span>
+                                      </div>
+                                    )}
+                                    {diamond.diamondCut && (
+                                      <div className='flex justify-between items-center py-2 border-b border-web/20'>
+                                        <span className='text-[#4F3A2E]/70 font-medium'>Cut</span>
+                                        <span className='font-bold text-[#1F3B29]'>{diamond.diamondCut}</span>
+                                      </div>
+                                    )}
+                                    {diamond.numberOfDiamonds && (
+                                      <div className='flex justify-between items-center py-2 border-b border-web/20'>
+                                        <span className='text-[#4F3A2E]/70 font-medium'>No. of Diamonds</span>
+                                        <span className='font-bold text-[#1F3B29]'>{diamond.numberOfDiamonds}</span>
+                                      </div>
+                                    )}
+                                    {diamond.certification && (
+                                      <div className='flex justify-between items-center py-2 border-b border-web/20'>
+                                        <span className='text-[#4F3A2E]/70 font-medium'>Certification</span>
+                                        <span className='font-bold text-[#1F3B29]'>{diamond.certification}</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              ))
+                            ) : (
+                              <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm'>
+                                {product.diamondCarat && (
+                                  <div className='flex justify-between items-center py-3 border-b border-web/20'>
+                                    <span className='text-[#4F3A2E]/70 font-medium'>Carat Weight</span>
+                                    <span className='font-bold text-[#1F3B29]'>{product.diamondCarat}ct</span>
+                                  </div>
+                                )}
+                                {product.numberOfStones && (
+                                  <div className='flex justify-between items-center py-3 border-b border-web/20'>
+                                    <span className='text-[#4F3A2E]/70 font-medium'>No. of Stones</span>
+                                    <span className='font-bold text-[#1F3B29]'>{product.numberOfStones}</span>
+                                  </div>
+                                )}
+                                {product.diamondShape && (
+                                  <div className='flex justify-between items-center py-3 border-b border-web/20'>
+                                    <span className='text-[#4F3A2E]/70 font-medium'>Shape</span>
+                                    <span className='font-bold text-[#1F3B29]'>{product.diamondShape}</span>
+                                  </div>
+                                )}
+                                {product.stoneClarity && (
+                                  <div className='flex justify-between items-center py-3 border-b border-web/20'>
+                                    <span className='text-[#4F3A2E]/70 font-medium'>Clarity</span>
+                                    <span className='font-bold text-[#1F3B29]'>{product.stoneClarity}</span>
+                                  </div>
+                                )}
+                                {product.stoneColor && (
+                                  <div className='flex justify-between items-center py-3 border-b border-web/20'>
+                                    <span className='text-[#4F3A2E]/70 font-medium'>Color</span>
+                                    <span className='font-bold text-[#1F3B29]'>{product.stoneColor}</span>
+                                  </div>
+                                )}
+                                {product.diamondCut && (
+                                  <div className='flex justify-between items-center py-3 border-b border-web/20'>
+                                    <span className='text-[#4F3A2E]/70 font-medium'>Cut</span>
+                                    <span className='font-bold text-[#1F3B29]'>{product.diamondCut}</span>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </PremiumAccordion>
+                      )}
+
+                    {product.gemstoneName && (
+                      <PremiumAccordion title='Gemstone Details' icon={Gem}>
+                        <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm'>
+                          {product.gemstoneName && (
+                            <div className='flex justify-between items-center py-3 border-b border-web/20'>
+                              <span className='text-[#4F3A2E]/70 font-medium'>Gemstone</span>
+                              <span className='font-bold text-[#1F3B29]'>{product.gemstoneName}</span>
+                            </div>
+                          )}
+                          {product.gemstoneColour && (
+                            <div className='flex justify-between items-center py-3 border-b border-web/20'>
+                              <span className='text-[#4F3A2E]/70 font-medium'>Color</span>
+                              <span className='font-bold text-[#1F3B29]'>{product.gemstoneColour}</span>
+                            </div>
+                          )}
+                          {product.gemstoneShape && (
+                            <div className='flex justify-between items-center py-3 border-b border-web/20'>
+                              <span className='text-[#4F3A2E]/70 font-medium'>Shape</span>
+                              <span className='font-bold text-[#1F3B29]'>{product.gemstoneShape}</span>
+                            </div>
+                          )}
+                          {product.gemstoneWeight && (
+                            <div className='flex justify-between items-center py-3 border-b border-web/20'>
+                              <span className='text-[#4F3A2E]/70 font-medium'>Weight</span>
+                              <span className='font-bold text-[#1F3B29]'>{product.gemstoneWeight}ct</span>
+                            </div>
+                          )}
+                          {product.ratti && (
+                            <div className='flex justify-between items-center py-3 border-b border-web/20'>
+                              <span className='text-[#4F3A2E]/70 font-medium'>Ratti</span>
+                              <span className='font-bold text-[#1F3B29]'>{product.ratti}</span>
+                            </div>
+                          )}
+                          {product.specificGravity && (
+                            <div className='flex justify-between items-center py-3 border-b border-web/20'>
+                              <span className='text-[#4F3A2E]/70 font-medium'>Specific Gravity</span>
+                              <span className='font-bold text-[#1F3B29]'>{product.specificGravity}</span>
+                            </div>
+                          )}
+                          {product.hardness && (
+                            <div className='flex justify-between items-center py-3 border-b border-web/20'>
+                              <span className='text-[#4F3A2E]/70 font-medium'>Hardness</span>
+                              <span className='font-bold text-[#1F3B29]'>{product.hardness}</span>
+                            </div>
+                          )}
+                          {product.refractiveIndex && (
+                            <div className='flex justify-between items-center py-3 border-b border-web/20'>
+                              <span className='text-[#4F3A2E]/70 font-medium'>Refractive Index</span>
+                              <span className='font-bold text-[#1F3B29]'>{product.refractiveIndex}</span>
+                            </div>
+                          )}
+                          {product.magnification && (
+                            <div className='flex justify-between items-center py-3 border-b border-web/20'>
+                              <span className='text-[#4F3A2E]/70 font-medium'>Magnification</span>
+                              <span className='font-bold text-[#1F3B29]'>{product.magnification}</span>
+                            </div>
+                          )}
+                          {product.remarks && (
+                            <div className='col-span-1 sm:col-span-2 flex justify-between items-center py-3 border-b border-web/20'>
+                              <span className='text-[#4F3A2E]/70 font-medium'>Remarks</span>
+                              <span className='font-bold text-[#1F3B29]'>{product.remarks}</span>
+                            </div>
+                          )}
+                        </div>
+                      </PremiumAccordion>
+                    )}
+
+                    {product.specifications && product.specifications.length > 0 && (
+                      <PremiumAccordion title='Specifications' icon={FileText} defaultOpen={false}>
+                        <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm'>
+                          {product.specifications.map((spec, index) => (
+                            <div key={`${spec.key}-${index}`} className='flex justify-between items-center py-3 border-b border-web/20'>
+                              <span className='text-[#4F3A2E]/70 font-medium'>{spec.key}</span>
+                              <span className='font-bold text-[#1F3B29]'>{spec.value}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </PremiumAccordion>
+                    )}
+
+                    {product.certificationNumber && (
+                      <PremiumAccordion title='Certification' icon={Award} defaultOpen={false}>
+                        <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm'>
+                          <div className='flex justify-between items-center py-3 border-b border-web/20'>
+                            <span className='text-[#4F3A2E]/70 font-medium'>Certificate No.</span>
+                            <span className='font-bold text-[#1F3B29]'>{product.certificationNumber}</span>
+                          </div>
+                          {product.gemstoneCertificateLab && (
+                            <div className='flex justify-between items-center py-3 border-b border-web/20'>
+                              <span className='text-[#4F3A2E]/70 font-medium'>Lab</span>
+                              <span className='font-bold text-[#1F3B29]'>{product.gemstoneCertificateLab}</span>
+                            </div>
+                          )}
+                          {product.reportNo && (
+                            <div className='flex justify-between items-center py-3 border-b border-web/20'>
+                              <span className='text-[#4F3A2E]/70 font-medium'>Report No.</span>
+                              <span className='font-bold text-[#1F3B29]'>{product.reportNo}</span>
+                            </div>
+                          )}
+                        </div>
+                      </PremiumAccordion>
+                    )}
+                  </div>
+                </TabsContent>
+
+                <TabsContent value='reviews' className='mt-0'>
+                  <div className='bg-white rounded-2xl border border-web/30 shadow-sm p-6 lg:p-8'>
+                    <div className='flex items-center gap-3 mb-6'>
+                      <Sparkles className='w-5 h-5 text-web' />
+                      <h3 className='text-lg font-semibold text-[#1F3B29]'>Customer Reviews</h3>
+                    </div>
+                    <p className='text-sm text-[#4F3A2E]/70'>No reviews yet. Be the first to review this product.</p>
+                  </div>
+                </TabsContent>
+              </Tabs>
+            </div>
+
             {/* Trust Badges */}
-            <div className='grid grid-cols-3 gap-3 lg:gap-4 pt-6 border-t border-[#E6D3C2]/30'>
-              <div className='flex flex-col items-center gap-2 text-center p-3 lg:p-4 rounded-xl bg-white/60 hover:bg-white transition-colors cursor-default'>
+            <div className='grid grid-cols-3 gap-3 lg:gap-4 pt-6 border-t border-web/30'>
+              <div className='flex flex-col items-center gap-2 text-center p-3 lg:p-4 rounded-xl bg-web/60 hover:bg-white transition-colors cursor-default'>
                 <div className='p-2.5 rounded-full bg-[#F5EEE5]'>
                   <Award className='w-5 h-5 lg:w-6 lg:h-6 text-web' />
                 </div>
@@ -741,577 +1154,9 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
           </div>
         </div>
 
-        {/* Product Details Tabs Section */}
-        <div className='mb-16 lg:mb-24'>
-          <Tabs defaultValue='description' className='w-full'>
-            <TabsList className='w-full justify-start bg-[#FAF7F4] p-1.5 rounded-2xl border border-[#E6D3C2]/30 mb-8'>
-              <TabsTrigger 
-                value='description' 
-                className='data-[state=active]:bg-white data-[state=active]:text-web data-[state=active]:shadow-sm px-6 py-3 rounded-xl font-semibold text-sm transition-all'>
-                Description
-              </TabsTrigger>
-              <TabsTrigger 
-                value='specifications' 
-                className='data-[state=active]:bg-white data-[state=active]:text-web data-[state=active]:shadow-sm px-6 py-3 rounded-xl font-semibold text-sm transition-all'>
-                Specifications
-              </TabsTrigger>
-              <TabsTrigger 
-                value='reviews' 
-                className='data-[state=active]:bg-white data-[state=active]:text-web data-[state=active]:shadow-sm px-6 py-3 rounded-xl font-semibold text-sm transition-all'>
-                Reviews
-              </TabsTrigger>
-            </TabsList>
-
-            {/* Description Tab */}
-            <TabsContent value='description' className='mt-0'>
-              <div className='bg-white rounded-2xl border border-[#E6D3C2]/30 shadow-sm p-6 lg:p-8'>
-                {product.longDescription ? (
-                  <div className='prose prose-sm lg:prose-base max-w-none prose-headings:text-[#1F3B29] prose-headings:font-bold prose-headings:tracking-tight prose-headings:mb-4 prose-h1:text-2xl prose-h2:text-xl prose-h3:text-lg prose-p:text-[#4F3A2E] prose-p:leading-relaxed prose-p:mb-4 prose-strong:text-[#1F3B29] prose-strong:font-semibold prose-ul:text-[#4F3A2E] prose-ul:my-4 prose-ol:text-[#4F3A2E] prose-ol:my-4 prose-li:text-[#4F3A2E] prose-li:my-2 prose-li:pl-2 prose-a:text-web prose-a:font-medium prose-a:no-underline hover:prose-a:underline prose-a:transition-colors prose-img:rounded-xl prose-img:shadow-md prose-img:my-6 prose-img:w-full prose-img:max-w-full prose-hr:border-[#E6D3C2]/30 prose-hr:my-6 prose-blockquote:border-l-web prose-blockquote:border-l-4 prose-blockquote:bg-[#FAF7F4] prose-blockquote:py-2 prose-blockquote:px-4 prose-blockquote:rounded-r-lg prose-blockquote:my-4 prose-blockquote:text-[#4F3A2E] prose-code:text-[#1F3B29] prose-code:bg-[#F5EEE5] prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-pre:bg-[#F5EEE5] prose-pre:rounded-xl prose-pre:p-4 prose-pre:overflow-x-auto prose-table:w-full prose-table:my-4 prose-th:bg-[#FAF7F4] prose-th:text-[#1F3B29] prose-th:font-semibold prose-th:p-3 prose-th:border prose-th:border-[#E6D3C2]/30 prose-td:border prose-td:border-[#E6D3C2]/30 prose-td:p-3'>
-                    <ReactMarkdown 
-                      remarkPlugins={[remarkGfm]} 
-                      rehypePlugins={[rehypeRaw]}
-                      components={{
-                        // Customize link rendering
-                        a: ({node, ...props}) => (
-                          <a {...props} className="text-web font-medium no-underline hover:underline transition-colors" target="_blank" rel="noopener noreferrer" />
-                        ),
-                        // Customize image rendering
-                        img: ({node, ...props}) => (
-                          <img {...props} className="rounded-xl shadow-md my-6 w-full max-w-full h-auto" alt={props.alt || ''} />
-                        ),
-                      }}
-                    >
-                      {product.longDescription}
-                    </ReactMarkdown>
-                  </div>
-                ) : product.shortDescription ? (
-                  <p className='text-base lg:text-lg text-[#4F3A2E] leading-relaxed'>{product.shortDescription}</p>
-                ) : (
-                  <p className='text-[#4F3A2E]/70 italic'>No description available for this product.</p>
-                )}
-              </div>
-            </TabsContent>
-
-            {/* Specifications Tab */}
-            <TabsContent value='specifications' className='mt-0'>
-              <div className='space-y-6'>
-                {/* Price Breakup Accordion */}
-                <PremiumAccordion title='Price Breakup' icon={Coins} defaultOpen={true}>
-                  <div className='space-y-4 text-sm'>
-                    {metalValue > 0 && (
-                      <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
-                        <span className='text-[#4F3A2E]/70 font-medium'>Metal Value</span>
-                        <span className='font-bold text-[#1F3B29]'>₹{metalValue.toLocaleString()}</span>
-                      </div>
-                    )}
-                    {diamondValue > 0 && (
-                      <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
-                        <span className='text-[#4F3A2E]/70 font-medium'>Diamond Value</span>
-                        <span className='font-bold text-[#1F3B29]'>₹{diamondValue.toLocaleString()}</span>
-                      </div>
-                    )}
-                    {product.gemstonePrice && product.gemstonePrice > 0 && (
-                      <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
-                        <span className='text-[#4F3A2E]/70 font-medium'>Gemstone Value</span>
-                        <span className='font-bold text-[#1F3B29]'>₹{product.gemstonePrice.toLocaleString()}</span>
-                      </div>
-                    )}
-                    {makingChargesValue > 0 && (
-                      <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
-                        <span className='text-[#4F3A2E]/70 font-medium'>Making Charges</span>
-                        <span className='font-bold text-[#1F3B29]'>₹{makingChargesValue.toLocaleString()}</span>
-                      </div>
-                    )}
-                    {otherCharges > 0 && (
-                      <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
-                        <span className='text-[#4F3A2E]/70 font-medium'>Other Charges</span>
-                        <span className='font-bold text-[#1F3B29]'>₹{otherCharges.toLocaleString()}</span>
-                      </div>
-                    )}
-                    <div className='flex justify-between items-center py-4 pt-5 border-t-2 border-[#E6D3C2]/30'>
-                      <span className='text-[#4F3A2E] font-semibold'>Subtotal</span>
-                      <span className='font-bold text-lg text-[#1F3B29]'>₹{subTotal.toLocaleString()}</span>
-                    </div>
-                    {product.discount && product.discount > 0 && product.discount <= 100 && discountAmount > 0 && (
-                      <div className='flex justify-between items-center py-3 text-red-600'>
-                        <span className='font-medium'>Discount ({product.discount}%)</span>
-                        <span className='font-bold'>-₹{discountAmount.toLocaleString()}</span>
-                      </div>
-                    )}
-                    <div className='flex justify-between items-center py-3'>
-                      <span className='text-[#4F3A2E]/70 font-medium'>GST ({product.taxRate || 3}%)</span>
-                      <span className='font-bold text-[#1F3B29]'>₹{gstAmount.toLocaleString()}</span>
-                    </div>
-                    <div className='flex justify-between items-center py-5 pt-6 border-t-2 border-web/30 bg-gradient-to-r from-[#FAF7F4] to-white rounded-xl px-4 -mx-2'>
-                      <span className='font-bold text-xl text-[#1F3B29]'>Grand Total</span>
-                      <span className='font-bold text-2xl text-[#1F3B29]'>₹{grandTotal.toLocaleString()}</span>
-                    </div>
-                  </div>
-                </PremiumAccordion>
-
-                {/* Metal Details Accordion */}
-                {(() => {
-                  // Helper function to check if a value is valid
-                  const isValid = (value: any): boolean => {
-                    if (value === null || value === undefined) return false;
-                    if (typeof value === 'string') return value.trim().length > 0;
-                    if (typeof value === 'number') return value > 0;
-                    if (typeof value === 'boolean') return value === true;
-                    return true;
-                  };
-
-                  // Check if any metal field is valid
-                  const hasValidFields = 
-                    product.hasGold ||
-                    product.hasSilver ||
-                    isValid(product.metalType) ||
-                    isValid(product.goldPurity) ||
-                    isValid(product.silverPurity) ||
-                    isValid(product.metalPurity) ||
-                    isValid(product.goldWeight) ||
-                    isValid(product.silverWeight) ||
-                    isValid(product.metalWeight) ||
-                    isValid(product.goldRatePerGram) ||
-                    isValid(product.silverRatePerGram) ||
-                    product.hallmarked;
-
-                  if (!hasValidFields) return null;
-
-                  return (
-                    <PremiumAccordion title='Metal Details' icon={Package}>
-                      <div className='grid grid-cols-1 sm:grid-cols-2 gap-6 text-sm'>
-                    {(isValid(product.metalType) || product.hasGold || product.hasSilver) && (
-                      <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
-                        <span className='text-[#4F3A2E]/70 font-medium'>Metal Type</span>
-                        <span className='font-bold text-[#1F3B29]'>
-                          {product.metalType || (product.hasGold ? 'Gold' : product.hasSilver ? 'Silver' : '—')}
-                        </span>
-                      </div>
-                    )}
-                    {(isValid(product.goldPurity) || isValid(product.silverPurity) || isValid(product.metalPurity)) && (
-                      <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
-                        <span className='text-[#4F3A2E]/70 font-medium'>Purity</span>
-                        <span className='font-bold text-[#1F3B29]'>
-                          {product.goldPurity || product.silverPurity || product.metalPurity}
-                        </span>
-                      </div>
-                    )}
-                    {(isValid(product.goldWeight) || isValid(product.silverWeight) || isValid(product.metalWeight)) && (
-                      <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
-                        <span className='text-[#4F3A2E]/70 font-medium'>Weight</span>
-                        <span className='font-bold text-[#1F3B29]'>
-                          {(product.goldWeight || product.silverWeight || product.metalWeight)?.toFixed(2)}g
-                        </span>
-                      </div>
-                    )}
-                    {(isValid(product.goldRatePerGram) || isValid(product.silverRatePerGram)) && (
-                      <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
-                        <span className='text-[#4F3A2E]/70 font-medium'>Rate per gram</span>
-                        <span className='font-bold text-[#1F3B29]'>
-                          ₹{(product.goldRatePerGram || product.silverRatePerGram)?.toLocaleString()}
-                        </span>
-                      </div>
-                    )}
-                    {product.hallmarked && (
-                      <div className='col-span-1 sm:col-span-2 flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
-                        <span className='text-[#4F3A2E]/70 font-medium'>Hallmark</span>
-                        <span className='font-bold text-[#1F3B29]'>{product.bis_hallmark ? 'BIS Hallmarked' : 'Hallmarked'}</span>
-                      </div>
-                    )}
-                      </div>
-                    </PremiumAccordion>
-                  );
-                })()}
-
-                {/* Diamond Details Accordion */}
-                {(product.hasDiamond || product.diamonds) &&
-                  (product.diamonds?.some(
-                    d =>
-                      d.diamondType ||
-                      d.diamondShape ||
-                      d.diamondClarity ||
-                      d.diamondColor ||
-                      d.diamondCut ||
-                      d.diamondCaratWeight ||
-                      d.numberOfDiamonds ||
-                      d.certification
-                  ) ||
-                    product.diamondCarat ||
-                    product.numberOfStones ||
-                    product.diamondShape ||
-                    product.stoneClarity ||
-                    product.stoneColor ||
-                    product.diamondCut) && (
-                    <PremiumAccordion title='Diamond & Stone Details' icon={Gem}>
-                      {product.diamonds && product.diamonds.length > 0 ? (
-                        <div className='space-y-6'>
-                          {product.diamonds.map((diamond, index) => (
-                            <div
-                              key={diamond.id || index}
-                              className='p-5 lg:p-6 bg-gradient-to-br from-[#FAF7F4] to-white rounded-xl border border-[#E6D3C2]/30 shadow-sm'>
-                              <h4 className='text-sm font-bold text-[#1F3B29] mb-4 uppercase tracking-wider'>Diamond #{index + 1}</h4>
-                              <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm'>
-                                {diamond.diamondType && (
-                                  <div className='flex justify-between items-center py-2 border-b border-[#E6D3C2]/20'>
-                                    <span className='text-[#4F3A2E]/70 font-medium'>Type</span>
-                                    <span className='font-bold text-[#1F3B29]'>{diamond.diamondType}</span>
-                                  </div>
-                                )}
-                                {diamond.diamondShape && (
-                                  <div className='flex justify-between items-center py-2 border-b border-[#E6D3C2]/20'>
-                                    <span className='text-[#4F3A2E]/70 font-medium'>Shape</span>
-                                    <span className='font-bold text-[#1F3B29]'>{diamond.diamondShape}</span>
-                                  </div>
-                                )}
-                                {diamond.diamondCaratWeight && (
-                                  <div className='flex justify-between items-center py-2 border-b border-[#E6D3C2]/20'>
-                                    <span className='text-[#4F3A2E]/70 font-medium'>Carat Weight</span>
-                                    <span className='font-bold text-[#1F3B29]'>{diamond.diamondCaratWeight}ct</span>
-                                  </div>
-                                )}
-                                {diamond.diamondClarity && (
-                                  <div className='flex justify-between items-center py-2 border-b border-[#E6D3C2]/20'>
-                                    <span className='text-[#4F3A2E]/70 font-medium'>Clarity</span>
-                                    <span className='font-bold text-[#1F3B29]'>{diamond.diamondClarity}</span>
-                                  </div>
-                                )}
-                                {diamond.diamondColor && (
-                                  <div className='flex justify-between items-center py-2 border-b border-[#E6D3C2]/20'>
-                                    <span className='text-[#4F3A2E]/70 font-medium'>Color</span>
-                                    <span className='font-bold text-[#1F3B29]'>{diamond.diamondColor}</span>
-                                  </div>
-                                )}
-                                {diamond.diamondCut && (
-                                  <div className='flex justify-between items-center py-2 border-b border-[#E6D3C2]/20'>
-                                    <span className='text-[#4F3A2E]/70 font-medium'>Cut</span>
-                                    <span className='font-bold text-[#1F3B29]'>{diamond.diamondCut}</span>
-                                  </div>
-                                )}
-                                {diamond.numberOfDiamonds && (
-                                  <div className='flex justify-between items-center py-2 border-b border-[#E6D3C2]/20'>
-                                    <span className='text-[#4F3A2E]/70 font-medium'>Number of Stones</span>
-                                    <span className='font-bold text-[#1F3B29]'>{diamond.numberOfDiamonds}</span>
-                                  </div>
-                                )}
-                                {diamond.certification && (
-                                  <div className='flex justify-between items-center py-2 border-b border-[#E6D3C2]/20'>
-                                    <span className='text-[#4F3A2E]/70 font-medium'>Certification</span>
-                                    <span className='font-bold text-[#1F3B29]'>{diamond.certification}</span>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className='grid grid-cols-1 sm:grid-cols-2 gap-6 text-sm'>
-                          {product.diamondCarat && (
-                            <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
-                              <span className='text-[#4F3A2E]/70 font-medium'>Carat Weight</span>
-                              <span className='font-bold text-[#1F3B29]'>{product.diamondCarat}ct</span>
-                            </div>
-                          )}
-                          {product.numberOfStones && (
-                            <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
-                              <span className='text-[#4F3A2E]/70 font-medium'>Number of Stones</span>
-                              <span className='font-bold text-[#1F3B29]'>{product.numberOfStones}</span>
-                            </div>
-                          )}
-                          {product.diamondShape && (
-                            <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
-                              <span className='text-[#4F3A2E]/70 font-medium'>Shape</span>
-                              <span className='font-bold text-[#1F3B29]'>{product.diamondShape}</span>
-                            </div>
-                          )}
-                          {product.stoneClarity && (
-                            <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
-                              <span className='text-[#4F3A2E]/70 font-medium'>Clarity</span>
-                              <span className='font-bold text-[#1F3B29]'>{product.stoneClarity}</span>
-                            </div>
-                          )}
-                          {product.stoneColor && (
-                            <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
-                              <span className='text-[#4F3A2E]/70 font-medium'>Color</span>
-                              <span className='font-bold text-[#1F3B29]'>{product.stoneColor}</span>
-                            </div>
-                          )}
-                          {product.diamondCut && (
-                            <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
-                              <span className='text-[#4F3A2E]/70 font-medium'>Cut</span>
-                              <span className='font-bold text-[#1F3B29]'>{product.diamondCut}</span>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </PremiumAccordion>
-                  )}
-
-                {/* Specifications Table Accordion */}
-                {product.specifications && Array.isArray(product.specifications) && product.specifications.length > 0 && product.specifications.some((spec: any) => spec.key && spec.value) && (
-                  <PremiumAccordion title='Specifications' icon={FileText} defaultOpen={false}>
-                    <div className='space-y-3'>
-                      {product.specifications
-                        .filter((spec: any) => spec.key && spec.value && spec.key.trim() && spec.value.trim())
-                        .map((spec: any, index: number) => (
-                          <div key={index} className='flex justify-between items-start py-3 border-b border-[#E6D3C2]/20'>
-                            <span className='text-[#4F3A2E]/70 font-medium flex-1'>{spec.key}</span>
-                            <span className='font-bold text-[#1F3B29] text-right flex-1 ml-4'>{spec.value}</span>
-                          </div>
-                        ))}
-                    </div>
-                  </PremiumAccordion>
-                )}
-
-                {/* Gemstone Details Accordion */}
-                {(() => {
-                  // Helper function to check if a value is valid
-                  const isValid = (value: any): boolean => {
-                    if (value === null || value === undefined) return false;
-                    if (typeof value === 'string') return value.trim().length > 0;
-                    if (Array.isArray(value)) return value.length > 0 && value.some(v => v && (typeof v === 'string' ? v.trim().length > 0 : true));
-                    if (typeof value === 'number') return value > 0;
-                    return true;
-                  };
-
-                  // Check if any gemstone field is valid
-                  const hasGemstoneFields = 
-                    isValid(product.gemstoneName) ||
-                    isValid(product.gemstoneColour) ||
-                    isValid(product.gemstoneShape) ||
-                    isValid(product.gemstoneWeight) ||
-                    isValid(product.ratti) ||
-                    isValid(product.specificGravity) ||
-                    isValid(product.hardness) ||
-                    isValid(product.refractiveIndex) ||
-                    isValid(product.magnification) ||
-                    isValid(product.remarks) ||
-                    isValid(product.gemstoneDescription) ||
-                    isValid(product.reportNo) ||
-                    isValid(product.gemstoneCertificateLab) ||
-                    (product.gemstonePrice && product.gemstonePrice > 0);
-
-                  if (!hasGemstoneFields) return null;
-
-                  return (
-                    <PremiumAccordion title='Gemstone Details' icon={Sparkle}>
-                      <div className='grid grid-cols-1 sm:grid-cols-2 gap-6 text-sm'>
-                        {isValid(product.gemstoneName) && (
-                          <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
-                            <span className='text-[#4F3A2E]/70 font-medium'>Gemstone Name</span>
-                            <span className='font-bold text-[#1F3B29]'>{product.gemstoneName}</span>
-                          </div>
-                        )}
-                        {isValid(product.gemstoneColour) && (
-                          <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
-                            <span className='text-[#4F3A2E]/70 font-medium'>Colour</span>
-                            <span className='font-bold text-[#1F3B29]'>{product.gemstoneColour}</span>
-                          </div>
-                        )}
-                        {isValid(product.gemstoneShape) && (
-                          <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
-                            <span className='text-[#4F3A2E]/70 font-medium'>Shape</span>
-                            <span className='font-bold text-[#1F3B29]'>{product.gemstoneShape}</span>
-                          </div>
-                        )}
-                        {isValid(product.gemstoneWeight) && (
-                          <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
-                            <span className='text-[#4F3A2E]/70 font-medium'>Weight</span>
-                            <span className='font-bold text-[#1F3B29]'>{product.gemstoneWeight}g</span>
-                          </div>
-                        )}
-                        {isValid(product.ratti) && (
-                          <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
-                            <span className='text-[#4F3A2E]/70 font-medium'>Ratti</span>
-                            <span className='font-bold text-[#1F3B29]'>{product.ratti}</span>
-                          </div>
-                        )}
-                        {isValid(product.specificGravity) && (
-                          <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
-                            <span className='text-[#4F3A2E]/70 font-medium'>Specific Gravity</span>
-                            <span className='font-bold text-[#1F3B29]'>{product.specificGravity}</span>
-                          </div>
-                        )}
-                        {isValid(product.hardness) && (
-                          <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
-                            <span className='text-[#4F3A2E]/70 font-medium'>Hardness</span>
-                            <span className='font-bold text-[#1F3B29]'>{product.hardness}</span>
-                          </div>
-                        )}
-                        {isValid(product.refractiveIndex) && (
-                          <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
-                            <span className='text-[#4F3A2E]/70 font-medium'>Refractive Index</span>
-                            <span className='font-bold text-[#1F3B29]'>{product.refractiveIndex}</span>
-                          </div>
-                        )}
-                        {isValid(product.magnification) && (
-                          <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
-                            <span className='text-[#4F3A2E]/70 font-medium'>Magnification</span>
-                            <span className='font-bold text-[#1F3B29]'>{product.magnification}</span>
-                          </div>
-                        )}
-                        {isValid(product.reportNo) && (
-                          <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
-                            <span className='text-[#4F3A2E]/70 font-medium'>Report Number</span>
-                            <span className='font-bold text-[#1F3B29]'>{product.reportNo}</span>
-                          </div>
-                        )}
-                        {isValid(product.gemstoneCertificateLab) && (
-                          <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
-                            <span className='text-[#4F3A2E]/70 font-medium'>Certificate Lab</span>
-                            <span className='font-bold text-[#1F3B29]'>{product.gemstoneCertificateLab}</span>
-                          </div>
-                        )}
-                        {product.gemstonePrice && product.gemstonePrice > 0 && (
-                          <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
-                            <span className='text-[#4F3A2E]/70 font-medium'>Price</span>
-                            <span className='font-bold text-[#1F3B29]'>₹{product.gemstonePrice.toLocaleString()}</span>
-                          </div>
-                        )}
-                        {isValid(product.remarks) && (
-                          <div className='col-span-1 sm:col-span-2 flex flex-col py-3 border-b border-[#E6D3C2]/20'>
-                            <span className='text-[#4F3A2E]/70 font-medium mb-2'>Remarks</span>
-                            <span className='font-bold text-[#1F3B29]'>{product.remarks}</span>
-                          </div>
-                        )}
-                        {isValid(product.gemstoneDescription) && (
-                          <div className='col-span-1 sm:col-span-2 flex flex-col py-3 border-b border-[#E6D3C2]/20'>
-                            <span className='text-[#4F3A2E]/70 font-medium mb-2'>Description</span>
-                            <p className='text-[#1F3B29] leading-relaxed whitespace-pre-line'>{product.gemstoneDescription}</p>
-                          </div>
-                        )}
-                      </div>
-                    </PremiumAccordion>
-                  );
-                })()}
-
-                {/* Other Material Details Accordion */}
-                {(() => {
-                  // Helper function to check if a value is valid (not empty, not null, not undefined)
-                  const isValid = (value: any): boolean => {
-                    if (value === null || value === undefined) return false;
-                    if (typeof value === 'string') return value.trim().length > 0;
-                    if (Array.isArray(value)) return value.length > 0 && value.some(v => v && (typeof v === 'string' ? v.trim().length > 0 : true));
-                    if (typeof value === 'number') return value > 0;
-                    return true;
-                  };
-
-                  // Check if any field is valid (excluding gemstone fields which are now separate)
-                  const hasValidFields = 
-                    isValid(product.brand) ||
-                    isValid(product.gender) ||
-                    isValid(product.certificationNumber) ||
-                    isValid(product.occasion) ||
-                    isValid(product.dimension) ||
-                    isValid(product.collection) ||
-                    isValid(product.designType) ||
-                    isValid(product.size) ||
-                    isValid(product.thickness);
-
-                  if (!hasValidFields) return null;
-
-                  return (
-                    <PremiumAccordion title='Other Product Details' icon={Sparkles}>
-                      <div className='grid grid-cols-1 sm:grid-cols-2 gap-6 text-sm'>
-                    {isValid(product.brand) && (
-                      <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
-                        <span className='text-[#4F3A2E]/70 font-medium'>Brand</span>
-                        <span className='font-bold text-[#1F3B29]'>{product.brand}</span>
-                      </div>
-                    )}
-                    {isValid(product.gender) && (
-                      <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
-                        <span className='text-[#4F3A2E]/70 font-medium'>Gender</span>
-                        <span className='font-bold text-[#1F3B29]'>
-                          {Array.isArray(product.gender) 
-                            ? product.gender.filter(g => g && g.trim().length > 0).join(', ') 
-                            : product.gender}
-                        </span>
-                      </div>
-                    )}
-                    {isValid(product.designType) && (
-                      <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
-                        <span className='text-[#4F3A2E]/70 font-medium'>Design Type</span>
-                        <span className='font-bold text-[#1F3B29]'>{product.designType}</span>
-                      </div>
-                    )}
-                    {isValid(product.size) && (
-                      <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
-                        <span className='text-[#4F3A2E]/70 font-medium'>Size</span>
-                        <span className='font-bold text-[#1F3B29]'>{product.size}</span>
-                      </div>
-                    )}
-                    {isValid(product.collection) && (
-                      <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
-                        <span className='text-[#4F3A2E]/70 font-medium'>Collection</span>
-                        <span className='font-bold text-[#1F3B29]'>{product.collection}</span>
-                      </div>
-                    )}
-                    {isValid(product.occasion) && (
-                      <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
-                        <span className='text-[#4F3A2E]/70 font-medium'>Occasion</span>
-                        <span className='font-bold text-[#1F3B29]'>{product.occasion}</span>
-                      </div>
-                    )}
-                    {isValid(product.dimension) && (
-                      <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
-                        <span className='text-[#4F3A2E]/70 font-medium'>Dimension</span>
-                        <span className='font-bold text-[#1F3B29]'>{product.dimension}</span>
-                      </div>
-                    )}
-                    {isValid(product.thickness) && (
-                      <div className='flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
-                        <span className='text-[#4F3A2E]/70 font-medium'>Thickness</span>
-                        <span className='font-bold text-[#1F3B29]'>
-                          {typeof product.thickness === 'number' ? `${product.thickness}mm` : product.thickness}
-                        </span>
-                      </div>
-                    )}
-                    {isValid(product.certificationNumber) && (
-                      <div className='col-span-1 sm:col-span-2 flex justify-between items-center py-3 border-b border-[#E6D3C2]/20'>
-                        <span className='text-[#4F3A2E]/70 font-medium'>Certification Number</span>
-                        <span className='font-bold text-[#1F3B29]'>{product.certificationNumber}</span>
-                      </div>
-                    )}
-                      </div>
-                    </PremiumAccordion>
-                  );
-                })()}
-              </div>
-            </TabsContent>
-
-            {/* Reviews Tab */}
-            <TabsContent value='reviews' className='mt-0'>
-              <div className='bg-white rounded-2xl border border-[#E6D3C2]/30 shadow-sm p-6 lg:p-8'>
-                <div className='text-center py-12'>
-                  <div className='inline-flex items-center justify-center w-16 h-16 rounded-full bg-[#F5EEE5] mb-4'>
-                    <Star className='w-8 h-8 text-web fill-web/30' />
-                  </div>
-                  <h3 className='text-xl font-bold text-[#1F3B29] mb-2'>No Reviews Yet</h3>
-                  <p className='text-[#4F3A2E]/70 mb-6'>
-                    {product.reviewCount && product.reviewCount > 0
-                      ? `Be the first to review this product!`
-                      : 'Be the first to review this product!'}
-                  </p>
-                  {product.rating && product.rating > 0 && (
-                    <div className='inline-flex items-center gap-2 px-6 py-3 bg-[#FAF7F4] rounded-xl'>
-                      <div className='flex items-center gap-1'>
-                        {[...Array(5)].map((_, i) => (
-                          <Star key={i} size={20} className={i < Math.floor(product.rating || 0) ? 'text-amber-400 fill-amber-400' : 'text-[#E6D3C2]'} />
-                        ))}
-                      </div>
-                      <span className='text-lg font-bold text-[#1F3B29]'>{product.rating.toFixed(1)}</span>
-                      <span className='text-sm text-[#4F3A2E]/70'>({product.reviewCount || 0} {product.reviewCount === 1 ? 'review' : 'reviews'})</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </TabsContent>
-          </Tabs>
-        </div>
-
         {/* You May Also Like Section - Grid View */}
         {product.relatedProducts && product.relatedProducts.length > 0 && (
-          <div className='mt-20 pt-12 border-t border-[#E6D3C2]/30'>
+          <div className='mt-20 pt-12 border-t border-web/30'>
             <div className='mb-8'>
               <h2 className='text-xl sm:text-2xl font-bold text-[#1F3B29] mb-2 tracking-tight'>You May Also Like</h2>
               <p className='text-sm text-[#4F3A2E]/70'>Discover More Favourites</p>
@@ -1326,7 +1171,7 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
 
         {/* Recently Viewed Products */}
         {recentlyViewed.length > 0 && (
-          <div className='mt-20 pt-12 border-t border-[#E6D3C2]/30'>
+          <div className='mt-20 pt-12 border-t border-web/30'>
             <div className='mb-8'>
               <h2 className='text-xl sm:text-2xl font-bold text-[#1F3B29] mb-2 tracking-tight'>Recently Viewed</h2>
               <p className='text-sm text-[#4F3A2E]/70'>Continue Your Journey</p>
@@ -1354,7 +1199,7 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
       </div>
 
       {/* Sticky Add to Cart Button for Mobile */}
-      <div className='lg:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-[#E6D3C2]/30 shadow-2xl z-50 p-3 safe-area-bottom'>
+      <div className='lg:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-web/30 shadow-2xl z-50 p-3 safe-area-bottom'>
         <div className='flex gap-2 max-w-[1400px] mx-auto'>
           <button
             onClick={handleAddToCart}
@@ -1364,8 +1209,8 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
               isInCart
                 ? 'bg-green-500 text-white cursor-default'
                 : product.stock === 0
-                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                : 'bg-[#1F3B29] text-white hover:bg-[#2a4d3a] active:scale-[0.98]'
+                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  : 'bg-[#1F3B29] text-white hover:bg-[#2a4d3a] active:scale-[0.98]',
             )}>
             {cartButtonLoading ? (
               <>
@@ -1391,7 +1236,7 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
               'flex-1 px-4 py-3 rounded-xl font-semibold text-sm border-2 transition-all shadow-md hover:shadow-lg bg-white active:scale-[0.98]',
               product.stock === 0
                 ? 'border-gray-300 text-gray-500 cursor-not-allowed bg-gray-100'
-                : 'border-web text-web hover:bg-web hover:text-white'
+                : 'border-web text-web hover:bg-web hover:text-white',
             )}>
             <span>Buy Now</span>
           </button>
