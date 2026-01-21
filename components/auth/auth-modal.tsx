@@ -402,8 +402,8 @@ export function AuthModal({ open, onOpenChange, mode, onSwitchMode, onSwitchToFo
                   {resendLoading
                     ? 'Sending...'
                     : cooldownSeconds > 0
-                    ? `Resend in ${Math.floor(cooldownSeconds / 60)}:${String(cooldownSeconds % 60).padStart(2, '0')}`
-                    : 'Resend Verification Email'}
+                      ? `Resend in ${Math.floor(cooldownSeconds / 60)}:${String(cooldownSeconds % 60).padStart(2, '0')}`
+                      : 'Resend Verification Email'}
                 </button>
               </div>
 
@@ -428,13 +428,17 @@ export function AuthModal({ open, onOpenChange, mode, onSwitchMode, onSwitchToFo
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className='sm:max-w-md p-0 overflow-hidden animate-in fade-in-0 zoom-in-95 duration-300 rounded-none' showCloseButton={true}>
+      <DialogContent
+        className='sm:max-w-md p-0 overflow-hidden animate-in fade-in-0 zoom-in-95 duration-300 rounded-none'
+        showCloseButton={true}>
         <div className='flex items-center justify-center p-6 sm:p-8 bg-white'>
           <div className='w-full space-y-4'>
             {/* Header */}
             <div className='text-center mb-4'>
               <h2 className='text-xl sm:text-2xl font-bold text-[#001e38] mb-1'>{mode === 'login' ? 'Login' : 'Create Account'}</h2>
-              <p className='text-gray-600 text-sm'>{mode === 'login' ? 'Enter your credentials to access your account' : 'Fill in your details to create a new account'}</p>
+              <p className='text-gray-600 text-sm'>
+                {mode === 'login' ? 'Enter your credentials to access your account' : 'Fill in your details to create a new account'}
+              </p>
             </div>
 
             {/* Error message */}
@@ -547,7 +551,7 @@ export function AuthModal({ open, onOpenChange, mode, onSwitchMode, onSwitchToFo
                   <button
                     type='submit'
                     disabled={loading || !!loginErrors.email || !!loginErrors.password}
-                    className='w-full bg-[#3579b8] text-white py-2.5 text-sm font-semibold hover:bg-[#2a6ba5] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed'>
+                    className='w-full bg-[#001e38] text-white py-2.5 text-sm font-semibold transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed'>
                     {loading ? 'Logging in...' : 'Login'}
                   </button>
                 </div>
@@ -561,7 +565,7 @@ export function AuthModal({ open, onOpenChange, mode, onSwitchMode, onSwitchToFo
                         onClick={() => {
                           onSwitchMode();
                         }}
-                        className='text-[#3579b8] font-semibold hover:text-[#2a6ba5] transition-colors'>
+                        className='text-[#001e38] font-semibold hover:text-[#001e38] transition-colors'>
                         Register here
                       </button>
                     </p>
@@ -699,7 +703,7 @@ export function AuthModal({ open, onOpenChange, mode, onSwitchMode, onSwitchToFo
                       !!registerErrors.confirmPassword ||
                       !!registerErrors.name
                     }
-                    className='w-full bg-[#3579b8] text-white py-2.5 text-sm font-semibold hover:bg-[#2a6ba5] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed'>
+                    className='w-full bg-[#001e38] text-white py-2.5 text-sm font-semibold hover:bg-[#001e38] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed'>
                     {loading ? 'Creating Account...' : 'Create Account'}
                   </button>
                 </div>
@@ -713,7 +717,7 @@ export function AuthModal({ open, onOpenChange, mode, onSwitchMode, onSwitchToFo
                         onClick={() => {
                           onSwitchMode();
                         }}
-                        className='text-[#3579b8] font-semibold hover:text-[#2a6ba5] transition-colors'>
+                        className='text-[#001e38] font-semibold hover:text-[#001e38] transition-colors'>
                         Login here
                       </button>
                     </p>
