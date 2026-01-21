@@ -8,8 +8,36 @@ import { useWishlist } from '@/contexts/WishlistContext';
 import { useRouter } from 'next/navigation';
 import { SearchDialog } from '@/components/home/SearchBar/SearchDialog';
 
+type CategoryOccasion = {
+  name: string;
+  productId?: string;
+  image?: string;
+};
+
+type CategoryItem = {
+  _id: string;
+  name: string;
+  slug?: string;
+  description?: string;
+  shortDescription?: string;
+  image?: string;
+  banner?: string;
+  featured?: boolean;
+  children?: CategoryItem[];
+  occasions?: CategoryOccasion[];
+  megaMenuProductId?: string;
+};
+
+type MegaMenuProduct = {
+  _id: string;
+  name: string;
+  mainImage?: string;
+  urlSlug?: string;
+  shortDescription?: string;
+};
+
 const HomeHeader = () => {
-  const [openDropdown, setOpenDropdown] = useState(null);
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [isSticky, setIsSticky] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
@@ -21,6 +49,10 @@ const HomeHeader = () => {
   const [searchOpen, setSearchOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
+  const [categories, setCategories] = useState<CategoryItem[]>([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
+  const [megaMenuProduct, setMegaMenuProduct] = useState<MegaMenuProduct | null>(null);
+  const [megaMenuLoading, setMegaMenuLoading] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -100,17 +132,57 @@ const HomeHeader = () => {
     setAuthMode(prev => (prev === 'login' ? 'register' : 'login'));
   };
 
-  const menuItems = [
-    // { label: '10+1 MONTHLY PLANS', hasDropdown: true },
-    { label: 'WATCH JEWELLERY', hasDropdown: true },
-    { label: 'RINGS', hasDropdown: true },
-    { label: 'EARRINGS', hasDropdown: true },
-    { label: 'PENDANTS', hasDropdown: true },
-    { label: 'SOLITAIRES', hasDropdown: true },
-    { label: 'ALL JEWELLERY', hasDropdown: true },
-    { label: 'GIFTS', hasDropdown: true },
-    { label: 'GOLD COINS', hasDropdown: true },
-  ];
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch('/api/public/categories');
+        if (!response.ok) {
+          return;
+        }
+        const data = await response.json();
+        setCategories(Array.isArray(data.categories) ? data.categories : []);
+      } catch (error) {
+        console.error('Failed to fetch categories:', error);
+      } finally {
+        setCategoriesLoading(false);
+      }
+    };
+
+    fetchCategories();
+  }, []);
+
+  useEffect(() => {
+    const activeCategory = categories.find(category => category._id === openDropdown);
+    if (!activeCategory?.megaMenuProductId) {
+      setMegaMenuProduct(null);
+      return;
+    }
+
+    const controller = new AbortController();
+    const fetchMegaMenuProduct = async () => {
+      try {
+        setMegaMenuLoading(true);
+        const response = await fetch(`/api/public/products/megamenu/${activeCategory.megaMenuProductId}`, {
+          signal: controller.signal,
+        });
+        if (!response.ok) {
+          setMegaMenuProduct(null);
+          return;
+        }
+        const data = await response.json();
+        setMegaMenuProduct(data);
+      } catch (error) {
+        if ((error as Error).name !== 'AbortError') {
+          console.error('Failed to fetch mega menu product:', error);
+        }
+      } finally {
+        setMegaMenuLoading(false);
+      }
+    };
+
+    fetchMegaMenuProduct();
+    return () => controller.abort();
+  }, [openDropdown, categories]);
 
   return (
     <div className='w-full'>
@@ -281,8 +353,10 @@ const HomeHeader = () => {
       </div>
 
       {/* Navigation Menu - Sticky */}
-      <div className={`bg-[#001e38] text-white transition-all duration-300 ${isSticky ? 'fixed top-0 left-0 right-0 z-50 shadow-lg' : ''}`}>
-        <div className='max-w-[1440px] mx-auto'>
+      <div
+        className={`bg-[#001e38] text-white transition-all duration-300 ${isSticky ? 'fixed top-0 left-0 right-0 z-50 shadow-lg' : ''}`}
+        onMouseLeave={() => setOpenDropdown(null)}>
+        <div className='max-w-[1440px] mx-auto relative'>
           <div className='flex items-center justify-between'>
             {/* Logo in Navbar - Only shows when sticky */}
             <div
@@ -297,16 +371,22 @@ const HomeHeader = () => {
 
             {/* Menu Items */}
             <div className='flex items-center'>
-              {menuItems.map((item, index) => (
-                <button
-                  key={index}
-                  onMouseEnter={() => item.hasDropdown && setOpenDropdown(index)}
-                  onMouseLeave={() => setOpenDropdown(null)}
-                  className='px-4 py-4 text-[14px] font-light leading-[20px] flex items-center gap-1 transition-colors'>
-                  {item.label}
-                  {item.hasDropdown && <ChevronDown className='w-4 h-4' />}
-                </button>
-              ))}
+              {categoriesLoading ? (
+                <span className='px-4 py-4 text-sm text-white/70'>Loading...</span>
+              ) : (
+                categories.map(category => (
+                  <button
+                    key={category._id}
+                    onMouseEnter={() => setOpenDropdown(category._id)}
+                    onClick={() => setOpenDropdown(prev => (prev === category._id ? null : category._id))}
+                    className={`px-4 py-4 text-[14px] font-light leading-[20px] flex items-center gap-1 transition-colors hover:text-[#C8A15B] ${
+                      openDropdown === category._id ? 'text-[#C8A15B]' : ''
+                    }`}>
+                    {category.name}
+                    <ChevronDown className='w-4 h-4' />
+                  </button>
+                ))
+              )}
             </div>
 
             {/* Offers */}
@@ -315,6 +395,110 @@ const HomeHeader = () => {
               <ChevronDown className='w-4 h-4' />
             </button>
           </div>
+
+          {openDropdown && (
+            <div className='absolute left-0 right-0 top-full bg-white text-[#1F3B29] shadow-xl border-t border-[#E6D3C2]/40 z-40'>
+              {(() => {
+                const activeCategory = categories.find(category => category._id === openDropdown);
+                if (!activeCategory) {
+                  return null;
+                }
+
+                const subcategories = Array.isArray(activeCategory.children) ? activeCategory.children : [];
+                const occasions = Array.isArray(activeCategory.occasions) ? activeCategory.occasions : [];
+
+                return (
+                  <div className='px-6 sm:px-8 lg:px-12 py-8 grid grid-cols-1 md:grid-cols-[1.2fr_1fr_1fr] gap-8'>
+                    <div className='space-y-4'>
+                      <div>
+                        <p className='text-xs uppercase tracking-[0.3em] text-[#C8A15B] font-semibold'>Shop by Category</p>
+                        <h3 className='mt-2 text-xl font-semibold text-[#001e38]'>{activeCategory.name}</h3>
+                        {activeCategory.shortDescription && (
+                          <p className='mt-2 text-sm text-[#4F3A2E]'>{activeCategory.shortDescription}</p>
+                        )}
+                        <Link
+                          href={`/jewellery?category=${encodeURIComponent(activeCategory.slug || activeCategory.name)}`}
+                          className='mt-4 inline-flex text-sm font-semibold text-[#001e38] hover:text-[#C8A15B] transition-colors'>
+                          View all
+                        </Link>
+                      </div>
+
+                      {subcategories.length > 0 && (
+                        <div className='grid grid-cols-2 gap-3'>
+                          {subcategories.map(sub => (
+                            <Link
+                              key={sub._id}
+                              href={`/jewellery?category=${encodeURIComponent(sub.slug || sub.name)}`}
+                              className='text-sm text-[#4F3A2E] hover:text-[#001e38] transition-colors'>
+                              {sub.name}
+                            </Link>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className='space-y-4'>
+                      <h4 className='text-sm font-semibold text-[#001e38]'>Shop by Occasion</h4>
+                      {occasions.length > 0 ? (
+                        <div className='grid grid-cols-2 gap-3'>
+                          {occasions.map((occasion, index) => (
+                            <Link
+                              key={`${occasion.name}-${index}`}
+                              href={
+                                occasion.productId
+                                  ? `/products/${occasion.productId}`
+                                  : `/jewellery?search=${encodeURIComponent(occasion.name)}`
+                              }
+                              className='flex items-center gap-3 rounded-lg border border-[#E6D3C2]/40 p-2 hover:border-[#C8A15B] hover:bg-[#F5EEE5] transition-colors'>
+                              <div className='h-12 w-12 rounded-md overflow-hidden bg-[#F5EEE5] flex items-center justify-center text-xs text-[#C8A15B]'>
+                                {occasion.image ? (
+                                  <img src={occasion.image} alt={occasion.name} className='h-full w-full object-cover' />
+                                ) : (
+                                  occasion.name.charAt(0)
+                                )}
+                              </div>
+                              <span className='text-sm font-medium text-[#1F3B29]'>{occasion.name}</span>
+                            </Link>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className='text-sm text-[#4F3A2E]/70'>No occasions configured.</p>
+                      )}
+                    </div>
+
+                    <div className='space-y-4'>
+                      <h4 className='text-sm font-semibold text-[#001e38]'>Featured</h4>
+                      {megaMenuLoading ? (
+                        <p className='text-sm text-[#4F3A2E]/70'>Loading...</p>
+                      ) : megaMenuProduct ? (
+                        <Link
+                          href={`/products/${megaMenuProduct.urlSlug || megaMenuProduct._id}`}
+                          className='group block rounded-xl border border-[#E6D3C2]/40 overflow-hidden hover:border-[#C8A15B] hover:shadow-md transition-all'>
+                          <div className='aspect-[4/3] bg-[#F5EEE5] overflow-hidden'>
+                            <img
+                              src={megaMenuProduct.mainImage || '/placeholder.jpg'}
+                              alt={megaMenuProduct.name}
+                              className='h-full w-full object-cover transition-transform duration-300 group-hover:scale-105'
+                            />
+                          </div>
+                          <div className='p-4'>
+                            <p className='text-sm font-semibold text-[#001e38]'>{megaMenuProduct.name}</p>
+                            {megaMenuProduct.shortDescription && (
+                              <p className='mt-1 text-xs text-[#4F3A2E]/70 line-clamp-2'>{megaMenuProduct.shortDescription}</p>
+                            )}
+                          </div>
+                        </Link>
+                      ) : (
+                        <div className='rounded-xl border border-dashed border-[#E6D3C2]/50 p-4 text-sm text-[#4F3A2E]/70'>
+                          No featured product selected.
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+          )}
         </div>
       </div>
 
