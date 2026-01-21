@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { Search, Phone, Video, MapPin, Heart, ShoppingCart, ChevronDown, Clock, Store, LogOut, User } from 'lucide-react';
 import { AuthModal } from '@/components/auth/auth-modal';
 import toast from 'react-hot-toast';
@@ -152,12 +153,12 @@ const HomeHeader = () => {
       <div className='bg-white border-b border-gray-200 pb-2 px-4'>
         <div className='max-w-[1440px] mx-auto flex items-center justify-between gap-8'>
           {/* Logo */}
-          <div className='flex items-center gap-2 cursor-pointer'>
+          <Link href='/' className='flex items-center gap-2 cursor-pointer'>
             <div className='w-[70px] h-[70px] bg-white rounded-full flex items-center justify-center'>
               <img src='/logo.png' className='w-full h-full object-contain' />
             </div>
             <span className='text-2xl font-bold text-[#001e38] tracking-wide'>Jewellery</span>
-          </div>
+          </Link>
 
           {/* Search Bar */}
           <div className='flex-1 max-w-xl'>
