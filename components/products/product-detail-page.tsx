@@ -179,9 +179,9 @@ function PremiumAccordion({
     <div className='border border-web/20 bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300'>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className='flex items-center justify-between w-full px-8 py-5 hover:bg-[#FAF7F4]/50 transition-colors group'>
+        className='flex items-center justify-between w-full px-8 py-5 hover:bg-gray-100/50 transition-colors group'>
         <div className='flex items-center gap-4'>
-          <div className='p-2 rounded-xl bg-[#F5EEE5] group-hover:bg-web/10 transition-colors'>
+          <div className='p-2 rounded-xl bg-gray-100 group-hover:bg-web/10 transition-colors'>
             <Icon className='w-5 h-5 text-web' />
           </div>
           <h3 className='text-lg font-semibold text-[#1F3B29] tracking-wide'>{title}</h3>
@@ -545,33 +545,33 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
                       'p-2.5 lg:p-3 rounded-xl border-2 transition-all duration-300 hover:scale-110 active:scale-95',
                       isInWishlist
                         ? 'border-red-500 bg-red-50 hover:bg-red-100 shadow-md'
-                        : 'border-webhover:border-web hover:bg-[#FAF7F4] hover:shadow-md bg-white',
+                        : 'border-webhover:border-web hover:bg-gray-100 hover:shadow-md bg-white',
                     )}>
                     <Heart size={20} className={cn('transition-colors', isInWishlist ? 'text-red-500 fill-red-500' : 'text-[#1F3B29]')} />
                   </button>
                   <div className='relative'>
                     <button
                       onClick={() => setShareMenuOpen(!shareMenuOpen)}
-                      className='p-2.5 lg:p-3 rounded-xl border-2 border-webhover:border-web hover:bg-[#FAF7F4] bg-white transition-all duration-300 hover:scale-110 active:scale-95 hover:shadow-md'>
+                      className='p-2.5 lg:p-3 rounded-xl border-2 border-webhover:border-web hover:bg-gray-100 bg-white transition-all duration-300 hover:scale-110 active:scale-95 hover:shadow-md'>
                       <Share2 size={20} className='text-[#1F3B29]' />
                     </button>
                     {shareMenuOpen && (
                       <div className='absolute right-0 top-full mt-2 bg-white rounded-2xl shadow-2xl border border-web/50 p-2 z-50 min-w-[200px] animate-in fade-in-50 slide-in-from-top-2'>
                         <button
                           onClick={() => handleShare('whatsapp')}
-                          className='w-full flex items-center gap-3 px-5 py-3 hover:bg-[#FAF7F4] rounded-xl text-sm text-left transition-colors'>
+                          className='w-full flex items-center gap-3 px-5 py-3 hover:bg-gray-100 rounded-xl text-sm text-left transition-colors'>
                           <MessageCircle size={20} className='text-green-600' />
                           WhatsApp
                         </button>
                         <button
                           onClick={() => handleShare('facebook')}
-                          className='w-full flex items-center gap-3 px-5 py-3 hover:bg-[#FAF7F4] rounded-xl text-sm text-left transition-colors'>
+                          className='w-full flex items-center gap-3 px-5 py-3 hover:bg-gray-100 rounded-xl text-sm text-left transition-colors'>
                           <Facebook size={20} className='text-blue-600' />
                           Facebook
                         </button>
                         <button
                           onClick={() => handleShare('copy')}
-                          className='w-full flex items-center gap-3 px-5 py-3 hover:bg-[#FAF7F4] rounded-xl text-sm text-left transition-colors'>
+                          className='w-full flex items-center gap-3 px-5 py-3 hover:bg-gray-100 rounded-xl text-sm text-left transition-colors'>
                           <LinkIcon size={20} className='text-[#4F3A2E]' />
                           Copy Link
                         </button>
@@ -640,7 +640,7 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
                   {product.tags.map((tag, index) => (
                     <span
                       key={index}
-                      className='px-3 py-1 text-xs font-medium bg-[#F5EEE5] text-[#1F3B29] rounded-full border border-web/50'>
+                      className='px-3 py-1 text-xs font-medium bg-gray-100 text-[#1F3B29] rounded-full border border-web/50'>
                       {tag}
                     </span>
                   ))}
@@ -654,7 +654,7 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
               <div className='flex items-center border-2 border-web rounded-xl overflow-hidden shadow-sm bg-white'>
                 <button
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  className='p-2.5 lg:p-3 hover:bg-[#FAF7F4] transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
+                  className='p-2.5 lg:p-3 hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
                   disabled={quantity <= 1}>
                   <Minus size={18} className='text-[#1F3B29]' />
                 </button>
@@ -663,7 +663,7 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
                 </span>
                 <button
                   onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
-                  className='p-2.5 lg:p-3 hover:bg-[#FAF7F4] transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
+                  className='p-2.5 lg:p-3 hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
                   disabled={quantity >= product.stock}>
                   <Plus size={18} className='text-[#1F3B29]' />
                 </button>
@@ -716,7 +716,7 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
             {/* Product Details Tabs Section */}
             <div className='pt-6'>
               <Tabs defaultValue='specifications' className='w-full'>
-                <TabsList className='w-full justify-start bg-[#FAF7F4] p-1.5 rounded-2xl border border-web/30 mb-6'>
+                <TabsList className='w-full justify-start bg-gray-100 p-1.5 rounded-2xl border border-web/30 mb-6'>
                   <TabsTrigger
                     value='description'
                     className='data-[state=active]:bg-white data-[state=active]:text-web data-[state=active]:shadow-sm px-6 py-3 rounded-xl font-semibold text-sm transition-all'>
@@ -738,7 +738,7 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
                 <TabsContent value='description' className='mt-0'>
                   <div className='bg-white rounded-2xl border border-web/30 shadow-sm p-6 lg:p-8'>
                     {product.longDescription ? (
-                      <div className='prose prose-sm lg:prose-base max-w-none prose-headings:text-[#1F3B29] prose-headings:font-bold prose-headings:tracking-tight prose-headings:mb-4 prose-h1:text-2xl prose-h2:text-xl prose-h3:text-lg prose-p:text-[#4F3A2E] prose-p:leading-relaxed prose-p:mb-4 prose-strong:text-[#1F3B29] prose-strong:font-semibold prose-ul:text-[#4F3A2E] prose-ul:my-4 prose-ol:text-[#4F3A2E] prose-ol:my-4 prose-li:text-[#4F3A2E] prose-li:my-2 prose-li:pl-2 prose-a:text-web prose-a:font-medium prose-a:no-underline hover:prose-a:underline prose-a:transition-colors prose-img:rounded-xl prose-img:shadow-md prose-img:my-6 prose-img:w-full prose-img:max-w-full prose-hr:border-web/30 prose-hr:my-6 prose-blockquote:border-l-web prose-blockquote:border-l-4 prose-blockquote:bg-[#FAF7F4] prose-blockquote:py-2 prose-blockquote:px-4 prose-blockquote:rounded-r-lg prose-blockquote:my-4 prose-blockquote:text-[#4F3A2E] prose-code:text-[#1F3B29] prose-code:bg-[#F5EEE5] prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-pre:bg-[#F5EEE5] prose-pre:rounded-xl prose-pre:p-4 prose-pre:overflow-x-auto prose-table:w-full prose-table:my-4 prose-th:bg-[#FAF7F4] prose-th:text-[#1F3B29] prose-th:font-semibold prose-th:p-3 prose-th:border prose-th:border-web/30 prose-td:border prose-td:border-web/30 prose-td:p-3'>
+                      <div className='prose prose-sm lg:prose-base max-w-none prose-headings:text-[#1F3B29] prose-headings:font-bold prose-headings:tracking-tight prose-headings:mb-4 prose-h1:text-2xl prose-h2:text-xl prose-h3:text-lg prose-p:text-[#4F3A2E] prose-p:leading-relaxed prose-p:mb-4 prose-strong:text-[#1F3B29] prose-strong:font-semibold prose-ul:text-[#4F3A2E] prose-ul:my-4 prose-ol:text-[#4F3A2E] prose-ol:my-4 prose-li:text-[#4F3A2E] prose-li:my-2 prose-li:pl-2 prose-a:text-web prose-a:font-medium prose-a:no-underline hover:prose-a:underline prose-a:transition-colors prose-img:rounded-xl prose-img:shadow-md prose-img:my-6 prose-img:w-full prose-img:max-w-full prose-hr:border-web/30 prose-hr:my-6 prose-blockquote:border-l-web prose-blockquote:border-l-4 prose-blockquote:bg-gray-100 prose-blockquote:py-2 prose-blockquote:px-4 prose-blockquote:rounded-r-lg prose-blockquote:my-4 prose-blockquote:text-[#4F3A2E] prose-code:text-[#1F3B29] prose-code:bg-gray-100 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-pre:bg-gray-100 prose-pre:rounded-xl prose-pre:p-4 prose-pre:overflow-x-auto prose-table:w-full prose-table:my-4 prose-th:bg-gray-100 prose-th:text-[#1F3B29] prose-th:font-semibold prose-th:p-3 prose-th:border prose-th:border-web/30 prose-td:border prose-td:border-web/30 prose-td:p-3'>
                         <ReactMarkdown
                           remarkPlugins={[remarkGfm]}
                           rehypePlugins={[rehypeRaw]}
@@ -1133,19 +1133,19 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
             {/* Trust Badges */}
             <div className='grid grid-cols-3 gap-3 lg:gap-4 pt-6 border-t border-web/30'>
               <div className='flex flex-col items-center gap-2 text-center p-3 lg:p-4 rounded-xl bg-web/60 hover:bg-white transition-colors cursor-default'>
-                <div className='p-2.5 rounded-full bg-[#F5EEE5]'>
+                <div className='p-2.5 rounded-full bg-gray-100'>
                   <Award className='w-5 h-5 lg:w-6 lg:h-6 text-web' />
                 </div>
                 <span className='text-xs text-[#4F3A2E] font-semibold leading-tight'>Certified Gold</span>
               </div>
               <div className='flex flex-col items-center gap-2 text-center p-3 lg:p-4 rounded-xl bg-white/60 hover:bg-white transition-colors cursor-default'>
-                <div className='p-2.5 rounded-full bg-[#F5EEE5]'>
+                <div className='p-2.5 rounded-full bg-gray-100'>
                   <RotateCcw className='w-5 h-5 lg:w-6 lg:h-6 text-web' />
                 </div>
                 <span className='text-xs text-[#4F3A2E] font-semibold leading-tight'>Easy Returns</span>
               </div>
               <div className='flex flex-col items-center gap-2 text-center p-3 lg:p-4 rounded-xl bg-white/60 hover:bg-white transition-colors cursor-default'>
-                <div className='p-2.5 rounded-full bg-[#F5EEE5]'>
+                <div className='p-2.5 rounded-full bg-gray-100'>
                   <Lock className='w-5 h-5 lg:w-6 lg:h-6 text-web' />
                 </div>
                 <span className='text-xs text-[#4F3A2E] font-semibold leading-tight'>Secure Payment</span>
