@@ -389,11 +389,10 @@ const HomeHeader = () => {
               )}
             </div>
 
-            {/* Offers */}
-            <button className='px-6 py-4 text-sm font-medium hover:bg-[#002e50] flex items-center gap-1'>
-              OFFERS
-              <ChevronDown className='w-4 h-4' />
-            </button>
+            {/* All Jewellery */}
+            <Link href='/jewellery' className='px-6 py-4 text-sm font-medium hover:bg-[#002e50]'>
+              Shop All Jewellery
+            </Link>
           </div>
 
           {openDropdown && (

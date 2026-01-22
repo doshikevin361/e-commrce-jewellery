@@ -34,6 +34,32 @@ export async function GET(request: NextRequest) {
       status: { $in: ['published', 'active'] }
     }).toArray();
 
+    const normalizeCategoryId = (value: any) => {
+      if (!value) return null;
+      if (value instanceof ObjectId) return value.toString();
+      if (typeof value === 'string') return value;
+      if (typeof value === 'object' && value._id) return value._id.toString();
+      return null;
+    };
+
+    const categoryIds = Array.from(
+      new Set(
+        products
+          .map(product => normalizeCategoryId(product.category))
+          .filter((id): id is string => !!id && ObjectId.isValid(id))
+      )
+    );
+
+    const categories = categoryIds.length
+      ? await db
+          .collection('categories')
+          .find({ _id: { $in: categoryIds.map(id => new ObjectId(id)) } })
+          .project({ name: 1 })
+          .toArray()
+      : [];
+
+    const categoryMap = new Map(categories.map(category => [category._id.toString(), category.name]));
+
     // Create a map for quick product lookup
     const productMap = new Map(products.map((p: any) => [p._id.toString(), p]));
 
@@ -45,12 +71,15 @@ export async function GET(request: NextRequest) {
 
         const priceData = formatProductPrice(product);
 
+        const categoryId = normalizeCategoryId(product.category);
+        const categoryName = categoryId ? categoryMap.get(categoryId) : null;
+
         return {
           _id: product._id.toString(),
           id: product._id.toString(),
           name: product.name,
           title: product.name,
-          category: product.category || '',
+          category: (categoryName ? categoryName : product.category) || '',
           price: `₹${priceData.displayPrice.toLocaleString()}`,
           image: product.mainImage || 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=600&q=80',
           quantity: item.quantity || 1,

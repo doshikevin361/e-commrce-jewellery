@@ -278,9 +278,17 @@ export function JewelleryPage() {
       }
     });
 
-    const newUrl = params.toString() ? `/jewellery?${params.toString()}` : '/jewellery';
+    const currentParams = new URLSearchParams(searchParams.toString());
+    currentParams.delete('_rsc');
+    const nextParams = new URLSearchParams(params.toString());
+
+    if (currentParams.toString() === nextParams.toString()) {
+      return;
+    }
+
+    const newUrl = nextParams.toString() ? `/jewellery?${nextParams.toString()}` : '/jewellery';
     router.replace(newUrl, { scroll: false });
-  }, [selectedCategories, selectedBrands, priceRange, showInStockOnly, selectedAttributes, searchQuery, router]);
+  }, [selectedCategories, selectedBrands, priceRange, showInStockOnly, selectedAttributes, searchQuery, router, searchParams]);
 
   // Filter and sort products
   const filteredAndSortedProducts = useMemo(() => {
@@ -440,7 +448,7 @@ export function JewelleryPage() {
       <div className='min-h-screen flex items-center justify-center bg-[#F5EEE5]'>
         <div className='text-center'>
           <p className='text-red-600 mb-4'>{error}</p>
-          <Button onClick={() => window.location.reload()} className='bg-[#1F3B29] hover:bg-[#3F5C45]'>
+          <Button onClick={() => window.location.reload()} className='bg-black hover:bg-[#3F5C45]'>
             Retry
           </Button>
         </div>
@@ -457,29 +465,18 @@ export function JewelleryPage() {
 
   return (
     <div className='min-h-screen'>
-      {/* Hero Banner */}
-      <div className='relative w-full h-[280px] sm:h-[350px] md:h-[400px] lg:h-[450px] overflow-hidden bg-gradient-to-r from-[#1F3B29] to-[#3F5C45]'>
-        <div className='absolute inset-0 bg-[url("https://images.unsplash.com/photo-1601121141461-9d6647bca1ed?w=1200&q=85")] bg-cover bg-center opacity-50'></div>
-        <div className='relative z-10 h-full flex flex-col items-center justify-center text-center px-4 sm:px-6 md:px-8 lg:px-12'>
-          <h1 className='text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-white mb-3 sm:mb-4 md:mb-6'>Exquisite Jewellery</h1>
-          <p className='text-base sm:text-lg md:text-xl lg:text-2xl text-white/90 max-w-2xl px-4'>
-            Discover our stunning collection of handcrafted jewellery pieces
-          </p>
-        </div>
-      </div>
-
-      <div className='container mx-auto px-4 sm:px-6 md:px-8 lg:px-12 py-6 sm:py-8 md:py-10 max-w-[1440px]'>
+      <div className='container mx-auto px-2 py-6 sm:py-8 md:py-10 max-w-[1440px]'>
         {/* Header */}
         <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mb-8'>
           <div>
-            <h2 className='text-xl sm:text-2xl md:text-3xl font-bold text-[#1F3B29]'>All Jewellery</h2>
-            <p className='text-sm sm:text-base text-[#4F3A2E] mt-1'>{filteredAndSortedProducts.length} products found</p>
+            <h2 className='text-xl sm:text-2xl md:text-3xl font-bold text-black'>All Jewellery</h2>
+            <p className='text-sm sm:text-base text-black mt-1'>{filteredAndSortedProducts.length} products found</p>
           </div>
 
           <div className='flex items-center gap-2 sm:gap-3 flex-wrap'>
             {/* Sort */}
             <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className='w-[140px] sm:w-48 border-[#E6D3C2] text-xs sm:text-sm'>
+              <SelectTrigger className='w-[140px] sm:w-48 border-website-primary text-xs sm:text-sm'>
                 <SelectValue placeholder='Sort by' />
               </SelectTrigger>
               <SelectContent>
@@ -496,7 +493,7 @@ export function JewelleryPage() {
             <Button
               variant='outline'
               onClick={() => setShowFilters(!showFilters)}
-              className='lg:hidden flex items-center gap-2 border-[#E6D3C2] text-[#1F3B29] hover:bg-[#F5EEE5]'>
+              className='lg:hidden flex items-center gap-2 border-[#E6D3C2] text-black hover:bg-[#F5EEE5]'>
               <Filter className='w-4 h-4' />
               Filters
               {activeFiltersCount > 0 && (
@@ -515,9 +512,9 @@ export function JewelleryPage() {
           priceRange[0] > priceBounds[0] ||
           priceRange[1] < priceBounds[1]) && (
           <div className='mb-6 flex flex-wrap items-center gap-2'>
-            <span className='text-sm font-medium text-[#1F3B29]'>Active filters:</span>
+            <span className='text-sm font-medium text-black'>Active filters:</span>
             {searchQuery.trim() && (
-              <Badge variant='outline' className='bg-[#F5EEE5] border-[#E6D3C2] text-[#1F3B29]'>
+              <Badge variant='outline' className='bg-gray-100 border-gray-100 text-black'>
                 Search: {searchQuery}
                 <button onClick={() => setSearchQuery('')} className='ml-2 hover:text-red-600'>
                   <X className='w-3 h-3' />
@@ -525,7 +522,7 @@ export function JewelleryPage() {
               </Badge>
             )}
             {selectedCategories.map(category => (
-              <Badge key={category} variant='outline' className='bg-[#F5EEE5] border-[#E6D3C2] text-[#1F3B29]'>
+              <Badge key={category} variant='outline' className='bg-gray-100 border-gray-100 text-black'>
                 {category}
                 <button
                   onClick={() => setSelectedCategories(selectedCategories.filter(c => c !== category))}
@@ -535,7 +532,7 @@ export function JewelleryPage() {
               </Badge>
             ))}
             {selectedBrands.map(brand => (
-              <Badge key={brand} variant='outline' className='bg-[#F5EEE5] border-[#E6D3C2] text-[#1F3B29]'>
+              <Badge key={brand} variant='outline' className='bg-gray-100 border-gray-100 text-black'>
                 {brand}
                 <button onClick={() => setSelectedBrands(selectedBrands.filter(b => b !== brand))} className='ml-2 hover:text-red-600'>
                   <X className='w-3 h-3' />
@@ -544,16 +541,16 @@ export function JewelleryPage() {
             ))}
             {Object.entries(selectedAttributes).map(([attrName, values]) =>
               values.map(value => (
-                <Badge key={`${attrName}-${value}`} variant='outline' className='bg-[#F5EEE5] border-[#E6D3C2] text-[#1F3B29]'>
+                <Badge key={`${attrName}-${value}`} variant='outline' className='bg-gray-100 border-gray-100 text-black'>
                   {attrName}: {value}
                   <button onClick={() => handleAttributeChange(attrName, value, false)} className='ml-2 hover:text-red-600'>
                     <X className='w-3 h-3' />
                   </button>
                 </Badge>
-              ))
+              )),
             )}
             {showInStockOnly && (
-              <Badge variant='outline' className='bg-[#F5EEE5] border-[#E6D3C2] text-[#1F3B29]'>
+              <Badge variant='outline' className='bg-gray-100 border-gray-100 text-black'>
                 In Stock Only
                 <button onClick={() => setShowInStockOnly(false)} className='ml-2 hover:text-red-600'>
                   <X className='w-3 h-3' />
@@ -561,7 +558,7 @@ export function JewelleryPage() {
               </Badge>
             )}
             {(priceRange[0] > priceBounds[0] || priceRange[1] < priceBounds[1]) && (
-              <Badge variant='outline' className='bg-[#F5EEE5] border-[#E6D3C2] text-[#1F3B29]'>
+              <Badge variant='outline' className='bg-gray-100 border-gray-100 text-black'>
                 Price: ₹{priceRange[0].toLocaleString()} - ₹{priceRange[1].toLocaleString()}
                 <button onClick={() => setPriceRange(priceBounds)} className='ml-2 hover:text-red-600'>
                   <X className='w-3 h-3' />
@@ -573,30 +570,25 @@ export function JewelleryPage() {
 
         <div className='flex flex-col lg:flex-row gap-4 sm:gap-6 lg:gap-8'>
           {/* Filters Sidebar - Mobile: Overlay, Desktop: Sidebar */}
-          {showFilters && (
-            <div className='lg:hidden fixed inset-0 z-50 bg-black/50' onClick={() => setShowFilters(false)} />
-          )}
-          <aside className={cn(
-            'w-full lg:w-80 flex-shrink-0 transition-all duration-300',
-            'lg:block',
-            showFilters 
-              ? 'fixed lg:relative inset-y-0 left-0 z-50 lg:z-auto bg-white lg:bg-transparent shadow-xl lg:shadow-none' 
-              : 'hidden lg:block'
-          )}>
-            <div className='bg-white border border-[#E6D3C2] rounded-xl lg:rounded-xl p-4 sm:p-5 md:p-6 h-full lg:h-auto lg:sticky top-24 sm:top-28 md:top-32 lg:top-36 max-h-[100vh] lg:max-h-[calc(100vh-8rem)] overflow-y-auto'>
+          {showFilters && <div className='lg:hidden fixed inset-0 z-50 bg-black/50' onClick={() => setShowFilters(false)} />}
+          <aside
+            className={cn(
+              'w-full lg:w-80 flex-shrink-0 transition-all duration-300',
+              'lg:block',
+              showFilters
+                ? 'fixed lg:relative inset-y-0 left-0 z-50 lg:z-auto bg-white lg:bg-transparent shadow-xl lg:shadow-none'
+                : 'hidden lg:block',
+            )}>
+            <div className='bg-white border border-border-website-primary rounded-xl lg:rounded-xl p-4 sm:p-5 md:p-6 h-full lg:h-auto lg:sticky top-24 sm:top-28 md:top-32 lg:top-20 max-h-[100vh] lg:max-h-[calc(100vh-7rem)] overflow-y-auto'>
               <div className='flex items-center justify-between mb-4 sm:mb-5 md:mb-6'>
-                <h3 className='text-base sm:text-lg font-semibold text-[#1F3B29]'>Filters</h3>
+                <h3 className='text-base sm:text-lg font-semibold text-black'>Filters</h3>
                 <div className='flex items-center gap-2'>
                   {activeFiltersCount > 0 && (
-                    <Button variant='ghost' size='sm' onClick={clearAllFilters} className='text-xs sm:text-sm text-[#4F3A2E] hover:text-[#1F3B29]'>
+                    <Button variant='ghost' size='sm' onClick={clearAllFilters} className='text-xs sm:text-sm text-black hover:text-black'>
                       Clear All
                     </Button>
                   )}
-                  <Button
-                    variant='ghost'
-                    size='sm'
-                    onClick={() => setShowFilters(false)}
-                    className='lg:hidden text-[#4F3A2E] hover:text-[#1F3B29]'>
+                  <Button variant='ghost' size='sm' onClick={() => setShowFilters(false)} className='lg:hidden text-black hover:text-black'>
                     <X className='w-4 h-4 sm:w-5 sm:h-5' />
                   </Button>
                 </div>
@@ -606,12 +598,8 @@ export function JewelleryPage() {
                 {/* Price Range */}
                 <div>
                   <button onClick={() => toggleSection('price')} className='w-full flex items-center justify-between mb-3'>
-                    <h4 className='font-medium text-[#1F3B29]'>Price Range</h4>
-                    {openSections.price ? (
-                      <ChevronUp className='w-4 h-4 text-[#4F3A2E]' />
-                    ) : (
-                      <ChevronDown className='w-4 h-4 text-[#4F3A2E]' />
-                    )}
+                    <h4 className='font-medium text-black'>Price Range</h4>
+                    {openSections.price ? <ChevronUp className='w-4 h-4 text-black' /> : <ChevronDown className='w-4 h-4 text-black' />}
                   </button>
                   {openSections.price && (
                     <div className='space-y-4'>
@@ -628,7 +616,7 @@ export function JewelleryPage() {
                           step={1000}
                           className='mb-2'
                         />
-                        <div className='flex justify-between text-sm text-[#4F3A2E]'>
+                        <div className='flex justify-between text-sm text-black'>
                           <span>₹{priceRange[0].toLocaleString()}</span>
                           <span>₹{priceRange[1].toLocaleString()}</span>
                         </div>
@@ -636,7 +624,7 @@ export function JewelleryPage() {
 
                       {/* Predefined Price Ranges */}
                       <div className='space-y-2'>
-                        <p className='text-xs text-[#4F3A2E] font-medium mb-2'>Quick Select:</p>
+                        <p className='text-xs text-black font-medium mb-2'>Quick Select:</p>
                         {PRICE_RANGES.map((range, idx) => (
                           <button
                             key={idx}
@@ -644,8 +632,8 @@ export function JewelleryPage() {
                             className={cn(
                               'w-full text-left px-3 py-2 rounded-lg text-sm transition-colors',
                               priceRange[0] === range.min && priceRange[1] === range.max
-                                ? 'bg-[#1F3B29] text-white'
-                                : 'bg-[#F5EEE5] text-[#1F3B29] hover:bg-[#E6D3C2]'
+                                ? 'bg-gray-200 text-black'
+                                : 'bg-gray-100 text-black hover:bg-gray-200',
                             )}>
                             {range.label}
                           </button>
@@ -659,11 +647,11 @@ export function JewelleryPage() {
                 {categories.length > 0 && (
                   <div>
                     <button onClick={() => toggleSection('categories')} className='w-full flex items-center justify-between mb-3'>
-                      <h4 className='font-medium text-[#1F3B29]'>Categories</h4>
+                      <h4 className='font-medium text-black'>Categories</h4>
                       {openSections.categories ? (
-                        <ChevronUp className='w-4 h-4 text-[#4F3A2E]' />
+                        <ChevronUp className='w-4 h-4 text-black' />
                       ) : (
-                        <ChevronDown className='w-4 h-4 text-[#4F3A2E]' />
+                        <ChevronDown className='w-4 h-4 text-black' />
                       )}
                     </button>
                     {openSections.categories && (
@@ -681,10 +669,10 @@ export function JewelleryPage() {
                                 }
                                 setCurrentPage(1);
                               }}
-                              className='rounded border-[#E6D3C2] text-[#1F3B29] focus:ring-[#1F3B29]'
+                              className='rounded border-[#E6D3C2] text-black focus:ring-black'
                             />
-                            <span className='text-sm text-[#4F3A2E] group-hover:text-[#1F3B29]'>{category.name}</span>
-                            <span className='text-xs text-[#4F3A2E]/60'>({category.productCount})</span>
+                            <span className='text-sm text-black group-hover:text-black'>{category.name}</span>
+                            <span className='text-xs text-black/60'>({category.productCount})</span>
                           </label>
                         ))}
                       </div>
@@ -696,12 +684,8 @@ export function JewelleryPage() {
                 {brands.length > 0 && (
                   <div>
                     <button onClick={() => toggleSection('brands')} className='w-full flex items-center justify-between mb-3'>
-                      <h4 className='font-medium text-[#1F3B29]'>Brands</h4>
-                      {openSections.brands ? (
-                        <ChevronUp className='w-4 h-4 text-[#4F3A2E]' />
-                      ) : (
-                        <ChevronDown className='w-4 h-4 text-[#4F3A2E]' />
-                      )}
+                      <h4 className='font-medium text-black'>Brands</h4>
+                      {openSections.brands ? <ChevronUp className='w-4 h-4 text-black' /> : <ChevronDown className='w-4 h-4 text-black' />}
                     </button>
                     {openSections.brands && (
                       <div className='space-y-2 max-h-60 overflow-y-auto'>
@@ -718,9 +702,9 @@ export function JewelleryPage() {
                                 }
                                 setCurrentPage(1);
                               }}
-                              className='rounded border-[#E6D3C2] text-[#1F3B29] focus:ring-[#1F3B29]'
+                              className='rounded border-[#E6D3C2] text-black focus:ring-black'
                             />
-                            <span className='text-sm text-[#4F3A2E] group-hover:text-[#1F3B29]'>{brand.name}</span>
+                            <span className='text-sm text-black group-hover:text-black'>{brand.name}</span>
                           </label>
                         ))}
                       </div>
@@ -732,18 +716,18 @@ export function JewelleryPage() {
                 {attributes.length > 0 && (
                   <div>
                     <button onClick={() => toggleSection('attributes')} className='w-full flex items-center justify-between mb-3'>
-                      <h4 className='font-medium text-[#1F3B29]'>Attributes</h4>
+                      <h4 className='font-medium text-black'>Attributes</h4>
                       {openSections.attributes ? (
-                        <ChevronUp className='w-4 h-4 text-[#4F3A2E]' />
+                        <ChevronUp className='w-4 h-4 text-black' />
                       ) : (
-                        <ChevronDown className='w-4 h-4 text-[#4F3A2E]' />
+                        <ChevronDown className='w-4 h-4 text-black' />
                       )}
                     </button>
                     {openSections.attributes && (
                       <div className='space-y-4'>
                         {attributes.map(attr => (
                           <div key={attr._id}>
-                            <p className='text-xs font-medium text-[#4F3A2E] mb-2'>{attr.name}</p>
+                            <p className='text-xs font-medium text-black mb-2'>{attr.name}</p>
                             <div className='space-y-2 max-h-40 overflow-y-auto'>
                               {attr.values.map(value => (
                                 <label key={value} className='flex items-center gap-2 cursor-pointer group'>
@@ -751,9 +735,9 @@ export function JewelleryPage() {
                                     type='checkbox'
                                     checked={selectedAttributes[attr.name]?.includes(value) || false}
                                     onChange={e => handleAttributeChange(attr.name, value, e.target.checked)}
-                                    className='rounded border-[#E6D3C2] text-[#1F3B29] focus:ring-[#1F3B29]'
+                                    className='rounded border-[#E6D3C2] text-black focus:ring-black'
                                   />
-                                  <span className='text-sm text-[#4F3A2E] group-hover:text-[#1F3B29]'>{value}</span>
+                                  <span className='text-sm text-black group-hover:text-black'>{value}</span>
                                 </label>
                               ))}
                             </div>
@@ -774,9 +758,9 @@ export function JewelleryPage() {
                         setShowInStockOnly(e.target.checked);
                         setCurrentPage(1);
                       }}
-                      className='rounded border-[#E6D3C2] text-[#1F3B29] focus:ring-[#1F3B29]'
+                      className='rounded border-[#E6D3C2] text-black focus:ring-black'
                     />
-                    <span className='text-sm text-[#4F3A2E] group-hover:text-[#1F3B29]'>In Stock Only</span>
+                    <span className='text-sm text-black group-hover:text-black'>In Stock Only</span>
                   </label>
                 </div>
               </div>
@@ -787,12 +771,12 @@ export function JewelleryPage() {
           <div className='flex-1 min-w-0'>
             {paginatedProducts.length === 0 ? (
               <div className='text-center py-12 bg-white rounded-xl border border-[#E6D3C2]'>
-                <div className='w-24 h-24 mx-auto mb-4 bg-[#F5EEE5] rounded-full flex items-center justify-center'>
-                  <Gem className='w-12 h-12 text-[#4F3A2E]' />
+                <div className='w-24 h-24 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center'>
+                  <Gem className='w-12 h-12 text-web' />
                 </div>
-                <h3 className='text-lg font-medium text-[#1F3B29] mb-2'>No products found</h3>
-                <p className='text-[#4F3A2E] mb-4'>Try adjusting your filters or search terms</p>
-                <Button onClick={clearAllFilters} className='bg-[#1F3B29] hover:bg-[#3F5C45] text-white'>
+                <h3 className='text-lg font-medium text-black mb-2'>No products found</h3>
+                <p className='text-black mb-4'>Try adjusting your filters or search terms</p>
+                <Button onClick={clearAllFilters} className='bg-gray-100 hover:bg-[#3F5C45] text-balck'>
                   Clear Filters
                 </Button>
               </div>
@@ -811,7 +795,7 @@ export function JewelleryPage() {
                       variant='outline'
                       onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                       disabled={currentPage === 1}
-                      className='border-[#E6D3C2] text-[#1F3B29] hover:bg-[#F5EEE5]'>
+                      className='border-[#E6D3C2] text-black hover:bg-[#F5EEE5]'>
                       Previous
                     </Button>
 
@@ -828,15 +812,15 @@ export function JewelleryPage() {
                               className={cn(
                                 'w-10',
                                 currentPage === page
-                                  ? 'bg-[#1F3B29] hover:bg-[#3F5C45] text-white'
-                                  : 'border-[#E6D3C2] text-[#1F3B29] hover:bg-[#F5EEE5]'
+                                  ? 'bg-black hover:bg-[#3F5C45] text-white'
+                                  : 'border-[#E6D3C2] text-black hover:bg-[#F5EEE5]',
                               )}>
                               {page}
                             </Button>
                           );
                         } else if (page === currentPage - 3 || page === currentPage + 3) {
                           return (
-                            <span key={page} className='px-2 text-[#4F3A2E]'>
+                            <span key={page} className='px-2 text-black'>
                               ...
                             </span>
                           );
@@ -849,7 +833,7 @@ export function JewelleryPage() {
                       variant='outline'
                       onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                       disabled={currentPage === totalPages}
-                      className='border-[#E6D3C2] text-[#1F3B29] hover:bg-[#F5EEE5]'>
+                      className='border-[#E6D3C2] text-black hover:bg-[#F5EEE5]'>
                       Next
                     </Button>
                   </div>

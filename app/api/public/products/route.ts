@@ -1,5 +1,6 @@
 import { connectToDatabase } from "@/lib/mongodb";
 import { NextRequest, NextResponse } from "next/server";
+import { ObjectId } from "mongodb";
 import { formatProductPrice } from "@/lib/utils/price-calculator";
 
 export async function GET(request: NextRequest) {
@@ -83,12 +84,42 @@ export async function GET(request: NextRequest) {
     // Get total count for pagination
     const total = await db.collection("products").countDocuments(query);
 
+    const normalizeCategoryId = (value: any) => {
+      if (!value) return null;
+      if (value instanceof ObjectId) return value.toString();
+      if (typeof value === "string") return value;
+      if (typeof value === "object" && value._id) return value._id.toString();
+      return null;
+    };
+
+    const categoryIds = Array.from(
+      new Set(
+        products
+          .map(product => normalizeCategoryId(product.category))
+          .filter((id): id is string => !!id && ObjectId.isValid(id))
+      )
+    );
+
+    const categories = categoryIds.length
+      ? await db
+          .collection("categories")
+          .find({ _id: { $in: categoryIds.map(id => new ObjectId(id)) } })
+          .project({ name: 1 })
+          .toArray()
+      : [];
+
+    const categoryMap = new Map(categories.map(category => [category._id.toString(), category.name]));
+
     return NextResponse.json({
       products: products.map((product) => {
         const priceData = formatProductPrice(product);
+        const categoryId = normalizeCategoryId(product.category);
+        const categoryName = categoryId ? categoryMap.get(categoryId) : null;
+
         return {
           ...product,
           _id: product._id.toString(),
+          category: categoryName ? categoryName : product.category,
           // Format price display using calculated prices
           displayPrice: priceData.displayPrice,
           originalPrice: priceData.originalPrice,

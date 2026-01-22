@@ -177,7 +177,7 @@ export function WishlistPage() {
 
       {/* Wishlist Items */}
       <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6'>
-        {wishlistItems.map(product => {
+      {wishlistItems.map(product => {
           const productId = (product as any)._id || product.id.toString();
           const productSlug = (product as any).urlSlug || productId;
           return (
