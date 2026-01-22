@@ -38,6 +38,7 @@
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
   --website-primary : #001e38;
+  --web: #001e38;
 }
 
 .dark {
@@ -74,6 +75,7 @@
   --sidebar-border: oklch(0.269 0 0);
   --sidebar-ring: oklch(0.439 0 0);
   --website-primary : #001e38;
+  --web: #001e38;
 
 }
 
@@ -117,6 +119,7 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
   --website-primary : var(--website-primary);
+  --color-web: var(--web);
 
 }
 

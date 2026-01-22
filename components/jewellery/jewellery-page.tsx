@@ -770,7 +770,7 @@ export function JewelleryPage() {
           {/* Products Grid */}
           <div className='flex-1 min-w-0'>
             {paginatedProducts.length === 0 ? (
-              <div className='text-center py-12 bg-white rounded-xl border border-[#E6D3C2]'>
+              <div className='text-center py-12 bg-white rounded-xl border border'>
                 <div className='w-24 h-24 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center'>
                   <Gem className='w-12 h-12 text-web' />
                 </div>
