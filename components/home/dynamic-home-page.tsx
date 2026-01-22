@@ -333,6 +333,7 @@ export const HomePage = () => {
   const [sectionsData, setSectionsData] = useState<HomepageSectionsState>(() => createDefaultSectionsState());
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [scrollVideoPanels, setScrollVideoPanels] = useState<VideoItem[]>([]);
 
   const fetchHomepageSections = useCallback(async (signal: AbortSignal) => {
     setIsLoading(true);
@@ -502,18 +503,34 @@ export const HomePage = () => {
     return () => controller.abort();
   }, [fetchHomepageSections]);
 
-  const videoData: VideoItem[] = [
-    {
-      url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
-      hashtag: '#OOTD',
-      productSlug: 'black-leather-bag',
-    },
-    {
-      url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
-      hashtag: '#StyleInspo',
-      productSlug: 'summer-dress',
-    },
-  ];
+  useEffect(() => {
+    const controller = new AbortController();
+    const fetchScrollVideos = async () => {
+      try {
+        const response = await fetch('/api/public/scroll-video-panels', { signal: controller.signal });
+        if (!response.ok) {
+          return;
+        }
+        const data = await response.json();
+        const panels = Array.isArray(data)
+          ? data.map((item: any) => ({
+              url: item.url || '',
+              hashtag: item.hashtag || '',
+              productSlug: item.productSlug || '',
+              productId: item.productId || '',
+            }))
+          : [];
+        setScrollVideoPanels(panels.filter(panel => panel.url));
+      } catch (error) {
+        if ((error as Error).name !== 'AbortError') {
+          console.error('[v0] Failed to fetch scroll video panels:', error);
+        }
+      }
+    };
+
+    fetchScrollVideos();
+    return () => controller.abort();
+  }, []);
 
   return (
     <>
@@ -536,9 +553,11 @@ export const HomePage = () => {
         <div>
           <JewelryProductsDemo products={sectionsData.newProducts} isLoading={isLoading} />
         </div>
-        <div>
-          <ScrollVideoPanels videoData={videoData} />
-        </div>
+        {scrollVideoPanels.length > 0 && (
+          <div>
+            <ScrollVideoPanels videoData={scrollVideoPanels} />
+          </div>
+        )}
         <div>
           <TestimonialsSection />
         </div>

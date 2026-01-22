@@ -7,7 +7,8 @@ import { useRouter } from 'next/navigation';
 export interface VideoItem {
   url: string;
   hashtag: string;
-  productSlug: string;
+  productSlug?: string;
+  productId?: string;
 }
 
 interface ScrollVideoPanelsProps {
@@ -27,8 +28,10 @@ const ScrollVideoPanels: React.FC<ScrollVideoPanelsProps> = ({ videoData }) => {
     });
   };
 
-  const handleVideoClick = (slug: string) => {
-    router.push(`/product/${slug}`);
+  const handleVideoClick = (slug?: string, id?: string) => {
+    const target = slug || id;
+    if (!target) return;
+    router.push(`/products/${target}`);
   };
 
   useEffect(() => {
@@ -88,7 +91,7 @@ const ScrollVideoPanels: React.FC<ScrollVideoPanelsProps> = ({ videoData }) => {
           videoData.map((item, index) => (
             <div
               key={index}
-              onClick={() => handleVideoClick(item.productSlug)}
+              onClick={() => handleVideoClick(item.productSlug, item.productId)}
               className='relative flex-shrink-0 w-64 h-96 snap-center cursor-pointer'>
               <div className='absolute top-4 left-4 z-10'>
                 <span className='text-white text-sm bg-black/30 px-3 py-1 rounded-full'>{item.hashtag}</span>

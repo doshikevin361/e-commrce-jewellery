@@ -19,6 +19,7 @@ interface MainImageUploadProps {
   uploadHandler?: (file: File) => Promise<string>;
   allowRemove?: boolean;
   hideLabel?: boolean;
+  previewType?: 'image' | 'video';
 }
 
 export function MainImageUpload({
@@ -36,6 +37,7 @@ export function MainImageUpload({
   uploadHandler,
   allowRemove = true,
   hideLabel = false,
+  previewType = 'image',
 }: MainImageUploadProps) {
   const generatedId = useId();
   const [isUploading, setIsUploading] = useState(false);
@@ -107,7 +109,17 @@ export function MainImageUpload({
 
         {value && (
           <div className='mt-4 relative inline-block'>
-            <img src={previewSrc} alt={label} className='h-32 w-32 object-cover rounded border border-slate-200 bg-white' />
+            {previewType === 'video' ? (
+              <video
+                src={previewSrc}
+                className='h-32 w-32 object-cover rounded border border-slate-200 bg-white'
+                controls
+                muted
+                playsInline
+              />
+            ) : (
+              <img src={previewSrc} alt={label} className='h-32 w-32 object-cover rounded border border-slate-200 bg-white' />
+            )}
             {allowRemove && !disabled && (
               <button
                 type='button'

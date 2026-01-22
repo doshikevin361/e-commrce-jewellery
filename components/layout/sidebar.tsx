@@ -345,6 +345,10 @@ export function Sidebar() {
       href: '/admin/cms/new-arrivals/cards',
     },
     {
+      label: 'Scroll Video Panels',
+      href: '/admin/cms/scroll-video-panels',
+    },
+    {
       label: 'Gallery',
       href: '/admin/cms/gallery',
     },
