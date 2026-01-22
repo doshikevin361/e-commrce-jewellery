@@ -47,6 +47,7 @@ import {
 import Categories, { HeroBanner, ScrollingOffer, Slider } from './hero-banner-slider';
 import ProductShowcase from './ProductShowcase';
 import TestimonialCard from '../testimonialCard/TestimonialCard';
+import ScrollVideoPanels, { VideoItem } from '../scrollvideopanel/ScrollVideoPanels';
 
 type HeroSlide = {
   id: string | number;
@@ -501,6 +502,19 @@ export const HomePage = () => {
     return () => controller.abort();
   }, [fetchHomepageSections]);
 
+  const videoData: VideoItem[] = [
+    {
+      url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+      hashtag: '#OOTD',
+      productSlug: 'black-leather-bag',
+    },
+    {
+      url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
+      hashtag: '#StyleInspo',
+      productSlug: 'summer-dress',
+    },
+  ];
+
   return (
     <>
       <div className='flex-col gap-0'>
@@ -521,6 +535,9 @@ export const HomePage = () => {
         </div>
         <div>
           <JewelryProductsDemo products={sectionsData.newProducts} isLoading={isLoading} />
+        </div>
+        <div>
+          <ScrollVideoPanels videoData={videoData} />
         </div>
         <div>
           <TestimonialsSection />
