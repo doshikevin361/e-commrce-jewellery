@@ -651,7 +651,7 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
             {/* Quantity Selector */}
             <div className='flex items-center gap-4 pt-2'>
               <span className='text-sm font-semibold text-[#1F3B29] uppercase tracking-wide'>Quantity:</span>
-              <div className='flex items-center border-2 border-web rounded-xl overflow-hidden shadow-sm bg-white'>
+              <div className='flex items-center border rounded-xl overflow-hidden shadow-sm bg-white'>
                 <button
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
                   className='p-2.5 lg:p-3 hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
@@ -678,7 +678,7 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
                 className={cn(
                   'flex-1 flex items-center justify-center gap-2 px-6 py-3.5 lg:py-4 rounded-xl font-semibold text-base transition-all duration-300 shadow-md hover:shadow-lg',
                   isInCart
-                    ? 'bg-green-500 text-white cursor-default'
+                    ? 'bg-web text-white cursor-default'
                     : product.stock === 0
                       ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                       : 'bg-[#001e38] text-white hover:scale-[1.02] active:scale-[0.98] hover:bg-[#002a52]',
@@ -707,7 +707,7 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
                   'flex-1 px-6 py-3.5 lg:py-4 rounded-xl font-semibold text-base border-2 transition-all duration-300 shadow-md hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]',
                   product.stock === 0
                     ? 'border-gray-300 text-gray-500 cursor-not-allowed bg-gray-100'
-                    : 'border-web text-web hover:bg-web bg-white',
+                    : 'border-web text-web hover:bg-web bg-white hover:text-white',
                 )}>
                 <span>Buy Now</span>
               </button>
@@ -1132,7 +1132,7 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
 
             {/* Trust Badges */}
             <div className='grid grid-cols-3 gap-3 lg:gap-4 pt-6 border-t border-web/30'>
-              <div className='flex flex-col items-center gap-2 text-center p-3 lg:p-4 rounded-xl bg-web/60 hover:bg-white transition-colors cursor-default'>
+              <div className='flex flex-col items-center gap-2 text-center p-3 lg:p-4 rounded-xl bg-web/60 bg-white transition-colors cursor-default'>
                 <div className='p-2.5 rounded-full bg-gray-100'>
                   <Award className='w-5 h-5 lg:w-6 lg:h-6 text-web' />
                 </div>

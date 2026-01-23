@@ -3,20 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import {
-  Loader2,
-  MapPin,
-  CreditCard,
-  Check,
-  AlertCircle,
-  Plus,
-  Edit2,
-  Trash2,
-  Home,
-  Briefcase,
-  MapPinned,
-  X,
-} from 'lucide-react';
+import { Loader2, MapPin, CreditCard, Check, AlertCircle, Plus, Edit2, Trash2, Home, Briefcase, MapPinned, X } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
 import { PageLoader } from '@/components/common/page-loader';
 import toast from 'react-hot-toast';
@@ -134,7 +121,7 @@ export function CheckoutPage() {
       if (response.ok) {
         const data = await response.json();
         setAddresses(data.addresses || []);
-        
+
         // Set default address as selected
         const defaultAddress = data.addresses?.find((addr: Address) => addr.isDefault);
         if (defaultAddress) {
@@ -192,7 +179,7 @@ export function CheckoutPage() {
 
   // Handle address selection
   const handleShippingAddressSelect = (addressId: string) => {
-    const address = addresses.find((addr) => addr._id === addressId);
+    const address = addresses.find(addr => addr._id === addressId);
     if (address) {
       setSelectedShippingAddressId(addressId);
       setShippingAddress({
@@ -221,7 +208,7 @@ export function CheckoutPage() {
   };
 
   const handleBillingAddressSelect = (addressId: string) => {
-    const address = addresses.find((addr) => addr._id === addressId);
+    const address = addresses.find(addr => addr._id === addressId);
     if (address) {
       setSelectedBillingAddressId(addressId);
       setBillingAddress({
@@ -241,9 +228,7 @@ export function CheckoutPage() {
   const handleSaveAddress = async () => {
     try {
       const token = localStorage.getItem('customerToken');
-      const url = editingAddress
-        ? '/api/customer/addresses'
-        : '/api/customer/addresses';
+      const url = editingAddress ? '/api/customer/addresses' : '/api/customer/addresses';
       const method = editingAddress ? 'PUT' : 'POST';
 
       const response = await fetch(url, {
@@ -252,11 +237,7 @@ export function CheckoutPage() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(
-          editingAddress
-            ? { ...newAddress, addressId: editingAddress._id }
-            : newAddress
-        ),
+        body: JSON.stringify(editingAddress ? { ...newAddress, addressId: editingAddress._id } : newAddress),
       });
 
       if (response.ok) {
@@ -349,11 +330,11 @@ export function CheckoutPage() {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     if (showAddressForm) {
-      setNewAddress((prev) => ({ ...prev, [name]: value }));
+      setNewAddress(prev => ({ ...prev, [name]: value }));
     } else if (showBillingForm && !useSameAsShipping) {
-      setBillingAddress((prev) => ({ ...prev, [name]: value }));
+      setBillingAddress(prev => ({ ...prev, [name]: value }));
     } else {
-      setShippingAddress((prev) => ({ ...prev, [name]: value }));
+      setShippingAddress(prev => ({ ...prev, [name]: value }));
     }
   };
 
@@ -460,7 +441,7 @@ export function CheckoutPage() {
       const fullOrderData = {
         customerEmail: customerEmail,
         customerName: shippingAddress.fullName,
-        items: cartItems.map((item) => ({
+        items: cartItems.map(item => ({
           product: item._id,
           productName: item.title,
           productImage: item.image,
@@ -589,23 +570,22 @@ export function CheckoutPage() {
   }
 
   return (
-    <div className='mx-auto w-full max-w-[1440px] px-4 sm:px-6 md:px-8 lg:px-12 py-6 sm:py-8 md:py-10'>
-      <h1 className='text-2xl sm:text-3xl md:text-4xl font-bold text-[#1F3B29] mb-6 sm:mb-8'>Checkout</h1>
+    <div className='mx-auto w-full max-w-[1440px] px-4  py-6 sm:py-8 md:py-10'>
+      <h1 className='text-2xl sm:text-3xl md:text-4xl font-bold text-web mb-6 sm:mb-8'>Checkout</h1>
 
       <div className='grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8'>
         {/* Left Column - Addresses and Payment */}
         <div className='lg:col-span-2 space-y-6'>
           {/* Shipping Address Section */}
-          <div className='bg-white border-2 border-[#E6D3C2] rounded-xl p-4 sm:p-6'>
+          <div className='bg-white border rounded-xl p-4 sm:p-6'>
             <div className='flex items-center justify-between mb-6'>
               <div className='flex items-center gap-2'>
-                <MapPin className='text-[#C8A15B]' size={24} />
-                <h2 className='text-xl font-bold text-[#1F3B29]'>Shipping Address</h2>
+                <MapPin className='text-web' size={24} />
+                <h2 className='text-xl font-bold text-web'>Shipping Address</h2>
               </div>
               <button
                 onClick={handleAddNewAddress}
-                className='flex items-center gap-2 px-4 py-2 bg-[#1F3B29] text-white rounded-lg hover:bg-[#2a4d3a] transition-colors text-sm font-medium'
-              >
+                className='flex items-center gap-2 px-4 py-2 bg-web text-white rounded-lg hover:bg-web transition-colors text-sm font-medium'>
                 <Plus size={16} />
                 Add New
               </button>
@@ -621,45 +601,38 @@ export function CheckoutPage() {
             {/* Saved Addresses */}
             {addresses.length > 0 && !showAddressForm && (
               <div className='space-y-3 mb-4'>
-                {addresses.map((address) => (
+                {addresses.map(address => (
                   <div
                     key={address._id}
                     className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
-                      selectedShippingAddressId === address._id
-                        ? 'border-[#C8A15B] bg-[#F5EEE5]'
-                        : 'border-[#E6D3C2] hover:border-[#C8A15B]'
+                      selectedShippingAddressId === address._id ? 'border-web bg-gray-100' : 'border-[#E6D3C2] hover:border-web'
                     }`}
-                    onClick={() => handleShippingAddressSelect(address._id!)}
-                  >
+                    onClick={() => handleShippingAddressSelect(address._id!)}>
                     <div className='flex items-start justify-between'>
                       <div className='flex-1'>
                         <div className='flex items-center gap-2 mb-2'>
                           {getAddressIcon(address.addressType)}
-                          <span className='font-semibold text-[#1F3B29]'>{address.fullName}</span>
-                          {address.isDefault && (
-                            <span className='text-xs bg-[#C8A15B] text-white px-2 py-0.5 rounded'>Default</span>
-                          )}
+                          <span className='font-semibold text-web'>{address.fullName}</span>
+                          {address.isDefault && <span className='text-xs bg-web text-white px-2 py-0.5 rounded'>Default</span>}
                         </div>
-                        <p className='text-sm text-[#4F3A2E]'>{address.phone}</p>
-                        <p className='text-sm text-[#4F3A2E] mt-1'>
+                        <p className='text-sm text-black'>{address.phone}</p>
+                        <p className='text-sm text-black mt-1'>
                           {address.addressLine1}
                           {address.addressLine2 && `, ${address.addressLine2}`}
                         </p>
-                        <p className='text-sm text-[#4F3A2E]'>
+                        <p className='text-sm text-black'>
                           {address.city}, {address.state} {address.postalCode}
                         </p>
                       </div>
-                      <div className='flex gap-2 ml-4' onClick={(e) => e.stopPropagation()}>
+                      <div className='flex gap-2 ml-4' onClick={e => e.stopPropagation()}>
                         <button
                           onClick={() => handleEditAddress(address)}
-                          className='p-2 text-[#C8A15B] hover:bg-[#F5EEE5] rounded transition-colors'
-                        >
+                          className='p-2 text-web hover:bg-gray-100 rounded transition-colors'>
                           <Edit2 size={16} />
                         </button>
                         <button
                           onClick={() => handleDeleteAddress(address._id!)}
-                          className='p-2 text-red-500 hover:bg-red-50 rounded transition-colors'
-                        >
+                          className='p-2 text-red-500 hover:bg-red-50 rounded transition-colors'>
                           <Trash2 size={16} />
                         </button>
                       </div>
@@ -673,23 +646,20 @@ export function CheckoutPage() {
             {showAddressForm ? (
               <div className='space-y-4 border-t pt-4'>
                 <div className='flex items-center justify-between mb-4'>
-                  <h3 className='font-semibold text-[#1F3B29]'>
-                    {editingAddress ? 'Edit Address' : 'Add New Address'}
-                  </h3>
+                  <h3 className='font-semibold text-web'>{editingAddress ? 'Edit Address' : 'Add New Address'}</h3>
                   <button
                     onClick={() => {
                       setShowAddressForm(false);
                       setEditingAddress(null);
                     }}
-                    className='p-2 hover:bg-gray-100 rounded'
-                  >
+                    className='p-2 hover:bg-gray-100 rounded'>
                     <X size={20} />
                   </button>
                 </div>
 
                 <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
                   <div>
-                    <label className='block text-sm font-medium text-[#1F3B29] mb-2'>
+                    <label className='block text-sm font-medium text-web mb-2'>
                       Full Name <span className='text-red-500'>*</span>
                     </label>
                     <input
@@ -697,12 +667,12 @@ export function CheckoutPage() {
                       name='fullName'
                       value={newAddress.fullName}
                       onChange={handleInputChange}
-                      className='w-full px-4 py-2 border border-[#E6D3C2] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C8A15B]'
+                      className='w-full px-4 py-2 border border-[#E6D3C2] rounded-lg focus:outline-none focus:ring-2 focus:ring-web'
                       placeholder='John Doe'
                     />
                   </div>
                   <div>
-                    <label className='block text-sm font-medium text-[#1F3B29] mb-2'>
+                    <label className='block text-sm font-medium text-web mb-2'>
                       Phone Number <span className='text-red-500'>*</span>
                     </label>
                     <input
@@ -710,7 +680,7 @@ export function CheckoutPage() {
                       name='phone'
                       value={newAddress.phone}
                       onChange={handleInputChange}
-                      className='w-full px-4 py-2 border border-[#E6D3C2] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C8A15B]'
+                      className='w-full px-4 py-2 border border-[#E6D3C2] rounded-lg focus:outline-none focus:ring-2 focus:ring-web'
                       placeholder='9876543210'
                       maxLength={10}
                     />
@@ -718,7 +688,7 @@ export function CheckoutPage() {
                 </div>
 
                 <div>
-                  <label className='block text-sm font-medium text-[#1F3B29] mb-2'>
+                  <label className='block text-sm font-medium text-web mb-2'>
                     Address Line 1 <span className='text-red-500'>*</span>
                   </label>
                   <input
@@ -726,26 +696,26 @@ export function CheckoutPage() {
                     name='addressLine1'
                     value={newAddress.addressLine1}
                     onChange={handleInputChange}
-                    className='w-full px-4 py-2 border border-[#E6D3C2] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C8A15B]'
+                    className='w-full px-4 py-2 border border-[#E6D3C2] rounded-lg focus:outline-none focus:ring-2 focus:ring-web'
                     placeholder='House No., Building Name'
                   />
                 </div>
 
                 <div>
-                  <label className='block text-sm font-medium text-[#1F3B29] mb-2'>Address Line 2</label>
+                  <label className='block text-sm font-medium text-web mb-2'>Address Line 2</label>
                   <input
                     type='text'
                     name='addressLine2'
                     value={newAddress.addressLine2}
                     onChange={handleInputChange}
-                    className='w-full px-4 py-2 border border-[#E6D3C2] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C8A15B]'
+                    className='w-full px-4 py-2 border border-[#E6D3C2] rounded-lg focus:outline-none focus:ring-2 focus:ring-web'
                     placeholder='Road Name, Area, Colony'
                   />
                 </div>
 
                 <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
                   <div>
-                    <label className='block text-sm font-medium text-[#1F3B29] mb-2'>
+                    <label className='block text-sm font-medium text-web mb-2'>
                       City <span className='text-red-500'>*</span>
                     </label>
                     <input
@@ -753,12 +723,12 @@ export function CheckoutPage() {
                       name='city'
                       value={newAddress.city}
                       onChange={handleInputChange}
-                      className='w-full px-4 py-2 border border-[#E6D3C2] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C8A15B]'
+                      className='w-full px-4 py-2 border border-[#E6D3C2] rounded-lg focus:outline-none focus:ring-2 focus:ring-web'
                       placeholder='Mumbai'
                     />
                   </div>
                   <div>
-                    <label className='block text-sm font-medium text-[#1F3B29] mb-2'>
+                    <label className='block text-sm font-medium text-web mb-2'>
                       State <span className='text-red-500'>*</span>
                     </label>
                     <input
@@ -766,7 +736,7 @@ export function CheckoutPage() {
                       name='state'
                       value={newAddress.state}
                       onChange={handleInputChange}
-                      className='w-full px-4 py-2 border border-[#E6D3C2] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C8A15B]'
+                      className='w-full px-4 py-2 border border-[#E6D3C2] rounded-lg focus:outline-none focus:ring-2 focus:ring-web'
                       placeholder='Maharashtra'
                     />
                   </div>
@@ -774,7 +744,7 @@ export function CheckoutPage() {
 
                 <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
                   <div>
-                    <label className='block text-sm font-medium text-[#1F3B29] mb-2'>
+                    <label className='block text-sm font-medium text-web mb-2'>
                       Postal Code <span className='text-red-500'>*</span>
                     </label>
                     <input
@@ -782,19 +752,18 @@ export function CheckoutPage() {
                       name='postalCode'
                       value={newAddress.postalCode}
                       onChange={handleInputChange}
-                      className='w-full px-4 py-2 border border-[#E6D3C2] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C8A15B]'
+                      className='w-full px-4 py-2 border border-[#E6D3C2] rounded-lg focus:outline-none focus:ring-2 focus:ring-web'
                       placeholder='400001'
                       maxLength={6}
                     />
                   </div>
                   <div>
-                    <label className='block text-sm font-medium text-[#1F3B29] mb-2'>Address Type</label>
+                    <label className='block text-sm font-medium text-web mb-2'>Address Type</label>
                     <select
                       name='addressType'
                       value={newAddress.addressType}
                       onChange={handleInputChange}
-                      className='w-full px-4 py-2 border border-[#E6D3C2] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C8A15B]'
-                    >
+                      className='w-full px-4 py-2 border border-[#E6D3C2] rounded-lg focus:outline-none focus:ring-2 focus:ring-web'>
                       <option value='home'>Home</option>
                       <option value='work'>Work</option>
                       <option value='other'>Other</option>
@@ -807,10 +776,10 @@ export function CheckoutPage() {
                     type='checkbox'
                     id='setDefault'
                     checked={newAddress.isDefault}
-                    onChange={(e) => setNewAddress({ ...newAddress, isDefault: e.target.checked })}
-                    className='w-4 h-4 text-[#C8A15B] border-[#E6D3C2] rounded focus:ring-[#C8A15B]'
+                    onChange={e => setNewAddress({ ...newAddress, isDefault: e.target.checked })}
+                    className='w-4 h-4 text-web border-[#E6D3C2] rounded focus:ring-web'
                   />
-                  <label htmlFor='setDefault' className='text-sm text-[#4F3A2E]'>
+                  <label htmlFor='setDefault' className='text-sm text-black'>
                     Set as default address
                   </label>
                 </div>
@@ -818,8 +787,7 @@ export function CheckoutPage() {
                 <div className='flex gap-3 pt-2'>
                   <button
                     onClick={handleSaveAddress}
-                    className='flex-1 px-4 py-2 bg-[#1F3B29] text-white rounded-lg hover:bg-[#2a4d3a] transition-colors font-medium'
-                  >
+                    className='flex-1 px-4 py-2 bg-web text-white rounded-lg hover:bg-[#2a4d3a] transition-colors font-medium'>
                     Save Address
                   </button>
                   <button
@@ -827,8 +795,7 @@ export function CheckoutPage() {
                       setShowAddressForm(false);
                       setEditingAddress(null);
                     }}
-                    className='px-4 py-2 border border-[#E6D3C2] text-[#1F3B29] rounded-lg hover:bg-gray-50 transition-colors'
-                  >
+                    className='px-4 py-2 border border-[#E6D3C2] text-web rounded-lg hover:bg-gray-50 transition-colors'>
                     Cancel
                   </button>
                 </div>
@@ -839,7 +806,7 @@ export function CheckoutPage() {
                 <div className='space-y-4'>
                   <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
                     <div>
-                      <label className='block text-sm font-medium text-[#1F3B29] mb-2'>
+                      <label className='block text-sm font-medium text-web mb-2'>
                         Full Name <span className='text-red-500'>*</span>
                       </label>
                       <input
@@ -847,12 +814,12 @@ export function CheckoutPage() {
                         name='fullName'
                         value={shippingAddress.fullName}
                         onChange={handleInputChange}
-                        className='w-full px-4 py-2 border border-[#E6D3C2] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C8A15B]'
+                        className='w-full px-4 py-2 border border-[#E6D3C2] rounded-lg focus:outline-none focus:ring-2 focus:ring-web'
                         placeholder='John Doe'
                       />
                     </div>
                     <div>
-                      <label className='block text-sm font-medium text-[#1F3B29] mb-2'>
+                      <label className='block text-sm font-medium text-web mb-2'>
                         Phone Number <span className='text-red-500'>*</span>
                       </label>
                       <input
@@ -860,7 +827,7 @@ export function CheckoutPage() {
                         name='phone'
                         value={shippingAddress.phone}
                         onChange={handleInputChange}
-                        className='w-full px-4 py-2 border border-[#E6D3C2] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C8A15B]'
+                        className='w-full px-4 py-2 border border-[#E6D3C2] rounded-lg focus:outline-none focus:ring-2 focus:ring-web'
                         placeholder='9876543210'
                         maxLength={10}
                       />
@@ -868,7 +835,7 @@ export function CheckoutPage() {
                   </div>
 
                   <div>
-                    <label className='block text-sm font-medium text-[#1F3B29] mb-2'>
+                    <label className='block text-sm font-medium text-web mb-2'>
                       Address Line 1 <span className='text-red-500'>*</span>
                     </label>
                     <input
@@ -876,26 +843,26 @@ export function CheckoutPage() {
                       name='addressLine1'
                       value={shippingAddress.addressLine1}
                       onChange={handleInputChange}
-                      className='w-full px-4 py-2 border border-[#E6D3C2] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C8A15B]'
+                      className='w-full px-4 py-2 border border-[#E6D3C2] rounded-lg focus:outline-none focus:ring-2 focus:ring-web'
                       placeholder='House No., Building Name'
                     />
                   </div>
 
                   <div>
-                    <label className='block text-sm font-medium text-[#1F3B29] mb-2'>Address Line 2</label>
+                    <label className='block text-sm font-medium text-web mb-2'>Address Line 2</label>
                     <input
                       type='text'
                       name='addressLine2'
                       value={shippingAddress.addressLine2}
                       onChange={handleInputChange}
-                      className='w-full px-4 py-2 border border-[#E6D3C2] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C8A15B]'
+                      className='w-full px-4 py-2 border border-[#E6D3C2] rounded-lg focus:outline-none focus:ring-2 focus:ring-web'
                       placeholder='Road Name, Area, Colony'
                     />
                   </div>
 
                   <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
                     <div>
-                      <label className='block text-sm font-medium text-[#1F3B29] mb-2'>
+                      <label className='block text-sm font-medium text-web mb-2'>
                         City <span className='text-red-500'>*</span>
                       </label>
                       <input
@@ -903,12 +870,12 @@ export function CheckoutPage() {
                         name='city'
                         value={shippingAddress.city}
                         onChange={handleInputChange}
-                        className='w-full px-4 py-2 border border-[#E6D3C2] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C8A15B]'
+                        className='w-full px-4 py-2 border border-[#E6D3C2] rounded-lg focus:outline-none focus:ring-2 focus:ring-web'
                         placeholder='Mumbai'
                       />
                     </div>
                     <div>
-                      <label className='block text-sm font-medium text-[#1F3B29] mb-2'>
+                      <label className='block text-sm font-medium text-web mb-2'>
                         State <span className='text-red-500'>*</span>
                       </label>
                       <input
@@ -916,7 +883,7 @@ export function CheckoutPage() {
                         name='state'
                         value={shippingAddress.state}
                         onChange={handleInputChange}
-                        className='w-full px-4 py-2 border border-[#E6D3C2] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C8A15B]'
+                        className='w-full px-4 py-2 border border-[#E6D3C2] rounded-lg focus:outline-none focus:ring-2 focus:ring-web'
                         placeholder='Maharashtra'
                       />
                     </div>
@@ -924,7 +891,7 @@ export function CheckoutPage() {
 
                   <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
                     <div>
-                      <label className='block text-sm font-medium text-[#1F3B29] mb-2'>
+                      <label className='block text-sm font-medium text-web mb-2'>
                         Postal Code <span className='text-red-500'>*</span>
                       </label>
                       <input
@@ -932,13 +899,13 @@ export function CheckoutPage() {
                         name='postalCode'
                         value={shippingAddress.postalCode}
                         onChange={handleInputChange}
-                        className='w-full px-4 py-2 border border-[#E6D3C2] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C8A15B]'
+                        className='w-full px-4 py-2 border border-[#E6D3C2] rounded-lg focus:outline-none focus:ring-2 focus:ring-web'
                         placeholder='400001'
                         maxLength={6}
                       />
                     </div>
                     <div>
-                      <label className='block text-sm font-medium text-[#1F3B29] mb-2'>Country</label>
+                      <label className='block text-sm font-medium text-web mb-2'>Country</label>
                       <input
                         type='text'
                         name='country'
@@ -955,11 +922,11 @@ export function CheckoutPage() {
           </div>
 
           {/* Billing Address Section */}
-          <div className='bg-white border-2 border-[#E6D3C2] rounded-xl p-4 sm:p-6'>
+          <div className='bg-white border rounded-xl p-4 sm:p-6'>
             <div className='flex items-center justify-between mb-6'>
               <div className='flex items-center gap-2'>
-                <CreditCard className='text-[#C8A15B]' size={24} />
-                <h2 className='text-xl font-bold text-[#1F3B29]'>Billing Address</h2>
+                <CreditCard className='text-web' size={24} />
+                <h2 className='text-xl font-bold text-web'>Billing Address</h2>
               </div>
             </div>
 
@@ -968,10 +935,10 @@ export function CheckoutPage() {
                 <input
                   type='checkbox'
                   checked={useSameAsShipping}
-                  onChange={(e) => setUseSameAsShipping(e.target.checked)}
-                  className='w-4 h-4 text-[#C8A15B] border-[#E6D3C2] rounded focus:ring-[#C8A15B]'
+                  onChange={e => setUseSameAsShipping(e.target.checked)}
+                  className='w-4 h-4 text-web border-[#E6D3C2] rounded focus:ring-web'
                 />
-                <span className='text-sm text-[#4F3A2E]'>Use same as shipping address</span>
+                <span className='text-sm text-black'>Use same as shipping address</span>
               </label>
             </div>
 
@@ -980,26 +947,23 @@ export function CheckoutPage() {
                 {/* Saved Billing Addresses */}
                 {addresses.length > 0 && !showBillingForm && (
                   <div className='space-y-3 mb-4'>
-                    {addresses.map((address) => (
+                    {addresses.map(address => (
                       <div
                         key={address._id}
                         className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
-                          selectedBillingAddressId === address._id
-                            ? 'border-[#C8A15B] bg-[#F5EEE5]'
-                            : 'border-[#E6D3C2] hover:border-[#C8A15B]'
+                          selectedBillingAddressId === address._id ? 'border-web bg-gray-100' : 'border hover:border-web'
                         }`}
-                        onClick={() => handleBillingAddressSelect(address._id!)}
-                      >
+                        onClick={() => handleBillingAddressSelect(address._id!)}>
                         <div className='flex items-center gap-2 mb-2'>
                           {getAddressIcon(address.addressType)}
-                          <span className='font-semibold text-[#1F3B29]'>{address.fullName}</span>
+                          <span className='font-semibold text-web'>{address.fullName}</span>
                         </div>
-                        <p className='text-sm text-[#4F3A2E]'>{address.phone}</p>
-                        <p className='text-sm text-[#4F3A2E] mt-1'>
+                        <p className='text-sm text-black'>{address.phone}</p>
+                        <p className='text-sm text-black mt-1'>
                           {address.addressLine1}
                           {address.addressLine2 && `, ${address.addressLine2}`}
                         </p>
-                        <p className='text-sm text-[#4F3A2E]'>
+                        <p className='text-sm text-black'>
                           {address.city}, {address.state} {address.postalCode}
                         </p>
                       </div>
@@ -1012,11 +976,8 @@ export function CheckoutPage() {
                   <div className='space-y-4'>
                     {showBillingForm && (
                       <div className='flex items-center justify-between mb-4'>
-                        <h3 className='font-semibold text-[#1F3B29]'>Enter Billing Address</h3>
-                        <button
-                          onClick={() => setShowBillingForm(false)}
-                          className='p-2 hover:bg-gray-100 rounded'
-                        >
+                        <h3 className='font-semibold text-web'>Enter Billing Address</h3>
+                        <button onClick={() => setShowBillingForm(false)} className='p-2 hover:bg-gray-100 rounded'>
                           <X size={20} />
                         </button>
                       </div>
@@ -1024,7 +985,7 @@ export function CheckoutPage() {
 
                     <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
                       <div>
-                        <label className='block text-sm font-medium text-[#1F3B29] mb-2'>
+                        <label className='block text-sm font-medium text-web mb-2'>
                           Full Name <span className='text-red-500'>*</span>
                         </label>
                         <input
@@ -1032,12 +993,12 @@ export function CheckoutPage() {
                           name='fullName'
                           value={billingAddress.fullName}
                           onChange={handleInputChange}
-                          className='w-full px-4 py-2 border border-[#E6D3C2] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C8A15B]'
+                          className='w-full px-4 py-2 border border-[#E6D3C2] rounded-lg focus:outline-none focus:ring-2 focus:ring-web'
                           placeholder='John Doe'
                         />
                       </div>
                       <div>
-                        <label className='block text-sm font-medium text-[#1F3B29] mb-2'>
+                        <label className='block text-sm font-medium text-web mb-2'>
                           Phone Number <span className='text-red-500'>*</span>
                         </label>
                         <input
@@ -1045,7 +1006,7 @@ export function CheckoutPage() {
                           name='phone'
                           value={billingAddress.phone}
                           onChange={handleInputChange}
-                          className='w-full px-4 py-2 border border-[#E6D3C2] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C8A15B]'
+                          className='w-full px-4 py-2 border border-[#E6D3C2] rounded-lg focus:outline-none focus:ring-2 focus:ring-web'
                           placeholder='9876543210'
                           maxLength={10}
                         />
@@ -1053,7 +1014,7 @@ export function CheckoutPage() {
                     </div>
 
                     <div>
-                      <label className='block text-sm font-medium text-[#1F3B29] mb-2'>
+                      <label className='block text-sm font-medium text-web mb-2'>
                         Address Line 1 <span className='text-red-500'>*</span>
                       </label>
                       <input
@@ -1061,26 +1022,26 @@ export function CheckoutPage() {
                         name='addressLine1'
                         value={billingAddress.addressLine1}
                         onChange={handleInputChange}
-                        className='w-full px-4 py-2 border border-[#E6D3C2] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C8A15B]'
+                        className='w-full px-4 py-2 border border-[#E6D3C2] rounded-lg focus:outline-none focus:ring-2 focus:ring-web'
                         placeholder='House No., Building Name'
                       />
                     </div>
 
                     <div>
-                      <label className='block text-sm font-medium text-[#1F3B29] mb-2'>Address Line 2</label>
+                      <label className='block text-sm font-medium text-web mb-2'>Address Line 2</label>
                       <input
                         type='text'
                         name='addressLine2'
                         value={billingAddress.addressLine2}
                         onChange={handleInputChange}
-                        className='w-full px-4 py-2 border border-[#E6D3C2] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C8A15B]'
+                        className='w-full px-4 py-2 border border-[#E6D3C2] rounded-lg focus:outline-none focus:ring-2 focus:ring-web'
                         placeholder='Road Name, Area, Colony'
                       />
                     </div>
 
                     <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
                       <div>
-                        <label className='block text-sm font-medium text-[#1F3B29] mb-2'>
+                        <label className='block text-sm font-medium text-web mb-2'>
                           City <span className='text-red-500'>*</span>
                         </label>
                         <input
@@ -1088,12 +1049,12 @@ export function CheckoutPage() {
                           name='city'
                           value={billingAddress.city}
                           onChange={handleInputChange}
-                          className='w-full px-4 py-2 border border-[#E6D3C2] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C8A15B]'
+                          className='w-full px-4 py-2 border border-[#E6D3C2] rounded-lg focus:outline-none focus:ring-2 focus:ring-web'
                           placeholder='Mumbai'
                         />
                       </div>
                       <div>
-                        <label className='block text-sm font-medium text-[#1F3B29] mb-2'>
+                        <label className='block text-sm font-medium text-web mb-2'>
                           State <span className='text-red-500'>*</span>
                         </label>
                         <input
@@ -1101,7 +1062,7 @@ export function CheckoutPage() {
                           name='state'
                           value={billingAddress.state}
                           onChange={handleInputChange}
-                          className='w-full px-4 py-2 border border-[#E6D3C2] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C8A15B]'
+                          className='w-full px-4 py-2 border border-[#E6D3C2] rounded-lg focus:outline-none focus:ring-2 focus:ring-web'
                           placeholder='Maharashtra'
                         />
                       </div>
@@ -1109,7 +1070,7 @@ export function CheckoutPage() {
 
                     <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
                       <div>
-                        <label className='block text-sm font-medium text-[#1F3B29] mb-2'>
+                        <label className='block text-sm font-medium text-web mb-2'>
                           Postal Code <span className='text-red-500'>*</span>
                         </label>
                         <input
@@ -1117,13 +1078,13 @@ export function CheckoutPage() {
                           name='postalCode'
                           value={billingAddress.postalCode}
                           onChange={handleInputChange}
-                          className='w-full px-4 py-2 border border-[#E6D3C2] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C8A15B]'
+                          className='w-full px-4 py-2 border border-[#E6D3C2] rounded-lg focus:outline-none focus:ring-2 focus:ring-web'
                           placeholder='400001'
                           maxLength={6}
                         />
                       </div>
                       <div>
-                        <label className='block text-sm font-medium text-[#1F3B29] mb-2'>Country</label>
+                        <label className='block text-sm font-medium text-web mb-2'>Country</label>
                         <input
                           type='text'
                           name='country'
@@ -1138,8 +1099,7 @@ export function CheckoutPage() {
                     {showBillingForm && (
                       <button
                         onClick={() => setShowBillingForm(false)}
-                        className='w-full px-4 py-2 border border-[#E6D3C2] text-[#1F3B29] rounded-lg hover:bg-gray-50 transition-colors'
-                      >
+                        className='w-full px-4 py-2 border border-[#E6D3C2] text-web rounded-lg hover:bg-gray-50 transition-colors'>
                         Done
                       </button>
                     )}
@@ -1147,8 +1107,7 @@ export function CheckoutPage() {
                 ) : (
                   <button
                     onClick={() => setShowBillingForm(true)}
-                    className='w-full px-4 py-2 border-2 border-dashed border-[#E6D3C2] text-[#1F3B29] rounded-lg hover:bg-[#F5EEE5] transition-colors flex items-center justify-center gap-2'
-                  >
+                    className='w-full px-4 py-2 border-2 border-dashed border-[#E6D3C2] text-web rounded-lg hover:bg-gray-100 transition-colors flex items-center justify-center gap-2'>
                     <Plus size={16} />
                     Enter Different Billing Address
                   </button>
@@ -1157,25 +1116,23 @@ export function CheckoutPage() {
             )}
 
             {useSameAsShipping && (
-              <div className='p-4 bg-[#F5EEE5] rounded-lg border border-[#E6D3C2]'>
-                <p className='text-sm text-[#4F3A2E]'>
-                  Billing address will be the same as shipping address
-                </p>
+              <div className='p-4 bg-gray-100 rounded-lg border border-[#E6D3C2]'>
+                <p className='text-sm text-black'>Billing address will be the same as shipping address</p>
               </div>
             )}
           </div>
 
           {/* Payment Method */}
-          <div className='bg-white border-2 border-[#E6D3C2] rounded-xl p-4 sm:p-6'>
+          <div className='bg-white border rounded-xl p-4 sm:p-6'>
             <div className='flex items-center gap-2 mb-4'>
-              <CreditCard className='text-[#C8A15B]' size={24} />
-              <h2 className='text-xl font-bold text-[#1F3B29]'>Payment Method</h2>
+              <CreditCard className='text-web' size={24} />
+              <h2 className='text-xl font-bold text-web'>Payment Method</h2>
             </div>
-            <div className='flex items-center gap-3 p-4 border-2 border-[#C8A15B] rounded-lg bg-[#F5EEE5]'>
-              <Check className='text-[#1F3B29]' size={20} />
+            <div className='flex items-center gap-3 p-4 border-2 border-web rounded-lg bg-gray-100'>
+              <Check className='text-web' size={20} />
               <div>
-                <p className='font-semibold text-[#1F3B29]'>Razorpay</p>
-                <p className='text-sm text-[#4F3A2E]'>Pay securely via UPI, Cards, Netbanking & more</p>
+                <p className='font-semibold text-web'>Razorpay</p>
+                <p className='text-sm text-black'>Pay securely via UPI, Cards, Netbanking & more</p>
               </div>
             </div>
           </div>
@@ -1183,40 +1140,38 @@ export function CheckoutPage() {
 
         {/* Order Summary */}
         <div className='lg:col-span-1'>
-          <div className='bg-white border-2 border-[#E6D3C2] rounded-xl p-4 sm:p-6 sticky top-24'>
-            <h2 className='text-xl font-bold text-[#1F3B29] mb-4'>Order Summary</h2>
+          <div className='bg-white border-2 border rounded-xl p-4 sm:p-6 sticky top-24'>
+            <h2 className='text-xl font-bold text-web mb-4'>Order Summary</h2>
 
             <div className='space-y-3 mb-4 max-h-60 overflow-y-auto'>
-              {cartItems.map((item) => (
+              {cartItems.map(item => (
                 <div key={item._id} className='flex gap-3'>
-                  <div className='relative w-16 h-16 rounded-lg overflow-hidden bg-[#F5EEE5] flex-shrink-0'>
+                  <div className='relative w-16 h-16 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0'>
                     <Image src={item.image} alt={item.title} fill sizes='64px' className='object-cover' />
                   </div>
                   <div className='flex-1 min-w-0'>
-                    <p className='text-sm font-semibold text-[#1F3B29] truncate'>{item.title}</p>
-                    <p className='text-xs text-[#4F3A2E]'>Qty: {item.quantity}</p>
-                    <p className='text-sm font-bold text-[#1F3B29]'>
-                      ₹{(item.displayPrice * item.quantity).toLocaleString()}
-                    </p>
+                    <p className='text-sm font-semibold text-web truncate'>{item.title}</p>
+                    <p className='text-xs text-black'>Qty: {item.quantity}</p>
+                    <p className='text-sm font-bold text-web'>₹{(item.displayPrice * item.quantity).toLocaleString()}</p>
                   </div>
                 </div>
               ))}
             </div>
 
             <div className='space-y-3 pt-4 border-t border-[#E6D3C2]'>
-              <div className='flex justify-between text-sm text-[#4F3A2E]'>
+              <div className='flex justify-between text-sm text-black'>
                 <span>Subtotal</span>
                 <span className='font-semibold'>₹{subtotal.toLocaleString()}</span>
               </div>
-              <div className='flex justify-between text-sm text-[#4F3A2E]'>
+              <div className='flex justify-between text-sm text-black'>
                 <span>Shipping</span>
                 <span className='font-semibold'>{shippingCharges === 0 ? 'Free' : `₹${shippingCharges}`}</span>
               </div>
-              <div className='flex justify-between text-sm text-[#4F3A2E]'>
+              <div className='flex justify-between text-sm text-black'>
                 <span>Tax (GST 3%)</span>
                 <span className='font-semibold'>₹{tax.toLocaleString()}</span>
               </div>
-              <div className='border-t border-[#E6D3C2] pt-3 flex justify-between text-lg font-bold text-[#1F3B29]'>
+              <div className='border-t border-[#E6D3C2] pt-3 flex justify-between text-lg font-bold text-web'>
                 <span>Total</span>
                 <span>₹{total.toLocaleString()}</span>
               </div>
@@ -1225,8 +1180,7 @@ export function CheckoutPage() {
             <button
               onClick={handlePayment}
               disabled={isProcessing || !razorpayLoaded}
-              className='w-full mt-6 rounded-full bg-[#1F3B29] px-6 py-3 text-white font-semibold hover:bg-[#2a4d3a] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2'
-            >
+              className='w-full mt-6 rounded-full bg-web px-6 py-3 text-white font-semibold hover:bg-web/80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2'>
               {isProcessing ? (
                 <>
                   <Loader2 size={20} className='animate-spin' />
@@ -1245,9 +1199,7 @@ export function CheckoutPage() {
               )}
             </button>
 
-            <p className='text-xs text-center text-[#4F3A2E] mt-4'>
-              Your payment information is secure and encrypted
-            </p>
+            <p className='text-xs text-center text-black mt-4'>Your payment information is secure and encrypted</p>
           </div>
         </div>
       </div>
