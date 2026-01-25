@@ -769,59 +769,6 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
                 {/* Specifications Tab */}
                 <TabsContent value='specifications' className='mt-0'>
                   <div className='space-y-6'>
-                    <PremiumAccordion title='Price Breakup' icon={Coins}>
-                      <div className='space-y-4 text-sm'>
-                        {metalValue > 0 && (
-                          <div className='flex justify-between items-center py-3 border-b border-web/20'>
-                            <span className='text-[#4F3A2E]/70 font-medium'>Metal Value</span>
-                            <span className='font-bold text-[#1F3B29]'>₹{metalValue.toLocaleString()}</span>
-                          </div>
-                        )}
-                        {diamondValue > 0 && (
-                          <div className='flex justify-between items-center py-3 border-b border-web/20'>
-                            <span className='text-[#4F3A2E]/70 font-medium'>Diamond Value</span>
-                            <span className='font-bold text-[#1F3B29]'>₹{diamondValue.toLocaleString()}</span>
-                          </div>
-                        )}
-                        {product.gemstonePrice && product.gemstonePrice > 0 && (
-                          <div className='flex justify-between items-center py-3 border-b border-web/20'>
-                            <span className='text-[#4F3A2E]/70 font-medium'>Gemstone Value</span>
-                            <span className='font-bold text-[#1F3B29]'>₹{product.gemstonePrice.toLocaleString()}</span>
-                          </div>
-                        )}
-                        {makingChargesValue > 0 && (
-                          <div className='flex justify-between items-center py-3'>
-                            <span className='text-[#4F3A2E]/70 font-medium'>Making Charges</span>
-                            <span className='font-bold text-[#1F3B29]'>₹{makingChargesValue.toLocaleString()}</span>
-                          </div>
-                        )}
-                        {otherCharges > 0 && (
-                          <div className='flex justify-between items-center py-3 border-b border-web/20'>
-                            <span className='text-[#4F3A2E]/70 font-medium'>Other Charges</span>
-                            <span className='font-bold text-[#1F3B29]'>₹{otherCharges.toLocaleString()}</span>
-                          </div>
-                        )}
-                        <div className='flex justify-between items-center py-4 pt-5 border-t-2 border-web/30'>
-                          <span className='text-[#4F3A2E] font-semibold'>Subtotal</span>
-                          <span className='font-bold text-lg text-[#1F3B29]'>₹{subTotal.toLocaleString()}</span>
-                        </div>
-                        {product.discount && product.discount > 0 && product.discount <= 100 && discountAmount > 0 && (
-                          <div className='flex justify-between items-center py-3 text-red-600'>
-                            <span className='font-medium'>Discount ({product.discount}%)</span>
-                            <span className='font-bold'>-₹{discountAmount.toLocaleString()}</span>
-                          </div>
-                        )}
-                        <div className='flex justify-between items-center py-3'>
-                          <span className='text-[#4F3A2E]/70 font-medium'>GST ({product.taxRate || 3}%)</span>
-                          <span className='font-bold text-[#1F3B29]'>₹{gstAmount.toLocaleString()}</span>
-                        </div>
-                        <div className='flex justify-between items-center py-5 pt-6 border-t-2 border-web/30 bg-gradient-to-r from-[#FAF7F4] to-white px-4 -mx-2'>
-                          <span className='font-bold text-xl text-[#1F3B29]'>Grand Total</span>
-                          <span className='font-bold text-2xl text-[#1F3B29]'>₹{grandTotal.toLocaleString()}</span>
-                        </div>
-                      </div>
-                    </PremiumAccordion>
-
                     {(() => {
                       const isValid = (value: any): boolean => {
                         if (value === null || value === undefined) return false;
@@ -892,6 +839,59 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
                         </PremiumAccordion>
                       );
                     })()}
+
+                    <PremiumAccordion title='Price Breakup' icon={Coins}>
+                      <div className='space-y-4 text-sm'>
+                        {metalValue > 0 && (
+                          <div className='flex justify-between items-center py-3 border-b border-web/20'>
+                            <span className='text-[#4F3A2E]/70 font-medium'>Metal Value</span>
+                            <span className='font-bold text-[#1F3B29]'>₹{metalValue.toLocaleString()}</span>
+                          </div>
+                        )}
+                        {diamondValue > 0 && (
+                          <div className='flex justify-between items-center py-3 border-b border-web/20'>
+                            <span className='text-[#4F3A2E]/70 font-medium'>Diamond Value</span>
+                            <span className='font-bold text-[#1F3B29]'>₹{diamondValue.toLocaleString()}</span>
+                          </div>
+                        )}
+                        {product.gemstonePrice && product.gemstonePrice > 0 && (
+                          <div className='flex justify-between items-center py-3 border-b border-web/20'>
+                            <span className='text-[#4F3A2E]/70 font-medium'>Gemstone Value</span>
+                            <span className='font-bold text-[#1F3B29]'>₹{product.gemstonePrice.toLocaleString()}</span>
+                          </div>
+                        )}
+                        {makingChargesValue > 0 && (
+                          <div className='flex justify-between items-center py-3'>
+                            <span className='text-[#4F3A2E]/70 font-medium'>Making Charges</span>
+                            <span className='font-bold text-[#1F3B29]'>₹{makingChargesValue.toLocaleString()}</span>
+                          </div>
+                        )}
+                        {otherCharges > 0 && (
+                          <div className='flex justify-between items-center py-3 border-b border-web/20'>
+                            <span className='text-[#4F3A2E]/70 font-medium'>Other Charges</span>
+                            <span className='font-bold text-[#1F3B29]'>₹{otherCharges.toLocaleString()}</span>
+                          </div>
+                        )}
+                        <div className='flex justify-between items-center py-4 pt-5 border-t-2 border-web/30'>
+                          <span className='text-[#4F3A2E] font-semibold'>Subtotal</span>
+                          <span className='font-bold text-lg text-[#1F3B29]'>₹{subTotal.toLocaleString()}</span>
+                        </div>
+                        {product.discount && product.discount > 0 && product.discount <= 100 && discountAmount > 0 && (
+                          <div className='flex justify-between items-center py-3 text-red-600'>
+                            <span className='font-medium'>Discount ({product.discount}%)</span>
+                            <span className='font-bold'>-₹{discountAmount.toLocaleString()}</span>
+                          </div>
+                        )}
+                        <div className='flex justify-between items-center py-3'>
+                          <span className='text-[#4F3A2E]/70 font-medium'>GST ({product.taxRate || 3}%)</span>
+                          <span className='font-bold text-[#1F3B29]'>₹{gstAmount.toLocaleString()}</span>
+                        </div>
+                        <div className='flex justify-between items-center py-5 pt-6 border-t-2 border-web/30 bg-gradient-to-r from-[#FAF7F4] to-white px-4 -mx-2'>
+                          <span className='font-bold text-xl text-[#1F3B29]'>Grand Total</span>
+                          <span className='font-bold text-2xl text-[#1F3B29]'>₹{grandTotal.toLocaleString()}</span>
+                        </div>
+                      </div>
+                    </PremiumAccordion>
 
                     {(product.hasDiamond || product.diamonds) &&
                       (product.diamonds?.some(
