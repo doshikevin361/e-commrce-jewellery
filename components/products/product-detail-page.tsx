@@ -34,6 +34,7 @@ import {
   Sparkle,
   FileText,
   Tag,
+  Diamond,
 } from 'lucide-react';
 import { ProductCardData, ProductCard } from '@/components/home/common/product-card';
 import { PageLoader } from '@/components/common/page-loader';
@@ -101,6 +102,29 @@ interface ProductDetail {
     diamondPrice?: number;
     numberOfDiamonds?: number;
     certification?: string;
+    diamondsType?: string;
+    noOfDiamonds?: number;
+    diamondWeight?: number;
+    diamondSize?: string;
+    settingType?: string;
+    clarity?: string;
+    diamondsColour?: string;
+    diamondsShape?: string;
+    diamondSetting?: string;
+    certifiedLabs?: string;
+    certificateNo?: string;
+    certificateImages?: string[];
+    occasion?: string;
+    dimension?: string;
+    height?: number;
+    width?: number;
+    length?: number;
+    brand?: string;
+    collection?: string;
+    thickness?: number;
+    description?: string;
+    specifications?: { key: string; value: string }[];
+    diamondDiscount?: number;
   }>;
   // Legacy diamond fields
   diamondCarat?: number;
@@ -109,6 +133,17 @@ interface ProductDetail {
   stoneClarity?: string;
   stoneColor?: string;
   diamondCut?: string;
+  diamondsType?: string;
+  noOfDiamonds?: number;
+  diamondWeight?: number;
+  diamondSize?: string;
+  settingType?: string;
+  clarity?: string;
+  diamondsColour?: string;
+  diamondsShape?: string;
+  diamondSetting?: string;
+  certifiedLabs?: string;
+  certificateNo?: string;
   // Making charges
   makingCharges?: number;
   makingChargePerGram?: number;
@@ -897,116 +932,250 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
                       (product.diamonds?.some(
                         d =>
                           d.diamondType ||
+                          d.diamondsType ||
                           d.diamondShape ||
+                          d.diamondsShape ||
                           d.diamondClarity ||
+                          d.clarity ||
                           d.diamondColor ||
+                          d.diamondsColour ||
                           d.diamondCut ||
                           d.diamondCaratWeight ||
+                          d.diamondWeight ||
                           d.numberOfDiamonds ||
-                          d.certification,
+                          d.noOfDiamonds ||
+                          d.diamondPrice ||
+                          d.diamondDiscount ||
+                          d.diamondSize ||
+                          d.settingType ||
+                          d.diamondSetting ||
+                          d.certifiedLabs ||
+                          d.certification ||
+                          d.certificateNo ||
+                          (d.certificateImages && d.certificateImages.length > 0) ||
+                          d.occasion ||
+                          d.dimension ||
+                          d.height ||
+                          d.width ||
+                          d.length ||
+                          d.thickness ||
+                          d.brand ||
+                          d.collection ||
+                          (d.specifications && d.specifications.length > 0) ||
+                          d.description,
                       ) ||
                         product.diamondCarat ||
                         product.numberOfStones ||
                         product.diamondShape ||
                         product.stoneClarity ||
                         product.stoneColor ||
-                        product.diamondCut) && (
+                        product.diamondCut ||
+                        product.diamondsType ||
+                        product.noOfDiamonds ||
+                        product.diamondWeight ||
+                        product.diamondSize ||
+                        product.settingType ||
+                        product.clarity ||
+                        product.diamondsColour ||
+                        product.diamondsShape ||
+                        product.diamondSetting ||
+                        product.certifiedLabs ||
+                        product.certificateNo ||
+                        product.occasion ||
+                        product.dimension ||
+                        product.height ||
+                        product.width ||
+                        product.length ||
+                        product.thickness ||
+                        product.brand ||
+                        product.collection) && (
                         <PremiumAccordion title='Diamond Details' icon={Diamond}>
                           <div className='space-y-6'>
                             {product.diamonds && product.diamonds.length > 0 ? (
-                              product.diamonds.map((diamond, index) => (
-                                <div key={diamond.id || index} className='border border-web/30 rounded-xl p-4'>
-                                  <h4 className='text-sm font-bold text-[#1F3B29] mb-4 uppercase tracking-wider'>Diamond #{index + 1}</h4>
-                                  <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm'>
-                                    {diamond.diamondType && (
-                                      <div className='flex justify-between items-center py-2 border-b border-web/20'>
-                                        <span className='text-[#4F3A2E]/70 font-medium'>Type</span>
-                                        <span className='font-bold text-[#1F3B29]'>{diamond.diamondType}</span>
+                              product.diamonds.map((diamond, index) => {
+                                const diamondRows = [
+                                  { label: 'Type', value: diamond.diamondsType || diamond.diamondType },
+                                  { label: 'No. of Diamonds', value: diamond.noOfDiamonds ?? diamond.numberOfDiamonds },
+                                  {
+                                    label: 'Discount',
+                                    value:
+                                      typeof diamond.diamondDiscount === 'number' && diamond.diamondDiscount > 0
+                                        ? `${diamond.diamondDiscount}%`
+                                        : undefined,
+                                  },
+                                  {
+                                    label: 'Price',
+                                    value:
+                                      typeof diamond.diamondPrice === 'number' && diamond.diamondPrice > 0
+                                        ? `₹${diamond.diamondPrice.toLocaleString()}`
+                                        : undefined,
+                                  },
+                                  {
+                                    label: 'Weight',
+                                    value:
+                                      typeof (diamond.diamondWeight ?? diamond.diamondCaratWeight) === 'number' &&
+                                      (diamond.diamondWeight ?? diamond.diamondCaratWeight) > 0
+                                        ? `${(diamond.diamondWeight ?? diamond.diamondCaratWeight)?.toFixed(2)}ct`
+                                        : undefined,
+                                  },
+                                  { label: 'Size', value: diamond.diamondSize },
+                                  { label: 'Setting Type', value: diamond.settingType || diamond.diamondSetting },
+                                  { label: 'Clarity', value: diamond.clarity || diamond.diamondClarity },
+                                  { label: 'Color', value: diamond.diamondsColour || diamond.diamondColor },
+                                  { label: 'Shape', value: diamond.diamondsShape || diamond.diamondShape },
+                                  { label: 'Cut', value: diamond.diamondCut },
+                                  { label: 'Certified Lab', value: diamond.certifiedLabs || diamond.certification },
+                                  { label: 'Certificate No.', value: diamond.certificateNo },
+                                  { label: 'Occasion', value: diamond.occasion },
+                                  { label: 'Dimensions', value: diamond.dimension },
+                                  {
+                                    label: 'Height',
+                                    value: typeof diamond.height === 'number' && diamond.height > 0 ? diamond.height : undefined,
+                                  },
+                                  {
+                                    label: 'Width',
+                                    value: typeof diamond.width === 'number' && diamond.width > 0 ? diamond.width : undefined,
+                                  },
+                                  {
+                                    label: 'Length',
+                                    value: typeof diamond.length === 'number' && diamond.length > 0 ? diamond.length : undefined,
+                                  },
+                                  {
+                                    label: 'Thickness',
+                                    value: typeof diamond.thickness === 'number' && diamond.thickness > 0 ? diamond.thickness : undefined,
+                                  },
+                                  { label: 'Brand', value: diamond.brand },
+                                  { label: 'Collection', value: diamond.collection },
+                                ].filter(item => {
+                                  if (item.value === null || item.value === undefined) return false;
+                                  if (typeof item.value === 'string') return item.value.trim().length > 0;
+                                  if (typeof item.value === 'number') return item.value > 0;
+                                  return true;
+                                });
+
+                                const diamondSpecs = diamond.specifications?.filter(spec => spec.key?.trim() || spec.value?.trim()) || [];
+
+                                return (
+                                  <div key={diamond.id || index} className='border border-web/30 rounded-xl p-4'>
+                                    <h4 className='text-sm font-bold text-[#1F3B29] mb-4 uppercase tracking-wider'>Diamond #{index + 1}</h4>
+                                    {diamondRows.length > 0 && (
+                                      <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm'>
+                                        {diamondRows.map((item, rowIndex) => (
+                                          <div
+                                            key={`${item.label}-${rowIndex}`}
+                                            className='flex justify-between items-center py-2 border-b border-web/20'>
+                                            <span className='text-[#4F3A2E]/70 font-medium'>{item.label}</span>
+                                            <span className='font-bold text-[#1F3B29]'>{item.value}</span>
+                                          </div>
+                                        ))}
                                       </div>
                                     )}
-                                    {diamond.diamondShape && (
-                                      <div className='flex justify-between items-center py-2 border-b border-web/20'>
-                                        <span className='text-[#4F3A2E]/70 font-medium'>Shape</span>
-                                        <span className='font-bold text-[#1F3B29]'>{diamond.diamondShape}</span>
+                                    {diamondSpecs.length > 0 && (
+                                      <div className='mt-6'>
+                                        <h5 className='text-xs font-semibold uppercase tracking-wider text-[#1F3B29] mb-3'>
+                                          Diamond Specifications
+                                        </h5>
+                                        <div className='grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm'>
+                                          {diamondSpecs.map((spec, specIndex) => (
+                                            <div
+                                              key={`${spec.key || 'spec'}-${specIndex}`}
+                                              className='flex justify-between items-center py-2 border-b border-web/20'>
+                                              <span className='text-[#4F3A2E]/70 font-medium'>{spec.key || 'Specification'}</span>
+                                              <span className='font-bold text-[#1F3B29]'>{spec.value || '—'}</span>
+                                            </div>
+                                          ))}
+                                        </div>
                                       </div>
                                     )}
-                                    {diamond.diamondCaratWeight && (
-                                      <div className='flex justify-between items-center py-2 border-b border-web/20'>
-                                        <span className='text-[#4F3A2E]/70 font-medium'>Carat Weight</span>
-                                        <span className='font-bold text-[#1F3B29]'>{diamond.diamondCaratWeight}ct</span>
+                                    {diamond.description && (
+                                      <div className='mt-6'>
+                                        <h5 className='text-xs font-semibold uppercase tracking-wider text-[#1F3B29] mb-2'>
+                                          Diamond Description
+                                        </h5>
+                                        <p className='text-sm text-[#4F3A2E]/80 leading-relaxed'>{diamond.description}</p>
                                       </div>
                                     )}
-                                    {diamond.diamondClarity && (
-                                      <div className='flex justify-between items-center py-2 border-b border-web/20'>
-                                        <span className='text-[#4F3A2E]/70 font-medium'>Clarity</span>
-                                        <span className='font-bold text-[#1F3B29]'>{diamond.diamondClarity}</span>
-                                      </div>
-                                    )}
-                                    {diamond.diamondColor && (
-                                      <div className='flex justify-between items-center py-2 border-b border-web/20'>
-                                        <span className='text-[#4F3A2E]/70 font-medium'>Color</span>
-                                        <span className='font-bold text-[#1F3B29]'>{diamond.diamondColor}</span>
-                                      </div>
-                                    )}
-                                    {diamond.diamondCut && (
-                                      <div className='flex justify-between items-center py-2 border-b border-web/20'>
-                                        <span className='text-[#4F3A2E]/70 font-medium'>Cut</span>
-                                        <span className='font-bold text-[#1F3B29]'>{diamond.diamondCut}</span>
-                                      </div>
-                                    )}
-                                    {diamond.numberOfDiamonds && (
-                                      <div className='flex justify-between items-center py-2 border-b border-web/20'>
-                                        <span className='text-[#4F3A2E]/70 font-medium'>No. of Diamonds</span>
-                                        <span className='font-bold text-[#1F3B29]'>{diamond.numberOfDiamonds}</span>
-                                      </div>
-                                    )}
-                                    {diamond.certification && (
-                                      <div className='flex justify-between items-center py-2 border-b border-web/20'>
-                                        <span className='text-[#4F3A2E]/70 font-medium'>Certification</span>
-                                        <span className='font-bold text-[#1F3B29]'>{diamond.certification}</span>
+                                    {diamond.certificateImages && diamond.certificateImages.length > 0 && (
+                                      <div className='mt-6'>
+                                        <h5 className='text-xs font-semibold uppercase tracking-wider text-[#1F3B29] mb-3'>
+                                          Certificate Images
+                                        </h5>
+                                        <div className='grid grid-cols-2 sm:grid-cols-3 gap-3'>
+                                          {diamond.certificateImages.map((url, imageIndex) => (
+                                            <div
+                                              key={`${diamond.id || index}-certificate-${imageIndex}`}
+                                              className='relative aspect-square overflow-hidden rounded-xl border border-web/20 bg-white shadow-sm'>
+                                              <Image
+                                                src={fixImagePath(url)}
+                                                alt={`Diamond ${index + 1} certificate ${imageIndex + 1}`}
+                                                fill
+                                                sizes='160px'
+                                                className='object-cover'
+                                              />
+                                            </div>
+                                          ))}
+                                        </div>
                                       </div>
                                     )}
                                   </div>
-                                </div>
-                              ))
+                                );
+                              })
                             ) : (
                               <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm'>
-                                {product.diamondCarat && (
-                                  <div className='flex justify-between items-center py-3 border-b border-web/20'>
-                                    <span className='text-[#4F3A2E]/70 font-medium'>Carat Weight</span>
-                                    <span className='font-bold text-[#1F3B29]'>{product.diamondCarat}ct</span>
-                                  </div>
-                                )}
-                                {product.numberOfStones && (
-                                  <div className='flex justify-between items-center py-3 border-b border-web/20'>
-                                    <span className='text-[#4F3A2E]/70 font-medium'>No. of Stones</span>
-                                    <span className='font-bold text-[#1F3B29]'>{product.numberOfStones}</span>
-                                  </div>
-                                )}
-                                {product.diamondShape && (
-                                  <div className='flex justify-between items-center py-3 border-b border-web/20'>
-                                    <span className='text-[#4F3A2E]/70 font-medium'>Shape</span>
-                                    <span className='font-bold text-[#1F3B29]'>{product.diamondShape}</span>
-                                  </div>
-                                )}
-                                {product.stoneClarity && (
-                                  <div className='flex justify-between items-center py-3 border-b border-web/20'>
-                                    <span className='text-[#4F3A2E]/70 font-medium'>Clarity</span>
-                                    <span className='font-bold text-[#1F3B29]'>{product.stoneClarity}</span>
-                                  </div>
-                                )}
-                                {product.stoneColor && (
-                                  <div className='flex justify-between items-center py-3 border-b border-web/20'>
-                                    <span className='text-[#4F3A2E]/70 font-medium'>Color</span>
-                                    <span className='font-bold text-[#1F3B29]'>{product.stoneColor}</span>
-                                  </div>
-                                )}
-                                {product.diamondCut && (
-                                  <div className='flex justify-between items-center py-3 border-b border-web/20'>
-                                    <span className='text-[#4F3A2E]/70 font-medium'>Cut</span>
-                                    <span className='font-bold text-[#1F3B29]'>{product.diamondCut}</span>
-                                  </div>
-                                )}
+                                {[
+                                  { label: 'Type', value: product.diamondsType },
+                                  { label: 'No. of Diamonds', value: product.noOfDiamonds ?? product.numberOfStones },
+                                  {
+                                    label: 'Weight',
+                                    value:
+                                      typeof (product.diamondWeight ?? product.diamondCarat) === 'number' &&
+                                      (product.diamondWeight ?? product.diamondCarat) > 0
+                                        ? `${(product.diamondWeight ?? product.diamondCarat)?.toFixed(2)}ct`
+                                        : undefined,
+                                  },
+                                  { label: 'Size', value: product.diamondSize },
+                                  { label: 'Setting Type', value: product.settingType || product.diamondSetting },
+                                  { label: 'Clarity', value: product.clarity || product.stoneClarity },
+                                  { label: 'Color', value: product.diamondsColour || product.stoneColor },
+                                  { label: 'Shape', value: product.diamondsShape || product.diamondShape },
+                                  { label: 'Cut', value: product.diamondCut },
+                                  { label: 'Certified Lab', value: product.certifiedLabs },
+                                  { label: 'Certificate No.', value: product.certificateNo },
+                                  { label: 'Occasion', value: product.occasion },
+                                  { label: 'Dimensions', value: product.dimension },
+                                  {
+                                    label: 'Height',
+                                    value: typeof product.height === 'number' && product.height > 0 ? product.height : undefined,
+                                  },
+                                  {
+                                    label: 'Width',
+                                    value: typeof product.width === 'number' && product.width > 0 ? product.width : undefined,
+                                  },
+                                  {
+                                    label: 'Length',
+                                    value: typeof product.length === 'number' && product.length > 0 ? product.length : undefined,
+                                  },
+                                  {
+                                    label: 'Thickness',
+                                    value: typeof product.thickness === 'number' && product.thickness > 0 ? product.thickness : undefined,
+                                  },
+                                  { label: 'Brand', value: product.brand },
+                                  { label: 'Collection', value: product.collection },
+                                ]
+                                  .filter(item => {
+                                    if (item.value === null || item.value === undefined) return false;
+                                    if (typeof item.value === 'string') return item.value.trim().length > 0;
+                                    if (typeof item.value === 'number') return item.value > 0;
+                                    return true;
+                                  })
+                                  .map((item, rowIndex) => (
+                                    <div
+                                      key={`${item.label}-${rowIndex}`}
+                                      className='flex justify-between items-center py-3 border-b border-web/20'>
+                                      <span className='text-[#4F3A2E]/70 font-medium'>{item.label}</span>
+                                      <span className='font-bold text-[#1F3B29]'>{item.value}</span>
+                                    </div>
+                                  ))}
                               </div>
                             )}
                           </div>

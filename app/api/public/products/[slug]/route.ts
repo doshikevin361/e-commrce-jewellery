@@ -56,6 +56,19 @@ const PRODUCT_PROJECTION = {
   stoneClarity: 1,
   stoneColor: 1,
   diamondCut: 1,
+  diamondsType: 1,
+  noOfDiamonds: 1,
+  diamondWeight: 1,
+  diamondSize: 1,
+  settingType: 1,
+  clarity: 1,
+  diamondsColour: 1,
+  diamondsShape: 1,
+  diamondSetting: 1,
+  certifiedLabs: 1,
+  certificateNo: 1,
+  diamondsPrice: 1,
+  diamondDiscount: 1,
   // Making charges
   makingCharges: 1,
   makingChargePerGram: 1,
@@ -150,6 +163,78 @@ export async function GET(
         designTypeName = designTypeDoc.name;
       }
     }
+
+    const collectIds = (values: Array<string | undefined>) =>
+      values.filter((value): value is string => typeof value === "string" && ObjectId.isValid(value));
+
+    const fetchNameMap = async (collection: string, ids: string[]) => {
+      if (ids.length === 0) return new Map<string, string>();
+      const documents = await db
+        .collection(collection)
+        .find({ _id: { $in: ids.map(id => new ObjectId(id)) } })
+        .project({ name: 1 })
+        .toArray();
+      return new Map(documents.map(doc => [doc._id.toString(), doc.name]));
+    };
+
+    const resolveLabel = (value: string | undefined, map: Map<string, string>) =>
+      value && map.has(value) ? map.get(value) : value;
+
+    const diamondTypeIds = collectIds([
+      product.diamondsType,
+      ...(product.diamonds || []).map(diamond => diamond?.diamondsType || diamond?.diamondType),
+    ]);
+    const settingTypeIds = collectIds([
+      product.settingType,
+      ...(product.diamonds || []).map(diamond => diamond?.settingType),
+    ]);
+    const diamondColorIds = collectIds([
+      product.diamondsColour,
+      ...(product.diamonds || []).map(diamond => diamond?.diamondsColour),
+    ]);
+    const certifiedLabIds = collectIds([
+      product.certifiedLabs,
+      ...(product.diamonds || []).map(diamond => diamond?.certifiedLabs),
+    ]);
+    const clarityIds = collectIds([
+      product.clarity,
+      ...(product.diamonds || []).map(diamond => diamond?.clarity),
+    ]);
+    const diamondShapeIds = collectIds([
+      product.diamondsShape,
+      product.diamondShape,
+      ...(product.diamonds || []).map(diamond => diamond?.diamondsShape || diamond?.diamondShape),
+    ]);
+
+    const [
+      diamondTypeMap,
+      settingTypeMap,
+      diamondColorMap,
+      certifiedLabMap,
+      clarityMap,
+      diamondShapeMap,
+    ] = await Promise.all([
+      fetchNameMap("diamond_types", diamondTypeIds),
+      fetchNameMap("setting_types", settingTypeIds),
+      fetchNameMap("diamond_colors", diamondColorIds),
+      fetchNameMap("certified_labs", certifiedLabIds),
+      fetchNameMap("clarities", clarityIds),
+      fetchNameMap("diamond_shapes", diamondShapeIds),
+    ]);
+
+    const normalizedDiamonds = Array.isArray(product.diamonds)
+      ? product.diamonds.map(diamond => ({
+          ...diamond,
+          diamondsType: resolveLabel(diamond.diamondsType, diamondTypeMap),
+          diamondType: resolveLabel(diamond.diamondType, diamondTypeMap),
+          settingType: resolveLabel(diamond.settingType, settingTypeMap),
+          diamondsColour: resolveLabel(diamond.diamondsColour, diamondColorMap),
+          certifiedLabs: resolveLabel(diamond.certifiedLabs, certifiedLabMap),
+          clarity: resolveLabel(diamond.clarity, clarityMap),
+          diamondsShape: resolveLabel(diamond.diamondsShape, diamondShapeMap),
+          diamondShape: resolveLabel(diamond.diamondShape, diamondShapeMap),
+        }))
+      : product.diamonds;
 
     // Increment view count for trending calculation
     await db.collection("products").updateOne(
@@ -253,6 +338,29 @@ export async function GET(
       ? product.galleryImages
       : (Array.isArray(product.images) && product.images.length > 0 ? product.images : []);
 
+    const hasDiamondDetails =
+      product.hasDiamond ||
+      (Array.isArray(product.diamonds) && product.diamonds.length > 0) ||
+      product.diamondCarat ||
+      product.numberOfStones ||
+      product.diamondShape ||
+      product.stoneClarity ||
+      product.stoneColor ||
+      product.diamondCut ||
+      product.diamondsType ||
+      product.noOfDiamonds ||
+      product.diamondWeight ||
+      product.diamondSize ||
+      product.settingType ||
+      product.clarity ||
+      product.diamondsColour ||
+      product.diamondsShape ||
+      product.diamondSetting ||
+      product.certifiedLabs ||
+      product.certificateNo ||
+      product.diamondsPrice ||
+      product.diamondDiscount;
+
     // Only return fields needed for customer display
     const productData = {
       _id: product._id.toString(),
@@ -308,15 +416,28 @@ export async function GET(
         metalWeight: product.metalWeight,
       }),
       // Diamond details (only if exists)
-      ...(product.hasDiamond && {
-        hasDiamond: product.hasDiamond,
-        diamonds: product.diamonds,
+      ...(hasDiamondDetails && {
+        hasDiamond: product.hasDiamond ?? (Array.isArray(product.diamonds) && product.diamonds.length > 0),
+        diamonds: normalizedDiamonds,
         diamondCarat: product.diamondCarat,
         numberOfStones: product.numberOfStones,
-        diamondShape: product.diamondShape,
+        diamondShape: resolveLabel(product.diamondShape, diamondShapeMap),
         stoneClarity: product.stoneClarity,
         stoneColor: product.stoneColor,
         diamondCut: product.diamondCut,
+        diamondsType: resolveLabel(product.diamondsType, diamondTypeMap),
+        noOfDiamonds: product.noOfDiamonds,
+        diamondWeight: product.diamondWeight,
+        diamondSize: product.diamondSize,
+        settingType: resolveLabel(product.settingType, settingTypeMap),
+        clarity: resolveLabel(product.clarity, clarityMap),
+        diamondsColour: resolveLabel(product.diamondsColour, diamondColorMap),
+        diamondsShape: resolveLabel(product.diamondsShape, diamondShapeMap),
+        diamondSetting: product.diamondSetting,
+        certifiedLabs: resolveLabel(product.certifiedLabs, certifiedLabMap),
+        certificateNo: product.certificateNo,
+        diamondsPrice: product.diamondsPrice,
+        diamondDiscount: product.diamondDiscount,
       }),
       // Making charges (only if exists)
       ...(product.makingCharges && { makingCharges: product.makingCharges }),
