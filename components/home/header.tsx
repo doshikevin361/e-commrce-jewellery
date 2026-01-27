@@ -302,10 +302,10 @@ const HomeHeader = () => {
 
             <span className='h-6 w-px bg-gray-500'></span>
 
-            <button className='flex items-center gap-2 text-gray-600 hover:text-[#001e38]'>
+            <Link href='/custom-jewellery' className='flex items-center gap-2 text-gray-600 hover:text-[#001e38]'>
               <Store className='w-6 h-6' />
-              <span className='text-xs max-w-[60px] text-left'>Locate Our Store</span>
-            </button>
+              <span className='text-xs max-w-[60px] text-left'>Custom Jewellery</span>
+            </Link>
 
             <span className='h-6 w-px bg-gray-500'></span>
 

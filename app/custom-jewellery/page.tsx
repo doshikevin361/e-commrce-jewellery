@@ -211,9 +211,9 @@ export default function CustomJewelleryPage() {
   return (
     <>
       <CategoriesSidebar />
-      <div className='w-full overflow-x-hidden'>
+      <div className='w-full overflow-x-hidden bg-[#f8f7f5] text-[#111827]'>
         {/* Hero Banner */}
-        <section className='relative w-full h-[350px] sm:h-[450px] md:h-[550px] lg:h-[600px] overflow-hidden'>
+        <section className='relative w-full h-[320px] sm:h-[420px] md:h-[520px] lg:h-[580px] overflow-hidden'>
           <div className='absolute inset-0 w-full h-full z-0'>
             <Image
               src='https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=1600&q=80'
@@ -224,36 +224,81 @@ export default function CustomJewelleryPage() {
               priority
               unoptimized
             />
-            <div className='absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-black/30 z-10' />
+            <div className='absolute inset-0 bg-gradient-to-r from-black/75 via-black/55 to-black/30 z-10' />
           </div>
-          <div className='relative z-20 h-full flex flex-col justify-center items-center text-center px-3 sm:px-4 md:px-6 text-white'>
-            <div className='flex items-center justify-center gap-2 mb-4 sm:mb-5'>
-              <div className='w-8 sm:w-10 h-px bg-white/50' />
-              <Sparkles size={20} className='sm:w-[24px] sm:h-[24px] text-white' />
-              <div className='w-8 sm:w-10 h-px bg-white/50' />
+          <div className='relative z-20 h-full flex flex-col justify-center items-center text-center px-4 sm:px-6 md:px-8 text-white'>
+            <div className='inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-[11px] sm:text-xs uppercase tracking-[0.35em] text-white/90'>
+              Bespoke Atelier
             </div>
-            <h1 className='text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-4 sm:mb-5 drop-shadow-2xl'>
-              CUSTOM JEWELLERY
+            <div className='flex items-center justify-center gap-2 mt-5 sm:mt-6 mb-4 sm:mb-6'>
+              <div className='w-10 sm:w-12 h-px bg-white/50' />
+              <Sparkles size={22} className='sm:w-[26px] sm:h-[26px] text-white' />
+              <div className='w-10 sm:w-12 h-px bg-white/50' />
+            </div>
+            <h1 className='text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-semibold tracking-tight mb-4 sm:mb-5 drop-shadow-2xl'>
+              Custom Jewellery
             </h1>
-            <p className='text-base sm:text-lg md:text-xl lg:text-2xl max-w-3xl mx-auto leading-relaxed drop-shadow-lg'>
-              Create your dream piece with our bespoke jewellery service
+            <p className='text-sm sm:text-base md:text-lg lg:text-xl max-w-3xl mx-auto leading-relaxed text-white/90 drop-shadow-lg'>
+              Collaborate with our artisans to craft a one-of-a-kind piece that reflects your story.
             </p>
           </div>
         </section>
 
         {/* Form Section */}
-        <section className='mx-auto w-full max-w-[1280px] py-8 sm:py-10 md:py-12 lg:py-16 px-3 sm:px-4 md:px-6 lg:px-0'>
-          <div className='max-w-4xl mx-auto'>
-            <div className='relative rounded-xl sm:rounded-2xl overflow-hidden shadow-xl'>
-              <div className='absolute inset-0 bg-gradient-to-br from-[#F5EEE5] via-white to-[#F5EEE5]/30 z-0' />
+        <section className='mx-auto w-full max-w-[1280px] py-10 sm:py-12 md:py-16 lg:py-20 px-4 sm:px-6 lg:px-8'>
+          <div className='grid grid-cols-1 lg:grid-cols-[0.95fr_1.05fr] gap-8 lg:gap-12 items-start'>
+            <div className='space-y-6'>
+              <div className='rounded-2xl border border-white/60 bg-white/70 p-6 sm:p-8 shadow-lg backdrop-blur'>
+                <p className='text-xs uppercase tracking-[0.3em] text-[#6B7280]'>Crafted For You</p>
+                <h2 className='mt-3 text-2xl sm:text-3xl font-semibold text-[#111827]'>A premium, guided design journey</h2>
+                <p className='mt-3 text-sm sm:text-base text-[#4B5563] leading-relaxed'>
+                  From concept to final polish, our design team partners with you to create a piece that feels timeless and personal.
+                </p>
+                <div className='mt-6 grid gap-4'>
+                  {[
+                    'Share inspiration and budget details',
+                    'Review curated design concepts',
+                    'Finalize materials, stones, and sizing',
+                    'Handcrafted by expert artisans',
+                  ].map(item => (
+                    <div key={item} className='flex items-start gap-3'>
+                      <span className='mt-1 flex h-6 w-6 items-center justify-center rounded-full bg-[#111827] text-xs font-semibold text-white'>✓</span>
+                      <p className='text-sm sm:text-base text-[#374151]'>{item}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className='rounded-2xl border border-[#E5E7EB] bg-white p-6 sm:p-8 shadow-md'>
+                <div className='flex items-center gap-3'>
+                  <div className='h-12 w-12 rounded-full bg-[#111827] text-white flex items-center justify-center'>
+                    <Diamond size={22} />
+                  </div>
+                  <div>
+                    <p className='text-sm uppercase tracking-[0.3em] text-[#6B7280]'>Assurance</p>
+                    <h3 className='text-lg sm:text-xl font-semibold text-[#111827]'>Designed for lasting brilliance</h3>
+                  </div>
+                </div>
+                <div className='mt-5 grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-[#4B5563]'>
+                  <div className='rounded-xl border border-[#E5E7EB] px-4 py-3'>Certified stones & metals</div>
+                  <div className='rounded-xl border border-[#E5E7EB] px-4 py-3'>Transparent pricing</div>
+                  <div className='rounded-xl border border-[#E5E7EB] px-4 py-3'>Dedicated design advisor</div>
+                  <div className='rounded-xl border border-[#E5E7EB] px-4 py-3'>Secure delivery</div>
+                </div>
+              </div>
+            </div>
+
+            <div className='relative rounded-2xl overflow-hidden shadow-2xl'>
+              <div className='absolute inset-0 bg-gradient-to-br from-white via-[#f8f7f5] to-white z-0' />
               <div className='relative z-10 p-6 sm:p-8 md:p-10 lg:p-12'>
                 <div className='flex items-center gap-3 sm:gap-4 mb-6 sm:mb-8'>
-                  <div className='w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full bg-[#1F3B29] flex items-center justify-center'>
+                  <div className='w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full bg-[#111827] flex items-center justify-center'>
                     <Sparkles size={24} className='sm:w-7 sm:h-7 md:w-8 md:h-8 text-white' />
                   </div>
-                  <h2 className='text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-[#1F3B29]'>
-                    Request Custom Jewellery
-                  </h2>
+                  <div>
+                    <p className='text-xs uppercase tracking-[0.3em] text-[#6B7280]'>Request Form</p>
+                    <h2 className='text-2xl sm:text-3xl md:text-4xl font-semibold text-[#111827]'>Request Custom Jewellery</h2>
+                  </div>
                 </div>
 
                 <form onSubmit={handleSubmit} className='space-y-4 sm:space-y-5 md:space-y-6'>
@@ -266,8 +311,8 @@ export default function CustomJewelleryPage() {
                     placeholder='Enter your full name'
                     required
                     error={errors.fullName}
-                    inputClassName='text-[#1F3B29] border-[#E6D3C2] focus:ring-[#C8A15B]'
-                    labelClassName='text-[#1F3B29] font-semibold text-sm sm:text-base'
+                    inputClassName='text-[#111827] border-[#E5E7EB] focus:ring-[#111827]'
+                    labelClassName='text-[#111827] font-semibold text-sm sm:text-base'
                   />
 
                   {/* Phone Number */}
@@ -280,8 +325,8 @@ export default function CustomJewelleryPage() {
                     placeholder='Enter your phone number'
                     required
                     error={errors.phone}
-                    inputClassName='text-[#1F3B29] border-[#E6D3C2] focus:ring-[#C8A15B]'
-                    labelClassName='text-[#1F3B29] font-semibold text-sm sm:text-base'
+                    inputClassName='text-[#111827] border-[#E5E7EB] focus:ring-[#111827]'
+                    labelClassName='text-[#111827] font-semibold text-sm sm:text-base'
                   />
 
                   {/* Email */}
@@ -294,8 +339,8 @@ export default function CustomJewelleryPage() {
                     placeholder='Enter your email address'
                     required
                     error={errors.email}
-                    inputClassName='text-[#1F3B29] border-[#E6D3C2] focus:ring-[#C8A15B]'
-                    labelClassName='text-[#1F3B29] font-semibold text-sm sm:text-base'
+                    inputClassName='text-[#111827] border-[#E5E7EB] focus:ring-[#111827]'
+                    labelClassName='text-[#111827] font-semibold text-sm sm:text-base'
                   />
 
                   {/* Jewellery Type and Metal Type - Side by Side */}
@@ -340,16 +385,16 @@ export default function CustomJewelleryPage() {
                     textarea
                     error={errors.description}
                     helperText='Minimum 20 characters required'
-                    inputClassName='text-[#1F3B29] min-h-[150px] border-[#E6D3C2] focus:ring-[#C8A15B]'
-                    labelClassName='text-[#1F3B29] font-semibold text-sm sm:text-base'
+                    inputClassName='text-[#111827] min-h-[150px] border-[#E5E7EB] focus:ring-[#111827]'
+                    labelClassName='text-[#111827] font-semibold text-sm sm:text-base'
                   />
 
                   {/* Image Upload */}
                   <div>
-                    <label className='block text-sm sm:text-base font-semibold text-[#1F3B29] mb-2'>
+                    <label className='block text-sm sm:text-base font-semibold text-[#111827] mb-2'>
                       Upload Images (Inspiration/Reference)
                     </label>
-                    <div className='border-2 border-dashed border-[#E6D3C2] rounded-lg p-6 sm:p-8 text-center hover:border-[#C8A15B] transition-all duration-300'>
+                    <div className='border-2 border-dashed border-[#E5E7EB] rounded-xl p-6 sm:p-8 text-center hover:border-[#111827] transition-all duration-300 bg-white'>
                       <input
                         type='file'
                         id='images'
@@ -362,14 +407,14 @@ export default function CustomJewelleryPage() {
                       <label
                         htmlFor='images'
                         className='cursor-pointer flex flex-col items-center justify-center gap-3'>
-                        <div className='w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-[#1F3B29]/10 flex items-center justify-center'>
-                          <Upload size={24} className='sm:w-7 sm:h-7 text-[#1F3B29]' />
+                        <div className='w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-[#111827]/10 flex items-center justify-center'>
+                          <Upload size={24} className='sm:w-7 sm:h-7 text-[#111827]' />
                         </div>
                         <div>
-                          <span className='text-sm sm:text-base font-semibold text-[#1F3B29]'>
+                          <span className='text-sm sm:text-base font-semibold text-[#111827]'>
                             Click to upload images
                           </span>
-                          <p className='text-xs text-[#3F5C45] mt-1'>Maximum 5 images, 5MB each (JPG, PNG)</p>
+                          <p className='text-xs text-[#6B7280] mt-1'>Maximum 5 images, 5MB each (JPG, PNG)</p>
                         </div>
                       </label>
                     </div>
@@ -379,7 +424,7 @@ export default function CustomJewelleryPage() {
                       <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 mt-4'>
                         {imagePreviews.map((preview, index) => (
                           <div key={index} className='relative group'>
-                            <div className='aspect-square rounded-lg overflow-hidden border-2 border-[#E6D3C2]'>
+                            <div className='aspect-square rounded-lg overflow-hidden border border-[#E5E7EB] shadow-sm'>
                               <Image
                                 src={preview}
                                 alt={`Preview ${index + 1}`}
@@ -391,7 +436,7 @@ export default function CustomJewelleryPage() {
                             <button
                               type='button'
                               onClick={() => removeImage(index)}
-                              className='absolute -top-2 -right-2 w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-red-600'>
+                              className='absolute -top-2 -right-2 w-6 h-6 rounded-full bg-black/80 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-black'>
                               <X size={14} />
                             </button>
                           </div>
@@ -404,7 +449,7 @@ export default function CustomJewelleryPage() {
                   <button
                     type='submit'
                     disabled={isSubmitting}
-                    className='w-full flex items-center justify-center gap-2 px-6 sm:px-8 py-3 sm:py-3.5 md:py-4 rounded-lg bg-[#1F3B29] text-white font-bold text-sm sm:text-base md:text-lg hover:bg-[#1F3B29]/90 transition-all duration-300 hover:scale-105 active:scale-95 tracking-wide uppercase shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100'>
+                    className='w-full flex items-center justify-center gap-2 px-6 sm:px-8 py-3 sm:py-3.5 md:py-4 rounded-xl bg-slate-gradient text-white font-semibold text-sm sm:text-base md:text-lg hover:from-slate-800 hover:via-slate-900 hover:to-slate-950 transition-all duration-300 hover:-translate-y-0.5 active:translate-y-0 tracking-wide uppercase shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0'>
                     {isSubmitting ? (
                       <>
                         <div className='w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin' />
@@ -421,12 +466,7 @@ export default function CustomJewelleryPage() {
               </div>
             </div>
 
-            {/* Bottom Separator */}
-            <div className='flex items-center justify-center gap-2 mt-12 sm:mt-16'>
-              <div className='w-8 sm:w-10 h-px bg-[#E6D3C2]' />
-              <Diamond size={20} className='sm:w-[24px] sm:h-[24px] text-[#C8A15B]' />
-              <div className='w-8 sm:w-10 h-px bg-[#E6D3C2]' />
-            </div>
+           
           </div>
         </section>
       </div>
