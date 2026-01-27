@@ -280,7 +280,7 @@ const HomeHeader = () => {
               />
               <button
                 type='submit'
-                className='absolute right-0 top-0 h-full border-l-0 border-3 border-[#e4e4e4] px-6 bg-[#F05D4d] hover:bg-[#ff5533] text-white'>
+                className='absolute right-0 top-0 h-full border-l-0 border-3 border-[#e4e4e4] px-6 bg-emerald-400 hover:bg-[#ff5533] text-white'>
                 <Search className='w-5 h-5' />
               </button>
               <SearchDialog
@@ -322,7 +322,7 @@ const HomeHeader = () => {
               aria-label='Wishlist'>
               <Heart className='w-6 h-6' />
               {wishlistCount > 0 && (
-                <span className='absolute -top-2 -right-2 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-[#C8A15B] px-1 text-[10px] font-semibold text-white'>
+                <span className='absolute -top-2 -right-2 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-emerald-400 px-1 text-[10px] font-semibold text-white'>
                   {wishlistCount}
                 </span>
               )}
@@ -343,7 +343,7 @@ const HomeHeader = () => {
               aria-label='Cart'>
               <ShoppingCart className='w-6 h-6' />
               {cartCount > 0 && (
-                <span className='absolute -top-2 -right-2 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-[#C8A15B] px-1 text-[10px] font-semibold text-white'>
+                <span className='absolute -top-2 -right-2 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-emerald-400 px-1 text-[10px] font-semibold text-white'>
                   {cartCount}
                 </span>
               )}
@@ -380,8 +380,8 @@ const HomeHeader = () => {
                     key={category._id}
                     onMouseEnter={() => setOpenDropdown(category._id)}
                     onClick={() => setOpenDropdown(prev => (prev === category._id ? null : category._id))}
-                    className={`px-4 py-4 text-[14px] font-light leading-[20px] flex items-center gap-1 transition-colors hover:text-[#C8A15B] ${
-                      openDropdown === category._id ? 'text-[#C8A15B]' : ''
+                    className={`px-4 py-4 text-[14px] font-light leading-[20px] flex items-center gap-1 transition-colors hover:text-emerald-400 ${
+                      openDropdown === category._id ? 'text-emerald-400' : ''
                     }`}>
                     {category.name}
                     <ChevronDown className='w-4 h-4' />
@@ -411,14 +411,14 @@ const HomeHeader = () => {
                   <div className='px-6 sm:px-8 lg:px-12 py-8 grid grid-cols-1 md:grid-cols-[1.2fr_1fr_1fr] gap-8'>
                     <div className='space-y-4'>
                       <div>
-                        <p className='text-xs uppercase tracking-[0.3em] text-[#C8A15B] font-semibold'>Shop by Category</p>
+                        <p className='text-xs uppercase tracking-[0.3em] text-emerald-400 font-semibold'>Shop by Category</p>
                         <h3 className='mt-2 text-xl font-semibold text-[#001e38]'>{activeCategory.name}</h3>
                         {activeCategory.shortDescription && (
                           <p className='mt-2 text-sm text-[#4F3A2E]'>{activeCategory.shortDescription}</p>
                         )}
                         <Link
                           href={`/jewellery?category=${encodeURIComponent(activeCategory.slug || activeCategory.name)}`}
-                          className='mt-4 inline-flex text-sm font-semibold text-[#001e38] hover:text-[#C8A15B] transition-colors'>
+                          className='mt-4 inline-flex text-sm font-semibold text-[#001e38] hover:text-emerald-400 transition-colors'>
                           View all
                         </Link>
                       </div>
@@ -449,8 +449,8 @@ const HomeHeader = () => {
                                   ? `/products/${occasion.productId}`
                                   : `/jewellery?search=${encodeURIComponent(occasion.name)}`
                               }
-                              className='flex items-center gap-3 rounded-lg border border-[#E6D3C2]/40 p-2 hover:border-[#C8A15B] hover:bg-[#F5EEE5] transition-colors'>
-                              <div className='h-12 w-12 rounded-md overflow-hidden bg-[#F5EEE5] flex items-center justify-center text-xs text-[#C8A15B]'>
+                              className='flex items-center gap-3 rounded-lg border border-[#E6D3C2]/40 p-2 hover:border-emerald-400 hover:bg-[#F5EEE5] transition-colors'>
+                              <div className='h-12 w-12 rounded-md overflow-hidden bg-[#F5EEE5] flex items-center justify-center text-xs text-emerald-400'>
                                 {occasion.image ? (
                                   <img src={occasion.image} alt={occasion.name} className='h-full w-full object-cover' />
                                 ) : (
@@ -473,7 +473,7 @@ const HomeHeader = () => {
                       ) : megaMenuProduct ? (
                         <Link
                           href={`/products/${megaMenuProduct.urlSlug || megaMenuProduct._id}`}
-                          className='group block rounded-xl border border-[#E6D3C2]/40 overflow-hidden hover:border-[#C8A15B] hover:shadow-md transition-all'>
+                          className='group block rounded-xl border border-[#E6D3C2]/40 overflow-hidden hover:border-emerald-400 hover:shadow-md transition-all'>
                           <div className='aspect-[4/3] bg-[#F5EEE5] overflow-hidden'>
                             <img
                               src={megaMenuProduct.mainImage || '/placeholder.jpg'}
