@@ -1063,9 +1063,13 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
                                         {diamondRows.map((item, rowIndex) => (
                                           <div
                                             key={`${item.label}-${rowIndex}`}
-                                            className='flex justify-between items-center py-2 border-b border-web/20'>
-                                            <span className='text-[#4F3A2E]/70 font-medium'>{item.label}</span>
-                                            <span className='font-bold text-[#1F3B29]'>{item.value}</span>
+                                            className='rounded-lg border border-web/20 bg-white/70 p-3 shadow-sm'>
+                                            <span className='block text-[11px] uppercase tracking-wider text-[#4F3A2E]/60 font-semibold'>
+                                              {item.label}
+                                            </span>
+                                            <span className='mt-1 block text-sm font-semibold text-[#1F3B29] leading-snug break-words'>
+                                              {item.value}
+                                            </span>
                                           </div>
                                         ))}
                                       </div>
@@ -1079,9 +1083,13 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
                                           {diamondSpecs.map((spec, specIndex) => (
                                             <div
                                               key={`${spec.key || 'spec'}-${specIndex}`}
-                                              className='flex justify-between items-center py-2 border-b border-web/20'>
-                                              <span className='text-[#4F3A2E]/70 font-medium'>{spec.key || 'Specification'}</span>
-                                              <span className='font-bold text-[#1F3B29]'>{spec.value || '—'}</span>
+                                              className='rounded-lg border border-web/20 bg-white/70 p-3 shadow-sm'>
+                                              <span className='block text-[11px] uppercase tracking-wider text-[#4F3A2E]/60 font-semibold'>
+                                                {spec.key || 'Specification'}
+                                              </span>
+                                              <span className='mt-1 block text-sm font-semibold text-[#1F3B29] leading-snug break-words'>
+                                                {spec.value || '—'}
+                                              </span>
                                             </div>
                                           ))}
                                         </div>
@@ -1092,7 +1100,23 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
                                         <h5 className='text-xs font-semibold uppercase tracking-wider text-[#1F3B29] mb-2'>
                                           Diamond Description
                                         </h5>
-                                        <p className='text-sm text-[#4F3A2E]/80 leading-relaxed'>{diamond.description}</p>
+                                        <div className='prose prose-sm max-w-none prose-p:text-[#4F3A2E]/80 prose-p:leading-relaxed prose-strong:text-[#1F3B29] prose-strong:font-semibold prose-ul:text-[#4F3A2E]/80 prose-ol:text-[#4F3A2E]/80 prose-li:my-1 prose-a:text-web prose-a:font-medium prose-a:no-underline hover:prose-a:underline'>
+                                          <ReactMarkdown
+                                            remarkPlugins={[remarkGfm]}
+                                            rehypePlugins={[rehypeRaw]}
+                                            components={{
+                                              a: ({ node, ...props }) => (
+                                                <a
+                                                  {...props}
+                                                  className='text-web font-medium no-underline hover:underline transition-colors'
+                                                  target='_blank'
+                                                  rel='noopener noreferrer'
+                                                />
+                                              ),
+                                            }}>
+                                            {diamond.description}
+                                          </ReactMarkdown>
+                                        </div>
                                       </div>
                                     )}
                                     {diamond.certificateImages && diamond.certificateImages.length > 0 && (
@@ -1253,9 +1277,15 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
                       <PremiumAccordion title='Specifications' icon={FileText} defaultOpen={false}>
                         <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm'>
                           {product.specifications.map((spec, index) => (
-                            <div key={`${spec.key}-${index}`} className='flex justify-between items-center py-3 border-b border-web/20'>
-                              <span className='text-[#4F3A2E]/70 font-medium'>{spec.key}</span>
-                              <span className='font-bold text-[#1F3B29]'>{spec.value}</span>
+                            <div
+                              key={`${spec.key}-${index}`}
+                              className='rounded-xl border border-web/20 bg-white/70 p-4 shadow-sm'>
+                              <span className='block text-[11px] uppercase tracking-wider text-[#4F3A2E]/60 font-semibold'>
+                                {spec.key}
+                              </span>
+                              <span className='mt-2 block text-sm font-semibold text-[#1F3B29] leading-snug break-words'>
+                                {spec.value}
+                              </span>
                             </div>
                           ))}
                         </div>
