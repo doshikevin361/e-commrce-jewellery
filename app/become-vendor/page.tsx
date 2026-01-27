@@ -91,12 +91,17 @@ export default function BecomeVendorPage() {
           </Link>
           <div className='flex items-center gap-3'>
             <Link href='/login'>
-              <Button variant='outline' className='border-[#001e38] text-[#001e38] hover:bg-[#001e38] hover:text-white'>
+              <Button
+                variant='outline'
+                className='border-[#001e38] text-[#001e38] hover:text-white hover:bg-gradient-to-br hover:from-slate-700 hover:via-slate-800 hover:to-slate-900'
+              >
                 Vendor Login
               </Button>
             </Link>
             <Link href='/vendor-registration'>
-              <Button className='bg-[#001e38] hover:bg-[#00294a]'>Start Selling</Button>
+              <Button className='bg-slate-gradient text-white hover:from-slate-800 hover:via-slate-900 hover:to-slate-950'>
+                Start Selling
+              </Button>
             </Link>
           </div>
         </div>
@@ -120,7 +125,10 @@ export default function BecomeVendorPage() {
             </p>
             <div className='mt-8 flex flex-col sm:flex-row gap-4'>
               <Link href='/vendor-registration'>
-                <Button size='lg' className='bg-white text-[#001e38] hover:bg-gray-100 font-semibold'>
+                <Button
+                  size='lg'
+                  className='bg-slate-gradient text-white hover:from-slate-800 hover:via-slate-900 hover:to-slate-950 font-semibold'
+                >
                   Apply Now <ArrowRight className='ml-2 h-5 w-5' />
                 </Button>
               </Link>
@@ -259,7 +267,10 @@ export default function BecomeVendorPage() {
             </div>
             <div className='flex flex-col sm:flex-row gap-4'>
               <Link href='/vendor-registration'>
-                <Button size='lg' className='bg-white text-[#001e38] hover:bg-gray-100 font-semibold'>
+                <Button
+                  size='lg'
+                  className='bg-slate-gradient text-white hover:from-slate-800 hover:via-slate-900 hover:to-slate-950 font-semibold'
+                >
                   Start Selling
                 </Button>
               </Link>

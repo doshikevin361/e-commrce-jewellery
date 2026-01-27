@@ -354,7 +354,8 @@ const HomeHeader = () => {
 
       {/* Navigation Menu - Sticky */}
       <div
-        className={`bg-[#001e38] text-white transition-all duration-300 ${isSticky ? 'fixed top-0 left-0 right-0 z-50 shadow-lg' : ''}`}
+        className={`bg-gradient-to-br from-slate-700 via-slate-800 to-slate-900
+ text-white transition-all duration-300 ${isSticky ? 'fixed top-0 left-0 right-0 z-50 shadow-lg' : ''}`}
         onMouseLeave={() => setOpenDropdown(null)}>
         <div className='max-w-[1440px] mx-auto relative'>
           <div className='flex items-center justify-between'>

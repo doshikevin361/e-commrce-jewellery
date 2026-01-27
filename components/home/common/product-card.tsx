@@ -238,7 +238,7 @@ export const ProductCard = memo(
                   'flex w-full items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-semibold transition-all',
                   isInCart
                     ? 'border border-gray-300 bg-gray-100 text-[#001e38]'
-                    : 'bg-[#001e38] text-white shadow-md hover:bg-[#002a52] hover:shadow-lg active:scale-[0.98]',
+                    : 'bg-slate-gradient text-white shadow-md hover:bg-[#002a52] hover:shadow-lg active:scale-[0.98]',
                 )}>
                 <ShoppingCart size={16} />
                 {cartLoading ? 'Adding...' : isInCart ? 'In Cart' : actionLabel}

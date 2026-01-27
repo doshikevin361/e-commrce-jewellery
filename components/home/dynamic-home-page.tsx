@@ -533,7 +533,7 @@ export const HomePage = () => {
   }, []);
 
   return (
-    <>
+    <div className='home-page'>
       <div className='flex-col gap-0'>
         <div className={'mx-auto w-full'}>
           <HeroBanner />
@@ -569,7 +569,7 @@ export const HomePage = () => {
       {/* <div className='mt-8 sm:mt-10 md:mt-12 lg:mt-20'>
         <Subscribe />
       </div> */}
-    </>
+    </div>
   );
 };
 

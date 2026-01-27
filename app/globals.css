@@ -133,6 +133,14 @@
   * {
     @apply border-border outline-ring/50;
   }
+  .home-page h1,
+  .home-page h2,
+  .home-page h3,
+  .home-page h4,
+  .home-page h5,
+  .home-page h6 {
+    color: #000 !important;
+  }
   html {
     scroll-behavior: auto; /* Changed from smooth to prevent unwanted scrolling */
     /* Removed overflow-x: hidden - can break position: sticky */
@@ -243,5 +251,11 @@
   }
   100% {
     transform: translateX(-50%);
+  }
+}
+
+@layer utilities {
+  .bg-slate-gradient {
+    @apply bg-gradient-to-br from-slate-700 via-slate-800 to-slate-900;
   }
 }
