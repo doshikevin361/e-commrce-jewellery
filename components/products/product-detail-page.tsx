@@ -542,11 +542,6 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
                       🔥 Trending
                     </span>
                   )}
-                  {product.hasDiscount && product.discountPercent > 0 && (
-                    <span className='inline-flex items-center justify-center rounded-full bg-gradient-to-r from-red-500 to-red-600 px-4 py-1.5 text-xs font-bold text-white shadow-xl backdrop-blur-sm whitespace-nowrap'>
-                      {product.discountPercent}% OFF
-                    </span>
-                  )}
                 </div>
 
                 {/* Zoom Indicator */}
@@ -562,7 +557,7 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
           </div>
 
           {/* Right Column - Premium Product Information */}
-          <div className='flex flex-col space-y-6 lg:space-y-7 lg:pt-3'>
+          <div className='flex flex-col space-y-6 lg:space-y-7 lg:pt-4'>
             {/* Category Label */}
             {product.categoryName && (
               <p className='text-[11px] uppercase tracking-[0.28em] text-web font-bold mb-2'>{product.categoryName}</p>
@@ -571,7 +566,7 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
             {/* Title with Wishlist & Share */}
             <div className='space-y-4'>
               <div className='flex items-start justify-between gap-4'>
-                <h1 className='text-xl sm:text-2xl lg:text-[2.35rem] font-bold text-[#001e38] leading-[1.2] flex-1 tracking-tight'>
+                <h1 className='text-xl sm:text-2xl lg:text-[2.2rem] font-bold text-[#001e38] leading-[1.2] flex-1 tracking-tight'>
                   {product.name}
                 </h1>
                 <div className='flex items-center gap-2 flex-shrink-0'>
@@ -638,8 +633,8 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
 
             {/* Price Section */}
             <div className='pb-6 border-b border-web/30'>
-              <div className='flex items-baseline gap-3 flex-wrap mb-4'>
-                <span className='text-2xl sm:text-3xl lg:text-[2.35rem] font-bold text-[#001e38] tracking-tight'>
+              <div className='flex items-end gap-3 flex-wrap mb-4'>
+                <span className='text-2xl sm:text-3xl lg:text-[2.2rem] font-bold text-[#001e38] tracking-tight'>
                   ₹{product.displayPrice.toLocaleString()}
                 </span>
                 {product.hasDiscount && product.discountPercent > 0 && (
@@ -647,7 +642,7 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
                     <span className='text-xl sm:text-2xl text-[#4F3A2E]/50 line-through decoration-[#4F3A2E]/50'>
                       ₹{product.originalPrice.toLocaleString()}
                     </span>
-                    <span className='text-sm font-bold bg-gradient-to-r from-red-500 to-red-600 text-white px-3 py-1.5 rounded-full shadow-md'>
+                    <span className='text-xs font-bold bg-gradient-to-r from-red-500 to-red-600 text-white px-3 py-1.5 rounded-full shadow-md'>
                       {product.discountPercent}% OFF
                     </span>
                   </>
@@ -708,12 +703,12 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
             </div>
 
             {/* Add to Cart & Buy Now Buttons */}
-            <div className='flex flex-col sm:flex-row gap-4 pt-2'>
+            <div className='flex flex-col sm:flex-row gap-4 pt-3'>
               <button
                 onClick={handleAddToCart}
                 disabled={cartButtonLoading || isInCart || product.stock === 0}
                 className={cn(
-                  'flex-1 flex items-center justify-center gap-2 px-6 py-3.5 lg:py-4 rounded-xl font-semibold text-[15px] transition-all duration-300 shadow-md hover:shadow-lg',
+                  'flex-1 flex items-center justify-center gap-2 px-6 py-3.5 lg:py-4 rounded-2xl font-semibold text-[15px] transition-all duration-300 shadow-md hover:shadow-lg ring-1 ring-transparent hover:ring-[#001e38]/30',
                   isInCart
                     ? 'bg-web text-white cursor-default'
                     : product.stock === 0
@@ -741,7 +736,7 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
                 onClick={handleBuyNow}
                 disabled={cartButtonLoading || product.stock === 0}
                 className={cn(
-                  'flex-1 px-6 py-3.5 lg:py-4 rounded-xl font-semibold text-[15px] border-2 transition-all duration-300 shadow-md hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]',
+                  'flex-1 px-6 py-3.5 lg:py-4 rounded-2xl font-semibold text-[15px] border-2 transition-all duration-300 shadow-md hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] ring-1 ring-transparent hover:ring-web/30',
                   product.stock === 0
                     ? 'border-gray-300 text-gray-500 cursor-not-allowed bg-gray-100'
                     : 'border-web text-web hover:bg-web bg-white hover:text-white',
@@ -913,12 +908,13 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
                           <span className='text-[#4F3A2E] font-semibold'>Subtotal</span>
                           <span className='font-bold text-lg text-[#1F3B29]'>₹{subTotal.toLocaleString()}</span>
                         </div>
-                        {product.discount && product.discount > 0 && product.discount <= 100 && discountAmount > 0 && (
+                        {product?.discount > 0 && discountAmount > 0 ? (
                           <div className='flex justify-between items-center py-3 text-red-600'>
                             <span className='font-medium'>Discount ({product.discount}%)</span>
                             <span className='font-bold'>-₹{discountAmount.toLocaleString()}</span>
                           </div>
-                        )}
+                        ) : null}
+
                         <div className='flex justify-between items-center py-3'>
                           <span className='text-[#4F3A2E]/70 font-medium'>GST ({product.taxRate || 3}%)</span>
                           <span className='font-bold text-[#1F3B29]'>₹{gstAmount.toLocaleString()}</span>
@@ -1058,7 +1054,7 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
                                 const diamondSpecs = diamond.specifications?.filter(spec => spec.key?.trim() || spec.value?.trim()) || [];
 
                                 return (
-                                  <div key={diamond.id || index} className='border border-web/30 rounded-xl p-4'>
+                                  <div key={diamond.id || index} className='rounded-xl p-4'>
                                     <h4 className='text-sm font-bold text-[#1F3B29] mb-4 uppercase tracking-wider'>Diamond #{index + 1}</h4>
                                     {diamondRows.length > 0 && (
                                       <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm'>
@@ -1371,24 +1367,11 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
               <h2 className='text-xl sm:text-2xl font-bold text-[#1F3B29] mb-2 tracking-tight'>Recently Viewed</h2>
               <p className='text-sm text-[#4F3A2E]/70'>Continue Your Journey</p>
             </div>
-            <Swiper
-              modules={[Navigation, Autoplay]}
-              spaceBetween={24}
-              slidesPerView='auto'
-              navigation
-              autoplay={{ delay: 5000, disableOnInteraction: false }}
-              breakpoints={{
-                320: { spaceBetween: 16 },
-                640: { spaceBetween: 20 },
-                1024: { spaceBetween: 24 },
-              }}
-              className='pb-4'>
+            <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 lg:gap-8'>
               {recentlyViewed.map(viewedProduct => (
-                <SwiperSlide key={viewedProduct.id} style={{ width: 'auto', minWidth: '280px', maxWidth: '320px' }}>
-                  <ProductCard product={viewedProduct} />
-                </SwiperSlide>
+                <ProductCard key={viewedProduct.id} product={viewedProduct} />
               ))}
-            </Swiper>
+            </div>
           </div>
         )}
       </div>
