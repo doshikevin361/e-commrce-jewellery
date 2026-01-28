@@ -492,20 +492,20 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
     <div className='min-h-screen bg-white'>
       {/* Back Button */}
       {/* Main Product Section - Premium Two Column Layout */}
-      <div className='mx-auto w-full max-w-[1400px] pb-24 lg:pb-16 pt-6'>
-        <div className='grid grid-cols-1 lg:grid-cols-[1.1fr_1fr] gap-6 lg:gap-10 xl:gap-12 mb-12 lg:mb-16'>
+      <div className='mx-auto w-full max-w-[1400px]  pb-24 lg:pb-16 pt-8 lg:pt-10'>
+        <div className='grid grid-cols-1 lg:grid-cols-[1.1fr_1fr] gap-8 lg:gap-12 xl:gap-14 mb-14 lg:mb-20'>
           {/* Left Column - Premium Image Gallery with Side Thumbnails */}
-          <div className='flex flex-col lg:flex-row gap-4 lg:gap-6'>
+          <div className='flex flex-col lg:flex-row gap-5 lg:gap-7 lg:sticky lg:top-24 lg:self-start'>
             {/* Gallery Thumbnails - Left Side (Desktop) / Bottom (Mobile) */}
             {images.length > 1 && (
-              <div className='flex lg:flex-col gap-2 lg:gap-3 overflow-x-auto lg:overflow-y-auto lg:max-h-[600px] scrollbar-hide pb-2 lg:pb-0'>
+              <div className='flex lg:flex-col gap-2.5 lg:gap-3 overflow-x-auto lg:overflow-y-auto lg:max-h-[600px] scrollbar-hide pb-2 lg:pb-0'>
                 {images.map((img, index) => (
                   <button
                     key={index}
                     onClick={() => setSelectedImage(index)}
                     className={cn(
-                      'relative flex-shrink-0 w-20 h-20 lg:w-24 lg:h-24 overflow-hidden rounded-md border transition-all duration-200 bg-white',
-                      selectedImage === index ? 'border-[#001e38] ring-1 ring-[#001e38]/20' : 'border-web/70 hover:border-[#001e38]/40',
+                      'relative flex-shrink-0 w-20 h-20 lg:w-24 lg:h-24 overflow-hidden rounded-lg border transition-all duration-200 bg-white',
+                      selectedImage === index ? 'border-[#001e38] ring-1 ring-[#001e38]/20' : 'border-web/60 hover:border-[#001e38]/40',
                     )}>
                     <Image src={img} alt={`View ${index + 1}`} fill sizes='96px' className='object-cover' />
                   </button>
@@ -516,7 +516,7 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
             {/* Main Image with Smooth Zoom */}
             <div className='flex-1 relative'>
               <div
-                className='relative w-full overflow-hidden rounded-md bg-white border border-web/70 shadow-sm transition-colors cursor-zoom-in'
+                className='relative w-full overflow-hidden rounded-xl bg-white border border-web/60 shadow-sm transition-colors cursor-zoom-in'
                 onMouseEnter={() => setImageZoom(true)}
                 onMouseLeave={() => setImageZoom(false)}>
                 <div className='relative aspect-square w-full'>
@@ -562,14 +562,16 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
           </div>
 
           {/* Right Column - Premium Product Information */}
-          <div className='flex flex-col space-y-5 lg:space-y-6 lg:pt-2'>
+          <div className='flex flex-col space-y-6 lg:space-y-7 lg:pt-3'>
             {/* Category Label */}
-            {product.categoryName && <p className='text-xs uppercase tracking-[0.25em] text-web font-bold mb-1'>{product.categoryName}</p>}
+            {product.categoryName && (
+              <p className='text-[11px] uppercase tracking-[0.28em] text-web font-bold mb-2'>{product.categoryName}</p>
+            )}
 
             {/* Title with Wishlist & Share */}
-            <div className='space-y-3'>
+            <div className='space-y-4'>
               <div className='flex items-start justify-between gap-4'>
-                <h1 className='text-xl sm:text-2xl lg:text-3xl font-bold text-[#001e38] leading-[1.2] flex-1 tracking-tight'>
+                <h1 className='text-xl sm:text-2xl lg:text-[2.35rem] font-bold text-[#001e38] leading-[1.2] flex-1 tracking-tight'>
                   {product.name}
                 </h1>
                 <div className='flex items-center gap-2 flex-shrink-0'>
@@ -577,7 +579,7 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
                     onClick={handleWishlistToggle}
                     disabled={wishlistLoading}
                     className={cn(
-                      'p-2.5 lg:p-3 rounded-xl border-2 transition-all duration-300 hover:scale-110 active:scale-95',
+                      'p-2.5 lg:p-3 rounded-xl border-2 transition-all duration-300 hover:scale-105 active:scale-95',
                       isInWishlist
                         ? 'border-red-500 bg-red-50 hover:bg-red-100 shadow-md'
                         : 'border-webhover:border-web hover:bg-gray-100 hover:shadow-md bg-white',
@@ -635,9 +637,9 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
             </div>
 
             {/* Price Section */}
-            <div className='pb-5 border-b border-web/30'>
+            <div className='pb-6 border-b border-web/30'>
               <div className='flex items-baseline gap-3 flex-wrap mb-4'>
-                <span className='text-3xl sm:text-4xl font-bold text-[#001e38] tracking-tight'>
+                <span className='text-2xl sm:text-3xl lg:text-[2.35rem] font-bold text-[#001e38] tracking-tight'>
                   ₹{product.displayPrice.toLocaleString()}
                 </span>
                 {product.hasDiscount && product.discountPercent > 0 && (
@@ -662,14 +664,14 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
 
             {/* Short Description */}
             {product.shortDescription && (
-              <div className='pt-1'>
-                <p className='text-base text-[#4F3A2E] leading-relaxed'>{product.shortDescription}</p>
+              <div className='pt-2'>
+                <p className='text-[15px] sm:text-base text-[#4F3A2E]/90 leading-relaxed'>{product.shortDescription}</p>
               </div>
             )}
 
             {/* Tags */}
             {product.tags && Array.isArray(product.tags) && product.tags.length > 0 && (
-              <div className='flex flex-wrap items-center gap-2 pt-2'>
+              <div className='flex flex-wrap items-center gap-2 pt-3'>
                 <Tag size={16} className='text-[#4F3A2E]/70' />
                 <div className='flex flex-wrap gap-2'>
                   {product.tags.map((tag, index) => (
@@ -684,16 +686,16 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
             )}
 
             {/* Quantity Selector */}
-            <div className='flex items-center gap-4 pt-2'>
+            <div className='flex items-center gap-4 pt-3'>
               <span className='text-sm font-semibold text-[#1F3B29] uppercase tracking-wide'>Quantity:</span>
-              <div className='flex items-center border rounded-xl overflow-hidden shadow-sm bg-white'>
+              <div className='flex items-center border border-web/40 rounded-2xl overflow-hidden shadow-sm bg-white'>
                 <button
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
                   className='p-2.5 lg:p-3 hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
                   disabled={quantity <= 1}>
                   <Minus size={18} className='text-[#1F3B29]' />
                 </button>
-                <span className='px-6 lg:px-8 py-2.5 text-base font-bold text-[#1F3B29] min-w-[4rem] text-center border-x-2 border-webbg-white'>
+                <span className='px-6 lg:px-8 py-2.5 text-base font-bold text-[#1F3B29] min-w-[4rem] text-center border-x-2 border-web bg-white'>
                   {quantity}
                 </span>
                 <button
@@ -706,12 +708,12 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
             </div>
 
             {/* Add to Cart & Buy Now Buttons */}
-            <div className='flex flex-col sm:flex-row gap-3 pt-1'>
+            <div className='flex flex-col sm:flex-row gap-4 pt-2'>
               <button
                 onClick={handleAddToCart}
                 disabled={cartButtonLoading || isInCart || product.stock === 0}
                 className={cn(
-                  'flex-1 flex items-center justify-center gap-2 px-6 py-3.5 lg:py-4 rounded-xl font-semibold text-base transition-all duration-300 shadow-md hover:shadow-lg',
+                  'flex-1 flex items-center justify-center gap-2 px-6 py-3.5 lg:py-4 rounded-xl font-semibold text-[15px] transition-all duration-300 shadow-md hover:shadow-lg',
                   isInCart
                     ? 'bg-web text-white cursor-default'
                     : product.stock === 0
@@ -739,7 +741,7 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
                 onClick={handleBuyNow}
                 disabled={cartButtonLoading || product.stock === 0}
                 className={cn(
-                  'flex-1 px-6 py-3.5 lg:py-4 rounded-xl font-semibold text-base border-2 transition-all duration-300 shadow-md hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]',
+                  'flex-1 px-6 py-3.5 lg:py-4 rounded-xl font-semibold text-[15px] border-2 transition-all duration-300 shadow-md hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]',
                   product.stock === 0
                     ? 'border-gray-300 text-gray-500 cursor-not-allowed bg-gray-100'
                     : 'border-web text-web hover:bg-web bg-white hover:text-white',
@@ -749,29 +751,29 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
             </div>
 
             {/* Product Details Tabs Section */}
-            <div className='pt-6'>
+            <div className='pt-8'>
               <Tabs defaultValue='specifications' className='w-full'>
-                <TabsList className='w-full justify-start bg-gray-100 p-1.5 rounded-2xl border border-web/30 mb-6'>
+                <TabsList className='w-full justify-start bg-gray-100 p-1 rounded-2xl border border-web/30 mb-6'>
                   <TabsTrigger
                     value='description'
-                    className='data-[state=active]:bg-white data-[state=active]:text-web data-[state=active]:shadow-sm px-6 py-3 rounded-xl font-semibold text-sm transition-all'>
+                    className='data-[state=active]:bg-white data-[state=active]:text-web data-[state=active]:shadow-sm px-5 py-2.5 rounded-xl font-semibold text-[13px] transition-all'>
                     Description
                   </TabsTrigger>
                   <TabsTrigger
                     value='specifications'
-                    className='data-[state=active]:bg-white data-[state=active]:text-web data-[state=active]:shadow-sm px-6 py-3 rounded-xl font-semibold text-sm transition-all'>
+                    className='data-[state=active]:bg-white data-[state=active]:text-web data-[state=active]:shadow-sm px-5 py-2.5 rounded-xl font-semibold text-[13px] transition-all'>
                     Specifications
                   </TabsTrigger>
                   <TabsTrigger
                     value='reviews'
-                    className='data-[state=active]:bg-white data-[state=active]:text-web data-[state=active]:shadow-sm px-6 py-3 rounded-xl font-semibold text-sm transition-all'>
+                    className='data-[state=active]:bg-white data-[state=active]:text-web data-[state=active]:shadow-sm px-5 py-2.5 rounded-xl font-semibold text-[13px] transition-all'>
                     Reviews
                   </TabsTrigger>
                 </TabsList>
 
                 {/* Description Tab */}
                 <TabsContent value='description' className='mt-0'>
-                  <div className='bg-white rounded-2xl border border-web/30 shadow-sm p-6 lg:p-8'>
+                  <div className='bg-white rounded-2xl border border-web/30 shadow-sm p-6 lg:p-10'>
                     {product.longDescription ? (
                       <div className='prose prose-sm lg:prose-base max-w-none prose-headings:text-[#1F3B29] prose-headings:font-bold prose-headings:tracking-tight prose-headings:mb-4 prose-h1:text-2xl prose-h2:text-xl prose-h3:text-lg prose-p:text-[#4F3A2E] prose-p:leading-relaxed prose-p:mb-4 prose-strong:text-[#1F3B29] prose-strong:font-semibold prose-ul:text-[#4F3A2E] prose-ul:my-4 prose-ol:text-[#4F3A2E] prose-ol:my-4 prose-li:text-[#4F3A2E] prose-li:my-2 prose-li:pl-2 prose-a:text-web prose-a:font-medium prose-a:no-underline hover:prose-a:underline prose-a:transition-colors prose-img:rounded-xl prose-img:shadow-md prose-img:my-6 prose-img:w-full prose-img:max-w-full prose-hr:border-web/30 prose-hr:my-6 prose-blockquote:border-l-web prose-blockquote:border-l-4 prose-blockquote:bg-gray-100 prose-blockquote:py-2 prose-blockquote:px-4 prose-blockquote:rounded-r-lg prose-blockquote:my-4 prose-blockquote:text-[#4F3A2E] prose-code:text-[#1F3B29] prose-code:bg-gray-100 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-pre:bg-gray-100 prose-pre:rounded-xl prose-pre:p-4 prose-pre:overflow-x-auto prose-table:w-full prose-table:my-4 prose-th:bg-gray-100 prose-th:text-[#1F3B29] prose-th:font-semibold prose-th:p-3 prose-th:border prose-th:border-web/30 prose-td:border prose-td:border-web/30 prose-td:p-3'>
                         <ReactMarkdown
@@ -1277,15 +1279,9 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
                       <PremiumAccordion title='Specifications' icon={FileText} defaultOpen={false}>
                         <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm'>
                           {product.specifications.map((spec, index) => (
-                            <div
-                              key={`${spec.key}-${index}`}
-                              className='rounded-xl border border-web/20 bg-white/70 p-4 shadow-sm'>
-                              <span className='block text-[11px] uppercase tracking-wider text-[#4F3A2E]/60 font-semibold'>
-                                {spec.key}
-                              </span>
-                              <span className='mt-2 block text-sm font-semibold text-[#1F3B29] leading-snug break-words'>
-                                {spec.value}
-                              </span>
+                            <div key={`${spec.key}-${index}`} className='rounded-xl border border-web/20 bg-white/70 p-4 shadow-sm'>
+                              <span className='block text-[11px] uppercase tracking-wider text-[#4F3A2E]/60 font-semibold'>{spec.key}</span>
+                              <span className='mt-2 block text-sm font-semibold text-[#1F3B29] leading-snug break-words'>{spec.value}</span>
                             </div>
                           ))}
                         </div>
@@ -1318,7 +1314,7 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
                 </TabsContent>
 
                 <TabsContent value='reviews' className='mt-0'>
-                  <div className='bg-white rounded-2xl border border-web/30 shadow-sm p-6 lg:p-8'>
+                  <div className='bg-white rounded-2xl border border-web/30 shadow-sm p-6 lg:p-10'>
                     <div className='flex items-center gap-3 mb-6'>
                       <Sparkles className='w-5 h-5 text-web' />
                       <h3 className='text-lg font-semibold text-[#1F3B29]'>Customer Reviews</h3>
@@ -1330,8 +1326,8 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
             </div>
 
             {/* Trust Badges */}
-            <div className='grid grid-cols-3 gap-3 lg:gap-4 pt-6 border-t border-web/30'>
-              <div className='flex flex-col items-center gap-2 text-center p-3 lg:p-4 rounded-xl bg-web/60 bg-white transition-colors cursor-default'>
+            <div className='grid grid-cols-3 gap-4 lg:gap-5 pt-8 border-t border-web/30'>
+              <div className='flex flex-col items-center gap-2 text-center p-3 lg:p-4 rounded-xl bg-white transition-colors cursor-default'>
                 <div className='p-2.5 rounded-full bg-gray-100'>
                   <Award className='w-5 h-5 lg:w-6 lg:h-6 text-web' />
                 </div>
@@ -1355,8 +1351,8 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
 
         {/* You May Also Like Section - Grid View */}
         {product.relatedProducts && product.relatedProducts.length > 0 && (
-          <div className='mt-20 pt-12 border-t border-web/30'>
-            <div className='mb-8'>
+          <div className='mt-16 lg:mt-20 pt-10 lg:pt-12 border-t border-web/30'>
+            <div className='mb-7 lg:mb-8'>
               <h2 className='text-xl sm:text-2xl font-bold text-[#1F3B29] mb-2 tracking-tight'>You May Also Like</h2>
               <p className='text-sm text-[#4F3A2E]/70'>Discover More Favourites</p>
             </div>
@@ -1370,8 +1366,8 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
 
         {/* Recently Viewed Products */}
         {recentlyViewed.length > 0 && (
-          <div className='mt-20 pt-12 border-t border-web/30'>
-            <div className='mb-8'>
+          <div className='mt-16 lg:mt-20 pt-10 lg:pt-12 border-t border-web/30'>
+            <div className='mb-7 lg:mb-8'>
               <h2 className='text-xl sm:text-2xl font-bold text-[#1F3B29] mb-2 tracking-tight'>Recently Viewed</h2>
               <p className='text-sm text-[#4F3A2E]/70'>Continue Your Journey</p>
             </div>
