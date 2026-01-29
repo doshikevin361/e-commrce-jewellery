@@ -228,7 +228,7 @@ export function OrderDetailPage({ params }: OrderDetailPageProps) {
             <p className='text-sm text-gray-500 mt-1'>Order ID: {order.orderId}</p>
           </div>
         </div>
-        {getOrderStatusBadge(orderStatus)}
+        {getOrderStatusBadge(orderStatus || 'pending')}
       </div>
 
       <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
@@ -243,11 +243,11 @@ export function OrderDetailPage({ params }: OrderDetailPageProps) {
               </div>
               <div className='bg-gray-50 p-4 rounded-lg'>
                 <div className='text-sm text-gray-500'>Payment Method</div>
-                <div className='font-semibold'>{order.paymentMethod.toUpperCase()}</div>
+                <div className='font-semibold'>{order.paymentMethod?.toUpperCase() || 'N/A'}</div>
               </div>
               <div className='bg-gray-50 p-4 rounded-lg'>
                 <div className='text-sm text-gray-500'>Payment Status</div>
-                <div>{getPaymentStatusBadge(order.paymentStatus)}</div>
+                <div>{getPaymentStatusBadge(order.paymentStatus || 'pending')}</div>
               </div>
             </div>
           </Card>
