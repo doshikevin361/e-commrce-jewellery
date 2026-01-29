@@ -444,7 +444,85 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
   const isInCart = product?._id ? cartItems.some(item => item._id === product._id.toString()) : false;
 
   // Conditional returns must come after all hooks
-  if (loading) return <PageLoader message='Loading product details...' />;
+  if (loading) {
+    return (
+      <div className='min-h-screen bg-white'>
+        <div className='mx-auto w-full max-w-[1400px] pb-24 lg:pb-16 pt-8 lg:pt-10'>
+          <div className='grid grid-cols-1 lg:grid-cols-[1.1fr_1fr] gap-8 lg:gap-12 xl:gap-14 mb-14 lg:mb-20'>
+            <div className='flex flex-col lg:flex-row gap-5 lg:gap-7 lg:sticky lg:top-24 lg:self-start'>
+              <div className='flex lg:flex-col gap-2.5 lg:gap-3 overflow-x-auto lg:overflow-y-auto lg:max-h-[600px] scrollbar-hide pb-2 lg:pb-0'>
+                {[...Array(4)].map((_, index) => (
+                  <div
+                    key={`thumb-${index}`}
+                    className='relative flex-shrink-0 w-20 h-20 lg:w-24 lg:h-24 overflow-hidden border border-web/30 rounded-lg bg-gray-100 animate-pulse'
+                  />
+                ))}
+              </div>
+              <div className='flex-1 relative'>
+                <div className='relative w-full overflow-hidden rounded-xl bg-white shadow-sm'>
+                  <div className='relative aspect-square w-full  bg-gray-100 animate-pulse' />
+                </div>
+              </div>
+            </div>
+
+            <div className='flex flex-col space-y-6 lg:space-y-7 lg:pt-4'>
+              <div className='h-3 w-32 rounded-full bg-gray-100 animate-pulse' />
+              <div className='space-y-4'>
+                <div className='flex items-start justify-between gap-4'>
+                  <div className='space-y-3 flex-1'>
+                    <div className='h-6 sm:h-7 lg:h-9 w-3/4 rounded-lg bg-gray-100 animate-pulse' />
+                    <div className='h-4 w-40 rounded-full bg-gray-100 animate-pulse' />
+                  </div>
+                  <div className='flex items-center gap-2'>
+                    <div className='h-11 w-11 rounded-xl border border-web/30 bg-gray-100 animate-pulse' />
+                    <div className='h-11 w-11 rounded-xl border border-web/30 bg-gray-100 animate-pulse' />
+                  </div>
+                </div>
+              </div>
+
+              <div className='pb-6 border-b border-web/30'>
+                <div className='flex items-end gap-3 flex-wrap mb-4'>
+                  <div className='h-8 sm:h-10 lg:h-12 w-40 rounded-lg bg-gray-100 animate-pulse' />
+                  <div className='h-6 w-24 rounded-full bg-gray-100 animate-pulse' />
+                </div>
+                <div className='flex items-center gap-2.5'>
+                  <div className='w-2.5 h-2.5 rounded-full bg-gray-100 animate-pulse' />
+                  <div className='h-4 w-32 rounded-full bg-gray-100 animate-pulse' />
+                </div>
+              </div>
+
+              <div className='space-y-3'>
+                <div className='h-4 w-full rounded-full bg-gray-100 animate-pulse' />
+                <div className='h-4 w-11/12 rounded-full bg-gray-100 animate-pulse' />
+                <div className='h-4 w-9/12 rounded-full bg-gray-100 animate-pulse' />
+              </div>
+
+              <div className='flex items-center gap-4 pt-3'>
+                <div className='h-4 w-24 rounded-full bg-gray-100 animate-pulse' />
+                <div className='h-12 w-32 rounded-2xl border border-web/30 bg-gray-100 animate-pulse' />
+              </div>
+
+              <div className='flex flex-col sm:flex-row gap-4 pt-3'>
+                <div className='h-12 flex-1 rounded-2xl bg-gray-100 animate-pulse' />
+                <div className='h-12 flex-1 rounded-2xl bg-gray-100 animate-pulse' />
+              </div>
+
+              <div className='pt-8'>
+                <div className='h-11 w-full rounded-2xl bg-gray-100 animate-pulse' />
+                <div className='mt-6 h-48 w-full rounded-2xl border border-web/30 bg-gray-50 animate-pulse' />
+              </div>
+
+              <div className='grid grid-cols-3 gap-4 lg:gap-5 pt-8 border-t border-web/30'>
+                {[...Array(3)].map((_, index) => (
+                  <div key={`badge-${index}`} className='h-20 rounded-xl bg-gray-100 animate-pulse' />
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (error || !product) {
     return (
