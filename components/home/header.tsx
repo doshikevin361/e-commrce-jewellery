@@ -280,7 +280,7 @@ const HomeHeader = () => {
               />
               <button
                 type='submit'
-                className='absolute right-0 top-0 h-full border-l-0 border-3 border-[#e4e4e4] px-6 bg-emerald-400 hover:bg-[#ff5533] text-white'>
+                className='absolute right-0 top-0 cursor-pointer h-full border-l-0 border-3 border-[#e4e4e4] px-6 bg-emerald-400 hover:bg-emerald-500 text-white'>
                 <Search className='w-5 h-5' />
               </button>
               <SearchDialog
