@@ -29,7 +29,7 @@ export async function GET(
       try {
         const { db } = await connectToDatabase();
         const vendorProducts = await db.collection('products')
-          .find({ vendor: user.email })
+          .find({ vendorId: user.id })
           .project({ _id: 1 })
           .toArray();
         const vendorProductIds = vendorProducts.map(p => p._id.toString());
@@ -119,7 +119,7 @@ export async function PUT(
       try {
         const { db } = await connectToDatabase();
         const vendorProducts = await db.collection('products')
-          .find({ vendor: user.email })
+          .find({ vendorId: user.id })
           .project({ _id: 1 })
           .toArray();
         const vendorProductIds = vendorProducts.map(p => p._id.toString());
@@ -252,7 +252,7 @@ export async function PUT(
       try {
         const { db } = await connectToDatabase();
         const vendorProducts = await db.collection('products')
-          .find({ vendor: user.email })
+          .find({ vendorId: user.id })
           .project({ _id: 1 })
           .toArray();
         const vendorProductIds = vendorProducts.map(p => p._id.toString());

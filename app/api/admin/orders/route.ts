@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
       try {
         const { db } = await connectToDatabase();
         const vendorProducts = await db.collection('products')
-          .find({ vendor: user.email })
+          .find({ vendorId: user.id })
           .project({ _id: 1 })
           .toArray();
         vendorProductIds = vendorProducts.map(p => p._id);
