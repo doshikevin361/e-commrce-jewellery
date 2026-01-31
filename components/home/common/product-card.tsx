@@ -149,104 +149,97 @@ export const ProductCard = memo(
     };
 
     return (
-      <article
-        className={cn(
-          'group relative flex h-full w-full flex-col rounded-2xl border border-gray-200 bg-white overflow-hidden hover:shadow-xl',
-          className,
-        )}>
-        {/* Image Section */}
-        <div onClick={handleProductClick} className='relative cursor-pointer overflow-hidden bg-gray-100'>
-          <div className='aspect-square relative'>
-            {/* Badge */}
-            {product.badge && (
-              <span className='absolute left-3 top-3 z-10 rounded-full bg-[#001e38] px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-white shadow-md'>
-                {product.badge}
-              </span>
-            )}
+      <div className='group relative rounded-[28px] bg-[#f5f6f8] p-5 transition-all duration-300 hover:shadow-[0_24px_60px_-24px_rgba(0,0,0,0.25)]'>
+        {/* Image Container */}
+        <div className='relative mb-5 overflow-hidden rounded-2xl bg-white'>
+          <img
+            src={product.image}
+            alt={product.title}
+            onClick={handleProductClick}
+            className='h-56 min-w-full object-cover cursor-pointer transition-transform duration-500 group-hover:scale-105'
+          />
 
-            {/* Wishlist / Delete */}
-            {showDeleteIcon && onDelete ? (
-              <button
-                onClick={e => {
-                  e.stopPropagation();
-                  onDelete();
-                }}
-                className='absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 backdrop-blur shadow hover:bg-red-50 transition'>
-                <Trash2 size={16} className='text-gray-700 hover:text-red-600' />
-              </button>
-            ) : (
-              <button
-                onClick={handleWishlistToggle}
-                disabled={wishlistLoading}
-                className='absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 backdrop-blur shadow hover:bg-red-50 transition'>
-                <Heart size={16} className={cn('transition', isInWishlist ? 'fill-red-500 text-red-500' : 'text-gray-700')} />
-              </button>
-            )}
+          {/* Badge */}
+          {product.badge && (
+            <span className='absolute left-4 top-4 rounded-full bg-black px-3 py-1 text-[11px] font-medium text-white'>
+              {product.badge}
+            </span>
+          )}
 
-            {/* Image */}
-            <img
-              src={product.image}
-              alt={product.title}
-              className='h-full w-full object-cover transition-transform duration-500 group-hover:scale-110'
-            />
-
-            {/* Gradient overlay */}
-            <div className='pointer-events-none absolute inset-0 bg-gradient-to-t from-black/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition' />
-          </div>
+          {/* Wishlist / Delete */}
+          {showDeleteIcon && onDelete ? (
+            <button
+              onClick={e => {
+                e.stopPropagation();
+                onDelete();
+              }}
+              className='absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-sm transition hover:bg-red-50'>
+              <Trash2 size={16} className='text-red-600' />
+            </button>
+          ) : (
+            <button
+              onClick={handleWishlistToggle}
+              className='absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-sm transition hover:scale-105'>
+              <Heart size={16} className={cn(isInWishlist ? 'fill-red-500 text-red-500' : 'text-neutral-600')} />
+            </button>
+          )}
         </div>
 
         {/* Content */}
-        <div className='flex flex-1 flex-col p-4'>
+        <div className='space-y-3'>
           {/* Category */}
-          <p className='mb-1 text-[11px] font-semibold uppercase tracking-wider text-gray-500'>{product.category}</p>
+          <span
+            onClick={handleProductClick}
+            className='inline-block rounded-full bg-neutral-200 px-3 py-1 text-[11px] font-medium text-neutral-600'>
+            {product.category}
+          </span>
 
           {/* Title */}
-          <h3
-            onClick={handleProductClick}
-            className='mb-2 line-clamp-2 cursor-pointer text-[15px] font-semibold leading-snug text-[#001e38] transition'>
+          <h3 onClick={handleProductClick} className='line-clamp-2 text-[15px] font-semibold cursor-pointer leading-snug text-neutral-900'>
             {product.title}
           </h3>
 
           {/* Rating */}
-          <div className='mb-3 flex items-center gap-1.5'>
+          <div className='flex items-center gap-2'>
             <div className='flex gap-0.5'>
               {[...Array(5)].map((_, i) => (
                 <Star
                   key={i}
-                  className={`h-3.5 w-3.5 ${i < Math.floor(rating) ? 'fill-amber-400 text-amber-400' : 'fill-gray-200 text-gray-200'}`}
+                  size={14}
+                  className={i < Math.floor(product.rating) ? 'fill-neutral-900 text-neutral-900' : 'fill-neutral-300 text-neutral-300'}
                 />
               ))}
             </div>
-            <span className='text-xs text-gray-500'>({product.reviews || 0})</span>
+            <span className='text-xs text-neutral-500'>{product.reviews || 0} reviews</span>
           </div>
 
-          {/* Bottom */}
-          <div className='mt-auto'>
-            {/* Price */}
-            <div className='mb-4 flex items-end gap-2'>
-              <span className='text-xl font-bold text-[#001e38]'>{product.price}</span>
-              {product.originalPrice && <span className='text-sm text-gray-400 line-through'>{product.originalPrice}</span>}
+          {/* Price + Action */}
+          <div className='flex items-center justify-between pt-2'>
+            <div className='flex items-baseline gap-2'>
+              <span className='text-xl font-semibold text-neutral-900'>{product.price}</span>
+              {/* {product.originalPrice && <span className='text-sm text-neutral-400 line-through'>{product.originalPrice}</span>} */}
             </div>
 
             {actionSlot ? (
               actionSlot
-            ) : hideDefaultAction ? null : (
+            ) : !hideDefaultAction ? (
               <button
                 onClick={handleAddToCart}
-                disabled={cartLoading || isInCart}
+                disabled={isInCart}
                 className={cn(
-                  'flex w-full items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-semibold transition-all',
-                  isInCart
-                    ? 'border border-gray-300 bg-gray-100 text-[#001e38]'
-                    : 'bg-slate-gradient text-white shadow-md hover:bg-[#002a52] hover:shadow-lg active:scale-[0.98]',
+                  'flex h-11 w-11 items-center justify-center rounded-full transition-all',
+                  isInCart ? 'bg-neutral-200 text-neutral-500' : 'bg-neutral-900 text-white hover:scale-105',
                 )}>
-                <ShoppingCart size={16} />
-                {cartLoading ? 'Adding...' : isInCart ? 'In Cart' : actionLabel}
+                {cartLoading ? (
+                  <div className='h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent' />
+                ) : (
+                  <ShoppingCart size={18} />
+                )}
               </button>
-            )}
+            ) : null}
           </div>
         </div>
-      </article>
+      </div>
     );
   },
   (prevProps, nextProps) => {
