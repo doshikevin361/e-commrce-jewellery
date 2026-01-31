@@ -157,7 +157,7 @@ export function OrderList() {
         throw new Error(error?.error || 'Failed to fetch order details');
       }
       const data = await response.json();
-      setViewOrderData(data);
+      setViewOrderData(data.order || data);
     } catch (error) {
       console.error('[OrderList] Failed to fetch order details:', error);
       toast({
@@ -494,7 +494,7 @@ export function OrderList() {
               <DetailItem label='Date' value={formatIndianDate(viewOrderData.createdAt)} />
               <DetailItem label='Customer Name' value={viewOrderData.customerName} />
               <DetailItem label='Customer Email' value={viewOrderData.customerEmail} />
-              <DetailItem label='Payment Method' value={viewOrderData.paymentMethod.toUpperCase()} />
+              <DetailItem label='Payment Method' value={viewOrderData?.paymentMethod?.toUpperCase() || 'N/A'} />
               <DetailItem
                 label='Payment Status'
                 value={
