@@ -149,14 +149,14 @@ export const ProductCard = memo(
     };
 
     return (
-      <div className='group relative rounded-[28px] bg-[#f5f6f8] p-5 transition-all duration-300 hover:shadow-[0_24px_60px_-24px_rgba(0,0,0,0.25)]'>
+      <div className='group relative flex h-full flex-col rounded-[28px] bg-[#f5f6f8] p-5 transition-all duration-300'>
         {/* Image Container */}
         <div className='relative mb-5 overflow-hidden rounded-2xl bg-white'>
           <img
             src={product.image}
             alt={product.title}
             onClick={handleProductClick}
-            className='h-56 min-w-full object-cover cursor-pointer transition-transform duration-500 group-hover:scale-105'
+            className='h-56 w-full cursor-pointer object-cover transition-transform duration-500 group-hover:scale-105'
           />
 
           {/* Badge */}
@@ -186,16 +186,18 @@ export const ProductCard = memo(
         </div>
 
         {/* Content */}
-        <div className='space-y-3'>
+        <div className='flex flex-1 flex-col gap-3'>
           {/* Category */}
           <span
             onClick={handleProductClick}
-            className='inline-block rounded-full bg-neutral-200 px-3 py-1 text-[11px] font-medium text-neutral-600'>
+            className='inline-block w-fit rounded-full bg-neutral-200 px-3 py-1 text-[11px] font-medium text-neutral-600 cursor-pointer'>
             {product.category}
           </span>
 
-          {/* Title */}
-          <h3 onClick={handleProductClick} className='line-clamp-2 text-[15px] font-semibold cursor-pointer leading-snug text-neutral-900'>
+          {/* Title (fixed height) */}
+          <h3
+            onClick={handleProductClick}
+            className='line-clamp-2 min-h-[40px] cursor-pointer text-[15px] font-semibold leading-snug text-neutral-900'>
             {product.title}
           </h3>
 
@@ -212,32 +214,33 @@ export const ProductCard = memo(
             </div>
             <span className='text-xs text-neutral-500'>{product.reviews || 0} reviews</span>
           </div>
+        </div>
 
-          {/* Price + Action */}
-          <div className='flex items-center justify-between pt-2'>
-            <div className='flex items-baseline gap-2'>
-              <span className='text-xl font-semibold text-neutral-900'>{product.price}</span>
-              {/* {product.originalPrice && <span className='text-sm text-neutral-400 line-through'>{product.originalPrice}</span>} */}
-            </div>
-
-            {actionSlot ? (
-              actionSlot
-            ) : !hideDefaultAction ? (
-              <button
-                onClick={handleAddToCart}
-                disabled={isInCart}
-                className={cn(
-                  'flex h-11 w-11 items-center justify-center rounded-full transition-all',
-                  isInCart ? 'bg-neutral-200 text-neutral-500' : 'bg-neutral-900 text-white hover:scale-105',
-                )}>
-                {cartLoading ? (
-                  <div className='h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent' />
-                ) : (
-                  <ShoppingCart size={18} />
-                )}
-              </button>
-            ) : null}
+        {/* Price + Action (always bottom aligned) */}
+        <div className='mt-auto flex items-center justify-between pt-2'>
+          <div className='flex items-baseline gap-2'>
+            <span className='text-xl font-semibold text-neutral-900'>{product.price}</span>
+            {/* Optional original price */}
+            {/* <span className='text-sm text-neutral-400 line-through'>{product.originalPrice}</span> */}
           </div>
+
+          {actionSlot ? (
+            actionSlot
+          ) : !hideDefaultAction ? (
+            <button
+              onClick={handleAddToCart}
+              disabled={isInCart}
+              className={cn(
+                'flex h-11 w-11 items-center justify-center rounded-full transition-all',
+                isInCart ? 'bg-neutral-200 text-neutral-500' : 'bg-neutral-900 text-white hover:scale-105',
+              )}>
+              {cartLoading ? (
+                <div className='h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent' />
+              ) : (
+                <ShoppingCart size={18} />
+              )}
+            </button>
+          ) : null}
         </div>
       </div>
     );

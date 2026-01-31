@@ -364,9 +364,11 @@ const HomeHeader = () => {
               className={`flex items-center gap-2 pl-4 transition-all duration-300 ${
                 isSticky ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-10 pointer-events-none w-0 overflow-hidden'
               }`}>
-              <div className='w-10 h-10 bg-white rounded-full flex items-center justify-center'>
-                <img src='/light_logo.png' className='w-full h-full object-contain' />
-              </div>
+              <Link href='/'>
+                <div className='w-10 h-10 bg-white rounded-full flex items-center justify-center'>
+                  <img src='/light_logo.png' className='w-full h-full object-contain' />
+                </div>
+              </Link>
               <span className='text-lg font-bold text-white tracking-wide'>Jewellery</span>
             </div>
 
