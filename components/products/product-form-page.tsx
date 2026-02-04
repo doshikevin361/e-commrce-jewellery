@@ -363,6 +363,7 @@ interface ProductFormData {
   otherCharges?: number;
   gstRate: number;
   customMetalRate?: number; // Custom metal rate to override live price
+  settingsData?: any; // Store settings data for commission lookup
 }
 
 interface ProductFormPageProps {
@@ -740,8 +741,9 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
     fetchLivePrices();
     fetchAllProducts(); // Fetch all products for related products selection
     
-    // Always fetch admin's default vendor commission rate and pass the detected role
-    fetchAdminDefaultCommission(detectedRole);
+    // Fetch settings to have them available when product type is selected
+    // Don't apply commission initially - will be applied when product type is selected
+    fetchAdminDefaultCommission(detectedRole, undefined);
     
     if (productId) {
       fetchProduct();
@@ -1004,7 +1006,7 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
     }
   };
 
-  const fetchAdminDefaultCommission = async (currentUserRole?: string) => {
+  const fetchAdminDefaultCommission = async (currentUserRole?: string, productType?: string) => {
     try {
       // Fetch admin's default vendor commission rate from site settings
       const response = await fetch('/api/admin/settings');
@@ -1012,10 +1014,19 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
         const data = await response.json();
         console.log('[DEBUG] Fetched settings:', data);
         console.log('[DEBUG] User role:', currentUserRole);
-        console.log('[DEBUG] defaultVendorCommissionRate:', data.defaultVendorCommissionRate);
+        console.log('[DEBUG] Product type:', productType);
+        console.log('[DEBUG] productTypeCommissions:', data.productTypeCommissions);
         
-        // Update the form with admin's default vendor commission rate
-        if (data.defaultVendorCommissionRate !== undefined) {
+        // Store settings data for later use when product type changes
+        if (data.productTypeCommissions) {
+          setFormData(prev => ({
+            ...prev,
+            settingsData: data, // Store the entire settings
+          }));
+        }
+        
+        // Update the form with product-type-specific commission rate
+        if (data.productTypeCommissions !== undefined) {
           // Get user role if not provided
           let roleToUse = currentUserRole;
           if (!roleToUse) {
@@ -1034,12 +1045,22 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
           }
 
           console.log('[DEBUG] Final role to use:', roleToUse);
-          console.log('[DEBUG] Will set platformCommissionRate to:', roleToUse === 'vendor' ? data.defaultVendorCommissionRate : 'keep current');
-          console.log('[DEBUG] Current prev.platformCommissionRate would be:', 0); // Initial value
+          
+          // Get commission rate based on product type
+          let commissionRate = 5; // Fallback default
+          if (productType && data.productTypeCommissions && data.productTypeCommissions[productType as keyof typeof data.productTypeCommissions]) {
+            commissionRate = data.productTypeCommissions[productType as keyof typeof data.productTypeCommissions];
+            console.log('[DEBUG] Using product-type-specific commission for', productType, ':', commissionRate);
+          } else if (productType) {
+            console.log('[DEBUG] Product type provided but no specific commission, using fallback rate:', commissionRate);
+          } else {
+            console.log('[DEBUG] No product type provided, settings loaded for future use');
+            return; // Don't apply commission if no product type specified
+          }
 
           const updateData = {
-            vendorCommissionRate: data.defaultVendorCommissionRate,
-            platformCommissionRate: roleToUse === 'vendor' ? data.defaultVendorCommissionRate : 0,
+            vendorCommissionRate: commissionRate,
+            platformCommissionRate: roleToUse === 'vendor' ? commissionRate : 0,
           };
           
           console.log('[DEBUG] About to update with:', updateData);
@@ -1053,7 +1074,7 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
             return newData;
           });
         } else {
-          console.log('[DEBUG] defaultVendorCommissionRate is undefined in response');
+          console.log('[DEBUG] productTypeCommissions is undefined in response');
         }
       } else {
         console.log('[DEBUG] Settings fetch failed with status:', response.status);
@@ -1204,8 +1225,9 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
           setSelectedRelatedProducts(product.relatedProducts);
         }
 
-        // After loading product, apply admin's commission rate
-        fetchAdminDefaultCommission();
+        // After loading product, don't override existing commission - keep what's saved
+        // But fetch settings for when user might change product type later
+        fetchAdminDefaultCommission(undefined, undefined);
       }
     } catch (error) {
       console.error('Failed to fetch product:', error);
@@ -1410,6 +1432,9 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
         };
         return { ...prev, ...resetData };
       });
+      
+      // Fetch and apply product-type-specific commission rate
+      fetchAdminDefaultCommission(userRole, value);
     } else {
       setFormData(prev => ({ ...prev, [field]: value }));
     }
