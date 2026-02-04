@@ -11,7 +11,14 @@ const DEFAULT_SETTINGS = {
   logo: '',
   favicon: '',
   productType: true,
-  defaultVendorCommissionRate: 5,
+  productTypeCommissions: {
+    Gold: 5,
+    Silver: 4,
+    Platinum: 6,
+    Gemstone: 8,
+    Diamonds: 10,
+    Imitation: 3,
+  },
 };
 
 function normalizeSettings(doc: any = {}) {
@@ -24,7 +31,7 @@ function normalizeSettings(doc: any = {}) {
     logo: doc.logo ?? DEFAULT_SETTINGS.logo,
     favicon: doc.favicon ?? DEFAULT_SETTINGS.favicon,
     productType: doc.productType ?? DEFAULT_SETTINGS.productType,
-    defaultVendorCommissionRate: doc.defaultVendorCommissionRate ?? DEFAULT_SETTINGS.defaultVendorCommissionRate,
+    productTypeCommissions: doc.productTypeCommissions ?? DEFAULT_SETTINGS.productTypeCommissions,
     updatedAt: doc.updatedAt ?? null,
     createdAt: doc.createdAt ?? null,
   };
@@ -65,7 +72,7 @@ export async function PUT(request: NextRequest) {
     const logo = body.logo || '';
     const favicon = body.favicon || '';
     const productType = body.productType ?? DEFAULT_SETTINGS.productType;
-    const defaultVendorCommissionRate = body.defaultVendorCommissionRate ?? DEFAULT_SETTINGS.defaultVendorCommissionRate;
+    const productTypeCommissions = body.productTypeCommissions ?? DEFAULT_SETTINGS.productTypeCommissions;
 
     if (!siteName) {
       return NextResponse.json({ error: 'Website name is required' }, { status: 400 });
@@ -88,7 +95,7 @@ export async function PUT(request: NextRequest) {
           logo,
           favicon,
           productType,
-          defaultVendorCommissionRate,
+          productTypeCommissions,
           updatedAt: now,
         },
         $setOnInsert: {

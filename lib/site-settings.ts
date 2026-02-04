@@ -1,3 +1,12 @@
+export type ProductTypeCommissions = {
+  Gold: number;
+  Silver: number;
+  Platinum: number;
+  Gemstone: number;
+  Diamonds: number;
+  Imitation: number;
+};
+
 export type SiteSettings = {
   siteName: string;
   siteTitle: string;
@@ -6,7 +15,7 @@ export type SiteSettings = {
   accentColor: string;
   logo: string;
   favicon: string;
-  defaultVendorCommissionRate: number;
+  productTypeCommissions: ProductTypeCommissions;
 };
 
 export const defaultSiteSettings: SiteSettings = {
@@ -17,5 +26,12 @@ export const defaultSiteSettings: SiteSettings = {
   accentColor: "#0f172a",
   logo: "",
   favicon: "",
-  defaultVendorCommissionRate: 5,
+  productTypeCommissions: {
+    Gold: 5,
+    Silver: 4,
+    Platinum: 6,
+    Gemstone: 8,
+    Diamonds: 10,
+    Imitation: 3,
+  },
 };
