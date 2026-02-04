@@ -11,7 +11,7 @@ export const HeroBanner = () => {
   return (
     <div className='relative w-full h-[80vh] overflow-hidden bg-black'>
       {/* VIDEO */}
-      <video src='/uploads/vid2.mp4' autoPlay loop muted playsInline className='w-full h-full object-cover' />
+      <video src='/uploads/banner_vi.mov' autoPlay loop muted playsInline className='w-full h-full object-cover' />
 
       {/* 🔥 BOTTOM FADE SHADOW (THIS FIXES IT) */}
       <div
@@ -88,13 +88,14 @@ export default function Categories() {
 
 const banners = [
   {
-    image: '/slider/s1.webp',
+    image: '/slider/banner1.jpg',
   },
+
   {
-    image: '/slider/s2.jpg',
+    image: '/slider/banner3.png',
   },
-  {
-    image: '/slider/s3.jpg',
+    {
+    image: '/slider/banner4.webp',
   },
 ];
 
