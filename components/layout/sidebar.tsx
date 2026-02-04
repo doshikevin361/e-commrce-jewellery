@@ -380,6 +380,10 @@ export function Sidebar() {
       label: 'SEO Settings',
       href: '/admin/cms/seo',
     },
+    {
+      label: 'Footer Content',
+      href: '/admin/cms/footer-content',
+    },
   ];
 
   const getInitials = (name: string) => {

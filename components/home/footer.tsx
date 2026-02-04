@@ -1,93 +1,107 @@
-import React from 'react';
+'use client';
+
+import React, { useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { Facebook, Twitter, Youtube, Instagram } from 'lucide-react';
 
+type FooterPageType = 'about' | 'policies' | 'jewellery-guide' | 'customer-delight';
+
+interface FooterPageLink {
+  _id: string;
+  pageName: string;
+  slug: string;
+  pageType: FooterPageType;
+}
+
+const SECTION_LABELS: Record<FooterPageType, string> = {
+  about: 'ABOUT US',
+  policies: 'POLICIES',
+  'jewellery-guide': 'JEWELLERY GUIDE',
+  'customer-delight': 'CUSTOMER DELIGHT',
+};
+
 export default function Footer() {
+  const [footerPages, setFooterPages] = useState<FooterPageLink[]>([]);
+  const [loadingFooterPages, setLoadingFooterPages] = useState(true);
+  const pathname = usePathname();
+
+  useEffect(() => {
+    const fetchFooterPages = async () => {
+      try {
+        setLoadingFooterPages(true);
+        const response = await fetch('/api/public/footer-pages', { cache: 'no-store' });
+        if (!response.ok) {
+          setFooterPages([]);
+          return;
+        }
+        const data = await response.json();
+        setFooterPages(Array.isArray(data) ? data : []);
+      } catch (error) {
+        console.error('[v0] Failed to fetch footer pages:', error);
+        setFooterPages([]);
+      } finally {
+        setLoadingFooterPages(false);
+      }
+    };
+
+    fetchFooterPages();
+  }, [pathname]);
+
+  const sectionLinks = useMemo(() => {
+    const grouped: Record<FooterPageType, FooterPageLink[]> = {
+      about: [],
+      policies: [],
+      'jewellery-guide': [],
+      'customer-delight': [],
+    };
+    footerPages.forEach(page => {
+      if (grouped[page.pageType]) {
+        grouped[page.pageType].push(page);
+      }
+    });
+    return grouped;
+  }, [footerPages]);
+
+  const renderSectionLinks = (section: FooterPageType) => {
+    const items = sectionLinks[section];
+    if (loadingFooterPages) {
+      return <p className='text-sm text-gray-400'>Loading...</p>;
+    }
+    if (!items || items.length === 0) {
+      return <p className='text-sm text-gray-400'>No pages yet.</p>;
+    }
+    return (
+      <ul className='space-y-2.5'>
+        {items.map(item => (
+          <li key={item._id}>
+            <Link href={`/footer/${item.slug}`} className='text-gray-300 hover:text-white text-sm transition-colors'>
+              {item.pageName}
+            </Link>
+          </li>
+        ))}
+      </ul>
+    );
+  };
+
   return (
     <footer className='bg-gradient-to-br from-slate-700 via-slate-800 to-slate-900 text-slate-300 text-white'>
       {/* Main Footer Content */}
       <div className='max-w-[1440px] mx-auto px-6 py-12'>
         <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12'>
-          {/* About Us Section */}
+          {/* About Us + Customer Delight */}
           <div>
-            <h3 className='text-sm font-semibold mb-4 tracking-wide'>ABOUT US</h3>
-            <ul className='space-y-2.5'>
-              <li>
-                <a href='#' className='text-gray-300 hover:text-white text-sm transition-colors'>
-                  Who we are?
-                </a>
-              </li>
-              <li>
-                <a href='#' className='text-gray-300 hover:text-white text-sm transition-colors'>
-                  Investor Relations
-                </a>
-              </li>
-              <li>
-                <a href='#' className='text-gray-300 hover:text-white text-sm transition-colors'>
-                  Design Philosophy
-                </a>
-              </li>
-            </ul>
+            <h3 className='text-sm font-semibold mb-4 tracking-wide'>{SECTION_LABELS.about}</h3>
+            {renderSectionLinks('about')}
 
-            <h3 className='text-sm font-semibold mt-8 mb-4 tracking-wide'>CUSTOMER DELIGHT</h3>
-            <ul className='space-y-2.5'>
-              <li>
-                <a href='#' className='text-gray-300 hover:text-white text-sm transition-colors'>
-                  Contact Us
-                </a>
-              </li>
-              <li>
-                <a href='#' className='text-gray-300 hover:text-white text-sm transition-colors'>
-                  FAQ
-                </a>
-              </li>
-              <li>
-                <a href='#' className='text-gray-300 hover:text-white text-sm transition-colors'>
-                  18004190066
-                </a>
-              </li>
-              <li>
-                <a href='#' className='text-gray-300 hover:text-white text-sm transition-colors'>
-                  cs@bluestone.com
-                </a>
-              </li>
-              <li>
-                <a href='#' className='text-gray-300 hover:text-white text-xs transition-colors'>
-                  (9 am-10 pm, 7 days a week)
-                </a>
-              </li>
-            </ul>
+            <h3 className='text-sm font-semibold mt-8 mb-4 tracking-wide'>{SECTION_LABELS['customer-delight']}</h3>
+            {renderSectionLinks('customer-delight')}
           </div>
 
           {/* Policies Section */}
           <div>
-            <h3 className='text-sm font-semibold mb-4 tracking-wide'>POLICIES</h3>
-            <ul className='space-y-2.5'>
-              <li>
-                <a href='#' className='text-gray-300 hover:text-white text-sm transition-colors'>
-                  30-Day Returns
-                </a>
-              </li>
-              <li>
-                <a href='#' className='text-gray-300 hover:text-white text-sm transition-colors'>
-                  Lifetime Exchange & Buy back
-                </a>
-              </li>
-              <li>
-                <a href='#' className='text-gray-300 hover:text-white text-sm transition-colors'>
-                  Privacy Policy
-                </a>
-              </li>
-              <li>
-                <a href='#' className='text-gray-300 hover:text-white text-sm transition-colors'>
-                  Terms & Conditions
-                </a>
-              </li>
-              <li>
-                <a href='#' className='text-gray-300 hover:text-white text-sm transition-colors'>
-                  Fraud Warning Disclaimer
-                </a>
-              </li>
-            </ul>
+            <h3 className='text-sm font-semibold mb-4 tracking-wide'>{SECTION_LABELS.policies}</h3>
+            {renderSectionLinks('policies')}
 
             {/* <h3 className='text-sm font-semibold mt-8 mb-4 tracking-wide'>SHOP WITH CONFIDENCE</h3>
             <ul className='space-y-2.5'>
@@ -121,39 +135,8 @@ export default function Footer() {
 
           {/* Jewellery Guide Section */}
           <div>
-            <h3 className='text-sm font-semibold mb-4 tracking-wide'>JEWELLERY GUIDE</h3>
-            <ul className='space-y-2.5'>
-              <li>
-                <a href='#' className='text-gray-300 hover:text-white text-sm transition-colors'>
-                  Buying and Price Guide
-                </a>
-              </li>
-              <li>
-                <a href='#' className='text-gray-300 hover:text-white text-sm transition-colors'>
-                  Certification Guide
-                </a>
-              </li>
-              <li>
-                <a href='#' className='text-gray-300 hover:text-white text-sm transition-colors'>
-                  Diamond and Solitaire Guide
-                </a>
-              </li>
-              <li>
-                <a href='#' className='text-gray-300 hover:text-white text-sm transition-colors'>
-                  Gemstone Guide
-                </a>
-              </li>
-              <li>
-                <a href='#' className='text-gray-300 hover:text-white text-sm transition-colors'>
-                  Gifting Guide
-                </a>
-              </li>
-              <li>
-                <a href='#' className='text-gray-300 hover:text-white text-sm transition-colors'>
-                  Jewellery Care Guide
-                </a>
-              </li>
-            </ul>
+            <h3 className='text-sm font-semibold mb-4 tracking-wide'>{SECTION_LABELS['jewellery-guide']}</h3>
+            {renderSectionLinks('jewellery-guide')}
           </div>
 
           {/* Download App Section */}
