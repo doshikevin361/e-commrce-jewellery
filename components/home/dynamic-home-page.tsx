@@ -48,6 +48,7 @@ import Categories, { HeroBanner, ScrollingOffer, Slider } from './hero-banner-sl
 import ProductShowcase from './ProductShowcase';
 import TestimonialCard from '../testimonialCard/TestimonialCard';
 import ScrollVideoPanels, { VideoItem } from '../scrollvideopanel/ScrollVideoPanels';
+import VideoSlider from '../videoSlider/videoSlider';
 
 type HeroSlide = {
   id: string | number;
@@ -558,9 +559,22 @@ export const HomePage = () => {
         <div>
           <ProductShowcase />
         </div>
+                 <div>
+          <VideoSlider
+  videos={[
+    '/uploads/1769508544978-ficc90lkph.mp4',
+    '/uploads/1769508518202-thc5l31ihr.mp4',
+    '/uploads/1769508544978-ficc90lkph.mp4',
+    '/uploads/1769508468719-3277vkwpts4.mp4',
+    '/uploads/1769508544978-ficc90lkph.mp4',
+  ]}
+/>
+
+        </div>
         <div>
           <TestimonialsSection />
         </div>
+
       </div>
       {/* Updates section - Full width */}
       {/* <div className={SECTION_SPACING}>
