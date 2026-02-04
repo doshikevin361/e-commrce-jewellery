@@ -51,6 +51,28 @@ import rehypeRaw from 'rehype-raw';
 import 'swiper/css';
 import 'swiper/css/navigation';
 
+const RECENTLY_VIEWED_KEY = 'recentlyViewed';
+const RECENTLY_VIEWED_LIMIT = 8;
+
+const readRecentlyViewed = () => {
+  if (typeof window === 'undefined') {
+    return [] as ProductCardData[];
+  }
+  try {
+    const stored = localStorage.getItem(RECENTLY_VIEWED_KEY);
+    const parsed = stored ? JSON.parse(stored) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (error) {
+    console.error('Failed to parse recently viewed products:', error);
+    return [];
+  }
+};
+
+const getRecentlyViewedId = (item: any) => {
+  const id = item?._id ?? item?.id;
+  return typeof id === 'string' || typeof id === 'number' ? String(id) : '';
+};
+
 // Product interface
 interface ProductDetail {
   _id: string;
@@ -272,23 +294,27 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
 
         // Save to recently viewed
         if (typeof window !== 'undefined') {
-          const viewed = JSON.parse(localStorage.getItem('recentlyViewed') || '[]');
+          const viewed = readRecentlyViewed();
+          const currentItem: ProductCardData & { name?: string; urlSlug?: string } = {
+            id: productData._id,
+            _id: productData._id,
+            name: productData.name,
+            title: productData.name,
+            category: productData.categoryName || productData.category,
+            price: `₹${productData.displayPrice.toLocaleString()}`,
+            originalPrice: productData.hasDiscount ? `₹${productData.originalPrice.toLocaleString()}` : undefined,
+            rating: productData.rating || 4.5,
+            reviews: productData.reviewCount || 0,
+            image: productData.mainImage || '/placeholder.jpg',
+            urlSlug: productData.urlSlug,
+          };
           const updated = [
-            {
-              id: productData._id,
-              _id: productData._id,
-              title: productData.name,
-              category: productData.categoryName || productData.category,
-              price: `₹${productData.displayPrice.toLocaleString()}`,
-              originalPrice: productData.hasDiscount ? `₹${productData.originalPrice.toLocaleString()}` : undefined,
-              rating: productData.rating || 4.5,
-              reviews: productData.reviewCount || 0,
-              image: productData.mainImage,
-            },
-            ...viewed.filter((p: any) => p.id !== productData._id),
-          ].slice(0, 10);
-          localStorage.setItem('recentlyViewed', JSON.stringify(updated));
-          setRecentlyViewed(updated.slice(1)); // Exclude current product
+            currentItem,
+            ...viewed.filter(item => getRecentlyViewedId(item) !== productData._id),
+          ].slice(0, RECENTLY_VIEWED_LIMIT);
+          localStorage.setItem(RECENTLY_VIEWED_KEY, JSON.stringify(updated));
+          window.dispatchEvent(new Event('recentlyViewedChange'));
+          setRecentlyViewed(updated.filter(item => getRecentlyViewedId(item) !== productData._id));
         }
       } catch (err) {
         console.error('Error fetching product:', err);
@@ -306,8 +332,10 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
   useEffect(() => {
     // Load recently viewed
     if (typeof window !== 'undefined') {
-      const viewed = JSON.parse(localStorage.getItem('recentlyViewed') || '[]');
-      setRecentlyViewed(viewed.filter((p: any) => p.id !== product?._id).slice(0, 8));
+      const viewed = readRecentlyViewed();
+      setRecentlyViewed(
+        viewed.filter(item => getRecentlyViewedId(item) !== product?._id).slice(0, RECENTLY_VIEWED_LIMIT),
+      );
     }
   }, [product?._id]);
 

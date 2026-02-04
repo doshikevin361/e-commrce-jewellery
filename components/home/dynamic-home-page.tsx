@@ -548,9 +548,6 @@ export const HomePage = () => {
           <Slider />
         </div>
         <div>
-          <ProductShowcase />
-        </div>
-        <div>
           <JewelryProductsDemo products={sectionsData.newProducts} isLoading={isLoading} />
         </div>
         {scrollVideoPanels.length > 0 && (
@@ -558,6 +555,9 @@ export const HomePage = () => {
             <ScrollVideoPanels videoData={scrollVideoPanels} />
           </div>
         )}
+        <div>
+          <ProductShowcase />
+        </div>
         <div>
           <TestimonialsSection />
         </div>

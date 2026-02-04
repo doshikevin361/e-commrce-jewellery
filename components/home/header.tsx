@@ -5,7 +5,7 @@ import { AuthModal } from '@/components/auth/auth-modal';
 import toast from 'react-hot-toast';
 import { useCart } from '@/contexts/CartContext';
 import { useWishlist } from '@/contexts/WishlistContext';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { SearchDialog } from '@/components/home/SearchBar/SearchDialog';
 
 type CategoryOccasion = {
@@ -36,6 +36,37 @@ type MegaMenuProduct = {
   shortDescription?: string;
 };
 
+type RecentlyViewedItem = {
+  id?: string | number;
+  _id?: string;
+  name?: string;
+  title?: string;
+  image?: string;
+  urlSlug?: string;
+};
+
+const RECENTLY_VIEWED_KEY = 'recentlyViewed';
+const RECENTLY_VIEWED_LIMIT = 8;
+
+const readRecentlyViewed = () => {
+  if (typeof window === 'undefined') {
+    return [] as RecentlyViewedItem[];
+  }
+  try {
+    const stored = localStorage.getItem(RECENTLY_VIEWED_KEY);
+    const parsed = stored ? JSON.parse(stored) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (error) {
+    console.error('Failed to parse recently viewed products:', error);
+    return [];
+  }
+};
+
+const getRecentlyViewedId = (item: RecentlyViewedItem) => {
+  const id = item?._id ?? item?.id;
+  return typeof id === 'string' || typeof id === 'number' ? String(id) : '';
+};
+
 const HomeHeader = () => {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [isSticky, setIsSticky] = useState(false);
@@ -49,10 +80,19 @@ const HomeHeader = () => {
   const [searchOpen, setSearchOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
+  const pathname = usePathname();
   const [categories, setCategories] = useState<CategoryItem[]>([]);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [megaMenuProduct, setMegaMenuProduct] = useState<MegaMenuProduct | null>(null);
   const [megaMenuLoading, setMegaMenuLoading] = useState(false);
+  const [recentlyViewed, setRecentlyViewed] = useState<RecentlyViewedItem[]>([]);
+  const [recentlyViewedOpen, setRecentlyViewedOpen] = useState(false);
+  const recentlyViewedRef = useRef<HTMLDivElement>(null);
+
+  const loadRecentlyViewed = () => {
+    const items = readRecentlyViewed();
+    setRecentlyViewed(items.slice(0, RECENTLY_VIEWED_LIMIT));
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -106,6 +146,38 @@ const HomeHeader = () => {
     window.addEventListener('openLoginModal', handleOpenLoginModal);
     return () => window.removeEventListener('openLoginModal', handleOpenLoginModal);
   }, []);
+
+  useEffect(() => {
+    loadRecentlyViewed();
+  }, [pathname]);
+
+  useEffect(() => {
+    const handleRecentlyViewedChange = () => loadRecentlyViewed();
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key === RECENTLY_VIEWED_KEY) {
+        loadRecentlyViewed();
+      }
+    };
+    window.addEventListener('recentlyViewedChange', handleRecentlyViewedChange);
+    window.addEventListener('storage', handleStorage);
+    return () => {
+      window.removeEventListener('recentlyViewedChange', handleRecentlyViewedChange);
+      window.removeEventListener('storage', handleStorage);
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (!recentlyViewedOpen) {
+        return;
+      }
+      if (recentlyViewedRef.current && !recentlyViewedRef.current.contains(event.target as Node)) {
+        setRecentlyViewedOpen(false);
+      }
+    };
+    window.addEventListener('mousedown', handleClickOutside);
+    return () => window.removeEventListener('mousedown', handleClickOutside);
+  }, [recentlyViewedOpen]);
 
   const handleLoginClick = () => {
     setAuthMode('login');
@@ -295,10 +367,53 @@ const HomeHeader = () => {
 
           {/* Right Icons */}
           <div className='flex items-center gap-4'>
-            <button className='flex items-center gap-2 text-gray-600 hover:text-[#001e38]'>
-              <Clock className='w-6 h-6' />
-              <span className='text-xs max-w-[60px] text-left'>Recently Viewed</span>
-            </button>
+            <div className='relative' ref={recentlyViewedRef}>
+              <button
+                type='button'
+                onClick={() => setRecentlyViewedOpen(prev => !prev)}
+                className='flex cursor-pointer items-center gap-2 text-gray-600 hover:text-[#001e38]'
+                aria-haspopup='menu'
+                aria-expanded={recentlyViewedOpen}>
+                <Clock className='w-6 h-6' />
+                <span className='text-xs max-w-[60px] text-left'>Recently Viewed</span>
+              </button>
+              {recentlyViewedOpen && (
+                <div className='absolute right-0 mt-3 w-80 rounded-2xl border border-[#E6D3C2]/60 bg-white shadow-xl z-50'>
+                  <div className='px-4 py-3 border-b border-[#E6D3C2]/40'>
+                    <p className='text-xs uppercase tracking-[0.1em] text-black font-semibold'>Recently Viewed</p>
+                  </div>
+                  {recentlyViewed.length === 0 ? (
+                    <div className='px-4 py-6 text-sm text-[#4F3A2E]/70'>No products viewed yet.</div>
+                  ) : (
+                    <div className='max-h-80 overflow-y-auto'>
+                      {recentlyViewed.map(item => {
+                        const itemId = getRecentlyViewedId(item);
+                        if (!itemId) {
+                          return null;
+                        }
+                        const itemName = item.name || item.title || 'Untitled product';
+                        const itemImage = item.image || '/placeholder.jpg';
+                        const itemSlug = item.urlSlug || itemId;
+                        return (
+                          <Link
+                            key={itemId}
+                            href={`/products/${itemSlug}`}
+                            onClick={() => setRecentlyViewedOpen(false)}
+                            className='flex items-center gap-3 px-4 py-3 hover:bg-[#F5EEE5] transition-colors'>
+                            <div className='h-12 w-12 rounded-lg overflow-hidden bg-[#F5EEE5] flex items-center justify-center'>
+                              <img src={itemImage} alt={itemName} className='h-full w-full object-cover' />
+                            </div>
+                            <div className='flex-1'>
+                              <p className='text-sm font-medium text-[#1F3B29] line-clamp-2'>{itemName}</p>
+                            </div>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
 
             <span className='h-6 w-px bg-gray-500'></span>
 

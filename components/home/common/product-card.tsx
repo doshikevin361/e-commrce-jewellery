@@ -197,7 +197,7 @@ export const ProductCard = memo(
           {/* Title (fixed height) */}
           <h3
             onClick={handleProductClick}
-            className='line-clamp-2 min-h-[40px] cursor-pointer text-[15px] font-semibold leading-snug text-neutral-900'>
+            className='line-clamp-2 min-h-[40px] cursor-pointer text-[15px] font-semibold leading-snug text-web'>
             {product.title}
           </h3>
 
@@ -208,7 +208,7 @@ export const ProductCard = memo(
                 <Star
                   key={i}
                   size={14}
-                  className={i < Math.floor(product.rating) ? 'fill-neutral-900 text-neutral-900' : 'fill-neutral-300 text-neutral-300'}
+                  className={i < Math.floor(product.rating) ? 'fill-web text-web' : 'fill-neutral-300 text-neutral-300'}
                 />
               ))}
             </div>
@@ -219,7 +219,7 @@ export const ProductCard = memo(
         {/* Price + Action (always bottom aligned) */}
         <div className='mt-auto flex items-center justify-between pt-2'>
           <div className='flex items-baseline gap-2'>
-            <span className='text-xl font-semibold text-neutral-900'>{product.price}</span>
+            <span className='text-xl font-semibold text-web'>{product.price}</span>
             {/* Optional original price */}
             {/* <span className='text-sm text-neutral-400 line-through'>{product.originalPrice}</span> */}
           </div>
@@ -232,7 +232,7 @@ export const ProductCard = memo(
               disabled={isInCart}
               className={cn(
                 'flex h-11 w-11 items-center justify-center rounded-full transition-all',
-                isInCart ? 'bg-neutral-200 text-neutral-500' : 'bg-neutral-900 text-white hover:scale-105',
+                isInCart ? 'bg-neutral-200 text-neutral-500' : 'bg-web text-white hover:scale-105',
               )}>
               {cartLoading ? (
                 <div className='h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent' />
