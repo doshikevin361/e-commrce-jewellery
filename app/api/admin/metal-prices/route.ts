@@ -235,14 +235,27 @@ export async function GET(request: NextRequest) {
       }
     });
 
+    // Get stored rates from metal_rates collection (preferred source)
+    const storedRates = await db.collection('metal_rates').findOne({});
+    
     // Convert to array format and filter out metals with 0 product count
     const metalRatesArray = Object.entries(metalRates)
       .filter(([_, data]) => data.productCount > 0) // Only include metals with products
-      .map(([metalType, data]) => ({
-        metalType,
-        rate: data.rate || 0, // Default to 0 if rate is not set
-        productCount: data.productCount,
-      }))
+      .map(([metalType, data]) => {
+        // Use stored rate if available, otherwise use rate from products
+        let rate = data.rate || 0;
+        if (storedRates) {
+          const storedRate = storedRates[metalType.toLowerCase()];
+          if (storedRate && storedRate > 0) {
+            rate = storedRate;
+          }
+        }
+        return {
+          metalType,
+          rate: rate,
+          productCount: data.productCount,
+        };
+      })
       .sort((a, b) => {
         // Sort: Gold first, then Silver, then Platinum, then others alphabetically
         const order: Record<string, number> = { Gold: 1, Silver: 2, Platinum: 3 };
@@ -407,6 +420,35 @@ export async function PUT(request: NextRequest) {
     });
 
     await Promise.all(updatePromises);
+
+    // Update metal_rates collection with current rates
+    try {
+      const currentRates = await db.collection('metal_rates').findOne({});
+      const now = new Date();
+      
+      if (currentRates) {
+        await db.collection('metal_rates').updateOne(
+          {},
+          {
+            $set: {
+              [metalType.toLowerCase()]: newRate,
+              updatedAt: now,
+            },
+          }
+        );
+      } else {
+        await db.collection('metal_rates').insertOne({
+          gold: metalType === 'Gold' ? newRate : 0,
+          silver: metalType === 'Silver' ? newRate : 0,
+          platinum: metalType === 'Platinum' ? newRate : 0,
+          createdAt: now,
+          updatedAt: now,
+        });
+      }
+    } catch (error) {
+      console.error('[v0] Failed to update metal_rates collection:', error);
+      // Don't fail the request if this fails
+    }
 
     // Revalidate Next.js cache for customer-facing pages
     try {

@@ -44,7 +44,7 @@ import {
   GallerySkeleton,
   WhyChooseUsSkeleton,
 } from './common/skeleton-loaders';
-import Categories, { HeroBanner, ScrollingOffer, Slider } from './hero-banner-slider';
+import Categories, { HeroBanner, Slider } from './hero-banner-slider';
 import ProductShowcase from './ProductShowcase';
 import TestimonialCard from '../testimonialCard/TestimonialCard';
 import ScrollVideoPanels, { VideoItem } from '../scrollvideopanel/ScrollVideoPanels';
@@ -541,9 +541,6 @@ export const HomePage = () => {
         </div>
         <div className={'mx-auto w-full'}>
           <Categories />
-        </div>
-        <div>
-          <ScrollingOffer />
         </div>
         <div>
           <Slider />

@@ -33,6 +33,7 @@ import {
   Sparkles,
   Coins,
   Percent,
+  Mail,
 } from 'lucide-react';
 
 export function Sidebar() {
@@ -154,6 +155,7 @@ export function Sidebar() {
       allowedRoles: ['superadmin', 'admin'],
     },
     { label: 'Customers', href: '/admin/customers', badge: null, icon: Users, allowedRoles: ['superadmin', 'admin'] },
+    { label: 'Newsletter Subscribers', href: '/admin/newsletter-subscribers', badge: null, icon: Mail, allowedRoles: ['superadmin', 'admin'] },
     { label: 'Custom Jewellery', href: '/admin/custom-jewellery', badge: null, icon: Sparkles, allowedRoles: ['superadmin', 'admin'] },
     {
       label: 'Vendors',

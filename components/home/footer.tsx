@@ -47,6 +47,9 @@ export default function Footer() {
     occasionSearches: [],
   });
   const [loadingSearches, setLoadingSearches] = useState(true);
+  const [email, setEmail] = useState('');
+  const [subscribing, setSubscribing] = useState(false);
+  const [subscribeMessage, setSubscribeMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const pathname = usePathname();
 
   useEffect(() => {
@@ -152,11 +155,51 @@ export default function Footer() {
     );
   };
 
+  const handleSubscribe = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!email.trim()) {
+      setSubscribeMessage({ type: 'error', text: 'Please enter an email address' });
+      return;
+    }
+
+    setSubscribing(true);
+    setSubscribeMessage(null);
+
+    try {
+      const response = await fetch('/api/public/newsletter/subscribe', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: email.trim() }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setSubscribeMessage({ type: 'success', text: data.message || 'Successfully subscribed to newsletter!' });
+        setEmail('');
+        // Clear message after 5 seconds
+        setTimeout(() => {
+          setSubscribeMessage(null);
+        }, 5000);
+      } else {
+        setSubscribeMessage({ type: 'error', text: data.error || 'Failed to subscribe. Please try again.' });
+      }
+    } catch (error) {
+      console.error('[v0] Newsletter subscription error:', error);
+      setSubscribeMessage({ type: 'error', text: 'An error occurred. Please try again later.' });
+    } finally {
+      setSubscribing(false);
+    }
+  };
+
   return (
     <footer className='bg-gradient-to-br from-slate-700 via-slate-800 to-slate-900 text-slate-300 text-white'>
       {/* Main Footer Content */}
       <div className='max-w-[1440px] mx-auto px-6 py-12'>
-        <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12'>
+        <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-12'>
           {/* About Us + Customer Delight */}
           <div>
             <h3 className='text-sm font-semibold mb-4 tracking-wide'>{SECTION_LABELS.about}</h3>
@@ -206,49 +249,35 @@ export default function Footer() {
             <h3 className='text-sm font-semibold mb-4 tracking-wide'>{SECTION_LABELS['jewellery-guide']}</h3>
             {renderSectionLinks('jewellery-guide')}
           </div>
-
-          {/* Download App Section */}
-          <div>
-            <h3 className='text-lg font-semibold mb-3'>Download App</h3>
-            <p className='text-gray-300 text-sm mb-4 leading-relaxed'>
-              Shining new app,
-              <br />
-              made just
-              <br />
-              for you! It's Free,
-              <br />
-              Easy & Smart.
-            </p>
-            <div className='space-y-3'>
-              <a href='#' className='block'>
-                <img
-                  src='https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg'
-                  alt='Get it on Google Play'
-                  className='h-10'
-                />
-              </a>
-              <a href='#' className='block'>
-                <img
-                  src='https://upload.wikimedia.org/wikipedia/commons/3/3c/Download_on_the_App_Store_Badge.svg'
-                  alt='Download on App Store'
-                  className='h-10'
-                />
-              </a>
-            </div>
-          </div>
         </div>
 
         {/* Newsletter Section */}
         <div className='mt-12 pt-8 border-t border-gray-600'>
           <div className='flex flex-col md:flex-row md:items-center md:justify-between gap-6'>
+            <form onSubmit={handleSubscribe} className='flex flex-col gap-2'>
             <div className='flex items-center gap-3'>
               <input
                 type='email'
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                 placeholder='Enter email for our newsletter'
                 className='bg-transparent border border-gray-500 px-4 py-2.5 text-sm text-gray-300 placeholder-gray-400 focus:outline-none focus:border-gray-400 w-64'
-              />
-              <button className='bg-[#9babc4] hover:bg-gray-500 px-6 py-2.5 text-sm font-medium transition-colors'>SUBSCRIBE</button>
+                  disabled={subscribing}
+                />
+                <button 
+                  type='submit'
+                  disabled={subscribing}
+                  className='bg-[#9babc4] hover:bg-gray-500 px-6 py-2.5 text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
+                >
+                  {subscribing ? 'SUBSCRIBING...' : 'SUBSCRIBE'}
+                </button>
             </div>
+              {subscribeMessage && (
+                <p className={`text-xs ${subscribeMessage.type === 'success' ? 'text-green-400' : 'text-red-400'}`}>
+                  {subscribeMessage.text}
+                </p>
+              )}
+            </form>
 
             <div className='flex items-center gap-6'>
               <span className='text-sm text-gray-400'>Follow us on</span>
@@ -295,64 +324,64 @@ export default function Footer() {
           {/* Popular Searches */}
           {footerSearches.popularSearches.length > 0 && (
             <>
-              <div className='mb-8'>
-                <h4 className='text-[#2c3e6f] font-semibold text-base mb-3'>Popular Searches</h4>
+          <div className='mb-8'>
+            <h4 className='text-[#2c3e6f] font-semibold text-base mb-3'>Popular Searches</h4>
                 {renderSearchLinks(footerSearches.popularSearches)}
-              </div>
-              <hr className='border-gray-300 my-6' />
+          </div>
+          <hr className='border-gray-300 my-6' />
             </>
           )}
 
           {/* Top Searches in Gold Jewellery */}
           {footerSearches.goldSearches.length > 0 && (
             <>
-              <div className='mb-8'>
-                <h4 className='text-[#2c3e6f] font-semibold text-base mb-3'>Top Searches in Gold Jewellery</h4>
+          <div className='mb-8'>
+            <h4 className='text-[#2c3e6f] font-semibold text-base mb-3'>Top Searches in Gold Jewellery</h4>
                 {renderSearchLinks(footerSearches.goldSearches)}
-              </div>
-              <hr className='border-gray-300 my-6' />
+          </div>
+          <hr className='border-gray-300 my-6' />
             </>
           )}
 
           {/* Top Searches in Diamond Jewellery */}
           {footerSearches.diamondSearches.length > 0 && (
             <>
-              <div className='mb-8'>
-                <h4 className='text-[#2c3e6f] font-semibold text-base mb-3'>Top Searches in Diamond Jewellery</h4>
+          <div className='mb-8'>
+            <h4 className='text-[#2c3e6f] font-semibold text-base mb-3'>Top Searches in Diamond Jewellery</h4>
                 {renderSearchLinks(footerSearches.diamondSearches)}
-              </div>
-              <hr className='border-gray-300 my-6' />
+          </div>
+          <hr className='border-gray-300 my-6' />
             </>
           )}
 
           {/* Men's Jewellery Collection */}
           {footerSearches.mensSearches.length > 0 && (
             <>
-              <div className='mb-8'>
-                <h4 className='text-[#2c3e6f] font-semibold text-base mb-3'>Men's Jewellery Collection</h4>
+          <div className='mb-8'>
+            <h4 className='text-[#2c3e6f] font-semibold text-base mb-3'>Men's Jewellery Collection</h4>
                 {renderSearchLinks(footerSearches.mensSearches)}
-              </div>
-              <hr className='border-gray-300 my-6' />
+          </div>
+          <hr className='border-gray-300 my-6' />
             </>
           )}
 
           {/* Women's Jewellery Collection */}
           {footerSearches.womensSearches.length > 0 && (
             <>
-              <div className='mb-8'>
-                <h4 className='text-[#2c3e6f] font-semibold text-base mb-3'>Women's Jewellery Collection</h4>
+          <div className='mb-8'>
+            <h4 className='text-[#2c3e6f] font-semibold text-base mb-3'>Women's Jewellery Collection</h4>
                 {renderSearchLinks(footerSearches.womensSearches)}
-              </div>
-              <hr className='border-gray-300 my-6' />
+          </div>
+          <hr className='border-gray-300 my-6' />
             </>
           )}
 
           {/* Jewellery by Occasion */}
           {footerSearches.occasionSearches.length > 0 && (
-            <div>
+          <div>
               <h4 className='text-[#2c3e6f] font-semibold text-base mb-3'>Jewellery by Occasion</h4>
               {renderSearchLinks(footerSearches.occasionSearches)}
-            </div>
+          </div>
           )}
         </div>
       </div>
