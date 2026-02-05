@@ -192,7 +192,7 @@ interface ProductDetail {
   hallmarked?: boolean;
   bis_hallmark?: boolean;
   certificationNumber?: string;
-  gender?: string;
+  gender?: string | string[];
   // Other product details
   occasion?: string;
   dimension?: string;
@@ -913,10 +913,26 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
                         if (typeof value === 'string') return value.trim().length > 0;
                         if (typeof value === 'number') return value > 0;
                         if (typeof value === 'boolean') return value === true;
+                        if (Array.isArray(value)) return value.filter(Boolean).length > 0;
                         return true;
                       };
 
-                      const hasValidFields =
+                      const normalizedGender = Array.isArray(product.gender)
+                        ? product.gender.filter(Boolean).join(', ')
+                        : product.gender;
+
+                      const productDetailRows = [
+                        { label: 'Size', value: product.size },
+                        { label: 'Gender', value: normalizedGender },
+                        { label: 'Design Type', value: product.designType },
+                        { label: 'Occasion', value: product.occasion },
+                        { label: 'Dimensions', value: product.dimension },
+                        { label: 'Thickness', value: product.thickness },
+                        { label: 'Brand', value: product.brand },
+                        { label: 'Collection', value: product.collection },
+                      ].filter(item => isValid(item.value));
+
+                      const hasMetalFields =
                         product.hasGold ||
                         product.hasSilver ||
                         isValid(product.metalType) ||
@@ -930,9 +946,9 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
                         isValid(product.silverRatePerGram) ||
                         product.hallmarked;
 
-                      if (!hasValidFields) return null;
+                      if (productDetailRows.length === 0 && !hasMetalFields) return null;
 
-                      return (
+                      return hasMetalFields ? (
                         <PremiumAccordion title='Metal Details' icon={Package}>
                           <div className='grid grid-cols-1 sm:grid-cols-2 gap-6 text-sm'>
                             {(isValid(product.metalType) || product.hasGold || product.hasSilver) && (
@@ -975,7 +991,7 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
                             )}
                           </div>
                         </PremiumAccordion>
-                      );
+                      ) : null;
                     })()}
 
                     <PremiumAccordion title='Price Breakup' icon={Coins}>
@@ -1377,18 +1393,51 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
                       </PremiumAccordion>
                     )}
 
-                    {product.specifications && product.specifications.length > 0 && (
-                      <PremiumAccordion title='Specifications' icon={FileText} defaultOpen={false}>
-                        <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm'>
-                          {product.specifications.map((spec, index) => (
-                            <div key={`${spec.key}-${index}`} className='rounded-xl border border-web/20 bg-white/70 p-4 shadow-sm'>
-                              <span className='block text-[11px] uppercase tracking-wider text-[#4F3A2E]/60 font-semibold'>{spec.key}</span>
-                              <span className='mt-2 block text-sm font-semibold text-[#1F3B29] leading-snug break-words'>{spec.value}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </PremiumAccordion>
-                    )}
+                    {(() => {
+                      const baseSpecs = [
+                        { key: 'Size', value: product.size },
+                        { key: 'Gender', value: Array.isArray(product.gender) ? product.gender.filter(Boolean).join(', ') : product.gender },
+                        { key: 'Design Type', value: product.designType },
+                        { key: 'Occasion', value: product.occasion },
+                        { key: 'Dimensions', value: product.dimension },
+                        { key: 'Thickness', value: product.thickness },
+                        { key: 'Brand', value: product.brand },
+                        { key: 'Collection', value: product.collection },
+                      ];
+
+                      const isSpecValueValid = (value: unknown): boolean => {
+                        if (value === null || value === undefined) return false;
+                        if (typeof value === 'string') return value.trim().length > 0;
+                        if (typeof value === 'number') return value > 0;
+                        if (typeof value === 'boolean') return value === true;
+                        if (Array.isArray(value)) return value.filter(Boolean).length > 0;
+                        return true;
+                      };
+
+                      const mergedSpecs = [
+                        ...baseSpecs,
+                        ...(product.specifications || []),
+                      ].filter(spec => isSpecValueValid(spec?.value));
+
+                      if (mergedSpecs.length === 0) return null;
+
+                      return (
+                        <PremiumAccordion title='Specifications' icon={FileText} defaultOpen={false}>
+                          <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm'>
+                            {mergedSpecs.map((spec, index) => (
+                              <div key={`${spec.key}-${index}`} className='rounded-xl border border-web/20 bg-white/70 p-4 shadow-sm'>
+                                <span className='block text-[11px] uppercase tracking-wider text-[#4F3A2E]/60 font-semibold'>
+                                  {spec.key}
+                                </span>
+                                <span className='mt-2 block text-sm font-semibold text-[#1F3B29] leading-snug break-words'>
+                                  {spec.value}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </PremiumAccordion>
+                      );
+                    })()}
 
                     {product.certificationNumber && (
                       <PremiumAccordion title='Certification' icon={Award} defaultOpen={false}>

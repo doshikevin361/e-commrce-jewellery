@@ -312,7 +312,7 @@ const HomeHeader = () => {
             <div className='w-[70px] h-[70px] bg-white rounded-full flex items-center justify-center'>
               <img src='/logo.png' className='w-full h-full object-contain' />
             </div>
-            <span className='text-2xl font-bold text-[#001e38] tracking-wide'>SLRS Global</span>
+            <span className='text-2xl font-bold text-[#001e38] tracking-wide'>Jewel Manas</span>
           </Link>
 
           {/* Search Bar */}
@@ -484,7 +484,7 @@ const HomeHeader = () => {
                   <img src='/light_logo.png' className='w-full h-full object-contain' />
                 </div>
               </Link>
-              <span className='text-lg font-bold text-white tracking-wide'>SLRS Global</span>
+              <span className='text-lg font-bold text-white tracking-wide'>Jewel Manas</span>
             </div>
 
             {/* Menu Items */}
