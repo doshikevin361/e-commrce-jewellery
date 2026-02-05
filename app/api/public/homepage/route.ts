@@ -146,11 +146,11 @@ export async function GET(request: NextRequest) {
       .sort({ featured: -1, createdAt: -1 })
       .limit(20)
       .project({
-        _id: 1,
-        name: 1,
-        slug: 1,
-        image: 1,
-        featured: 1,
+            _id: 1,
+            name: 1,
+            slug: 1,
+            image: 1,
+            featured: 1,
       })
       .toArray();
 

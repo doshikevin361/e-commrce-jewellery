@@ -31,6 +31,8 @@ import {
   X,
   ImageIcon,
   Sparkles,
+  Coins,
+  Percent,
 } from 'lucide-react';
 
 export function Sidebar() {
@@ -184,6 +186,20 @@ export function Sidebar() {
       badge: null,
       icon: Settings,
       allowedRoles: ['superadmin', 'admin'],
+    },
+    {
+      label: 'Pricing & Commission',
+      href: '/admin/pricing-settings',
+      badge: null,
+      icon: Coins,
+      allowedRoles: ['superadmin', 'admin'],
+    },
+    {
+      label: 'Commission Settings',
+      href: '/admin/vendor-commission',
+      badge: null,
+      icon: Percent,
+      allowedRoles: ['vendor'],
     },
   ];
 

@@ -1008,80 +1008,84 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
 
   const fetchAdminDefaultCommission = async (currentUserRole?: string, productType?: string) => {
     try {
-      // Fetch admin's default vendor commission rate from site settings
-      const response = await fetch('/api/admin/settings');
-      if (response.ok) {
-        const data = await response.json();
-        console.log('[DEBUG] Fetched settings:', data);
-        console.log('[DEBUG] User role:', currentUserRole);
-        console.log('[DEBUG] Product type:', productType);
-        console.log('[DEBUG] productTypeCommissions:', data.productTypeCommissions);
-        
-        // Store settings data for later use when product type changes
-        if (data.productTypeCommissions) {
-          setFormData(prev => ({
-            ...prev,
-            settingsData: data, // Store the entire settings
-          }));
-        }
-        
-        // Update the form with product-type-specific commission rate
-        if (data.productTypeCommissions !== undefined) {
-          // Get user role if not provided
-          let roleToUse = currentUserRole;
-          if (!roleToUse) {
-            const userStr = localStorage.getItem('adminUser');
-            if (userStr) {
-              try {
-                const user = JSON.parse(userStr);
-                roleToUse = user.role || 'admin';
-              } catch (error) {
-                console.error('Failed to parse user data:', error);
-                roleToUse = 'admin';
-              }
-            } else {
-              roleToUse = 'admin';
-            }
+      // Get user role if not provided
+      let roleToUse = currentUserRole;
+      if (!roleToUse) {
+        const userStr = localStorage.getItem('adminUser');
+        if (userStr) {
+          try {
+            const user = JSON.parse(userStr);
+            roleToUse = user.role || 'admin';
+          } catch (error) {
+            console.error('Failed to parse user data:', error);
+            roleToUse = 'admin';
           }
-
-          console.log('[DEBUG] Final role to use:', roleToUse);
-          
-          // Get commission rate based on product type
-          let commissionRate = 5; // Fallback default
-          if (productType && data.productTypeCommissions && data.productTypeCommissions[productType as keyof typeof data.productTypeCommissions]) {
-            commissionRate = data.productTypeCommissions[productType as keyof typeof data.productTypeCommissions];
-            console.log('[DEBUG] Using product-type-specific commission for', productType, ':', commissionRate);
-          } else if (productType) {
-            console.log('[DEBUG] Product type provided but no specific commission, using fallback rate:', commissionRate);
-          } else {
-            console.log('[DEBUG] No product type provided, settings loaded for future use');
-            return; // Don't apply commission if no product type specified
-          }
-
-          const updateData = {
-            vendorCommissionRate: commissionRate,
-            platformCommissionRate: roleToUse === 'vendor' ? commissionRate : 0,
-          };
-          
-          console.log('[DEBUG] About to update with:', updateData);
-
-          setFormData(prev => {
-            const newData = {
-              ...prev,
-              ...updateData,
-            };
-            console.log('[DEBUG] New formData will have platformCommissionRate:', newData.platformCommissionRate);
-            return newData;
-          });
         } else {
-          console.log('[DEBUG] productTypeCommissions is undefined in response');
+          roleToUse = 'admin';
+        }
+      }
+
+      let commissionRate = 5; // Fallback default
+      let commissions: any = null;
+
+      // If vendor, fetch vendor's commission settings
+      if (roleToUse === 'vendor') {
+        const vendorResponse = await fetch('/api/vendor/commission-settings');
+        if (vendorResponse.ok) {
+          const vendorData = await vendorResponse.json();
+          commissions = vendorData.commissions;
+          console.log('[DEBUG] Fetched vendor commission settings:', commissions);
         }
       } else {
-        console.log('[DEBUG] Settings fetch failed with status:', response.status);
+        // If admin, fetch admin's default commission settings
+        const response = await fetch('/api/admin/settings');
+        if (response.ok) {
+          const data = await response.json();
+          commissions = data.productTypeCommissions;
+          console.log('[DEBUG] Fetched admin commission settings:', commissions);
+        }
+      }
+
+      // Store settings data for later use when product type changes
+      if (commissions) {
+        setFormData(prev => ({
+          ...prev,
+          settingsData: { productTypeCommissions: commissions },
+        }));
+      }
+      
+      // Update the form with product-type-specific commission rate
+      if (commissions && productType) {
+        // Get commission rate based on product type
+        if (commissions[productType as keyof typeof commissions] !== undefined) {
+          commissionRate = commissions[productType as keyof typeof commissions];
+          console.log('[DEBUG] Using product-type-specific commission for', productType, ':', commissionRate);
+        } else {
+          console.log('[DEBUG] Product type provided but no specific commission, using fallback rate:', commissionRate);
+        }
+
+        const updateData = {
+          vendorCommissionRate: commissionRate,
+          platformCommissionRate: roleToUse === 'vendor' ? commissionRate : 0,
+        };
+        
+        console.log('[DEBUG] About to update with:', updateData);
+
+        setFormData(prev => {
+          const newData = {
+            ...prev,
+            ...updateData,
+          };
+          console.log('[DEBUG] New formData will have platformCommissionRate:', newData.platformCommissionRate);
+          return newData;
+        });
+      } else if (!productType) {
+        console.log('[DEBUG] No product type provided, settings loaded for future use');
+        return; // Don't apply commission if no product type specified
       }
     } catch (error) {
       // Silently fail - settings might not be available
-      console.log('Could not fetch default vendor commission from settings:', error);
+      console.log('Could not fetch commission settings:', error);
     }
   };
 

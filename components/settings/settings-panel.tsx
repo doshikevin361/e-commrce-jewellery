@@ -362,145 +362,6 @@ export function SettingsPanel() {
                 </FieldRow>
                 </div>
 
-              {/* Product Type Specific Commission Rates */}
-              <div className="space-y-4 pt-6 border-t border-slate-200 dark:border-slate-700">
-                <div>
-                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
-                    Product Type Commission Rates (%)
-                  </h3>
-                  <p className="text-sm text-slate-600 dark:text-slate-400">
-                    Set specific commission rates for each product type. These will be automatically applied when creating products.
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FieldRow
-                    label="Gold Commission (%)"
-                    description="Commission rate for Gold products"
-                  >
-                    <Input
-                      type="number"
-                      min="0"
-                      max="100"
-                      step="0.01"
-                      value={formData.productTypeCommissions?.Gold ?? 5}
-                      onChange={(event) =>
-                        updateField("productTypeCommissions", {
-                          ...formData.productTypeCommissions,
-                          Gold: parseFloat(event.target.value) || 0,
-                        })
-                      }
-                      placeholder="5.0"
-                      className="h-12"
-                    />
-                  </FieldRow>
-
-                  <FieldRow
-                    label="Silver Commission (%)"
-                    description="Commission rate for Silver products"
-                  >
-                    <Input
-                      type="number"
-                      min="0"
-                      max="100"
-                      step="0.01"
-                      value={formData.productTypeCommissions?.Silver ?? 4}
-                      onChange={(event) =>
-                        updateField("productTypeCommissions", {
-                          ...formData.productTypeCommissions,
-                          Silver: parseFloat(event.target.value) || 0,
-                        })
-                      }
-                      placeholder="4.0"
-                      className="h-12"
-                    />
-                  </FieldRow>
-
-                  <FieldRow
-                    label="Platinum Commission (%)"
-                    description="Commission rate for Platinum products"
-                  >
-                    <Input
-                      type="number"
-                      min="0"
-                      max="100"
-                      step="0.01"
-                      value={formData.productTypeCommissions?.Platinum ?? 6}
-                      onChange={(event) =>
-                        updateField("productTypeCommissions", {
-                          ...formData.productTypeCommissions,
-                          Platinum: parseFloat(event.target.value) || 0,
-                        })
-                      }
-                      placeholder="6.0"
-                      className="h-12"
-                    />
-                  </FieldRow>
-
-                  <FieldRow
-                    label="Gemstone Commission (%)"
-                    description="Commission rate for Gemstone products"
-                  >
-                    <Input
-                      type="number"
-                      min="0"
-                      max="100"
-                      step="0.01"
-                      value={formData.productTypeCommissions?.Gemstone ?? 8}
-                      onChange={(event) =>
-                        updateField("productTypeCommissions", {
-                          ...formData.productTypeCommissions,
-                          Gemstone: parseFloat(event.target.value) || 0,
-                        })
-                      }
-                      placeholder="8.0"
-                      className="h-12"
-                    />
-                  </FieldRow>
-
-                  <FieldRow
-                    label="Diamonds Commission (%)"
-                    description="Commission rate for Diamonds products"
-                  >
-                    <Input
-                      type="number"
-                      min="0"
-                      max="100"
-                      step="0.01"
-                      value={formData.productTypeCommissions?.Diamonds ?? 10}
-                      onChange={(event) =>
-                        updateField("productTypeCommissions", {
-                          ...formData.productTypeCommissions,
-                          Diamonds: parseFloat(event.target.value) || 0,
-                        })
-                      }
-                      placeholder="10.0"
-                      className="h-12"
-                    />
-                  </FieldRow>
-
-                  <FieldRow
-                    label="Imitation Commission (%)"
-                    description="Commission rate for Imitation products"
-                  >
-                    <Input
-                      type="number"
-                      min="0"
-                      max="100"
-                      step="0.01"
-                      value={formData.productTypeCommissions?.Imitation ?? 3}
-                      onChange={(event) =>
-                        updateField("productTypeCommissions", {
-                          ...formData.productTypeCommissions,
-                          Imitation: parseFloat(event.target.value) || 0,
-                        })
-                      }
-                      placeholder="3.0"
-                      className="h-12"
-                    />
-                  </FieldRow>
-                </div>
-              </div>
             </div>
 
             <div className="flex flex-col gap-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/20 px-6 py-5 md:flex-row md:items-center md:justify-between">
@@ -528,9 +389,9 @@ export function SettingsPanel() {
                     "Save changes"
                   )}
               </Button>
+              </div>
             </div>
-          </div>
-        </Card>
+          </Card>
 
           <Card className="border border-slate-200 dark:border-slate-800 bg-gradient-to-r from-white to-slate-50 dark:from-slate-900 dark:to-slate-900/40">
             <div className="flex flex-col gap-6 px-6 py-6 lg:flex-row lg:items-center lg:justify-between">
@@ -625,3 +486,4 @@ function ColorPicker({ value, onChange }: ColorPickerProps) {
     </div>
   );
 }
+
