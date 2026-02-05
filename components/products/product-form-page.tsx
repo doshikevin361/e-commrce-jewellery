@@ -1025,48 +1025,67 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
         }
       }
 
-      let commissionRate = 5; // Fallback default
-      let commissions: any = null;
+      let vendorCommissionRate = 5; // Fallback default
+      let platformCommissionRate = 0; // Fallback default
+      let vendorCommissions: any = null;
+      let adminCommissions: any = null;
 
-      // If vendor, fetch vendor's commission settings
-      if (roleToUse === 'vendor') {
-        const vendorResponse = await fetch('/api/vendor/commission-settings');
-        if (vendorResponse.ok) {
-          const vendorData = await vendorResponse.json();
-          commissions = vendorData.commissions;
-          console.log('[DEBUG] Fetched vendor commission settings:', commissions);
+      // Always fetch admin's commission settings (for Platform Commission)
+      try {
+        const adminResponse = await fetch('/api/admin/settings');
+        if (adminResponse.ok) {
+          const adminData = await adminResponse.json();
+          adminCommissions = adminData.productTypeCommissions;
+          console.log('[DEBUG] Fetched admin commission settings:', adminCommissions);
         }
-      } else {
-        // If admin, fetch admin's default commission settings
-        const response = await fetch('/api/admin/settings');
-        if (response.ok) {
-          const data = await response.json();
-          commissions = data.productTypeCommissions;
-          console.log('[DEBUG] Fetched admin commission settings:', commissions);
+      } catch (error) {
+        console.error('[DEBUG] Failed to fetch admin commission settings:', error);
+      }
+
+      // If vendor, also fetch vendor's commission settings (for Vendor Commission)
+      if (roleToUse === 'vendor') {
+        try {
+          const vendorResponse = await fetch('/api/vendor/commission-settings');
+          if (vendorResponse.ok) {
+            const vendorData = await vendorResponse.json();
+            vendorCommissions = vendorData.commissions;
+            console.log('[DEBUG] Fetched vendor commission settings:', vendorCommissions);
+          }
+        } catch (error) {
+          console.error('[DEBUG] Failed to fetch vendor commission settings:', error);
         }
       }
 
       // Store settings data for later use when product type changes
-      if (commissions) {
-        setFormData(prev => ({
-          ...prev,
-          settingsData: { productTypeCommissions: commissions },
-        }));
-      }
+      setFormData(prev => ({
+        ...prev,
+        settingsData: { 
+          productTypeCommissions: adminCommissions,
+          vendorCommissions: vendorCommissions,
+        },
+      }));
       
-      // Update the form with product-type-specific commission rate
-      if (commissions && productType) {
-        // Get commission rate based on product type
-        if (commissions[productType as keyof typeof commissions] !== undefined) {
-          commissionRate = commissions[productType as keyof typeof commissions];
-          console.log('[DEBUG] Using product-type-specific commission for', productType, ':', commissionRate);
-        } else {
-          console.log('[DEBUG] Product type provided but no specific commission, using fallback rate:', commissionRate);
+      // Update the form with product-type-specific commission rates
+      if (productType) {
+        // Get Platform Commission from admin settings
+        if (adminCommissions && adminCommissions[productType as keyof typeof adminCommissions] !== undefined) {
+          platformCommissionRate = adminCommissions[productType as keyof typeof adminCommissions];
+          console.log('[DEBUG] Platform Commission for', productType, ':', platformCommissionRate);
+        }
+
+        // Get Vendor Commission from vendor settings (only for vendors)
+        if (roleToUse === 'vendor' && vendorCommissions && vendorCommissions[productType as keyof typeof vendorCommissions] !== undefined) {
+          vendorCommissionRate = vendorCommissions[productType as keyof typeof vendorCommissions];
+          console.log('[DEBUG] Vendor Commission for', productType, ':', vendorCommissionRate);
+        } else if (roleToUse === 'admin' && adminCommissions && adminCommissions[productType as keyof typeof adminCommissions] !== undefined) {
+          // For admin, use admin commission as vendor commission
+          vendorCommissionRate = adminCommissions[productType as keyof typeof adminCommissions];
+          console.log('[DEBUG] Admin using admin commission as vendor commission for', productType, ':', vendorCommissionRate);
         }
 
         const updateData = {
-          vendorCommissionRate: commissionRate,
-          platformCommissionRate: roleToUse === 'vendor' ? commissionRate : 0,
+          vendorCommissionRate: vendorCommissionRate,
+          platformCommissionRate: platformCommissionRate,
         };
         
         console.log('[DEBUG] About to update with:', updateData);
@@ -1076,10 +1095,10 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
             ...prev,
             ...updateData,
           };
-          console.log('[DEBUG] New formData will have platformCommissionRate:', newData.platformCommissionRate);
+          console.log('[DEBUG] Updated commission rates - Platform:', newData.platformCommissionRate, 'Vendor:', newData.vendorCommissionRate);
           return newData;
         });
-      } else if (!productType) {
+      } else {
         console.log('[DEBUG] No product type provided, settings loaded for future use');
         return; // Don't apply commission if no product type specified
       }
@@ -1429,8 +1448,9 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
           netGoldWeight: 0,
           goldPurity: '',
           silverPurity: '',
-          // Don't reset platformCommissionRate for vendors - keep the admin's set value
+          // Don't reset commission rates for vendors - keep the admin's and vendor's set values
           platformCommissionRate: userRole === 'vendor' ? prev.platformCommissionRate : 0,
+          vendorCommissionRate: userRole === 'vendor' ? prev.vendorCommissionRate : 5,
           otherCharges: 0,
           discount: 0,
         };
@@ -1471,7 +1491,6 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
   const totalDiamondWeightCt = formData.diamonds.reduce((sum, d) => sum + (d.diamondWeight || 0), 0);
   const netGoldWeight = Math.max(0, goldWeightGram - totalDiamondWeightCt - (formData.lessStoneWeight || 0));
   const goldValue = netGoldWeight * purityMetalRate;
-  const vendorCommissionValue = netGoldWeight * (formData.vendorCommissionRate / 100) * metalLiveRate;
   const makingChargesValue = netGoldWeight * formData.makingChargePerGram;
   // For Diamonds product type, include direct price in diamond value
   const diamondValueAuto = formData.productType === 'Diamonds'
@@ -1507,17 +1526,23 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
   // For Diamonds product type, check if metals are added
   const hasMetalsInDiamonds = formData.productType === 'Diamonds' && formData.diamonds.some(d => d.metalType);
   
-  // Calculate platform commission base
-  const platformCommissionBase = formData.productType === 'Diamonds' && hasMetalsInDiamonds
+  // Calculate platform commission base (same base for vendor commission)
+  const commissionBase = formData.productType === 'Diamonds' && hasMetalsInDiamonds
     ? diamondsProductMetalValue + diamondValueAuto
     : isSimpleProductType 
       ? gemstoneValue 
       : formData.productType === 'Diamonds' && !hasMetalsInDiamonds
         ? diamondValueAuto
-        : goldValue + makingChargesValue + diamondValueAuto; // Removed vendorCommissionValue from base
-  // Only calculate platform commission if rate is provided (> 0)
+        : goldValue + makingChargesValue + diamondValueAuto;
+  
+  // Calculate platform commission (admin's commission)
   const platformCommissionValue = (formData.platformCommissionRate > 0)
-    ? platformCommissionBase * (formData.platformCommissionRate / 100)
+    ? commissionBase * (formData.platformCommissionRate / 100)
+    : 0;
+  
+  // Calculate vendor commission (vendor's commission)
+  const vendorCommissionValue = (formData.vendorCommissionRate > 0)
+    ? commissionBase * (formData.vendorCommissionRate / 100)
     : 0;
   const extraCharges = formData.otherCharges ?? 0;
   // Original price - GST and discount are NOT included in calculation, only stored for invoice
@@ -3360,9 +3385,31 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                 <p className='text-xs text-gray-500 mt-1'>Value: {formatINR(platformCommissionValue)}</p>
               )}
               {userRole === 'vendor' && (
-                <p className='text-xs text-blue-600 mt-1'>Set by Admin</p>
+                <p className='text-xs text-blue-600 mt-1 cursor-pointer hover:underline' onClick={() => window.open('/admin/pricing-settings', '_blank')}>
+                  Set by Admin
+                </p>
               )}
             </div>
+
+            {/* Vendor Commission field - for vendors only */}
+            {userRole === 'vendor' && (
+              <div className='p-3 bg-white rounded border'>
+                <p className='text-sm text-gray-600'>Vendor Commission (%)</p>
+                <FormField
+                  label=''
+                  value={formData.vendorCommissionRate}
+                  onChange={e => updateField('vendorCommissionRate', parseFloat(e.target.value) || 0)}
+                  type='number'
+                  placeholder='5'
+                />
+                {formData.vendorCommissionRate > 0 && (
+                  <p className='text-xs text-gray-500 mt-1'>Value: {formatINR(vendorCommissionValue)}</p>
+                )}
+                <p className='text-xs text-blue-600 mt-1 cursor-pointer hover:underline' onClick={() => window.open('/admin/vendor-commission', '_blank')}>
+                  Set in Commission Settings
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Price Summary for all product types */}
@@ -3378,6 +3425,12 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                   <div className='flex justify-between text-sm text-gray-700'>
                     <span>Platform Commission</span>
                     <span>{formatINR(platformCommissionValue)}</span>
+                  </div>
+                )}
+                {userRole === 'vendor' && formData.vendorCommissionRate > 0 && (
+                  <div className='flex justify-between text-sm text-gray-700'>
+                    <span>Vendor Commission</span>
+                    <span>{formatINR(vendorCommissionValue)}</span>
                   </div>
                 )}
                 <div className='flex justify-between font-semibold text-gray-900 pt-2 border-t'>
@@ -3414,6 +3467,12 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                     <span>{formatINR(platformCommissionValue)}</span>
                   </div>
                 )}
+                {userRole === 'vendor' && formData.vendorCommissionRate > 0 && (
+                  <div className='flex justify-between text-sm text-gray-700'>
+                    <span>Vendor Commission</span>
+                    <span>{formatINR(vendorCommissionValue)}</span>
+                  </div>
+                )}
                 <div className='flex justify-between font-semibold text-gray-900 pt-2 border-t'>
                   <span>Total Amount</span>
                   <span>{formatINR(subTotal)}</span>
@@ -3440,6 +3499,12 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                   <div className='flex justify-between text-sm text-gray-700'>
                     <span>Platform Commission</span>
                     <span>{formatINR(platformCommissionValue)}</span>
+                  </div>
+                )}
+                {userRole === 'vendor' && formData.vendorCommissionRate > 0 && (
+                  <div className='flex justify-between text-sm text-gray-700'>
+                    <span>Vendor Commission</span>
+                    <span>{formatINR(vendorCommissionValue)}</span>
                   </div>
                 )}
                 <div className='flex justify-between text-sm text-gray-700'>
