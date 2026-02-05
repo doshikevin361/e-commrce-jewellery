@@ -21,9 +21,32 @@ const SECTION_LABELS: Record<FooterPageType, string> = {
   'customer-delight': 'CUSTOMER DELIGHT',
 };
 
+interface FooterSearch {
+  name: string;
+  url: string;
+}
+
+interface FooterSearchesData {
+  popularSearches: FooterSearch[];
+  goldSearches: FooterSearch[];
+  diamondSearches: FooterSearch[];
+  mensSearches: FooterSearch[];
+  womensSearches: FooterSearch[];
+  occasionSearches: FooterSearch[];
+}
+
 export default function Footer() {
   const [footerPages, setFooterPages] = useState<FooterPageLink[]>([]);
   const [loadingFooterPages, setLoadingFooterPages] = useState(true);
+  const [footerSearches, setFooterSearches] = useState<FooterSearchesData>({
+    popularSearches: [],
+    goldSearches: [],
+    diamondSearches: [],
+    mensSearches: [],
+    womensSearches: [],
+    occasionSearches: [],
+  });
+  const [loadingSearches, setLoadingSearches] = useState(true);
   const pathname = usePathname();
 
   useEffect(() => {
@@ -45,7 +68,31 @@ export default function Footer() {
       }
     };
 
+    const fetchFooterSearches = async () => {
+      try {
+        setLoadingSearches(true);
+        const response = await fetch('/api/public/footer-searches', { cache: 'no-store' });
+        if (!response.ok) {
+          return;
+        }
+        const data = await response.json();
+        setFooterSearches({
+          popularSearches: data.popularSearches || [],
+          goldSearches: data.goldSearches || [],
+          diamondSearches: data.diamondSearches || [],
+          mensSearches: data.mensSearches || [],
+          womensSearches: data.womensSearches || [],
+          occasionSearches: data.occasionSearches || [],
+        });
+      } catch (error) {
+        console.error('[v0] Failed to fetch footer searches:', error);
+      } finally {
+        setLoadingSearches(false);
+      }
+    };
+
     fetchFooterPages();
+    fetchFooterSearches();
   }, [pathname]);
 
   const sectionLinks = useMemo(() => {
@@ -81,6 +128,27 @@ export default function Footer() {
           </li>
         ))}
       </ul>
+    );
+  };
+
+  const renderSearchLinks = (searches: FooterSearch[]) => {
+    if (loadingSearches) {
+      return <p className='text-[#2c3e6f] text-sm'>Loading...</p>;
+    }
+    if (!searches || searches.length === 0) {
+      return null;
+    }
+    return (
+      <p className='text-[#2c3e6f] text-sm leading-relaxed'>
+        {searches.map((search, index) => (
+          <React.Fragment key={index}>
+            <Link href={search.url} className='hover:underline'>
+              {search.name}
+            </Link>
+            {index < searches.length - 1 && ' | '}
+          </React.Fragment>
+        ))}
+      </p>
     );
   };
 
@@ -225,290 +293,67 @@ export default function Footer() {
       <div className='bg-white'>
         <div className='max-w-[1440px] mx-auto px-6 py-8'>
           {/* Popular Searches */}
-          <div className='mb-8'>
-            <h4 className='text-[#2c3e6f] font-semibold text-base mb-3'>Popular Searches</h4>
-            <p className='text-[#2c3e6f] text-sm leading-relaxed'>
-              <a href='#' className='hover:underline'>
-                Rings
-              </a>{' '}
-              |{' '}
-              <a href='#' className='hover:underline'>
-                Earrings
-              </a>{' '}
-              |{' '}
-              <a href='#' className='hover:underline'>
-                Mangalsutra
-              </a>{' '}
-              |{' '}
-              <a href='#' className='hover:underline'>
-                Mangalsutra Bracelets
-              </a>{' '}
-              |{' '}
-              <a href='#' className='hover:underline'>
-                Bangles
-              </a>{' '}
-              |{' '}
-              <a href='#' className='hover:underline'>
-                Bracelets
-              </a>{' '}
-              |{' '}
-              <a href='#' className='hover:underline'>
-                Pendants
-              </a>{' '}
-              |{' '}
-              <a href='#' className='hover:underline'>
-                Necklaces
-              </a>{' '}
-              |{' '}
-              <a href='#' className='hover:underline'>
-                Couple Bands
-              </a>{' '}
-              |{' '}
-              <a href='#' className='hover:underline'>
-                Gold Coins
-              </a>{' '}
-              |{' '}
-              <a href='#' className='hover:underline'>
-                Chains
-              </a>{' '}
-              |{' '}
-              <a href='#' className='hover:underline'>
-                Watch Jewellery
-              </a>{' '}
-              |{' '}
-              <a href='#' className='hover:underline'>
-                Nose Pin
-              </a>{' '}
-              |{' '}
-              <a href='#' className='hover:underline'>
-                Dailywear Rings
-              </a>{' '}
-              |{' '}
-              <a href='#' className='hover:underline'>
-                Dailywear Bracelets
-              </a>
-            </p>
-          </div>
-
-          <hr className='border-gray-300 my-6' />
+          {footerSearches.popularSearches.length > 0 && (
+            <>
+              <div className='mb-8'>
+                <h4 className='text-[#2c3e6f] font-semibold text-base mb-3'>Popular Searches</h4>
+                {renderSearchLinks(footerSearches.popularSearches)}
+              </div>
+              <hr className='border-gray-300 my-6' />
+            </>
+          )}
 
           {/* Top Searches in Gold Jewellery */}
-          <div className='mb-8'>
-            <h4 className='text-[#2c3e6f] font-semibold text-base mb-3'>Top Searches in Gold Jewellery</h4>
-            <p className='text-[#2c3e6f] text-sm leading-relaxed'>
-              <a href='#' className='hover:underline'>
-                Gold Jewellery
-              </a>{' '}
-              |{' '}
-              <a href='#' className='hover:underline'>
-                Gold Rings
-              </a>{' '}
-              |{' '}
-              <a href='#' className='hover:underline'>
-                Gold Earrings
-              </a>{' '}
-              |{' '}
-              <a href='#' className='hover:underline'>
-                Gold Pendants
-              </a>{' '}
-              |{' '}
-              <a href='#' className='hover:underline'>
-                Gold Necklaces
-              </a>{' '}
-              |{' '}
-              <a href='#' className='hover:underline'>
-                Gold Mangalsutras
-              </a>{' '}
-              |{' '}
-              <a href='#' className='hover:underline'>
-                Gold Bangles
-              </a>{' '}
-              |{' '}
-              <a href='#' className='hover:underline'>
-                Women Gold Rings
-              </a>{' '}
-              |{' '}
-              <a href='#' className='hover:underline'>
-                Men's Gold Earrings
-              </a>{' '}
-              |{' '}
-              <a href='#' className='hover:underline'>
-                Gold Chains for Men
-              </a>{' '}
-              |{' '}
-              <a href='#' className='hover:underline'>
-                Dailywear Gold Earrings
-              </a>{' '}
-              |{' '}
-              <a href='#' className='hover:underline'>
-                Dailywear Gold Bangles
-              </a>
-            </p>
-          </div>
-
-          <hr className='border-gray-300 my-6' />
+          {footerSearches.goldSearches.length > 0 && (
+            <>
+              <div className='mb-8'>
+                <h4 className='text-[#2c3e6f] font-semibold text-base mb-3'>Top Searches in Gold Jewellery</h4>
+                {renderSearchLinks(footerSearches.goldSearches)}
+              </div>
+              <hr className='border-gray-300 my-6' />
+            </>
+          )}
 
           {/* Top Searches in Diamond Jewellery */}
-          <div className='mb-8'>
-            <h4 className='text-[#2c3e6f] font-semibold text-base mb-3'>Top Searches in Diamond Jewellery</h4>
-            <p className='text-[#2c3e6f] text-sm leading-relaxed'>
-              <a href='#' className='hover:underline'>
-                Diamond Jewellery
-              </a>{' '}
-              |{' '}
-              <a href='#' className='hover:underline'>
-                Diamond Rings
-              </a>{' '}
-              |{' '}
-              <a href='#' className='hover:underline'>
-                Diamond Earrings
-              </a>{' '}
-              |{' '}
-              <a href='#' className='hover:underline'>
-                Diamond Pendants
-              </a>{' '}
-              |{' '}
-              <a href='#' className='hover:underline'>
-                Diamond Necklaces
-              </a>{' '}
-              |{' '}
-              <a href='#' className='hover:underline'>
-                Diamond Mangalsutras
-              </a>{' '}
-              |{' '}
-              <a href='#' className='hover:underline'>
-                Diamond Bangles
-              </a>{' '}
-              |{' '}
-              <a href='#' className='hover:underline'>
-                Diamond Bracelets
-              </a>{' '}
-              |{' '}
-              <a href='#' className='hover:underline'>
-                Women Diamond Rings
-              </a>{' '}
-              |{' '}
-              <a href='#' className='hover:underline'>
-                Men's Diamond Earrings
-              </a>{' '}
-              |{' '}
-              <a href='#' className='hover:underline'>
-                Men's Diamond Rings
-              </a>{' '}
-              |{' '}
-              <a href='#' className='hover:underline'>
-                Men's Diamond Braclets
-              </a>
-            </p>
-          </div>
-
-          <hr className='border-gray-300 my-6' />
+          {footerSearches.diamondSearches.length > 0 && (
+            <>
+              <div className='mb-8'>
+                <h4 className='text-[#2c3e6f] font-semibold text-base mb-3'>Top Searches in Diamond Jewellery</h4>
+                {renderSearchLinks(footerSearches.diamondSearches)}
+              </div>
+              <hr className='border-gray-300 my-6' />
+            </>
+          )}
 
           {/* Men's Jewellery Collection */}
-          <div className='mb-8'>
-            <h4 className='text-[#2c3e6f] font-semibold text-base mb-3'>Men's Jewellery Collection</h4>
-            <p className='text-[#2c3e6f] text-sm leading-relaxed'>
-              <a href='#' className='hover:underline'>
-                Men's Jewellery
-              </a>{' '}
-              |{' '}
-              <a href='#' className='hover:underline'>
-                Rings for Men
-              </a>{' '}
-              |{' '}
-              <a href='#' className='hover:underline'>
-                Earrings for Men
-              </a>{' '}
-              |{' '}
-              <a href='#' className='hover:underline'>
-                Men's Kada
-              </a>{' '}
-              |{' '}
-              <a href='#' className='hover:underline'>
-                Cufflinks for Men
-              </a>
-            </p>
-          </div>
-
-          <hr className='border-gray-300 my-6' />
+          {footerSearches.mensSearches.length > 0 && (
+            <>
+              <div className='mb-8'>
+                <h4 className='text-[#2c3e6f] font-semibold text-base mb-3'>Men's Jewellery Collection</h4>
+                {renderSearchLinks(footerSearches.mensSearches)}
+              </div>
+              <hr className='border-gray-300 my-6' />
+            </>
+          )}
 
           {/* Women's Jewellery Collection */}
-          <div className='mb-8'>
-            <h4 className='text-[#2c3e6f] font-semibold text-base mb-3'>Women's Jewellery Collection</h4>
-            <p className='text-[#2c3e6f] text-sm leading-relaxed'>
-              <a href='#' className='hover:underline'>
-                Jewellery For Women
-              </a>{' '}
-              |{' '}
-              <a href='#' className='hover:underline'>
-                Rings for Women
-              </a>{' '}
-              |{' '}
-              <a href='#' className='hover:underline'>
-                Earrings for Women
-              </a>{' '}
-              |{' '}
-              <a href='#' className='hover:underline'>
-                Bangles for Women
-              </a>{' '}
-              |{' '}
-              <a href='#' className='hover:underline'>
-                Pendants for Women
-              </a>{' '}
-              |{' '}
-              <a href='#' className='hover:underline'>
-                Bracelets for Women
-              </a>{' '}
-              |{' '}
-              <a href='#' className='hover:underline'>
-                Necklaces for Women
-              </a>
-            </p>
-          </div>
+          {footerSearches.womensSearches.length > 0 && (
+            <>
+              <div className='mb-8'>
+                <h4 className='text-[#2c3e6f] font-semibold text-base mb-3'>Women's Jewellery Collection</h4>
+                {renderSearchLinks(footerSearches.womensSearches)}
+              </div>
+              <hr className='border-gray-300 my-6' />
+            </>
+          )}
 
-          <hr className='border-gray-300 my-6' />
-
-          {/* Jewellery by Occassion */}
-          <div>
-            <h4 className='text-[#2c3e6f] font-semibold text-base mb-3'>Jewellery by Occassion</h4>
-            <p className='text-[#2c3e6f] text-sm leading-relaxed'>
-              <a href='#' className='hover:underline'>
-                Engagement Ring
-              </a>{' '}
-              |{' '}
-              <a href='#' className='hover:underline'>
-                Engagement Ring For Women
-              </a>{' '}
-              |{' '}
-              <a href='#' className='hover:underline'>
-                Engagement Ring For Men
-              </a>{' '}
-              |{' '}
-              <a href='#' className='hover:underline'>
-                Gold Engagement Rings for Women
-              </a>{' '}
-              |{' '}
-              <a href='#' className='hover:underline'>
-                Gold Engagement Rings for Men
-              </a>{' '}
-              |{' '}
-              <a href='#' className='hover:underline'>
-                Diamond Engagement Rings
-              </a>{' '}
-              |{' '}
-              <a href='#' className='hover:underline'>
-                Diamond Engagement Rings for Women
-              </a>{' '}
-              |{' '}
-              <a href='#' className='hover:underline'>
-                Jewellery Gifts for Anniversary
-              </a>{' '}
-              |{' '}
-              <a href='#' className='hover:underline'>
-                Jewellery Gifts for Wedding
-              </a>
-            </p>
-          </div>
+          {/* Jewellery by Occasion */}
+          {footerSearches.occasionSearches.length > 0 && (
+            <div>
+              <h4 className='text-[#2c3e6f] font-semibold text-base mb-3'>Jewellery by Occasion</h4>
+              {renderSearchLinks(footerSearches.occasionSearches)}
+            </div>
+          )}
         </div>
       </div>
     </footer>
