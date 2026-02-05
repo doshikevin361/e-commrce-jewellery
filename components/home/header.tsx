@@ -547,7 +547,7 @@ const HomeHeader = () => {
                 className={`px-6 py-4 text-sm font-medium flex items-center gap-2 hover:bg-[#002e50] ${
                   liveRateOpen ? 'text-emerald-400' : ''
                 }`}>
-                Live Rate
+                Gold Rate
                 <ChevronDown className='w-4 h-4' />
               </button>
               {liveRateOpen && (
