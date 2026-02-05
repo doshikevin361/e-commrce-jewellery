@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { Search, MapPin, Heart, ShoppingCart, ChevronDown, Clock, Store, LogOut, User, Radio } from 'lucide-react';
+import { Search, Heart, ShoppingCart, ChevronDown, Clock, Store, LogOut, User } from 'lucide-react';
 import { AuthModal } from '@/components/auth/auth-modal';
 import toast from 'react-hot-toast';
 import { useCart } from '@/contexts/CartContext';
@@ -88,10 +88,12 @@ const HomeHeader = () => {
   const [recentlyViewed, setRecentlyViewed] = useState<RecentlyViewedItem[]>([]);
   const [recentlyViewedOpen, setRecentlyViewedOpen] = useState(false);
   const recentlyViewedRef = useRef<HTMLDivElement>(null);
+  const [liveRateOpen, setLiveRateOpen] = useState(false);
   const [livePrices, setLivePrices] = useState<{
     gold: number;
     silver: number;
     platinum: number;
+    timestamp?: string;
   } | null>(null);
   const [loadingPrices, setLoadingPrices] = useState(true);
 
@@ -242,6 +244,7 @@ const HomeHeader = () => {
             gold: data.gold || 0,
             silver: data.silver || 0,
             platinum: data.platinum || 0,
+            timestamp: data.timestamp,
           });
         }
       } catch (error) {
@@ -294,50 +297,7 @@ const HomeHeader = () => {
     <div className='w-full'>
       {/* Top Bar */}
       <div className='bg-whit py-2 px-4'>
-        <div className='max-w-[1440px] mx-auto flex items-center justify-between'>
-          {/* Left - Live Prices */}
-          <div className='flex items-center gap-3'>
-            {loadingPrices ? (
-              <div className='flex items-center gap-2 text-gray-400 text-xs'>
-                <div className='h-2 w-2 rounded-full bg-gray-400 animate-pulse'></div>
-                <span>Loading prices...</span>
-              </div>
-            ) : livePrices ? (
-              <>
-                {/* Live Indicator */}
-                <div className='flex items-center gap-1.5 px-2 py-0.5 bg-red-50 rounded-full border border-red-200'>
-                  <div className='relative'>
-                    <Radio className='h-3 w-3 text-red-600' />
-                    <div className='absolute inset-0 h-3 w-3 rounded-full bg-red-600 animate-ping opacity-75'></div>
-                  </div>
-                  <span className='text-[10px] font-semibold text-red-600 uppercase tracking-wide'>Live</span>
-                </div>
-                
-                {/* Prices */}
-                <div className='flex items-center gap-3 text-xs'>
-                  <div className='flex items-center gap-1.5 px-2.5 py-1 bg-gradient-to-r from-yellow-50 to-yellow-100 rounded-md border border-yellow-200'>
-                    <span className='font-bold text-yellow-700'>Gold</span>
-                    <span className='font-semibold text-yellow-800'>₹{livePrices.gold.toLocaleString('en-IN')}</span>
-                    <span className='text-[10px] text-yellow-600'>/gm</span>
-                  </div>
-                  
-                  <div className='flex items-center gap-1.5 px-2.5 py-1 bg-gradient-to-r from-gray-50 to-gray-100 rounded-md border border-gray-200'>
-                    <span className='font-bold text-gray-600'>Silver</span>
-                    <span className='font-semibold text-gray-700'>₹{livePrices.silver.toLocaleString('en-IN')}</span>
-                    <span className='text-[10px] text-gray-500'>/gm</span>
-                  </div>
-                  
-                  <div className='flex items-center gap-1.5 px-2.5 py-1 bg-gradient-to-r from-slate-50 to-slate-100 rounded-md border border-slate-200'>
-                    <span className='font-bold text-slate-500'>Platinum</span>
-                    <span className='font-semibold text-slate-600'>₹{livePrices.platinum.toLocaleString('en-IN')}</span>
-                    <span className='text-[10px] text-slate-400'>/gm</span>
-                  </div>
-                </div>
-              </>
-            ) : null}
-          </div>
-
-          {/* Right - Actions */}
+        <div className='max-w-[1440px] mx-auto flex items-center justify-end'>
           <div className='flex items-center gap-4 text-[12px]'>
             <Link href='/become-vendor' className='flex items-center gap-1 text-[#3579b8] hover:text-gray-900'>
               <User className='w-4 h-4' />
@@ -574,10 +534,80 @@ const HomeHeader = () => {
               )}
             </div>
 
-            {/* All Jewellery */}
-            <Link href='/jewellery' className='px-6 py-4 text-sm font-medium hover:bg-[#002e50]'>
-              Shop All Jewellery
-            </Link>
+            {/* Live Rate */}
+            <div
+              className='relative'
+              onMouseEnter={() => {
+                setLiveRateOpen(true);
+                setOpenDropdown(null);
+              }}
+              onMouseLeave={() => setLiveRateOpen(false)}>
+              <button
+                onClick={() => setLiveRateOpen(prev => !prev)}
+                className={`px-6 py-4 text-sm font-medium flex items-center gap-2 hover:bg-[#002e50] ${
+                  liveRateOpen ? 'text-emerald-400' : ''
+                }`}>
+                Live Rate
+                <ChevronDown className='w-4 h-4' />
+              </button>
+              {liveRateOpen && (
+                <div className='absolute right-0 top-full mt-2 w-72 rounded-xl border border-[#D7C4B3] bg-[#F6EBDD] shadow-lg z-50'>
+                  <div className='px-4 py-3 border-b border-[#D7C4B3] bg-[#F1E2D2] text-center'>
+                    <p className='text-sm font-semibold text-[#1F3B29]'>Today&apos;s Gold Rate</p>
+                  </div>
+                  <div className='p-4 space-y-3 text-sm'>
+                    {loadingPrices ? (
+                      <p className='text-center text-[#4F3A2E]/70'>Loading rates...</p>
+                    ) : livePrices ? (
+                      <>
+                        {(() => {
+                          const gold22 = Math.round((livePrices.gold * 22) / 24);
+                          const gold18 = Math.round((livePrices.gold * 18) / 24);
+                          const gold14 = Math.round((livePrices.gold * 14) / 24);
+                          return (
+                            <>
+                              <div className='flex items-center justify-between border-b border-[#D7C4B3] pb-2'>
+                                <span className='font-semibold text-[#1F3B29]'>22 KT (916)</span>
+                                <span className='text-[#1F3B29]'>₹ {gold22.toLocaleString('en-IN')}/g</span>
+                              </div>
+                              <div className='flex items-center justify-between border-b border-[#D7C4B3] pb-2'>
+                                <span className='font-semibold text-[#1F3B29]'>18 KT (750)</span>
+                                <span className='text-[#1F3B29]'>₹ {gold18.toLocaleString('en-IN')}/g</span>
+                              </div>
+                              <div className='flex items-center justify-between border-b border-[#D7C4B3] pb-2'>
+                                <span className='font-semibold text-[#1F3B29]'>14 KT (585)</span>
+                                <span className='text-[#1F3B29]'>₹ {gold14.toLocaleString('en-IN')}/g</span>
+                              </div>
+                              <div className='flex items-center justify-between border-b border-[#D7C4B3] pb-2'>
+                                <span className='font-semibold text-[#1F3B29]'>Silver</span>
+                                <span className='text-[#1F3B29]'>₹ {livePrices.silver.toLocaleString('en-IN')}/g</span>
+                              </div>
+                              <div className='flex items-center justify-between'>
+                                <span className='font-semibold text-[#1F3B29]'>Platinum</span>
+                                <span className='text-[#1F3B29]'>₹ {livePrices.platinum.toLocaleString('en-IN')}/g</span>
+                              </div>
+                            </>
+                          );
+                        })()}
+                      </>
+                    ) : (
+                      <p className='text-center text-[#4F3A2E]/70'>Rates unavailable.</p>
+                    )}
+                  </div>
+                  <div className='px-4 py-3 border-t border-[#D7C4B3] bg-[#F1E2D2] text-center text-[11px] text-[#4F3A2E]'>
+                    Updated on -{' '}
+                    {livePrices?.timestamp
+                      ? new Date(livePrices.timestamp).toLocaleDateString('en-GB') +
+                        ' ' +
+                        new Date(livePrices.timestamp).toLocaleTimeString('en-GB', {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })
+                      : '—'}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
           {openDropdown && (
