@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { Search, Heart, ShoppingCart, ChevronDown, Clock, Store, LogOut, User } from 'lucide-react';
+import { Search, Heart, ShoppingCart, ChevronDown, Clock, Store, LogOut, User, TruckIcon } from 'lucide-react';
 import { AuthModal } from '@/components/auth/auth-modal';
 import toast from 'react-hot-toast';
 import { useCart } from '@/contexts/CartContext';
@@ -300,6 +300,11 @@ const HomeHeader = () => {
       <div className='bg-whit py-2 px-4'>
         <div className='max-w-[1440px] mx-auto flex items-center justify-end'>
           <div className='flex items-center gap-4 text-[12px]'>
+            <div className='flex items-center text-[#3579b8] gap-1'>
+              <TruckIcon className='w-4 h-4' />
+              Free Delivery
+            </div>
+            <span className='h-3 w-px bg-gray-500'></span>
             <Link href='/become-vendor' className='flex items-center gap-1 text-[#3579b8] hover:text-gray-900'>
               <User className='w-4 h-4' />
               <span>Become Member</span>
