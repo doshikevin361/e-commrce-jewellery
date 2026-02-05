@@ -89,6 +89,7 @@ const HomeHeader = () => {
   const [recentlyViewedOpen, setRecentlyViewedOpen] = useState(false);
   const recentlyViewedRef = useRef<HTMLDivElement>(null);
   const [liveRateOpen, setLiveRateOpen] = useState(false);
+  const liveRateCloseTimeoutRef = useRef<number | null>(null);
   const [livePrices, setLivePrices] = useState<{
     gold: number;
     silver: number;
@@ -538,10 +539,21 @@ const HomeHeader = () => {
             <div
               className='relative'
               onMouseEnter={() => {
+                if (liveRateCloseTimeoutRef.current) {
+                  window.clearTimeout(liveRateCloseTimeoutRef.current);
+                  liveRateCloseTimeoutRef.current = null;
+                }
                 setLiveRateOpen(true);
                 setOpenDropdown(null);
               }}
-              onMouseLeave={() => setLiveRateOpen(false)}>
+              onMouseLeave={() => {
+                if (liveRateCloseTimeoutRef.current) {
+                  window.clearTimeout(liveRateCloseTimeoutRef.current);
+                }
+                liveRateCloseTimeoutRef.current = window.setTimeout(() => {
+                  setLiveRateOpen(false);
+                }, 200);
+              }}>
               <button
                 onClick={() => setLiveRateOpen(prev => !prev)}
                 className={`px-6 py-4 text-sm font-medium flex items-center gap-2 hover:bg-[#002e50] ${
