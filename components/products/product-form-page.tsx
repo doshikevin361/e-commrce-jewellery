@@ -362,7 +362,7 @@ interface ProductFormData {
   diamondCertCharges: number;
   otherCharges?: number;
   gstRate: number;
-  customMetalRate?: number; // Custom metal rate to override live price
+  customMetalRate?: number; // Custom metal rate to override configured rates
   settingsData?: any; // Store settings data for commission lookup
 }
 
@@ -738,7 +738,7 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
     fetchSettingTypes();
     fetchCertifiedLabs();
     fetchGemstoneNames();
-    fetchLivePrices();
+    fetchMetalRates();
     fetchAllProducts(); // Fetch all products for related products selection
     
     // Fetch settings to have them available when product type is selected
@@ -994,15 +994,15 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
     }
   };
 
-  const fetchLivePrices = async () => {
+  const fetchMetalRates = async () => {
     try {
-      const response = await fetch('/api/live-prices');
+      const response = await fetch('/api/public/metal-prices');
       if (response.ok) {
         const data = await response.json();
         setLivePrices(data);
       }
     } catch (error) {
-      console.error('Failed to fetch live prices:', error);
+      console.error('Failed to fetch metal rates:', error);
     }
   };
 
@@ -1308,7 +1308,7 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
       }
       
       // Validations only for Gemstone/Imitation (fields that are shown)
-      if (isSimpleProductType) {
+      if (isSimpleProductType && userRole !== 'vendor') {
         if (!formData.gemstonePrice || formData.gemstonePrice <= 0) {
           nextErrors.gemstonePrice = 'Price is required';
         }
@@ -1339,11 +1339,11 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
       const silverRatePerGram = purityMetalRate || metalLiveRate || (formData as any).silverRatePerGram || 0;
       const makingCharges = Math.max(0, (formData.makingChargePerGram || 0) * (goldWeight || silverWeight));
 
-      // Store current live price in customMetalRate if no custom rate provided
-      // This prevents price discrepancies when editing product later with different live prices
+      // Store current configured rate in customMetalRate if no custom rate provided
+      // This prevents price discrepancies when editing product later with different configured rates
       const storedCustomMetalRate = formData.customMetalRate ?? liveMetalRate;
 
-      // Process diamonds array: store live price in customMetalRate for each diamond if not provided
+      // Process diamonds array: store configured rate in customMetalRate for each diamond if not provided
       const processedDiamonds = formData.diamonds.map(diamond => {
         if (diamond.metalType) {
           const diamondLiveRate = diamond.metalType === 'Silver'
@@ -1352,7 +1352,7 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
             ? livePrices?.platinum ?? 0
             : livePrices?.gold ?? 0;
           
-          // Store current live price if no custom rate provided
+          // Store current configured rate if no custom rate provided
           return {
             ...diamond,
             customMetalRate: diamond.customMetalRate ?? diamondLiveRate
@@ -1389,8 +1389,8 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
         regularPrice: 0,
         sellingPrice: 0,
         costPrice: 0,
-        // When editing, preserve original price if it exists, otherwise use calculated subTotal
-        // This prevents price from changing automatically when live prices change
+      // When editing, preserve original price if it exists, otherwise use calculated subTotal
+      // This prevents price from changing automatically when configured rates change
         price: (productId && originalPrice !== null) ? originalPrice : subTotal, // Preserve original price when editing
         subTotal: (productId && originalPrice !== null) ? originalPrice : subTotal, // Preserve original price when editing
         totalAmount: (productId && originalPrice !== null) ? originalPrice : subTotal, // Preserve original price when editing
@@ -2195,7 +2195,7 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
 
                     <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
                       {diamond.metalType ? (() => {
-                        // Get live price based on metal type (same logic as main section)
+                        // Get configured metal rate based on metal type (same logic as main section)
                         const itemLiveMetalRate = diamond.metalType === 'Silver'
                           ? livePrices?.silver ?? 0
                           : diamond.metalType === 'Platinum'
@@ -2273,7 +2273,7 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                                 const value = parseFloat(e.target.value) || 0;
                                 const updatedDiamonds = formData.diamonds.map(d => {
                                   if (d.id === diamond.id) {
-                                    // If value equals live rate, clear custom rate
+                                    // If value equals configured rate, clear custom rate
                                     const liveRate = d.metalType === 'Silver'
                                       ? livePrices?.silver ?? 0
                                       : d.metalType === 'Platinum'
@@ -2301,9 +2301,11 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                               }}
                               type='number'
                               placeholder={itemLiveMetalRate.toString()}
+                              disabled={userRole === 'vendor'}
+                              readOnly={userRole === 'vendor'}
                             />
                             <p className='text-xs text-gray-500 -mt-2 mb-2'>
-                              {diamond.customMetalRate ? 'Custom rate' : `Live: ${formatINR(itemLiveMetalRate)}`}
+                              {diamond.customMetalRate ? 'Custom rate' : `Configured: ${formatINR(itemLiveMetalRate)}`}
                             </p>
 
                             <FormField
@@ -3196,7 +3198,7 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                   : 'Gold Details (Live Calculation)'}
               </h2>
               <div className='text-xs text-gray-500'>
-                {livePrices?.source ? `Source: ${livePrices.source}` : 'Using live rates'}
+                {livePrices?.source ? `Source: ${livePrices.source}` : 'Using configured rates'}
                 {livePrices?.timestamp ? ` · ${new Date(livePrices.timestamp).toLocaleTimeString()}` : ''}
               </div>
             </div>
@@ -3209,7 +3211,7 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                   value={metalLiveRate}
                   onChange={e => {
                     const value = parseFloat(e.target.value) || 0;
-                    // If value equals current live rate, clear custom rate
+                    // If value equals current configured rate, clear custom rate
                     if (value === liveMetalRate) {
                       updateField('customMetalRate', undefined);
                     } else {
@@ -3218,9 +3220,11 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                   }}
                   type='number'
                   placeholder={liveMetalRate.toString()}
+                  disabled={userRole === 'vendor'}
+                  readOnly={userRole === 'vendor'}
                 />
                 <p className='text-xs text-gray-500 mt-1'>
-                  {formData.customMetalRate ? `Stored rate${liveMetalRate !== formData.customMetalRate ? ` · Live: ${formatINR(liveMetalRate)}` : ''}` : `Live: ${formatINR(liveMetalRate)}`}
+                  {formData.customMetalRate ? `Stored rate${liveMetalRate !== formData.customMetalRate ? ` · Configured: ${formatINR(liveMetalRate)}` : ''}` : `Configured: ${formatINR(liveMetalRate)}`}
                 </p>
               </div>
               <div className='p-3 bg-gray-50 rounded border'>
@@ -3304,7 +3308,12 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                   onChange={e => updateField('gemstonePrice', parseFloat(e.target.value) || 0)}
                   type='number'
                   placeholder='Example: 50000'
+                  disabled={userRole === 'vendor'}
+                  readOnly={userRole === 'vendor'}
                 />
+                {userRole === 'vendor' && (
+                  <p className='text-xs text-blue-600 mt-1'>Set by Admin</p>
+                )}
               </div>
             )}
             
@@ -3318,10 +3327,15 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                   onChange={e => updateField('diamondsPrice', parseFloat(e.target.value) || 0)}
                   type='number'
                   placeholder='Example: 50000'
+                  disabled={userRole === 'vendor'}
+                  readOnly={userRole === 'vendor'}
                 />
                 <p className='text-xs text-gray-500 mt-1'>
                   Price will be added to Total Diamonds Value
                 </p>
+                {userRole === 'vendor' && (
+                  <p className='text-xs text-blue-600 mt-1'>Set by Admin</p>
+                )}
               </div>
             )}
             
