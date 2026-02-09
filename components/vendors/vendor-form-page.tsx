@@ -792,7 +792,7 @@ export function VendorFormPage({ vendorId }: VendorFormProps) {
                   {activeTab === 'media' && (
                     <div className='space-y-6'>
                       <div>
-                        <h3 className='text-xl font-semibold text-slate-900'>Store Media & Commission</h3>
+                        <h3 className='text-xl font-semibold text-slate-900'>Store Media</h3>
                         <p className='text-sm text-slate-500'>Upload branding assets and set commission rates.</p>
                       </div>
 
@@ -814,7 +814,7 @@ export function VendorFormPage({ vendorId }: VendorFormProps) {
                           helperText='Shown on vendor detail header'
                         />
 
-                        <FormField
+                        {/* <FormField
                           label='Commission Rate (%)'
                           id='commissionRate'
                           name='commissionRate'
@@ -823,7 +823,7 @@ export function VendorFormPage({ vendorId }: VendorFormProps) {
                           onChange={handleInputChange}
                           placeholder='0'
                           step='0.1'
-                        />
+                        /> */}
                       </div>
                     </div>
                   )}
