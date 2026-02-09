@@ -31,12 +31,20 @@ export async function GET(request: NextRequest) {
     };
 
     const commissions = vendor.productTypeCommissions || defaultCommissions;
+    const productTypes = Array.isArray(vendor.allowedProductTypes)
+      ? vendor.allowedProductTypes
+      : [];
+    const categories = Array.isArray(vendor.allowedCategories)
+      ? vendor.allowedCategories
+      : [];
     const setupCompleted = Boolean(
       vendor.commissionSetupCompleted ?? vendor.productTypeCommissions
     );
 
     return NextResponse.json({ 
       commissions,
+      productTypes,
+      categories,
       vendorId: vendor._id.toString(),
       setupCompleted,
     });
@@ -57,6 +65,8 @@ export async function PUT(request: NextRequest) {
     const { db } = await connectToDatabase();
     const body = await request.json();
     const { commissions } = body;
+    const productTypesInput = Array.isArray(body?.productTypes) ? body.productTypes : [];
+    const categoriesInput = Array.isArray(body?.categories) ? body.categories : [];
     const strict = Boolean(body?.strict);
     const markSetupComplete = Boolean(body?.markSetupComplete);
 
@@ -99,6 +109,12 @@ export async function PUT(request: NextRequest) {
       {
         $set: {
           productTypeCommissions: validCommissions,
+          allowedProductTypes: productTypesInput.filter(
+            (item: unknown) => typeof item === 'string' && item.trim().length > 0
+          ),
+          allowedCategories: categoriesInput.filter(
+            (item: unknown) => typeof item === 'string' && item.trim().length > 0
+          ),
           ...(markSetupComplete
             ? {
                 commissionSetupCompleted: true,

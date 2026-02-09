@@ -81,9 +81,9 @@ function DropdownMenuItem({
         data-disabled:pointer-events-none data-disabled:opacity-50
         data-inset:pl-8
 
-        /* Simple gray hover */
-        hover:bg-gray-300 dark:hover:bg-gray-800
-        hover:text-gray-900 dark:hover:text-gray-100
+        /* Green hover */
+        hover:bg-[#22c55e] hover:text-white
+        dark:hover:bg-[#22c55e] dark:hover:text-white
 
         /* Icon fixes */
         [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4
@@ -106,7 +106,7 @@ function DropdownMenuCheckboxItem({
     <DropdownMenuPrimitive.CheckboxItem
       data-slot="dropdown-menu-checkbox-item"
       className={cn(
-        "focus:bg-accent focus:text-accent-foreground relative flex cursor-default items-center gap-2 rounded-sm py-1.5 pr-2 pl-8 text-sm outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        "relative flex cursor-default items-center gap-2 rounded-sm py-1.5 pr-2 pl-8 text-sm outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 hover:bg-[#22c55e] hover:text-white dark:hover:bg-[#22c55e] dark:hover:text-white [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
         className,
       )}
       checked={checked}
