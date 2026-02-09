@@ -420,6 +420,35 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
       d.certificateNo
     );
 
+  const createDiamondEntry = (): Diamond => ({
+    id: Date.now().toString(),
+    diamondsType: '',
+    noOfDiamonds: 0,
+    diamondWeight: 0,
+    diamondSize: '',
+    settingType: '',
+    clarity: '',
+    diamondsColour: '',
+    diamondsShape: '',
+    diamondSetting: '',
+    certifiedLabs: '',
+    certificateNo: '',
+    certificateImages: [],
+    occasion: '',
+    dimension: '',
+    height: 0,
+    width: 0,
+    length: 0,
+    brand: '',
+    collection: '',
+    thickness: 0,
+    description: '',
+    specifications: [{ key: '', value: '' }],
+    pricePerCarat: 0,
+    diamondDiscount: 0,
+    diamondPrice: 0,
+  });
+
   const generateSku = () => {
     updateField('sku', generateSkuValue(formData.productType));
   };
@@ -1448,7 +1477,7 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
         const resetData: Partial<ProductFormData> = {
           productType: value,
           // Reset product-specific fields
-          diamonds: [],
+          diamonds: value === 'Diamonds' ? [createDiamondEntry()] : [],
           gemstonePrice: 0,
           diamondsPrice: 0,
           goldWeight: 0,
@@ -1479,6 +1508,18 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
       });
     }
   };
+
+  useEffect(() => {
+    if (formData.productType !== 'Diamonds') return;
+
+    const hasDiamondEntry = formData.diamonds.some(d => !d.metalType);
+    if (!hasDiamondEntry) {
+      setFormData(prev => ({
+        ...prev,
+        diamonds: [...prev.diamonds, createDiamondEntry()],
+      }));
+    }
+  }, [formData.productType, formData.diamonds]);
 
   // Use custom metal rate if provided, otherwise use live rate
   const liveMetalRate =
@@ -2019,109 +2060,7 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                 <Package className='w-5 h-5' />
                 Diamonds Field Details
               </h2>
-              {formData.productType === 'Diamonds' ? (
-                <div className='flex gap-2'>
-                  <Button
-                    type='button'
-                    onClick={() => {
-                      const newMetal: Diamond = {
-                        id: Date.now().toString(),
-                        metalType: 'Gold',
-                        diamondsType: '',
-                        noOfDiamonds: 0,
-                        diamondWeight: 0,
-                        diamondSize: '',
-                        settingType: '',
-                        clarity: '',
-                        diamondsColour: '',
-                        diamondsShape: '',
-                        diamondSetting: '',
-                        certifiedLabs: '',
-                        certificateNo: '',
-                        certificateImages: [],
-                        metalWeight: 0,
-                        metalPurity: '',
-                        customMetalRate: undefined,
-                        makingCharges: 0,
-                        metalValue: 0,
-                      };
-                      setFormData(prev => ({
-                        ...prev,
-                        diamonds: [...prev.diamonds, newMetal],
-                      }));
-                    }}
-                    className='text-white'>
-                    <Plus className='w-4 h-4 mr-2' />
-                    Add Gold
-                  </Button>
-                  <Button
-                    type='button'
-                    onClick={() => {
-                      const newMetal: Diamond = {
-                        id: Date.now().toString(),
-                        metalType: 'Silver',
-                        diamondsType: '',
-                        noOfDiamonds: 0,
-                        diamondWeight: 0,
-                        diamondSize: '',
-                        settingType: '',
-                        clarity: '',
-                        diamondsColour: '',
-                        diamondsShape: '',
-                        diamondSetting: '',
-                        certifiedLabs: '',
-                        certificateNo: '',
-                        certificateImages: [],
-                        metalWeight: 0,
-                        metalPurity: '',
-                        customMetalRate: undefined,
-                        makingCharges: 0,
-                        metalValue: 0,
-                      };
-                      setFormData(prev => ({
-                        ...prev,
-                        diamonds: [...prev.diamonds, newMetal],
-                      }));
-                    }}
-                    className='text-white'>
-                    <Plus className='w-4 h-4 mr-2' />
-                    Add Silver
-                  </Button>
-                  <Button
-                    type='button'
-                    onClick={() => {
-                      const newMetal: Diamond = {
-                        id: Date.now().toString(),
-                        metalType: 'Platinum',
-                        diamondsType: '',
-                        noOfDiamonds: 0,
-                        diamondWeight: 0,
-                        diamondSize: '',
-                        settingType: '',
-                        clarity: '',
-                        diamondsColour: '',
-                        diamondsShape: '',
-                        diamondSetting: '',
-                        certifiedLabs: '',
-                        certificateNo: '',
-                        certificateImages: [],
-                        metalWeight: 0,
-                        metalPurity: '',
-                        customMetalRate: undefined,
-                        makingCharges: 0,
-                        metalValue: 0,
-                      };
-                      setFormData(prev => ({
-                        ...prev,
-                        diamonds: [...prev.diamonds, newMetal],
-                      }));
-                    }}
-                    className='text-white'>
-                    <Plus className='w-4 h-4 mr-2' />
-                    Add Platinum
-                  </Button>
-                </div>
-              ) : (
+              {formData.productType !== 'Diamonds' && (
                 <Button
                   type='button'
                   onClick={() => {
@@ -2135,37 +2074,9 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                       return;
                     }
 
-                    const newDiamond: Diamond = {
-                      id: Date.now().toString(),
-                      diamondsType: '',
-                      noOfDiamonds: 0,
-                      diamondWeight: 0,
-                      diamondSize: '',
-                      settingType: '',
-                      clarity: '',
-                      diamondsColour: '',
-                      diamondsShape: '',
-                      diamondSetting: '',
-                      certifiedLabs: '',
-                      certificateNo: '',
-                      certificateImages: [],
-                      occasion: '',
-                      dimension: '',
-                      height: 0,
-                      width: 0,
-                      length: 0,
-                      brand: '',
-                      collection: '',
-                      thickness: 0,
-                      description: '',
-                      specifications: [{ key: '', value: '' }],
-                      pricePerCarat: 0,
-                      diamondDiscount: 0,
-                      diamondPrice: 0,
-                    };
                     setFormData(prev => ({
                       ...prev,
-                      diamonds: [...prev.diamonds, newDiamond],
+                      diamonds: [...prev.diamonds, createDiamondEntry()],
                     }));
                   }}
                   className='text-white'>
@@ -2176,32 +2087,34 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
             </div>
 
             {formData.diamonds.length === 0 ? (
-              <p className='text-gray-500 text-center py-8'>
-                {formData.productType === 'Diamonds' 
-                  ? 'No metals added. Click "Add Gold", "Add Silver", or "Add Platinum" to add one.'
-                  : 'No diamonds added. Click "Add Diamond" to add one.'}
-              </p>
+              <p className='text-gray-500 text-center py-8'>No diamonds added.</p>
             ) : (
               <div className='space-y-6'>
                 {formData.diamonds.map((diamond, index) => (
                   <Card key={diamond.id} className='p-4 border-2 border-gray-200'>
                     <div className='flex items-center justify-between mb-4'>
                       <h3 className='font-semibold text-lg'>
-                        {diamond.metalType ? `${diamond.metalType} ${index + 1}` : `Diamond ${index + 1}`}
+                        {diamond.metalType
+                          ? `${diamond.metalType} ${index + 1}`
+                          : formData.productType === 'Diamonds'
+                          ? 'Diamond'
+                          : `Diamond ${index + 1}`}
                       </h3>
-                      <Button
-                        type='button'
-                        variant='ghost'
-                        size='icon'
-                        onClick={() => {
-                          setFormData(prev => ({
-                            ...prev,
-                            diamonds: prev.diamonds.filter(d => d.id !== diamond.id),
-                          }));
-                        }}
-                        className='text-red-600'>
-                        <Trash2 className='w-4 h-4' />
-                      </Button>
+                      {formData.productType !== 'Diamonds' && (
+                        <Button
+                          type='button'
+                          variant='ghost'
+                          size='icon'
+                          onClick={() => {
+                            setFormData(prev => ({
+                              ...prev,
+                              diamonds: prev.diamonds.filter(d => d.id !== diamond.id),
+                            }));
+                          }}
+                          className='text-red-600'>
+                          <Trash2 className='w-4 h-4' />
+                        </Button>
+                      )}
                     </div>
 
                     <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
