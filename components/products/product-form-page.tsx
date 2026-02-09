@@ -397,6 +397,7 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
     timestamp?: string;
     error?: string;
   } | null>(null);
+  const [isCustomMetalRateOverride, setIsCustomMetalRateOverride] = useState(false);
   const [uploadingProductImages, setUploadingProductImages] = useState(false);
   const [uploadingMainThumbnail, setUploadingMainThumbnail] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -1152,12 +1153,7 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
   const fetchProduct = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/admin/products/${productId}`, {
-        cache: 'no-store',
-        headers: {
-          'Cache-Control': 'no-cache',
-        },
-      });
+      const response = await fetch(`/api/admin/products/${productId}`);
       if (response.ok) {
         const product = await response.json();
         // Map product data to form data
@@ -1247,6 +1243,7 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
           diamonds: product.diamonds || [],
           relatedProducts: product.relatedProducts || [],
         });
+        setIsCustomMetalRateOverride(false);
         
         // Store original price to preserve it when editing
         // Prefer price, then subTotal, then totalAmount
@@ -1351,7 +1348,9 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
 
       // Store current configured rate in customMetalRate if no custom rate provided
       // This prevents price discrepancies when editing product later with different configured rates
-      const storedCustomMetalRate = formData.customMetalRate ?? liveMetalRate;
+      const storedCustomMetalRate = isCustomMetalRateOverride
+        ? formData.customMetalRate ?? liveMetalRate
+        : liveMetalRate;
 
       // Process diamonds array: store configured rate in customMetalRate for each diamond if not provided
       const processedDiamonds = formData.diamonds.map(diamond => {
@@ -1488,7 +1487,9 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
       : formData.productType === 'Platinum'
       ? livePrices?.platinum ?? 0
       : livePrices?.gold ?? 0;
-  const metalLiveRate = formData.customMetalRate ?? liveMetalRate;
+  const metalLiveRate = isCustomMetalRateOverride
+    ? formData.customMetalRate ?? liveMetalRate
+    : liveMetalRate;
   // Prefer the explicit Purity dropdown value; fallback to karat if not set.
   const selectedPurityValue = formData.silverPurity || formData.goldPurity;
 
@@ -3224,8 +3225,10 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                     // If value equals current configured rate, clear custom rate
                     if (value === liveMetalRate) {
                       updateField('customMetalRate', undefined);
+                      setIsCustomMetalRateOverride(false);
                     } else {
                       updateField('customMetalRate', value);
+                      setIsCustomMetalRateOverride(true);
                     }
                   }}
                   type='number'
@@ -3234,7 +3237,9 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                   readOnly={userRole === 'vendor'}
                 />
                 <p className='text-xs text-gray-500 mt-1'>
-                  {formData.customMetalRate ? `Stored rate${liveMetalRate !== formData.customMetalRate ? ` · Configured: ${formatINR(liveMetalRate)}` : ''}` : `Configured: ${formatINR(liveMetalRate)}`}
+                  {isCustomMetalRateOverride
+                    ? `Stored rate${liveMetalRate !== formData.customMetalRate ? ` · Configured: ${formatINR(liveMetalRate)}` : ''}`
+                    : `Configured: ${formatINR(liveMetalRate)}`}
                 </p>
               </div>
               <div className='p-3 bg-gray-50 rounded border'>

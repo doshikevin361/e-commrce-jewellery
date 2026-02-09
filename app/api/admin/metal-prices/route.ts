@@ -145,7 +145,7 @@ export async function PUT(request: NextRequest) {
 
     const { db } = await connectToDatabase();
     const body = await request.json();
-    const { metalType, newRate, previousRate: previousRateFromClient } = body;
+    const { metalType, newRate } = body;
 
     if (!metalType || typeof newRate !== 'number' || newRate <= 0) {
       return NextResponse.json(
@@ -156,9 +156,7 @@ export async function PUT(request: NextRequest) {
 
     const storedRates = await db.collection('metal_rates').findOne({});
     const previousRate =
-      typeof previousRateFromClient === 'number'
-        ? previousRateFromClient
-        : storedRates && typeof storedRates[metalType.toLowerCase()] === 'number'
+      storedRates && typeof storedRates[metalType.toLowerCase()] === 'number'
         ? storedRates[metalType.toLowerCase()]
         : undefined;
 

@@ -132,7 +132,6 @@ export function MetalPriceManagement() {
       return;
     }
 
-    const previousRate = metalRates.find((mr) => mr.metalType === metalType)?.rate;
     setUpdating((prev) => ({ ...prev, [metalType]: true }));
     try {
       const response = await fetch("/api/admin/metal-prices", {
@@ -143,7 +142,6 @@ export function MetalPriceManagement() {
         body: JSON.stringify({
           metalType,
           newRate,
-          previousRate,
         }),
       });
 
