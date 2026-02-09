@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Sidebar } from './sidebar';
 import { TopBar } from './top-bar';
@@ -10,8 +10,10 @@ import 'react-toastify/dist/ReactToastify.css';
 
 export function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isCheckingSetup, setIsCheckingSetup] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem('adminToken');
@@ -22,6 +24,53 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
     }
     setIsLoading(false);
   }, [router]);
+
+  useEffect(() => {
+    if (!isAuthenticated || typeof window === 'undefined') return;
+
+    let isCancelled = false;
+
+    const checkCommissionSetup = async () => {
+      const adminData = localStorage.getItem('adminUser');
+      if (!adminData) return;
+
+      try {
+        const admin = JSON.parse(adminData);
+        if (admin?.role !== 'vendor') return;
+
+        setIsCheckingSetup(true);
+        const response = await fetch('/api/vendor/commission-settings', {
+          cache: 'no-store',
+        });
+
+        if (!response.ok) {
+          return;
+        }
+
+        const data = await response.json();
+        const setupCompleted = Boolean(data?.setupCompleted);
+        const setupPath = '/admin/vendor-commission-setup';
+
+        if (!setupCompleted && pathname !== setupPath) {
+          router.push(setupPath);
+        } else if (setupCompleted && pathname === setupPath) {
+          router.push('/admin');
+        }
+      } catch (error) {
+        console.error('[AdminLayout] Commission setup check failed:', error);
+      } finally {
+        if (!isCancelled) {
+          setIsCheckingSetup(false);
+        }
+      }
+    };
+
+    checkCommissionSetup();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [isAuthenticated, pathname, router]);
 
   // Global fetch interceptor to handle unauthorized errors
   useEffect(() => {
@@ -66,7 +115,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
     };
   }, [router]);
 
-  if (isLoading) {
+  if (isLoading || isCheckingSetup) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
         <div className="text-center">

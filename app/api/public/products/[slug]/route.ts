@@ -106,6 +106,8 @@ const PRODUCT_PROJECTION = {
   // Specifications
   specifications: 1,
   variants: 1,
+  productType: 1,
+  product_type: 1,
 };
 
 export async function GET(
@@ -361,6 +363,21 @@ export async function GET(
       product.diamondsPrice ||
       product.diamondDiscount;
 
+    const resolvedProductType =
+      typeof product.productType === 'string'
+        ? product.productType
+        : typeof product.product_type === 'string'
+        ? product.product_type
+        : '';
+    const isGoldProduct = product.hasGold || resolvedProductType === 'Gold';
+    const isSilverProduct = product.hasSilver || resolvedProductType === 'Silver';
+    const isPlatinumProduct = resolvedProductType === 'Platinum';
+    const resolvedMetalType =
+      product.metalType ||
+      (['Gold', 'Silver', 'Platinum'].includes(resolvedProductType)
+        ? resolvedProductType
+        : undefined);
+
     // Only return fields needed for customer display
     const productData = {
       _id: product._id.toString(),
@@ -398,20 +415,20 @@ export async function GET(
       // URL
       urlSlug: product.urlSlug,
       // Metal details (only if exists)
-      ...(product.hasGold && {
+      ...((isGoldProduct || isPlatinumProduct) && {
         hasGold: product.hasGold,
         goldWeight: product.goldWeight,
         goldPurity: product.goldPurity,
         goldRatePerGram: product.goldRatePerGram,
       }),
-      ...(product.hasSilver && {
+      ...(isSilverProduct && {
         hasSilver: product.hasSilver,
         silverWeight: product.silverWeight,
         silverPurity: product.silverPurity,
         silverRatePerGram: product.silverRatePerGram,
       }),
-      ...(product.metalType && {
-        metalType: product.metalType,
+      ...(resolvedMetalType && {
+        metalType: resolvedMetalType,
         metalPurity: product.metalPurity,
         metalWeight: product.metalWeight,
       }),

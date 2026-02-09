@@ -3,143 +3,7 @@ import { connectToDatabase } from '@/lib/mongodb';
 import { getUserFromRequest, isAdmin } from '@/lib/auth';
 import { broadcastMetalPriceUpdate } from './events/route';
 import { revalidatePath, revalidateTag } from 'next/cache';
-
-// Helper function to calculate product price (same logic as in product-form-page.tsx)
-function calculateProductPrice(product: any, newGoldRate?: number, newSilverRate?: number, newPlatinumRate?: number): number {
-  const PURITY_MAP: Record<string, number> = {
-    '24kt': 1,
-    '22kt': 0.92,
-    '20kt': 0.84,
-    '18kt': 0.75,
-    '14kt': 0.583,
-    '80%': 0.80,
-  };
-
-  const parsePurityPercent = (purity: string): number => {
-    if (!purity) return 1;
-    const lower = purity.toLowerCase().trim();
-    if (PURITY_MAP[lower] !== undefined) return PURITY_MAP[lower];
-    const numeric = parseFloat(purity);
-    if (isFinite(numeric)) {
-      // If user enters a percentage (e.g., 92), treat >24 as percent/100.
-      if (numeric > 24) return Math.min(numeric / 100, 1);
-      // If user enters karat (e.g., 22), convert to 24k scale.
-      if (numeric > 0 && numeric <= 24) return numeric / 24;
-    }
-    return 1;
-  };
-
-  const productType = product.productType || product.product_type;
-  const isSimpleProductType = productType === 'Gemstone' || productType === 'Imitation';
-  
-  // For Gemstone/Imitation, return gemstone price
-  if (isSimpleProductType) {
-    const gemstoneValue = product.gemstonePrice || 0;
-    const platformCommissionRate = product.platformCommissionRate || 0;
-    const platformCommissionValue = (platformCommissionRate > 0) 
-      ? gemstoneValue * (platformCommissionRate / 100) 
-      : 0;
-    return gemstoneValue + platformCommissionValue;
-  }
-
-  // For Diamonds without metals
-  if (productType === 'Diamonds' && !product.diamonds?.some((d: any) => d.metalType)) {
-    const diamondValueAuto = (product.diamonds || []).reduce((sum: number, d: any) => sum + (d.diamondPrice || 0), 0) + (product.diamondsPrice || 0);
-    const platformCommissionRate = product.platformCommissionRate || 0;
-    const platformCommissionValue = (platformCommissionRate > 0) 
-      ? diamondValueAuto * (platformCommissionRate / 100) 
-      : 0;
-    return diamondValueAuto + platformCommissionValue;
-  }
-
-  // For Diamonds with metals - calculate from diamonds array
-  if (productType === 'Diamonds' && product.diamonds?.some((d: any) => d.metalType)) {
-    const diamondsProductMetalValue = (product.diamonds || []).reduce((sum: number, d: any) => {
-      if (d.metalType) {
-        const itemMetalRate = d.metalType === 'Silver'
-          ? (newSilverRate ?? d.customMetalRate ?? 0)
-          : d.metalType === 'Platinum'
-          ? (newPlatinumRate ?? d.customMetalRate ?? 0)
-          : (newGoldRate ?? d.customMetalRate ?? 0);
-        const itemPurityPercent = parsePurityPercent(d.metalPurity || '24kt');
-        const itemPurityMetalRate = itemMetalRate * itemPurityPercent;
-        const itemWeight = d.metalWeight || 0;
-        const itemMakingCharges = d.makingCharges || 0;
-        return sum + ((itemWeight * itemPurityMetalRate) + (itemWeight * itemMakingCharges));
-      }
-      return sum;
-    }, 0);
-    
-    const diamondValueAuto = (product.diamonds || []).reduce((sum: number, d: any) => sum + (d.diamondPrice || 0), 0) + (product.diamondsPrice || 0);
-    const platformCommissionRate = product.platformCommissionRate || 0;
-    const platformCommissionBase = diamondsProductMetalValue + diamondValueAuto;
-    const platformCommissionValue = (platformCommissionRate > 0) 
-      ? platformCommissionBase * (platformCommissionRate / 100) 
-      : 0;
-    return diamondsProductMetalValue + diamondValueAuto + platformCommissionValue;
-  }
-
-  // For Gold/Silver/Platinum products
-  const hasGold = product.hasGold || productType === 'Gold';
-  const hasPlatinum = productType === 'Platinum';
-  const hasSilver = product.hasSilver || productType === 'Silver';
-  
-  let goldValue = 0;
-  let platinumValue = 0;
-  let silverValue = 0;
-  let makingChargesValue = 0;
-
-  if (hasGold) {
-    const goldWeight = product.goldWeight || product.weight || 0;
-    const goldRatePerGram = newGoldRate ?? product.goldRatePerGram ?? 0;
-    const goldPurity = product.goldPurity || '24kt';
-    const purityPercent = parsePurityPercent(goldPurity);
-    const purityMetalRate = goldRatePerGram * purityPercent;
-    
-    // Calculate net gold weight (subtract diamond weight if any)
-    const totalDiamondWeightCt = (product.diamonds || []).reduce((sum: number, d: any) => sum + (d.diamondWeight || 0), 0);
-    const netGoldWeight = Math.max(0, goldWeight - totalDiamondWeightCt - (product.lessStoneWeight || 0));
-    
-    goldValue = netGoldWeight * purityMetalRate;
-    makingChargesValue = netGoldWeight * (product.makingChargePerGram || 0);
-  }
-
-  if (hasPlatinum) {
-    const platinumWeight = product.goldWeight || product.weight || 0; // Platinum uses goldWeight field
-    const platinumRatePerGram = newPlatinumRate ?? product.goldRatePerGram ?? 0; // Platinum uses goldRatePerGram field
-    const platinumPurity = product.goldPurity || '24kt'; // Platinum uses goldPurity field
-    const purityPercent = parsePurityPercent(platinumPurity);
-    const purityMetalRate = platinumRatePerGram * purityPercent;
-    
-    // Calculate net platinum weight (subtract diamond weight if any)
-    const totalDiamondWeightCt = (product.diamonds || []).reduce((sum: number, d: any) => sum + (d.diamondWeight || 0), 0);
-    const netPlatinumWeight = Math.max(0, platinumWeight - totalDiamondWeightCt - (product.lessStoneWeight || 0));
-    
-    platinumValue = netPlatinumWeight * purityMetalRate;
-    makingChargesValue = netPlatinumWeight * (product.makingChargePerGram || 0);
-  }
-
-  if (hasSilver) {
-    const silverWeight = product.silverWeight || product.weight || 0;
-    const silverRatePerGram = newSilverRate ?? product.silverRatePerGram ?? 0;
-    const silverPurity = product.silverPurity || '24kt';
-    const purityPercent = parsePurityPercent(silverPurity);
-    const purityMetalRate = silverRatePerGram * purityPercent;
-    
-    silverValue = silverWeight * purityMetalRate;
-    makingChargesValue = silverWeight * (product.makingChargePerGram || 0);
-  }
-
-  const diamondValueAuto = (product.diamonds || []).reduce((sum: number, d: any) => sum + (d.diamondPrice || 0), 0);
-  const platformCommissionRate = product.platformCommissionRate || 0;
-  const platformCommissionBase = goldValue + platinumValue + silverValue + makingChargesValue + diamondValueAuto;
-  const platformCommissionValue = (platformCommissionRate > 0) 
-    ? platformCommissionBase * (platformCommissionRate / 100) 
-    : 0;
-  const extraCharges = product.otherCharges || 0;
-
-  return goldValue + platinumValue + silverValue + makingChargesValue + diamondValueAuto + platformCommissionValue + extraCharges;
-}
+import { calculateAdminProductPrice } from '@/lib/utils/admin-price-calculator';
 
 // GET: Fetch all unique metal types and their rates from products
 export async function GET(request: NextRequest) {
@@ -290,35 +154,49 @@ export async function PUT(request: NextRequest) {
       );
     }
 
+    const storedRates = await db.collection('metal_rates').findOne({});
+    const previousRate =
+      storedRates && typeof storedRates[metalType.toLowerCase()] === 'number'
+        ? storedRates[metalType.toLowerCase()]
+        : undefined;
+
     // Find all products using this metal type
     let query: any = {};
     
+    const normalizedMetalType = metalType.toLowerCase();
     if (metalType === 'Gold') {
       query = {
         $and: [
           {
             $or: [
               { hasGold: true },
-              { productType: 'Gold' },
+              { productType: { $in: ['Gold', 'gold'] } },
+              { product_type: { $in: ['Gold', 'gold'] } },
               { 'diamonds.metalType': 'Gold' },
+              { 'diamonds.metalType': 'gold' },
             ],
           },
           { productType: { $ne: 'Platinum' } }, // Exclude Platinum products
+          { product_type: { $ne: 'Platinum' } },
         ],
       };
     } else if (metalType === 'Platinum') {
       query = {
         $or: [
-          { productType: 'Platinum' },
+          { productType: { $in: ['Platinum', 'platinum'] } },
+          { product_type: { $in: ['Platinum', 'platinum'] } },
           { 'diamonds.metalType': 'Platinum' },
+          { 'diamonds.metalType': 'platinum' },
         ],
       };
     } else if (metalType === 'Silver') {
       query = {
         $or: [
           { hasSilver: true },
-          { productType: 'Silver' },
+          { productType: { $in: ['Silver', 'silver'] } },
+          { product_type: { $in: ['Silver', 'silver'] } },
           { 'diamonds.metalType': 'Silver' },
+          { 'diamonds.metalType': 'silver' },
         ],
       };
     } else {
@@ -341,12 +219,11 @@ export async function PUT(request: NextRequest) {
     const updatePromises = products.map(async (product: any) => {
       try {
         // Calculate new price
-        const newPrice = calculateProductPrice(
-          product,
-          metalType === 'Gold' ? newRate : undefined,
-          metalType === 'Silver' ? newRate : undefined,
-          metalType === 'Platinum' ? newRate : undefined
-        );
+        const newPrice = calculateAdminProductPrice(product, {
+          goldRate: metalType === 'Gold' ? newRate : undefined,
+          silverRate: metalType === 'Silver' ? newRate : undefined,
+          platinumRate: metalType === 'Platinum' ? newRate : undefined,
+        });
 
         // Prepare update object
         const updateFields: any = {
@@ -357,41 +234,81 @@ export async function PUT(request: NextRequest) {
         };
 
         // Update the metal rate in product
+        const shouldUpdateCustomRate =
+          product.customMetalRate === undefined ||
+          product.customMetalRate === null ||
+          (typeof previousRate === 'number' &&
+            product.customMetalRate === previousRate);
+
+        const productTypeValue = (product.productType || product.product_type || '')
+          .toString()
+          .toLowerCase();
+
         if (metalType === 'Gold') {
-          if (product.hasGold || (product.productType || product.product_type) === 'Gold') {
+          if (product.hasGold || productTypeValue === 'gold') {
             updateFields.goldRatePerGram = newRate;
+            if (shouldUpdateCustomRate) {
+              updateFields.customMetalRate = newRate;
+            }
           }
           // Update in diamonds array if present
           if (product.diamonds && Array.isArray(product.diamonds)) {
             updateFields.diamonds = product.diamonds.map((d: any) => {
-              if (d.metalType === 'Gold') {
-                return { ...d, customMetalRate: newRate };
+              if ((d.metalType || '').toString().toLowerCase() === 'gold') {
+                const shouldUpdateDiamondRate =
+                  d.customMetalRate === undefined ||
+                  d.customMetalRate === null ||
+                  (typeof previousRate === 'number' &&
+                    d.customMetalRate === previousRate);
+                return shouldUpdateDiamondRate
+                  ? { ...d, customMetalRate: newRate }
+                  : d;
               }
               return d;
             });
           }
         } else if (metalType === 'Platinum') {
-          if ((product.productType || product.product_type) === 'Platinum') {
+          if (productTypeValue === 'platinum') {
             updateFields.goldRatePerGram = newRate; // Platinum uses goldRatePerGram field
+            if (shouldUpdateCustomRate) {
+              updateFields.customMetalRate = newRate;
+            }
           }
           // Update in diamonds array if present
           if (product.diamonds && Array.isArray(product.diamonds)) {
             updateFields.diamonds = product.diamonds.map((d: any) => {
-              if (d.metalType === 'Platinum') {
-                return { ...d, customMetalRate: newRate };
+              if ((d.metalType || '').toString().toLowerCase() === 'platinum') {
+                const shouldUpdateDiamondRate =
+                  d.customMetalRate === undefined ||
+                  d.customMetalRate === null ||
+                  (typeof previousRate === 'number' &&
+                    d.customMetalRate === previousRate);
+                return shouldUpdateDiamondRate
+                  ? { ...d, customMetalRate: newRate }
+                  : d;
               }
               return d;
             });
           }
         } else if (metalType === 'Silver') {
-          if (product.hasSilver || product.productType === 'Silver') {
+          if (product.hasSilver || productTypeValue === 'silver') {
             updateFields.silverRatePerGram = newRate;
+            if (shouldUpdateCustomRate) {
+              updateFields.customMetalRate = newRate;
+            }
           }
           // Update in diamonds array if present
           if (product.diamonds && Array.isArray(product.diamonds)) {
             updateFields.diamonds = product.diamonds.map((d: any) => {
-              if (d.metalType === 'Silver') {
-                return { ...d, customMetalRate: newRate };
+              if ((d.metalType || '').toString().toLowerCase() === 'silver') {
+                const shouldUpdateDiamondRate =
+                  d.customMetalRate === undefined ||
+                  d.customMetalRate === null ||
+                  (typeof previousRate === 'number' &&
+                    d.customMetalRate === previousRate);
+                return shouldUpdateDiamondRate
+                  ? { ...d, customMetalRate: newRate }
+                  : d;
               }
               return d;
             });
@@ -400,8 +317,17 @@ export async function PUT(request: NextRequest) {
           // For other metal types, update in diamonds array
           if (product.diamonds && Array.isArray(product.diamonds)) {
             updateFields.diamonds = product.diamonds.map((d: any) => {
-              if (d.metalType === metalType) {
-                return { ...d, customMetalRate: newRate };
+              if (
+                (d.metalType || '').toString().toLowerCase() === normalizedMetalType
+              ) {
+                const shouldUpdateDiamondRate =
+                  d.customMetalRate === undefined ||
+                  d.customMetalRate === null ||
+                  (typeof previousRate === 'number' &&
+                    d.customMetalRate === previousRate);
+                return shouldUpdateDiamondRate
+                  ? { ...d, customMetalRate: newRate }
+                  : d;
               }
               return d;
             });
@@ -423,7 +349,7 @@ export async function PUT(request: NextRequest) {
 
     // Update metal_rates collection with current rates
     try {
-      const currentRates = await db.collection('metal_rates').findOne({});
+      const currentRates = storedRates;
       const now = new Date();
       
       if (currentRates) {

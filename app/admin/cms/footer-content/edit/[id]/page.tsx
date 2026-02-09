@@ -11,3 +11,5 @@ export default function FooterContentEditPage({ params }: { params: { id: string
   );
 }
 
+
+
