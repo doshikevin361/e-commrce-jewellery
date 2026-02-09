@@ -17,6 +17,7 @@ import {
   FileText,
   Share2,
   ShieldCheck,
+  ListChecks,
 } from 'lucide-react';
 import FormField from '@/components/formField/formField';
 import Dropdown from '../customDropdown/customDropdown';
@@ -32,7 +33,8 @@ type VendorTabId =
   | 'media'
   | 'documents'
   | 'social'
-  | 'status';
+  | 'status'
+  | 'commission';
 
 interface VendorFormData {
   storeName: string;
@@ -63,6 +65,9 @@ interface VendorFormData {
   logo: string;
   banner: string;
   commissionRate: number;
+  productTypeCommissions?: Record<string, number>;
+  allowedProductTypes?: string[];
+  allowedCategories?: string[];
   facebook: string;
   instagram: string;
   twitter: string;
@@ -185,6 +190,9 @@ export function VendorFormPage({ vendorId }: VendorFormProps) {
     logo: '',
     banner: '',
     commissionRate: 0,
+    productTypeCommissions: undefined,
+    allowedProductTypes: [],
+    allowedCategories: [],
     facebook: '',
     instagram: '',
     twitter: '',
@@ -204,6 +212,7 @@ export function VendorFormPage({ vendorId }: VendorFormProps) {
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(!!vendorId);
   const [tabsWithErrors, setTabsWithErrors] = useState<Set<VendorTabId>>(new Set());
+  const [categoryOptions, setCategoryOptions] = useState<{ _id: string; name: string }[]>([]);
   const [activeTab, setActiveTab] = useState<
     | 'basic'
     | 'business'
@@ -213,6 +222,7 @@ export function VendorFormPage({ vendorId }: VendorFormProps) {
     | 'documents'
     | 'social'
     | 'status'
+    | 'commission'
   >('basic');
 
   useEffect(() => {
@@ -239,6 +249,22 @@ export function VendorFormPage({ vendorId }: VendorFormProps) {
       fetchVendor();
     }
   }, [vendorId, toast]);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch('/api/admin/categories', { cache: 'no-store' });
+        if (response.ok) {
+          const data = await response.json();
+          const options = Array.isArray(data.categories) ? data.categories : [];
+          setCategoryOptions(options);
+        }
+      } catch (error) {
+        console.error('[v0] Failed to fetch categories:', error);
+      }
+    };
+    fetchCategories();
+  }, []);
 
   const getTabsWithErrors = (errorFields: Record<string, string>) => {
     const tabs = new Set<VendorTabId>();
@@ -424,6 +450,7 @@ export function VendorFormPage({ vendorId }: VendorFormProps) {
     { id: 'documents', label: 'Documents', icon: FileText },
     { id: 'social', label: 'Social Links', icon: Share2 },
     { id: 'status', label: 'Verification & Status', icon: ShieldCheck },
+    { id: 'commission', label: 'Commission Setup', icon: ListChecks },
   ] as const;
 
   if (loading) {
@@ -975,6 +1002,62 @@ export function VendorFormPage({ vendorId }: VendorFormProps) {
                             checked={formData.documentsVerified}
                             onCheckedChange={val => updateField('documentsVerified', val)}
                           />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {activeTab === 'commission' && (
+                    <div className='space-y-6'>
+                      <div>
+                        <h3 className='text-xl font-semibold text-slate-900'>Commission Setup</h3>
+                        <p className='text-sm text-slate-500'>
+                          Read-only view of the vendor’s selected product scope and commission rates.
+                        </p>
+                      </div>
+
+                      <div className='space-y-4'>
+                        <div>
+                          <Label>Selected Product Types</Label>
+                          <div className='mt-2 text-sm text-slate-700'>
+                            {Array.isArray(formData.allowedProductTypes) && formData.allowedProductTypes.length
+                              ? formData.allowedProductTypes.join(', ')
+                              : 'No product types selected'}
+                          </div>
+                        </div>
+
+                        <div>
+                          <Label>Selected Categories</Label>
+                          <div className='mt-2 text-sm text-slate-700'>
+                            {Array.isArray(formData.allowedCategories) && formData.allowedCategories.length
+                              ? formData.allowedCategories
+                                  .map(
+                                    id =>
+                                      categoryOptions.find(category => category._id === id)?.name || id
+                                  )
+                                  .join(', ')
+                              : 'No categories selected'}
+                          </div>
+                        </div>
+
+                        <div>
+                          <Label>Product Type Commissions (%)</Label>
+                          <div className='mt-2 grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-slate-700'>
+                            {formData.productTypeCommissions &&
+                            Object.keys(formData.productTypeCommissions).length ? (
+                              Object.entries(formData.productTypeCommissions).map(([type, rate]) => (
+                                <div
+                                  key={type}
+                                  className='flex items-center justify-between rounded-md border border-slate-200 px-3 py-2'
+                                >
+                                  <span>{type}</span>
+                                  <span className='font-medium'>{rate}%</span>
+                                </div>
+                              ))
+                            ) : (
+                              <div>No commission settings saved</div>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
