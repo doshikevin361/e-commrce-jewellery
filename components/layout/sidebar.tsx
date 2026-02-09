@@ -135,6 +135,13 @@ export function Sidebar() {
   const menuItems = [
     { label: 'Dashboard', href: '/admin', badge: null, icon: LayoutDashboard, allowedRoles: ['superadmin', 'admin', 'vendor'] },
     {
+      label: 'Pricing & Commission',
+      href: '/admin/pricing-settings',
+      badge: null,
+      icon: Coins,
+      allowedRoles: ['superadmin', 'admin'],
+    },
+    {
       label: 'Products',
       href: '/admin/products',
       badge: null,
@@ -187,13 +194,6 @@ export function Sidebar() {
       href: '/admin/settings',
       badge: null,
       icon: Settings,
-      allowedRoles: ['superadmin', 'admin'],
-    },
-    {
-      label: 'Pricing & Commission',
-      href: '/admin/pricing-settings',
-      badge: null,
-      icon: Coins,
       allowedRoles: ['superadmin', 'admin'],
     },
     {

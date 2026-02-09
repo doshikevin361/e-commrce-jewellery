@@ -1185,6 +1185,20 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
       const response = await fetch(`/api/admin/products/${productId}`);
       if (response.ok) {
         const product = await response.json();
+        // Fetch current configured metal rates so edit page shows same rate as Pricing Settings
+        let configuredRates: { gold?: number; silver?: number; platinum?: number } = {};
+        try {
+          const metalRes = await fetch('/api/public/metal-prices', { cache: 'no-store', headers: { 'Cache-Control': 'no-cache' } });
+          if (metalRes.ok) configuredRates = await metalRes.json();
+        } catch (_) {}
+        const pt = (product.product_type || product.productType || '').toString();
+        const configuredRate = pt === 'Silver' ? (configuredRates.silver ?? 0) : pt === 'Platinum' ? (configuredRates.platinum ?? 0) : (configuredRates.gold ?? 0);
+        const productRate = pt === 'Silver' ? (product.silverRatePerGram ?? product.customMetalRate) : (product.goldRatePerGram ?? product.customMetalRate);
+        // Use configured rate in form when product rate matches settings (so "gold price same" in edit)
+        const customMetalRate = (['Gold', 'Silver', 'Platinum'].includes(pt) && configuredRate > 0 && productRate === configuredRate)
+          ? undefined
+          : (product.customMetalRate ?? undefined);
+        if (Object.keys(configuredRates).length > 0) setLivePrices(configuredRates as any);
         // Map product data to form data
         setFormData({
           productType: product.product_type || '',
@@ -1268,7 +1282,7 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
           diamondCertCharges: product.diamondCertCharges ?? 0,
           otherCharges: product.otherCharges ?? 0,
           gstRate: product.gstRate ?? 3,
-          customMetalRate: product.customMetalRate ?? undefined,
+          customMetalRate,
           diamonds: product.diamonds || [],
           relatedProducts: product.relatedProducts || [],
         });
@@ -1449,11 +1463,50 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
       });
 
       if (response.ok) {
-        toast({
-          title: 'Success',
-          description: productId ? 'Product updated successfully' : 'Product created successfully',
-          variant: 'success',
-        });
+        // When user set a custom metal rate, sync it to Pricing Settings so same price applies everywhere (vice versa)
+        const isMetalProduct = ['Gold', 'Silver', 'Platinum'].includes(formData.productType);
+        const customRateToSync = isCustomMetalRateOverride && isMetalProduct && ((formData.customMetalRate ?? 0) > 0);
+        if (customRateToSync) {
+          const rateToSync = formData.customMetalRate ?? liveMetalRate;
+          try {
+            const syncRes = await fetch('/api/admin/metal-prices', {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ metalType: formData.productType, newRate: rateToSync }),
+            });
+            if (syncRes.ok) {
+              const data = await syncRes.json();
+              toast({
+                title: 'Success',
+                description: productId ? 'Product updated successfully' : 'Product created successfully',
+                variant: 'success',
+              });
+              toast({
+                title: 'Price config updated',
+                description: data?.message || `₹${rateToSync}/gram set for all ${formData.productType} products.`,
+                variant: 'default',
+              });
+            } else {
+              toast({
+                title: 'Success',
+                description: productId ? 'Product updated successfully' : 'Product created successfully',
+                variant: 'success',
+              });
+            }
+          } catch (_) {
+            toast({
+              title: 'Success',
+              description: productId ? 'Product updated successfully' : 'Product created successfully',
+              variant: 'success',
+            });
+          }
+        } else {
+          toast({
+            title: 'Success',
+            description: productId ? 'Product updated successfully' : 'Product created successfully',
+            variant: 'success',
+          });
+        }
         router.push('/admin/products');
       } else {
         const error = await response.json();
