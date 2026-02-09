@@ -30,6 +30,9 @@ export interface Vendor {
   logo: string;
   banner: string;
   commissionRate: number;
+  productTypeCommissions?: Record<string, number>;
+  commissionSetupCompleted?: boolean;
+  commissionSetupCompletedAt?: Date;
   allowedCategories: string[];
   facebook?: string;
   instagram?: string;

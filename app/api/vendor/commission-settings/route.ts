@@ -22,19 +22,23 @@ export async function GET(request: NextRequest) {
 
     // Default commission rates if not set
     const defaultCommissions = {
-      Gold: 5,
-      Silver: 4,
-      Platinum: 6,
-      Gemstone: 8,
-      Diamonds: 10,
-      Imitation: 3,
+      Gold: 0,
+      Silver: 0,
+      Platinum: 0,
+      Gemstone: 0,
+      Diamonds: 0,
+      Imitation: 0,
     };
 
     const commissions = vendor.productTypeCommissions || defaultCommissions;
+    const setupCompleted = Boolean(
+      vendor.commissionSetupCompleted ?? vendor.productTypeCommissions
+    );
 
     return NextResponse.json({ 
       commissions,
       vendorId: vendor._id.toString(),
+      setupCompleted,
     });
   } catch (error) {
     console.error('[v0] Failed to fetch vendor commission settings:', error);
@@ -53,6 +57,8 @@ export async function PUT(request: NextRequest) {
     const { db } = await connectToDatabase();
     const body = await request.json();
     const { commissions } = body;
+    const strict = Boolean(body?.strict);
+    const markSetupComplete = Boolean(body?.markSetupComplete);
 
     if (!commissions || typeof commissions !== 'object') {
       return NextResponse.json(
@@ -67,17 +73,22 @@ export async function PUT(request: NextRequest) {
     
     for (const productType of productTypes) {
       const rate = commissions[productType];
-      if (typeof rate === 'number' && rate >= 0 && rate <= 100) {
+      if (typeof rate === 'number' && Number.isFinite(rate) && rate >= 0 && rate <= 100) {
         validCommissions[productType] = rate;
+      } else if (strict) {
+        return NextResponse.json(
+          { error: `Invalid commission rate for ${productType}` },
+          { status: 400 }
+        );
       } else {
         // Use default if invalid
         const defaults: Record<string, number> = {
-          Gold: 5,
-          Silver: 4,
-          Platinum: 6,
-          Gemstone: 8,
-          Diamonds: 10,
-          Imitation: 3,
+          Gold: 0,
+          Silver: 0,
+          Platinum: 0,
+          Gemstone: 0,
+          Diamonds: 0,
+          Imitation: 0,
         };
         validCommissions[productType] = defaults[productType];
       }
@@ -88,6 +99,12 @@ export async function PUT(request: NextRequest) {
       {
         $set: {
           productTypeCommissions: validCommissions,
+          ...(markSetupComplete
+            ? {
+                commissionSetupCompleted: true,
+                commissionSetupCompletedAt: new Date(),
+              }
+            : {}),
           updatedAt: new Date(),
         },
       }
@@ -101,6 +118,7 @@ export async function PUT(request: NextRequest) {
       success: true,
       message: 'Commission rates updated successfully',
       commissions: validCommissions,
+      setupCompleted: markSetupComplete ? true : undefined,
     });
   } catch (error) {
     console.error('[v0] Failed to update vendor commission settings:', error);

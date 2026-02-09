@@ -18,16 +18,25 @@ interface CommissionRates {
 }
 
 const DEFAULT_COMMISSIONS: CommissionRates = {
-  Gold: 5,
-  Silver: 4,
-  Platinum: 6,
-  Gemstone: 8,
-  Diamonds: 10,
-  Imitation: 3,
+  Gold: 0,
+  Silver: 0,
+  Platinum: 0,
+  Gemstone: 0,
+  Diamonds: 0,
+  Imitation: 0,
 };
 
-export function VendorCommissionSettings() {
+interface VendorCommissionSettingsProps {
+  mode?: 'settings' | 'setup';
+  onComplete?: () => void;
+}
+
+export function VendorCommissionSettings({
+  mode = 'settings',
+  onComplete,
+}: VendorCommissionSettingsProps) {
   const { toast } = useToast();
+  const isSetup = mode === 'setup';
   const [commissions, setCommissions] = useState<CommissionRates>(DEFAULT_COMMISSIONS);
   const [lastSaved, setLastSaved] = useState<CommissionRates>(DEFAULT_COMMISSIONS);
   const [loading, setLoading] = useState(true);
@@ -97,7 +106,11 @@ export function VendorCommissionSettings() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ commissions }),
+        body: JSON.stringify({
+          commissions,
+          strict: isSetup,
+          markSetupComplete: isSetup,
+        }),
       });
 
       if (!response.ok) {
@@ -108,10 +121,14 @@ export function VendorCommissionSettings() {
       setLastSaved(commissions);
 
       toast({
-        title: "Settings saved",
+        title: isSetup ? "Setup complete" : "Settings saved",
         description: "Commission rates updated successfully",
         variant: "success",
       });
+
+      if (isSetup && onComplete) {
+        onComplete();
+      }
     } catch (error) {
       console.error("[v0] Commission settings update failed:", error);
       toast({
@@ -147,10 +164,12 @@ export function VendorCommissionSettings() {
           Configuration
         </p>
         <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
-          Commission Settings
+          {isSetup ? "Commission Setup" : "Commission Settings"}
         </h1>
         <p className="text-slate-600 dark:text-slate-400 mt-1">
-          Set commission rates for each product type. These rates will be automatically applied when you add products.
+          {isSetup
+            ? "Complete your commission setup to access the vendor dashboard."
+            : "Set commission rates for each product type. These rates will be automatically applied when you add products."}
         </p>
       </div>
 
@@ -304,7 +323,7 @@ export function VendorCommissionSettings() {
                     Saving...
                   </>
                 ) : (
-                  "Save changes"
+                  isSetup ? "Save and continue" : "Save changes"
                 )}
               </Button>
             </div>

@@ -996,7 +996,12 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
 
   const fetchMetalRates = async () => {
     try {
-      const response = await fetch('/api/public/metal-prices');
+      const response = await fetch('/api/public/metal-prices', {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache',
+        },
+      });
       if (response.ok) {
         const data = await response.json();
         setLivePrices(data);
@@ -1147,7 +1152,12 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
   const fetchProduct = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/admin/products/${productId}`);
+      const response = await fetch(`/api/admin/products/${productId}`, {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache',
+        },
+      });
       if (response.ok) {
         const product = await response.json();
         // Map product data to form data

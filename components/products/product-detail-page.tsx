@@ -278,7 +278,12 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
       try {
         setLoading(true);
         // API has Cache-Control headers, browser will cache automatically
-        const response = await fetch(`/api/public/products/${productSlug}`);
+        const response = await fetch(`/api/public/products/${productSlug}`, {
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache',
+          },
+        });
 
         if (!response.ok) {
           if (response.status === 404) {
