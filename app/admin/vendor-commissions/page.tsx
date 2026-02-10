@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { AdminLayout } from '@/components/layout/admin-layout';
 import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import {
   Table,
   TableBody,
@@ -12,7 +13,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Store, Percent } from 'lucide-react';
+import { Loader2, Store, Percent, Search } from 'lucide-react';
 
 interface CommissionRow {
   productType: string;
@@ -39,6 +40,7 @@ interface VendorCommissionSummary {
 export default function VendorCommissionsPage() {
   const [vendors, setVendors] = useState<VendorCommissionSummary[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     const token =
@@ -58,19 +60,48 @@ export default function VendorCommissionsPage() {
       .finally(() => setLoading(false));
   }, []);
 
+  const filteredVendors = useMemo(() => {
+    const term = searchTerm.trim().toLowerCase();
+    if (!term) return vendors;
+    return vendors.filter((vendor) => {
+      const storeName = vendor.storeName?.toLowerCase() ?? '';
+      const ownerName = vendor.ownerName?.toLowerCase() ?? '';
+      const email = vendor.email?.toLowerCase() ?? '';
+      return (
+        storeName.includes(term) ||
+        ownerName.includes(term) ||
+        email.includes(term)
+      );
+    });
+  }, [vendors, searchTerm]);
+
   return (
     <AdminLayout>
       <div className="space-y-6">
-        <div>
-          <p className="text-sm uppercase tracking-wide text-slate-500">
-            Commission
-          </p>
-          <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
-            Vendor-wise Commission Details
-          </h1>
-          <p className="mt-1 text-slate-600 dark:text-slate-400">
-            Saved commission settings for each vendor (product type, category, design, metal, purity, %).
-          </p>
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <p className="text-sm uppercase tracking-wide text-slate-500">
+              Commission
+            </p>
+            <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
+              Vendor-wise Commission Details
+            </h1>
+            <p className="mt-1 text-slate-600 dark:text-slate-400">
+              Saved commission settings for each vendor (product type, category,
+              design, metal, purity, %).
+            </p>
+          </div>
+          <div className="flex w-full justify-end sm:w-auto">
+            <div className="relative w-full sm:w-[320px]">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Search by store, owner, or email..."
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
+                className="pl-10"
+              />
+            </div>
+          </div>
         </div>
 
         {loading ? (
@@ -84,9 +115,13 @@ export default function VendorCommissionsPage() {
           <Card className="py-12 text-center text-slate-500">
             No vendors found.
           </Card>
+        ) : filteredVendors.length === 0 ? (
+          <Card className="py-12 text-center text-slate-500">
+            No vendors match your search.
+          </Card>
         ) : (
           <div className="space-y-6">
-            {vendors.map((v) => (
+            {filteredVendors.map((v) => (
               <Card
                 key={v._id}
                 className="overflow-hidden border border-slate-200 dark:border-slate-800"
