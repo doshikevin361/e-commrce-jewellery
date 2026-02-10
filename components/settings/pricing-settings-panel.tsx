@@ -257,7 +257,7 @@ export function PricingSettingsPanel() {
                   Commission by combination
                 </h2>
                 <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-                  When adding a product, vendor commission is set from the matching row (product type + category + design type + metal + purity). Add rows and save.
+                  Admin commission per combination. When anyone (admin or vendor) adds a product, this rate is applied. Vendor commission is set from vendor&apos;s own commission settings when a vendor adds a product.
                 </p>
               </div>
               <div className="overflow-x-auto">
@@ -269,8 +269,7 @@ export function PricingSettingsPanel() {
                       <TableHead className="whitespace-nowrap">Design Type</TableHead>
                       <TableHead className="whitespace-nowrap">Metal</TableHead>
                       <TableHead className="whitespace-nowrap">Purity</TableHead>
-                      <TableHead className="whitespace-nowrap">Vendor (%)</TableHead>
-                      <TableHead className="whitespace-nowrap">Platform / Admin (%)</TableHead>
+                      <TableHead className="whitespace-nowrap">Admin Commission (%)</TableHead>
                       <TableHead className="w-12" />
                     </TableRow>
                   </TableHeader>
@@ -351,22 +350,6 @@ export function PricingSettingsPanel() {
                             <option value="">Select</option>
                             {PURITY_OPTIONS.map((p) => <option key={p} value={p}>{p}</option>)}
                           </select>
-                        </TableCell>
-                        <TableCell className="p-2">
-                          <Input
-                            type="number"
-                            min={0}
-                            step={0.5}
-                            className="h-9 w-24"
-                            value={row.vendorCommission || ""}
-                            onChange={(e) => {
-                              const rows = [...(formData.commissionRows ?? [])];
-                              if (rows.length <= index) rows.push({ productType: "", category: "", designType: "", metal: "", purityKarat: "", vendorCommission: 0, platformCommission: 0 });
-                              rows[index] = { ...rows[index], vendorCommission: parseFloat(e.target.value) || 0 };
-                              updateField("commissionRows", rows);
-                            }}
-                            placeholder="%"
-                          />
                         </TableCell>
                         <TableCell className="p-2">
                           <Input

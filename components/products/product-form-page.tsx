@@ -718,7 +718,7 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
     urlSlug: '',
     weight: 0,
     stock: 1,
-    vendorCommissionRate: 5,
+    vendorCommissionRate: 0,
     platformCommissionRate: 0,
     makingChargePerGram: 500,
     diamondValue: 0,
@@ -1057,20 +1057,21 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
         }
       }
 
-      let vendorCommissionRate = 5; // Fallback default
+      let vendorCommissionRate = 0; // Fallback default (vendor gets rate from their commission rows)
       let platformCommissionRate = 0; // Fallback default
       let vendorCommissions: any = null;
       let adminCommissions: any = null;
 
-      let commissionRows: Array<{ productType: string; category: string; designType: string; metal: string; purityKarat: string; vendorCommission: number }> = [];
+      let adminCommissionRows: Array<{ productType: string; category: string; designType: string; metal: string; purityKarat: string; platformCommission?: number }> = [];
+      let vendorCommissionRows: Array<{ productType: string; category: string; designType: string; metal: string; purityKarat: string; vendorCommission: number }> = [];
       try {
         const adminResponse = await fetch('/api/admin/settings');
         if (adminResponse.ok) {
           const adminData = await adminResponse.json();
           adminCommissions = adminData.productTypeCommissions;
-          if (roleToUse === 'admin' && Array.isArray(adminData.commissionRows)) {
-            commissionRows = adminData.commissionRows;
-            console.log('[DEBUG] Fetched admin commission rows:', commissionRows.length);
+          if (Array.isArray(adminData.commissionRows)) {
+            adminCommissionRows = adminData.commissionRows;
+            console.log('[DEBUG] Fetched admin commission rows (for platform):', adminCommissionRows.length);
           }
           console.log('[DEBUG] Fetched admin commission settings:', adminCommissions);
         }
@@ -1084,8 +1085,8 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
           if (vendorResponse.ok) {
             const vendorData = await vendorResponse.json();
             vendorCommissions = vendorData.commissions;
-            commissionRows = Array.isArray(vendorData.commissionRows) ? vendorData.commissionRows : [];
-            console.log('[DEBUG] Fetched vendor commission settings:', vendorCommissions, 'rows:', commissionRows.length);
+            vendorCommissionRows = Array.isArray(vendorData.commissionRows) ? vendorData.commissionRows : [];
+            console.log('[DEBUG] Fetched vendor commission rows:', vendorCommissionRows.length);
           }
         } catch (error) {
           console.error('[DEBUG] Failed to fetch vendor commission settings:', error);
@@ -1095,44 +1096,41 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
       const rawCategory = formSnapshot?.category ?? '';
       const rawDesignType = formSnapshot?.designType ?? '';
       const purity = formSnapshot?.goldPurity || formSnapshot?.silverPurity || '';
+      // Metal for matching: only when product is Gold/Silver/Platinum (row may have metal set)
       const metal = productType === 'Gold' || productType === 'Silver' || productType === 'Platinum' ? productType : '';
       const categoryName = optionMaps?.categoryOptions?.find((o) => o.value === rawCategory)?.label?.split(' > ').pop()?.trim() || rawCategory;
       const designTypeName = optionMaps?.designTypes?.find((o) => o.value === rawDesignType)?.label?.trim() || rawDesignType;
 
+      // Full combination match: ALL fields (category, designType, metal, purity) must match the row. No partial match.
       const findCommissionFromRows = (
-        rows: typeof commissionRows,
+        rows: any[],
         pt: string,
         cat: string,
         des: string,
         met: string,
         pur: string
-      ): { vendor: number; platform?: number } | null => {
+      ): { platform?: number; vendor?: number } | null => {
         const norm = (s: string) => (s || '').trim().toLowerCase();
-        let best: { row: (typeof commissionRows)[0]; score: number } | null = null;
+        const nPt = norm(pt);
+        const nCat = norm(cat);
+        const nDes = norm(des);
+        const nMet = norm(met);
+        const nPur = norm(pur);
         for (const row of rows) {
-          if (norm(row.productType) !== norm(pt)) continue;
+          if (norm(row.productType) !== nPt) continue;
           const rowCat = norm(row.category);
           const rowDes = norm(row.designType);
-          const matchCat = rowCat === norm(cat) || rowCat === norm(rawCategory);
-          const matchDes = rowDes === norm(des) || rowDes === norm(rawDesignType);
-          const c = matchCat ? 1 : 0;
-          const d = matchDes ? 1 : 0;
-          const m = norm(row.metal) === norm(met) ? 1 : 0;
-          const p = norm(row.purityKarat) === norm(pur) ? 1 : 0;
-          const score = (c ? 8 : 0) + (d ? 4 : 0) + (m ? 2 : 0) + (p ? 1 : 0);
-          if (score >= 0 && (!best || score > best.score)) {
-            best = { row, score };
-          }
-        }
-        if (best && best.score > 0) {
-          const r = best.row as { vendorCommission: number; platformCommission?: number };
-          return { vendor: r.vendorCommission, platform: typeof r.platformCommission === 'number' ? r.platformCommission : undefined };
-        }
-        for (const row of rows) {
-          if (norm(row.productType) === norm(pt)) {
-            const r = row as { vendorCommission: number; platformCommission?: number };
-            return { vendor: r.vendorCommission, platform: typeof r.platformCommission === 'number' ? r.platformCommission : undefined };
-          }
+          const rowMetal = norm(row.metal);
+          const rowPur = norm(row.purityKarat);
+          // Every field must match: category, designType, metal, purity (exact combination)
+          if (rowCat !== nCat) continue;
+          if (rowDes !== nDes) continue;
+          if (rowMetal !== nMet) continue;
+          if (rowPur !== nPur) continue;
+          return {
+            platform: typeof row.platformCommission === 'number' ? row.platformCommission : undefined,
+            vendor: typeof row.vendorCommission === 'number' ? row.vendorCommission : undefined,
+          };
         }
         return null;
       };
@@ -1142,41 +1140,45 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
         settingsData: {
           productTypeCommissions: adminCommissions,
           vendorCommissions: vendorCommissions,
-          commissionRows,
+          adminCommissionRows,
+          vendorCommissionRows,
         },
       }));
 
       if (productType) {
-        if (adminCommissions && adminCommissions[productType as keyof typeof adminCommissions] !== undefined) {
-          platformCommissionRate = adminCommissions[productType as keyof typeof adminCommissions];
-          console.log('[DEBUG] Platform Commission (fallback) for', productType, ':', platformCommissionRate);
-        }
+        let platformCommissionMatched = false;
+        let vendorCommissionMatched = false;
 
-        if ((roleToUse === 'vendor' || roleToUse === 'admin') && commissionRows.length > 0) {
-          const fromRows = findCommissionFromRows(commissionRows, productType, categoryName, designTypeName, metal, purity);
-          if (fromRows !== null) {
-            vendorCommissionRate = fromRows.vendor;
-            if (typeof fromRows.platform === 'number') {
-              platformCommissionRate = fromRows.platform;
-              console.log('[DEBUG] Platform & Vendor commission from combination:', platformCommissionRate, '/', vendorCommissionRate);
-            } else {
-              console.log('[DEBUG] Vendor commission from combination:', vendorCommissionRate);
-            }
-          } else if (roleToUse === 'vendor' && vendorCommissions) {
+        // Platform commission only from combination match (puri combination check) – no product-type-only fallback
+        if (adminCommissionRows.length > 0) {
+          const fromAdmin = findCommissionFromRows(adminCommissionRows, productType, categoryName, designTypeName, metal, purity);
+          platformCommissionMatched = fromAdmin !== null;
+          if (fromAdmin !== null && typeof fromAdmin.platform === 'number') {
+            platformCommissionRate = fromAdmin.platform;
+            console.log('[DEBUG] Platform commission from admin combination:', platformCommissionRate);
+          }
+        }
+        // When no commission rows or no match, platformCommissionRate stays 0
+
+        if (roleToUse === 'vendor' && vendorCommissionRows.length > 0) {
+          const fromVendor = findCommissionFromRows(vendorCommissionRows, productType, categoryName, designTypeName, metal, purity);
+          vendorCommissionMatched = fromVendor !== null;
+          if (fromVendor !== null && typeof fromVendor.vendor === 'number') {
+            vendorCommissionRate = fromVendor.vendor;
+            console.log('[DEBUG] Vendor commission from vendor combination:', vendorCommissionRate);
+          } else if (vendorCommissions) {
             const rate = vendorCommissions[productType as keyof typeof vendorCommissions];
             vendorCommissionRate = typeof rate === 'number' && rate >= 0 ? rate : 0;
             console.log('[DEBUG] Vendor Commission fallback by product type:', vendorCommissionRate);
-          } else if (roleToUse === 'admin' && adminCommissions && adminCommissions[productType as keyof typeof adminCommissions] !== undefined) {
-            vendorCommissionRate = adminCommissions[productType as keyof typeof adminCommissions];
-            console.log('[DEBUG] Admin commission fallback by product type:', vendorCommissionRate);
           }
         } else if (roleToUse === 'vendor' && vendorCommissions) {
           const rate = vendorCommissions[productType as keyof typeof vendorCommissions];
           vendorCommissionRate = typeof rate === 'number' && rate >= 0 ? rate : 0;
+          vendorCommissionMatched = true; // no combination rows, show field with product-type fallback
           console.log('[DEBUG] Vendor Commission for', productType, ':', vendorCommissionRate);
-        } else if (roleToUse === 'admin' && adminCommissions && adminCommissions[productType as keyof typeof adminCommissions] !== undefined) {
-          vendorCommissionRate = adminCommissions[productType as keyof typeof adminCommissions];
-          console.log('[DEBUG] Admin using admin commission as vendor commission for', productType, ':', vendorCommissionRate);
+        } else if (roleToUse === 'admin') {
+          vendorCommissionRate = 0;
+          console.log('[DEBUG] Admin adding product: vendor commission 0');
         }
 
         const updateData = {
@@ -1190,6 +1192,13 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
           const newData = {
             ...prev,
             ...updateData,
+            settingsData: {
+              ...prev.settingsData,
+              adminCommissionRows,
+              vendorCommissionRows,
+              platformCommissionMatched: adminCommissionRows.length === 0 ? true : platformCommissionMatched,
+              vendorCommissionMatched: roleToUse !== 'vendor' ? true : (vendorCommissionRows.length === 0 ? true : vendorCommissionMatched),
+            },
           };
           console.log('[DEBUG] Updated commission rates - Platform:', newData.platformCommissionRate, 'Vendor:', newData.vendorCommissionRate);
           return newData;
@@ -1331,7 +1340,7 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
           urlSlug: product.urlSlug || '',
           weight: product.weight || 0,
           stock: product.stock ?? 1,
-          vendorCommissionRate: product.vendorCommissionRate ?? 5,
+          vendorCommissionRate: product.vendorCommissionRate ?? 0,
           platformCommissionRate: product.platformCommissionRate ?? 0,
           makingChargePerGram: product.makingChargePerGram ?? 500,
           diamondValue: product.diamondValue ?? 0,
@@ -1602,7 +1611,7 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
           silverPurity: '',
           // Don't reset commission rates for vendors - keep the admin's and vendor's set values
           platformCommissionRate: userRole === 'vendor' ? prev.platformCommissionRate : 0,
-          vendorCommissionRate: userRole === 'vendor' ? prev.vendorCommissionRate : 5,
+          vendorCommissionRate: userRole === 'vendor' ? prev.vendorCommissionRate : 0,
           otherCharges: 0,
           discount: 0,
         };
@@ -1695,6 +1704,25 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
   // For Gemstone and Imitation products, use gemstone price instead of gold/diamond calculations
   const isSimpleProductType = formData.productType === 'Gemstone' || formData.productType === 'Imitation';
   const gemstoneValue = isSimpleProductType ? (formData.gemstonePrice || 0) : 0;
+
+  // Commission fields show only when 4 fields selected AND combination matched
+  const isMetalType = ['Gold', 'Silver', 'Platinum'].includes(formData.productType || '');
+  const hasPurity = !!(formData.goldPurity || formData.silverPurity);
+  const hasFourFieldsForCommission = !!(
+    formData.productType &&
+    formData.category &&
+    formData.designType &&
+    (isMetalType ? hasPurity : true)
+  );
+  const showPlatformCommissionField =
+    hasFourFieldsForCommission &&
+    (formData.settingsData?.adminCommissionRows?.length ?? 0) > 0 &&
+    formData.settingsData?.platformCommissionMatched === true;
+  const showVendorCommissionField =
+    userRole === 'vendor' &&
+    hasFourFieldsForCommission &&
+    (formData.settingsData?.vendorCommissionRows?.length ?? 0) > 0 &&
+    formData.settingsData?.vendorCommissionMatched === true;
   
   // For Diamonds product type, check if metals are added
   const hasMetalsInDiamonds = formData.productType === 'Diamonds' && formData.diamonds.some(d => d.metalType);
@@ -3304,22 +3332,6 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                 <p className='text-sm text-gray-600'>Metal Value</p>
                 <p className='text-lg font-semibold text-[#1F3B29]'>{formatINR(goldValue)}</p>
               </div>
-              {userRole !== 'vendor' && (
-                <div className='p-3 bg-white rounded border'>
-                  <p className='text-sm text-gray-600'>Vendor Wastage / Commission (%)</p>
-                  <FormField
-                    label=''
-                    value={formData.vendorCommissionRate}
-                    onChange={e => updateField('vendorCommissionRate', parseFloat(e.target.value) || 0)}
-                    type='number'
-                    placeholder='5'
-                    disabled={true}
-                    readOnly={true}
-                  />
-                  <p className='text-xs text-gray-500 mt-1'>Value: {formatINR(vendorCommissionValue)}</p>
-                  <p className='text-xs text-blue-600 mt-1'>Set in Admin Settings</p>
-                </div>
-              )}
               <div className='p-3 bg-white rounded border'>
                 <p className='text-sm text-gray-600'>Making Charges per gram</p>
                 <FormField
@@ -3432,30 +3444,32 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
               <p className='text-xs text-gray-500 mt-1'>Stored for invoice calculation (website)</p>
             </div>
             
-            {/* Platform Commission field - for all product types */}
-            <div className='p-3 bg-white rounded border'>
-              <p className='text-sm text-gray-600'>Platform Commission (%)</p>
-              <FormField
-                label=''
-                value={formData.platformCommissionRate}
-                onChange={e => updateField('platformCommissionRate', parseFloat(e.target.value) || 0)}
-                type='number'
-                placeholder='0'
-                disabled={userRole === 'vendor'}
-                readOnly={userRole === 'vendor'}
-              />
-              {formData.platformCommissionRate > 0 && (
-                <p className='text-xs text-gray-500 mt-1'>Value: {formatINR(platformCommissionValue)}</p>
-              )}
-              {userRole === 'vendor' && (
-                <p className='text-xs text-blue-600 mt-1 cursor-pointer hover:underline' onClick={() => window.open('/admin/pricing-settings', '_blank')}>
-                  Set by Admin
-                </p>
-              )}
-            </div>
+            {/* Platform Commission: show only when 4 fields selected AND combination matched */}
+            {showPlatformCommissionField && (
+              <div className='p-3 bg-white rounded border'>
+                <p className='text-sm text-gray-600'>Platform Commission (%)</p>
+                <FormField
+                  label=''
+                  value={formData.platformCommissionRate}
+                  onChange={e => updateField('platformCommissionRate', parseFloat(e.target.value) || 0)}
+                  type='number'
+                  placeholder='0'
+                  disabled={userRole === 'vendor'}
+                  readOnly={userRole === 'vendor'}
+                />
+                {formData.platformCommissionRate > 0 && (
+                  <p className='text-xs text-gray-500 mt-1'>Value: {formatINR(platformCommissionValue)}</p>
+                )}
+                {userRole === 'vendor' && (
+                  <p className='text-xs text-blue-600 mt-1 cursor-pointer hover:underline' onClick={() => window.open('/admin/pricing-settings', '_blank')}>
+                    Set by Admin
+                  </p>
+                )}
+              </div>
+            )}
 
-            {/* Vendor Commission field - for vendors only */}
-            {userRole === 'vendor' && (
+            {/* Vendor Commission (vendor only): show only when 4 fields selected AND combination matched */}
+            {showVendorCommissionField && (
               <div className='p-3 bg-white rounded border'>
                 <p className='text-sm text-gray-600'>Vendor Commission (%)</p>
                 <FormField
@@ -3463,7 +3477,7 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                   value={formData.vendorCommissionRate}
                   onChange={e => updateField('vendorCommissionRate', parseFloat(e.target.value) || 0)}
                   type='number'
-                  placeholder='5'
+                  placeholder='0'
                 />
                 {formData.vendorCommissionRate > 0 && (
                   <p className='text-xs text-gray-500 mt-1'>Value: {formatINR(vendorCommissionValue)}</p>
