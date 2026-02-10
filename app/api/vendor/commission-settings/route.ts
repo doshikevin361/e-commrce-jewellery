@@ -37,6 +37,16 @@ export async function GET(request: NextRequest) {
     const categories = Array.isArray(vendor.allowedCategories)
       ? vendor.allowedCategories
       : [];
+    const commissionRows = Array.isArray(vendor.commissionRows)
+      ? vendor.commissionRows.map((r: any) => ({
+          productType: String(r?.productType ?? ''),
+          category: String(r?.category ?? ''),
+          designType: String(r?.designType ?? ''),
+          metal: String(r?.metal ?? ''),
+          purityKarat: String(r?.purityKarat ?? ''),
+          vendorCommission: typeof r?.vendorCommission === 'number' ? r.vendorCommission : 0,
+        }))
+      : [];
     const setupCompleted = Boolean(
       vendor.commissionSetupCompleted ?? vendor.productTypeCommissions
     );
@@ -45,6 +55,7 @@ export async function GET(request: NextRequest) {
       commissions,
       productTypes,
       categories,
+      commissionRows,
       vendorId: vendor._id.toString(),
       setupCompleted,
     });
@@ -67,6 +78,7 @@ export async function PUT(request: NextRequest) {
     const { commissions } = body;
     const productTypesInput = Array.isArray(body?.productTypes) ? body.productTypes : [];
     const categoriesInput = Array.isArray(body?.categories) ? body.categories : [];
+    const commissionRowsInput = Array.isArray(body?.commissionRows) ? body.commissionRows : [];
     const strict = Boolean(body?.strict);
     const markSetupComplete = Boolean(body?.markSetupComplete);
 
@@ -104,6 +116,17 @@ export async function PUT(request: NextRequest) {
       }
     }
 
+    const safeCommissionRows = commissionRowsInput
+      .filter((r: any) => r && (typeof r.productType === 'string' || typeof r.category === 'string'))
+      .map((r: any) => ({
+        productType: String(r?.productType ?? '').trim(),
+        category: String(r?.category ?? '').trim(),
+        designType: String(r?.designType ?? '').trim(),
+        metal: String(r?.metal ?? '').trim(),
+        purityKarat: String(r?.purityKarat ?? '').trim(),
+        vendorCommission: typeof r?.vendorCommission === 'number' && Number.isFinite(r.vendorCommission) ? r.vendorCommission : 0,
+      }));
+
     const result = await db.collection('vendors').updateOne(
       { _id: new ObjectId(user.id) },
       {
@@ -115,6 +138,7 @@ export async function PUT(request: NextRequest) {
           allowedCategories: categoriesInput.filter(
             (item: unknown) => typeof item === 'string' && item.trim().length > 0
           ),
+          commissionRows: safeCommissionRows,
           ...(markSetupComplete
             ? {
                 commissionSetupCompleted: true,

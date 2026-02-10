@@ -14,18 +14,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { 
-  CheckCircle2, 
-  MapPin, 
-  Building2, 
+import {
+  CheckCircle2,
+  MapPin,
+  Building2,
   User,
   ArrowRight,
-  ArrowLeft
+  ArrowLeft,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface FormData {
-  // Business Details
   hasGST: boolean;
   gstin: string;
   businessName: string;
@@ -36,14 +35,10 @@ interface FormData {
   city: string;
   state: string;
   pincode: string;
-  
-  // Bank Details
   accountHolderName: string;
   accountNumber: string;
   ifscCode: string;
   bankName: string;
-  
-  // Supplier Details
   supplierName: string;
   supplierEmail: string;
   supplierPhone: string;
@@ -87,6 +82,7 @@ export default function VendorRegistrationPage() {
     { id: 3, name: 'Bank Details', icon: Building2 },
     { id: 4, name: 'Supplier Details', icon: User },
   ];
+  const TOTAL_STEPS = 4;
 
   const handleInputChange = (field: keyof FormData, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -191,7 +187,7 @@ export default function VendorRegistrationPage() {
           return false;
         }
         return true;
-      
+
       default:
         return true;
     }
@@ -199,7 +195,7 @@ export default function VendorRegistrationPage() {
 
   const handleNext = () => {
     if (validateStep()) {
-      setCurrentStep(prev => Math.min(prev + 1, 4));
+      setCurrentStep(prev => Math.min(prev + 1, TOTAL_STEPS));
     }
   };
 
@@ -575,7 +571,7 @@ export default function VendorRegistrationPage() {
                 </Button>
               )}
               
-              {currentStep < 4 ? (
+              {currentStep < TOTAL_STEPS ? (
                 <Button
                   onClick={handleNext}
                   className='flex-1 bg-[#1F3B29] hover:bg-[#2d5a3f]'>

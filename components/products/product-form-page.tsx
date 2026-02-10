@@ -35,15 +35,7 @@ const CATEGORY_OPTIONS = [
   { label: 'Anklet', value: 'Anklet' },
 ] as const;
 
-// Design Type Options
-const DESIGN_TYPE_OPTIONS = [
-  { label: 'Plain', value: 'Plain' },
-  { label: 'Casting', value: 'Casting' },
-  { label: 'Handmade', value: 'Handmade' },
-  { label: 'Rajkot', value: 'Rajkot' },
-  { label: 'Agra Payal', value: 'Agra Payal' },
-  { label: 'Fancy Payal', value: 'Fancy Payal' },
-] as const;
+// Design Type: loaded from /api/admin/design-types (design_types table), no static list
 
 // Gold Purity/Karat Options
 const GOLD_PURITY_OPTIONS = [
@@ -1041,7 +1033,11 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
     }
   };
 
-  const fetchAdminDefaultCommission = async (currentUserRole?: string, productType?: string) => {
+  const fetchAdminDefaultCommission = async (
+    currentUserRole?: string,
+    productType?: string,
+    formSnapshot?: { category?: string; designType?: string; goldPurity?: string; silverPurity?: string }
+  ) => {
     try {
       // Get user role if not provided
       let roleToUse = currentUserRole;
@@ -1065,55 +1061,113 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
       let vendorCommissions: any = null;
       let adminCommissions: any = null;
 
-      // Always fetch admin's commission settings (for Platform Commission)
+      let commissionRows: Array<{ productType: string; category: string; designType: string; metal: string; purityKarat: string; vendorCommission: number }> = [];
       try {
         const adminResponse = await fetch('/api/admin/settings');
         if (adminResponse.ok) {
           const adminData = await adminResponse.json();
           adminCommissions = adminData.productTypeCommissions;
+          if (roleToUse === 'admin' && Array.isArray(adminData.commissionRows)) {
+            commissionRows = adminData.commissionRows;
+            console.log('[DEBUG] Fetched admin commission rows:', commissionRows.length);
+          }
           console.log('[DEBUG] Fetched admin commission settings:', adminCommissions);
         }
       } catch (error) {
         console.error('[DEBUG] Failed to fetch admin commission settings:', error);
       }
 
-      // If vendor, also fetch vendor's commission settings (for Vendor Commission)
       if (roleToUse === 'vendor') {
         try {
           const vendorResponse = await fetch('/api/vendor/commission-settings');
           if (vendorResponse.ok) {
             const vendorData = await vendorResponse.json();
             vendorCommissions = vendorData.commissions;
-            console.log('[DEBUG] Fetched vendor commission settings:', vendorCommissions);
+            commissionRows = Array.isArray(vendorData.commissionRows) ? vendorData.commissionRows : [];
+            console.log('[DEBUG] Fetched vendor commission settings:', vendorCommissions, 'rows:', commissionRows.length);
           }
         } catch (error) {
           console.error('[DEBUG] Failed to fetch vendor commission settings:', error);
         }
       }
 
-      // Store settings data for later use when product type changes
+      const category = formSnapshot?.category ?? '';
+      const designType = formSnapshot?.designType ?? '';
+      const purity = formSnapshot?.goldPurity || formSnapshot?.silverPurity || '';
+      const metal = productType === 'Gold' || productType === 'Silver' || productType === 'Platinum' ? productType : '';
+
+      const findCommissionFromRows = (
+        rows: typeof commissionRows,
+        pt: string,
+        cat: string,
+        des: string,
+        met: string,
+        pur: string
+      ): { vendor: number; platform?: number } | null => {
+        const norm = (s: string) => (s || '').trim().toLowerCase();
+        let best: { row: (typeof commissionRows)[0]; score: number } | null = null;
+        for (const row of rows) {
+          if (norm(row.productType) !== norm(pt)) continue;
+          const c = norm(row.category) === norm(cat) ? 1 : 0;
+          const d = norm(row.designType) === norm(des) ? 1 : 0;
+          const m = norm(row.metal) === norm(met) ? 1 : 0;
+          const p = norm(row.purityKarat) === norm(pur) ? 1 : 0;
+          const score = (c ? 8 : 0) + (d ? 4 : 0) + (m ? 2 : 0) + (p ? 1 : 0);
+          if (score >= 0 && (!best || score > best.score)) {
+            best = { row, score };
+          }
+        }
+        if (best && best.score > 0) {
+          const r = best.row as { vendorCommission: number; platformCommission?: number };
+          return { vendor: r.vendorCommission, platform: typeof r.platformCommission === 'number' ? r.platformCommission : undefined };
+        }
+        for (const row of rows) {
+          if (norm(row.productType) === norm(pt)) {
+            const r = row as { vendorCommission: number; platformCommission?: number };
+            return { vendor: r.vendorCommission, platform: typeof r.platformCommission === 'number' ? r.platformCommission : undefined };
+          }
+        }
+        return null;
+      };
+
       setFormData(prev => ({
         ...prev,
-        settingsData: { 
+        settingsData: {
           productTypeCommissions: adminCommissions,
           vendorCommissions: vendorCommissions,
+          commissionRows,
         },
       }));
-      
-      // Update the form with product-type-specific commission rates
+
       if (productType) {
-        // Get Platform Commission from admin settings
         if (adminCommissions && adminCommissions[productType as keyof typeof adminCommissions] !== undefined) {
           platformCommissionRate = adminCommissions[productType as keyof typeof adminCommissions];
-          console.log('[DEBUG] Platform Commission for', productType, ':', platformCommissionRate);
+          console.log('[DEBUG] Platform Commission (fallback) for', productType, ':', platformCommissionRate);
         }
 
-        // Get Vendor Commission from vendor settings (only for vendors)
-        if (roleToUse === 'vendor' && vendorCommissions && vendorCommissions[productType as keyof typeof vendorCommissions] !== undefined) {
-          vendorCommissionRate = vendorCommissions[productType as keyof typeof vendorCommissions];
+        if ((roleToUse === 'vendor' || roleToUse === 'admin') && commissionRows.length > 0) {
+          const fromRows = findCommissionFromRows(commissionRows, productType, category, designType, metal, purity);
+          if (fromRows !== null) {
+            vendorCommissionRate = fromRows.vendor;
+            if (typeof fromRows.platform === 'number') {
+              platformCommissionRate = fromRows.platform;
+              console.log('[DEBUG] Platform & Vendor commission from combination:', platformCommissionRate, '/', vendorCommissionRate);
+            } else {
+              console.log('[DEBUG] Vendor commission from combination:', vendorCommissionRate);
+            }
+          } else if (roleToUse === 'vendor' && vendorCommissions) {
+            const rate = vendorCommissions[productType as keyof typeof vendorCommissions];
+            vendorCommissionRate = typeof rate === 'number' && rate >= 0 ? rate : 0;
+            console.log('[DEBUG] Vendor Commission fallback by product type:', vendorCommissionRate);
+          } else if (roleToUse === 'admin' && adminCommissions && adminCommissions[productType as keyof typeof adminCommissions] !== undefined) {
+            vendorCommissionRate = adminCommissions[productType as keyof typeof adminCommissions];
+            console.log('[DEBUG] Admin commission fallback by product type:', vendorCommissionRate);
+          }
+        } else if (roleToUse === 'vendor' && vendorCommissions) {
+          const rate = vendorCommissions[productType as keyof typeof vendorCommissions];
+          vendorCommissionRate = typeof rate === 'number' && rate >= 0 ? rate : 0;
           console.log('[DEBUG] Vendor Commission for', productType, ':', vendorCommissionRate);
         } else if (roleToUse === 'admin' && adminCommissions && adminCommissions[productType as keyof typeof adminCommissions] !== undefined) {
-          // For admin, use admin commission as vendor commission
           vendorCommissionRate = adminCommissions[productType as keyof typeof adminCommissions];
           console.log('[DEBUG] Admin using admin commission as vendor commission for', productType, ':', vendorCommissionRate);
         }
@@ -1547,11 +1601,19 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
         };
         return { ...prev, ...resetData };
       });
-      
-      // Fetch and apply product-type-specific commission rate
+      // Apply commission for this product type (vendor commission by selection)
       fetchAdminDefaultCommission(userRole, value);
     } else {
       setFormData(prev => ({ ...prev, [field]: value }));
+      const snapshot = {
+        category: field === 'category' ? (value as string) : formData.category,
+        designType: field === 'designType' ? (value as string) : formData.designType,
+        goldPurity: field === 'goldPurity' ? (value as string) : formData.goldPurity,
+        silverPurity: field === 'silverPurity' ? (value as string) : formData.silverPurity,
+      };
+      if ((field === 'category' || field === 'designType' || field === 'goldPurity' || field === 'silverPurity') && formData.productType) {
+        fetchAdminDefaultCommission(userRole, formData.productType, snapshot);
+      }
     }
     if (errors[field]) {
       setErrors(prev => {

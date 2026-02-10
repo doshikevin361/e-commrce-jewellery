@@ -52,6 +52,26 @@ export async function POST(request: NextRequest) {
       .replace(/-+/g, '-')
       .replace(/^-|-$/g, '') + '-' + Math.floor(Math.random() * 10000);
 
+    // Build productTypeCommissions and allowedCategories from tabular rows
+    const rows = Array.isArray(body.productCommissionRows) ? body.productCommissionRows : [];
+    const productTypeCommissions: Record<string, number> = {};
+    const allowedCategories: string[] = [];
+    const allowedProductTypes: string[] = [];
+    for (const row of rows) {
+      const pt = (row.productType || '').toString().trim();
+      const cat = (row.category || '').toString().trim();
+      const commission = typeof row.vendorCommission === 'number' ? row.vendorCommission : parseFloat(row.vendorCommission) || 0;
+      if (pt) {
+        productTypeCommissions[pt] = commission;
+        if (!allowedProductTypes.includes(pt)) allowedProductTypes.push(pt);
+      }
+      if (cat && !allowedCategories.includes(cat)) allowedCategories.push(cat);
+    }
+    const defaultCommission = 5;
+    const commissionRate = Object.keys(productTypeCommissions).length > 0
+      ? Math.round(Object.values(productTypeCommissions).reduce((a, b) => a + b, 0) / Object.keys(productTypeCommissions).length * 10) / 10
+      : defaultCommission;
+
     // Prepare vendor document
     const vendorData = {
       storeName: body.businessName,
@@ -79,8 +99,10 @@ export async function POST(request: NextRequest) {
       upiId: '',
       logo: '',
       banner: '',
-      commissionRate: 5, // Default 5% commission
-      allowedCategories: [],
+      commissionRate,
+      productTypeCommissions: Object.keys(productTypeCommissions).length > 0 ? productTypeCommissions : undefined,
+      allowedProductTypes: allowedProductTypes.length > 0 ? allowedProductTypes : undefined,
+      allowedCategories,
       facebook: '',
       instagram: '',
       twitter: '',
@@ -100,12 +122,13 @@ export async function POST(request: NextRequest) {
       registrationDate: new Date().toISOString().split('T')[0],
       createdAt: new Date(),
       updatedAt: new Date(),
-      // Store original registration data
+      // Store original registration data including product/commission table
       registrationData: {
         hasGST: body.hasGST,
         gstin: body.gstin || '',
         supplierEmail: body.supplierEmail || '',
         supplierPhone: body.supplierPhone || '',
+        productCommissionRows: rows,
       },
     };
 

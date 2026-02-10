@@ -142,6 +142,13 @@ export function Sidebar() {
       allowedRoles: ['superadmin', 'admin'],
     },
     {
+      label: 'Vendor Commission Details',
+      href: '/admin/vendor-commissions',
+      badge: null,
+      icon: Percent,
+      allowedRoles: ['superadmin', 'admin'],
+    },
+    {
       label: 'Products',
       href: '/admin/products',
       badge: null,

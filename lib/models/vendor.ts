@@ -35,6 +35,15 @@ export interface Vendor {
   commissionSetupCompletedAt?: Date;
   allowedProductTypes?: string[];
   allowedCategories: string[];
+  /** Tabular commission rows: productType, category, designType, metal, purityKarat, vendorCommission */
+  commissionRows?: Array<{
+    productType: string;
+    category: string;
+    designType: string;
+    metal: string;
+    purityKarat: string;
+    vendorCommission: number;
+  }>;
   facebook?: string;
   instagram?: string;
   twitter?: string;

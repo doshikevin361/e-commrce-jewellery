@@ -21,6 +21,7 @@ const DEFAULT_SETTINGS = {
     Diamonds: 10,
     Imitation: 3,
   },
+  commissionRows: [] as Array<{ productType: string; category: string; designType: string; metal: string; purityKarat: string; vendorCommission: number }>,
 };
 
 function normalizeSettings(doc: any = {}) {
@@ -34,6 +35,7 @@ function normalizeSettings(doc: any = {}) {
     favicon: doc.favicon ?? DEFAULT_SETTINGS.favicon,
     productType: doc.productType ?? DEFAULT_SETTINGS.productType,
     productTypeCommissions: doc.productTypeCommissions ?? DEFAULT_SETTINGS.productTypeCommissions,
+    commissionRows: Array.isArray(doc.commissionRows) ? doc.commissionRows : [],
     updatedAt: doc.updatedAt ?? null,
     createdAt: doc.createdAt ?? null,
   };
@@ -81,6 +83,17 @@ export async function PUT(request: NextRequest) {
       ...DEFAULT_SETTINGS.productTypeCommissions,
       ...incomingCommissions,
     };
+    const commissionRows = Array.isArray(body.commissionRows)
+      ? body.commissionRows.map((r: any) => ({
+          productType: String(r?.productType ?? '').trim(),
+          category: String(r?.category ?? '').trim(),
+          designType: String(r?.designType ?? '').trim(),
+          metal: String(r?.metal ?? '').trim(),
+          purityKarat: String(r?.purityKarat ?? '').trim(),
+          vendorCommission: typeof r?.vendorCommission === 'number' && Number.isFinite(r.vendorCommission) ? r.vendorCommission : 0,
+          platformCommission: typeof r?.platformCommission === 'number' && Number.isFinite(r.platformCommission) ? r.platformCommission : 0,
+        }))
+      : (existingSettings?.commissionRows && Array.isArray(existingSettings.commissionRows) ? existingSettings.commissionRows : []);
 
     if (!siteName) {
       return NextResponse.json({ error: 'Website name is required' }, { status: 400 });
@@ -104,6 +117,7 @@ export async function PUT(request: NextRequest) {
           favicon,
           productType,
           productTypeCommissions,
+          commissionRows,
           updatedAt: now,
         },
         $setOnInsert: {

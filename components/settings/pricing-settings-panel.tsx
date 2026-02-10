@@ -7,16 +7,28 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { Loader2, RefreshCw, Coins, AlertCircle, Percent } from "lucide-react";
+import { Loader2, RefreshCw, Plus, Trash2 } from "lucide-react";
 
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { defaultSiteSettings, type SiteSettings } from "@/lib/site-settings";
+import { defaultSiteSettings, type SiteSettings, type CommissionRow } from "@/lib/site-settings";
 import { useSettings } from "@/components/settings/settings-provider";
 import { MetalPriceManagement } from "./metal-price-management";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+
+const PRODUCT_TYPES = ["Gold", "Silver", "Platinum", "Diamonds", "Gemstone", "Imitation"];
+const METAL_OPTIONS = ["Gold", "Silver", "Platinum"];
+const PURITY_OPTIONS = ["24kt", "22kt", "20kt", "18kt", "14kt", "80%"];
 
 export function PricingSettingsPanel() {
   const { toast } = useToast();
@@ -26,6 +38,8 @@ export function PricingSettingsPanel() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [categoryOptions, setCategoryOptions] = useState<{ value: string; label: string }[]>([]);
+  const [designTypeOptions, setDesignTypeOptions] = useState<{ value: string; label: string }[]>([]);
 
   const hasChanges = useMemo(
     () =>
@@ -57,9 +71,17 @@ export function PricingSettingsPanel() {
         throw new Error("Unable to load settings");
       }
       const data = await response.json();
+      const commissionRows = Array.isArray(data.commissionRows)
+        ? data.commissionRows.map((r: any) => ({
+            ...r,
+            vendorCommission: typeof r?.vendorCommission === 'number' ? r.vendorCommission : 0,
+            platformCommission: typeof r?.platformCommission === 'number' ? r.platformCommission : 0,
+          }))
+        : [];
       const normalized: SiteSettings = {
         ...defaultSiteSettings,
         ...data,
+        commissionRows,
       };
       setFormData(normalized);
       setLastSaved(normalized);
@@ -81,6 +103,37 @@ export function PricingSettingsPanel() {
   useEffect(() => {
     fetchSettings();
   }, [fetchSettings]);
+
+  useEffect(() => {
+    const fetchOptions = async () => {
+      try {
+        const [catRes, designRes] = await Promise.all([
+          fetch("/api/admin/categories", { cache: "no-store" }),
+          fetch("/api/admin/design-types", { cache: "no-store" }),
+        ]);
+        if (catRes.ok) {
+          const d = await catRes.json();
+          const list = Array.isArray(d.categories) ? d.categories : [];
+          const flatten = (arr: any[], prefix = ""): { value: string; label: string }[] => {
+            let out: { value: string; label: string }[] = [];
+            for (const c of arr) {
+              const name = (c.name || c.slug || String(c._id ?? "")).trim();
+              if (name) out.push({ value: name, label: prefix ? `${prefix} > ${name}` : name });
+              if (Array.isArray(c.children) && c.children.length) out = out.concat(flatten(c.children, prefix ? `${prefix} > ${name}` : name));
+            }
+            return out;
+          };
+          setCategoryOptions(flatten(list));
+        }
+        if (designRes.ok) {
+          const d = await designRes.json();
+          const list = Array.isArray(d.designTypes) ? d.designTypes : [];
+          setDesignTypeOptions(list.map((item: any) => ({ value: item.name || item._id, label: item.name || item._id })));
+        }
+      } catch (_) {}
+    };
+    fetchOptions();
+  }, []);
 
   const updateField = <K extends keyof SiteSettings>(
     field: K,
@@ -141,6 +194,7 @@ export function PricingSettingsPanel() {
         logo: formData.logo,
         favicon: formData.favicon,
         productTypeCommissions: formData.productTypeCommissions,
+        commissionRows: formData.commissionRows ?? [],
       };
       
       setFormData(savedData);
@@ -196,159 +250,175 @@ export function PricingSettingsPanel() {
           {/* Metal Price Management */}
           <MetalPriceManagement />
 
-          {/* Product Type Commission Rates */}
           <form onSubmit={handleSubmit}>
             <Card className="border border-slate-200 dark:border-slate-800 overflow-hidden">
               <div className="px-6 py-5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/20">
-                <div className="flex items-center gap-3">
-                  <Percent className="h-5 w-5 text-slate-600 dark:text-slate-400" />
-                  <div>
-                    <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-                      Product Type Commission Rates (%)
-                    </h2>
-                    <p className="text-sm text-slate-600 dark:text-slate-400">
-                      Set specific commission rates for each product type. These will be automatically applied when creating products.
-                    </p>
-                  </div>
-                </div>
+                <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+                  Commission by combination
+                </h2>
+                <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                  When adding a product, vendor commission is set from the matching row (product type + category + design type + metal + purity). Add rows and save.
+                </p>
               </div>
-
-              <div className="px-6 py-6 space-y-8">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FieldRow
-                    label="Gold Commission (%)"
-                    description="Commission rate for Gold products"
-                  >
-                    <Input
-                      type="number"
-                      min="0"
-                      max="100"
-                      step="0.01"
-                      value={formData.productTypeCommissions?.Gold ?? 5}
-                      onChange={(event) =>
-                        updateField("productTypeCommissions", {
-                          ...formData.productTypeCommissions,
-                          Gold: parseFloat(event.target.value) || 0,
-                        })
-                      }
-                      placeholder="5.0"
-                      className="h-12"
-                    />
-                  </FieldRow>
-
-                  <FieldRow
-                    label="Silver Commission (%)"
-                    description="Commission rate for Silver products"
-                  >
-                    <Input
-                      type="number"
-                      min="0"
-                      max="100"
-                      step="0.01"
-                      value={formData.productTypeCommissions?.Silver ?? 4}
-                      onChange={(event) =>
-                        updateField("productTypeCommissions", {
-                          ...formData.productTypeCommissions,
-                          Silver: parseFloat(event.target.value) || 0,
-                        })
-                      }
-                      placeholder="4.0"
-                      className="h-12"
-                    />
-                  </FieldRow>
-
-                  <FieldRow
-                    label="Platinum Commission (%)"
-                    description="Commission rate for Platinum products"
-                  >
-                    <Input
-                      type="number"
-                      min="0"
-                      max="100"
-                      step="0.01"
-                      value={formData.productTypeCommissions?.Platinum ?? 6}
-                      onChange={(event) =>
-                        updateField("productTypeCommissions", {
-                          ...formData.productTypeCommissions,
-                          Platinum: parseFloat(event.target.value) || 0,
-                        })
-                      }
-                      placeholder="6.0"
-                      className="h-12"
-                    />
-                  </FieldRow>
-
-                  <FieldRow
-                    label="Gemstone Commission (%)"
-                    description="Commission rate for Gemstone products"
-                  >
-                    <Input
-                      type="number"
-                      min="0"
-                      max="100"
-                      step="0.01"
-                      value={formData.productTypeCommissions?.Gemstone ?? 8}
-                      onChange={(event) =>
-                        updateField("productTypeCommissions", {
-                          ...formData.productTypeCommissions,
-                          Gemstone: parseFloat(event.target.value) || 0,
-                        })
-                      }
-                      placeholder="8.0"
-                      className="h-12"
-                    />
-                  </FieldRow>
-
-                  <FieldRow
-                    label="Diamonds Commission (%)"
-                    description="Commission rate for Diamonds products"
-                  >
-                    <Input
-                      type="number"
-                      min="0"
-                      max="100"
-                      step="0.01"
-                      value={formData.productTypeCommissions?.Diamonds ?? 10}
-                      onChange={(event) =>
-                        updateField("productTypeCommissions", {
-                          ...formData.productTypeCommissions,
-                          Diamonds: parseFloat(event.target.value) || 0,
-                        })
-                      }
-                      placeholder="10.0"
-                      className="h-12"
-                    />
-                  </FieldRow>
-
-                  <FieldRow
-                    label="Imitation Commission (%)"
-                    description="Commission rate for Imitation products"
-                  >
-                    <Input
-                      type="number"
-                      min="0"
-                      max="100"
-                      step="0.01"
-                      value={formData.productTypeCommissions?.Imitation ?? 3}
-                      onChange={(event) =>
-                        updateField("productTypeCommissions", {
-                          ...formData.productTypeCommissions,
-                          Imitation: parseFloat(event.target.value) || 0,
-                        })
-                      }
-                      placeholder="3.0"
-                      className="h-12"
-                    />
-                  </FieldRow>
-                </div>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-slate-50 dark:bg-slate-900/20">
+                      <TableHead className="whitespace-nowrap">Product Type</TableHead>
+                      <TableHead className="whitespace-nowrap">Category</TableHead>
+                      <TableHead className="whitespace-nowrap">Design Type</TableHead>
+                      <TableHead className="whitespace-nowrap">Metal</TableHead>
+                      <TableHead className="whitespace-nowrap">Purity</TableHead>
+                      <TableHead className="whitespace-nowrap">Vendor (%)</TableHead>
+                      <TableHead className="whitespace-nowrap">Platform / Admin (%)</TableHead>
+                      <TableHead className="w-12" />
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {((formData.commissionRows ?? []).length === 0 ? [{ productType: "", category: "", designType: "", metal: "", purityKarat: "", vendorCommission: 0, platformCommission: 0 }] : (formData.commissionRows ?? [])).map((row: CommissionRow, index: number) => (
+                      <TableRow key={index}>
+                        <TableCell className="p-2">
+                          <select
+                            value={row.productType}
+                            onChange={(e) => {
+                              const rows = [...(formData.commissionRows ?? [])];
+                              if (rows.length <= index) rows.push({ productType: "", category: "", designType: "", metal: "", purityKarat: "", vendorCommission: 0, platformCommission: 0 });
+                              rows[index] = { ...rows[index], productType: e.target.value };
+                              updateField("commissionRows", rows);
+                            }}
+                            className="h-9 min-w-[100px] w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm"
+                          >
+                            <option value="">Select</option>
+                            {PRODUCT_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+                          </select>
+                        </TableCell>
+                        <TableCell className="p-2">
+                          <select
+                            value={row.category}
+                            onChange={(e) => {
+                              const rows = [...(formData.commissionRows ?? [])];
+                              if (rows.length <= index) rows.push({ productType: "", category: "", designType: "", metal: "", purityKarat: "", vendorCommission: 0, platformCommission: 0 });
+                              rows[index] = { ...rows[index], category: e.target.value };
+                              updateField("commissionRows", rows);
+                            }}
+                            className="h-9 min-w-[120px] w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm"
+                          >
+                            <option value="">Select</option>
+                            {categoryOptions.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+                          </select>
+                        </TableCell>
+                        <TableCell className="p-2">
+                          <select
+                            value={row.designType}
+                            onChange={(e) => {
+                              const rows = [...(formData.commissionRows ?? [])];
+                              if (rows.length <= index) rows.push({ productType: "", category: "", designType: "", metal: "", purityKarat: "", vendorCommission: 0, platformCommission: 0 });
+                              rows[index] = { ...rows[index], designType: e.target.value };
+                              updateField("commissionRows", rows);
+                            }}
+                            className="h-9 min-w-[110px] w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm"
+                          >
+                            <option value="">Select</option>
+                            {designTypeOptions.map((d) => <option key={d.value} value={d.value}>{d.label}</option>)}
+                          </select>
+                        </TableCell>
+                        <TableCell className="p-2">
+                          <select
+                            value={row.metal}
+                            onChange={(e) => {
+                              const rows = [...(formData.commissionRows ?? [])];
+                              if (rows.length <= index) rows.push({ productType: "", category: "", designType: "", metal: "", purityKarat: "", vendorCommission: 0, platformCommission: 0 });
+                              rows[index] = { ...rows[index], metal: e.target.value };
+                              updateField("commissionRows", rows);
+                            }}
+                            className="h-9 min-w-[100px] w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm"
+                          >
+                            <option value="">Select</option>
+                            {METAL_OPTIONS.map((m) => <option key={m} value={m}>{m}</option>)}
+                          </select>
+                        </TableCell>
+                        <TableCell className="p-2">
+                          <select
+                            value={row.purityKarat}
+                            onChange={(e) => {
+                              const rows = [...(formData.commissionRows ?? [])];
+                              if (rows.length <= index) rows.push({ productType: "", category: "", designType: "", metal: "", purityKarat: "", vendorCommission: 0, platformCommission: 0 });
+                              rows[index] = { ...rows[index], purityKarat: e.target.value };
+                              updateField("commissionRows", rows);
+                            }}
+                            className="h-9 min-w-[90px] w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm"
+                          >
+                            <option value="">Select</option>
+                            {PURITY_OPTIONS.map((p) => <option key={p} value={p}>{p}</option>)}
+                          </select>
+                        </TableCell>
+                        <TableCell className="p-2">
+                          <Input
+                            type="number"
+                            min={0}
+                            step={0.5}
+                            className="h-9 w-24"
+                            value={row.vendorCommission || ""}
+                            onChange={(e) => {
+                              const rows = [...(formData.commissionRows ?? [])];
+                              if (rows.length <= index) rows.push({ productType: "", category: "", designType: "", metal: "", purityKarat: "", vendorCommission: 0, platformCommission: 0 });
+                              rows[index] = { ...rows[index], vendorCommission: parseFloat(e.target.value) || 0 };
+                              updateField("commissionRows", rows);
+                            }}
+                            placeholder="%"
+                          />
+                        </TableCell>
+                        <TableCell className="p-2">
+                          <Input
+                            type="number"
+                            min={0}
+                            step={0.5}
+                            className="h-9 w-24"
+                            value={(row as any).platformCommission ?? ""}
+                            onChange={(e) => {
+                              const rows = [...(formData.commissionRows ?? [])];
+                              if (rows.length <= index) rows.push({ productType: "", category: "", designType: "", metal: "", purityKarat: "", vendorCommission: 0, platformCommission: 0 });
+                              rows[index] = { ...rows[index], platformCommission: parseFloat(e.target.value) || 0 };
+                              updateField("commissionRows", rows);
+                            }}
+                            placeholder="%"
+                          />
+                        </TableCell>
+                        <TableCell className="p-2">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-9 w-9 text-red-600 hover:text-red-700 hover:bg-red-50"
+                            onClick={() => {
+                              const rows = (formData.commissionRows ?? []).filter((_, i) => i !== index);
+                              updateField("commissionRows", rows.length ? rows : []);
+                            }}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               </div>
-
-              <div className="flex flex-col gap-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/20 px-6 py-5 md:flex-row md:items-center md:justify-between">
-                <div className="text-sm text-slate-600 dark:text-slate-400">
-                  {hasChanges ? "You have unsaved changes" : "All changes saved"}
-                </div>
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+              <div className="px-6 py-4 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3">
                 <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => updateField("commissionRows", [...(formData.commissionRows ?? []), { productType: "", category: "", designType: "", metal: "", purityKarat: "", vendorCommission: 0, platformCommission: 0 }])}
+                  className="border-slate-300"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add row
+                </Button>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                  <div className="text-sm text-slate-600 dark:text-slate-400">
+                    {hasChanges ? "You have unsaved changes" : "All changes saved"}
+                  </div>
+                  <Button
                     type="button"
                     variant="outline"
                     disabled={!hasChanges || saving}

@@ -7,6 +7,16 @@ export type ProductTypeCommissions = {
   Imitation: number;
 };
 
+export type CommissionRow = {
+  productType: string;
+  category: string;
+  designType: string;
+  metal: string;
+  purityKarat: string;
+  vendorCommission: number;
+  platformCommission: number;
+};
+
 export type SiteSettings = {
   siteName: string;
   siteTitle: string;
@@ -16,6 +26,7 @@ export type SiteSettings = {
   logo: string;
   favicon: string;
   productTypeCommissions: ProductTypeCommissions;
+  commissionRows?: CommissionRow[];
 };
 
 export const defaultSiteSettings: SiteSettings = {
@@ -34,4 +45,5 @@ export const defaultSiteSettings: SiteSettings = {
     Diamonds: 10,
     Imitation: 3,
   },
+  commissionRows: [],
 };
