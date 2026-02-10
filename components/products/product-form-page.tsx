@@ -1036,7 +1036,8 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
   const fetchAdminDefaultCommission = async (
     currentUserRole?: string,
     productType?: string,
-    formSnapshot?: { category?: string; designType?: string; goldPurity?: string; silverPurity?: string }
+    formSnapshot?: { category?: string; designType?: string; goldPurity?: string; silverPurity?: string },
+    optionMaps?: { categoryOptions: { value: string; label: string }[]; designTypes: { value: string; label: string }[] }
   ) => {
     try {
       // Get user role if not provided
@@ -1091,10 +1092,12 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
         }
       }
 
-      const category = formSnapshot?.category ?? '';
-      const designType = formSnapshot?.designType ?? '';
+      const rawCategory = formSnapshot?.category ?? '';
+      const rawDesignType = formSnapshot?.designType ?? '';
       const purity = formSnapshot?.goldPurity || formSnapshot?.silverPurity || '';
       const metal = productType === 'Gold' || productType === 'Silver' || productType === 'Platinum' ? productType : '';
+      const categoryName = optionMaps?.categoryOptions?.find((o) => o.value === rawCategory)?.label?.split(' > ').pop()?.trim() || rawCategory;
+      const designTypeName = optionMaps?.designTypes?.find((o) => o.value === rawDesignType)?.label?.trim() || rawDesignType;
 
       const findCommissionFromRows = (
         rows: typeof commissionRows,
@@ -1108,8 +1111,12 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
         let best: { row: (typeof commissionRows)[0]; score: number } | null = null;
         for (const row of rows) {
           if (norm(row.productType) !== norm(pt)) continue;
-          const c = norm(row.category) === norm(cat) ? 1 : 0;
-          const d = norm(row.designType) === norm(des) ? 1 : 0;
+          const rowCat = norm(row.category);
+          const rowDes = norm(row.designType);
+          const matchCat = rowCat === norm(cat) || rowCat === norm(rawCategory);
+          const matchDes = rowDes === norm(des) || rowDes === norm(rawDesignType);
+          const c = matchCat ? 1 : 0;
+          const d = matchDes ? 1 : 0;
           const m = norm(row.metal) === norm(met) ? 1 : 0;
           const p = norm(row.purityKarat) === norm(pur) ? 1 : 0;
           const score = (c ? 8 : 0) + (d ? 4 : 0) + (m ? 2 : 0) + (p ? 1 : 0);
@@ -1146,7 +1153,7 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
         }
 
         if ((roleToUse === 'vendor' || roleToUse === 'admin') && commissionRows.length > 0) {
-          const fromRows = findCommissionFromRows(commissionRows, productType, category, designType, metal, purity);
+          const fromRows = findCommissionFromRows(commissionRows, productType, categoryName, designTypeName, metal, purity);
           if (fromRows !== null) {
             vendorCommissionRate = fromRows.vendor;
             if (typeof fromRows.platform === 'number') {
@@ -1601,7 +1608,6 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
         };
         return { ...prev, ...resetData };
       });
-      // Apply commission for this product type (vendor commission by selection)
       fetchAdminDefaultCommission(userRole, value);
     } else {
       setFormData(prev => ({ ...prev, [field]: value }));
@@ -1612,7 +1618,7 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
         silverPurity: field === 'silverPurity' ? (value as string) : formData.silverPurity,
       };
       if ((field === 'category' || field === 'designType' || field === 'goldPurity' || field === 'silverPurity') && formData.productType) {
-        fetchAdminDefaultCommission(userRole, formData.productType, snapshot);
+        fetchAdminDefaultCommission(userRole, formData.productType, snapshot, { categoryOptions, designTypes });
       }
     }
     if (errors[field]) {
