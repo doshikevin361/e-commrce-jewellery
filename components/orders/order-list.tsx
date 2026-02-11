@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { formatIndianDate } from '@/app/utils/helper';
-import { Eye, Search, Filter, Download, Plus, Trash2 } from 'lucide-react';
+import { Eye, Search, Filter, Download, Plus, Trash2, Edit } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { AdminPagination } from '@/components/ui/admin-pagination';
@@ -37,6 +37,8 @@ interface Order {
   items: any[];
   razorpayOrderId?: string;
   razorpayPaymentId?: string;
+  trackingNumber?: string;
+  orderNotes?: string;
   shippingAddress?: {
     fullName: string;
     phone: string;
@@ -146,6 +148,10 @@ export function OrderList() {
     setViewOrderId(orderId);
     setViewOrderData(null);
     fetchOrderDetails(orderId);
+  };
+
+  const handleEditOrder = (orderId: string) => {
+    router.push(`/admin/orders/${orderId}`);
   };
 
   const fetchOrderDetails = async (orderId: string) => {
@@ -447,6 +453,12 @@ export function OrderList() {
                               title='View order'
                               className='text-gray-600 hover:text-gray-900 hover:bg-gray-100 cursor-pointer'>
                               <Eye className='h-5 w-5' />
+                            </button>
+                            <button
+                              onClick={() => handleEditOrder(order._id)}
+                              title='Edit order'
+                              className='text-blue-500 hover:text-blue-700 hover:bg-blue-50 cursor-pointer'>
+                              <Edit className='h-5 w-5' />
                             </button>
                             <button
                               onClick={() => handleDeleteClick(order._id)}

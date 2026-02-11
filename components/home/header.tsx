@@ -1,12 +1,19 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { Search, Heart, ShoppingCart, ChevronDown, Clock, Store, LogOut, User, TruckIcon } from 'lucide-react';
+import { Search, Heart, ShoppingCart, ChevronDown, Clock, Store, LogOut, User, TruckIcon, Package } from 'lucide-react';
 import { AuthModal } from '@/components/auth/auth-modal';
 import toast from 'react-hot-toast';
 import { useCart } from '@/contexts/CartContext';
 import { useWishlist } from '@/contexts/WishlistContext';
 import { useRouter, usePathname } from 'next/navigation';
 import { SearchDialog } from '@/components/home/SearchBar/SearchDialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 type CategoryOccasion = {
   name: string;
@@ -312,15 +319,34 @@ const HomeHeader = () => {
             <span className='h-3 w-px bg-gray-500'></span>
             {isLoggedIn ? (
               <>
-                <div className='flex items-center gap-2'>
-                  <User className='w-4 h-4 text-[#3579b8]' />
-                  <span className='text-[#3579b8] font-medium'>{customerName}</span>
-                </div>
-                <span className='h-3 w-px bg-gray-500'></span>
-                <button onClick={handleLogout} className='text-[#3579b8] hover:text-gray-900 flex items-center gap-1'>
-                  <LogOut className='w-4 h-4' />
-                  <span>Logout</span>
-                </button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className='flex items-center gap-2 text-[#3579b8] hover:text-gray-900 focus:outline-none'>
+                      <User className='w-4 h-4' />
+                      <span className='font-medium'>{customerName}</span>
+                      <ChevronDown className='w-3 h-3' />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align='end' className='w-48'>
+                    <DropdownMenuItem asChild>
+                      <Link href='/customer-profile' className='flex items-center gap-2 cursor-pointer'>
+                        <User className='w-4 h-4' />
+                        <span>My Profile</span>
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href='/my-orders' className='flex items-center gap-2 cursor-pointer'>
+                        <Package className='w-4 h-4' />
+                        <span>My Orders</span>
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleLogout} className='cursor-pointer'>
+                      <LogOut className='w-4 h-4' />
+                      <span>Logout</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </>
             ) : (
               <>

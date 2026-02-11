@@ -4,6 +4,10 @@ import Order from '@/lib/models/Order';
 import { getUserFromRequest, isAdminOrVendor, isVendor } from '@/lib/auth';
 import { ObjectId } from 'mongodb';
 
+// Force nodejs runtime for this route
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest) {
   try {
     const user = getUserFromRequest(request);
