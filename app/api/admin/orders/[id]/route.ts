@@ -3,7 +3,10 @@ import { connectDB, connectToDatabase } from '@/lib/mongodb';
 import Order from '@/lib/models/Order';
 import { getUserFromRequest, isAdminOrVendor, isVendor } from '@/lib/auth';
 import { ObjectId } from 'mongodb';
-import { sendEmail, emailTemplates } from '@/lib/email';
+
+// Force nodejs runtime for this route
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 export async function GET(
   request: NextRequest,
@@ -138,13 +141,22 @@ export async function PUT(
       }
     }
 
-    const { orderStatus, orderNotes, trackingNumber } = body;
+    const { orderStatus, orderNotes, trackingNumber, paymentStatus } = body;
 
     // Validate order status
     const validStatuses = ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'];
     if (orderStatus && !validStatuses.includes(orderStatus)) {
       return NextResponse.json(
         { error: 'Invalid order status' },
+        { status: 400 }
+      );
+    }
+
+    // Validate payment status
+    const validPaymentStatuses = ['pending', 'paid', 'failed', 'refunded'];
+    if (paymentStatus && !validPaymentStatuses.includes(paymentStatus)) {
+      return NextResponse.json(
+        { error: 'Invalid payment status' },
         { status: 400 }
       );
     }
@@ -161,6 +173,10 @@ export async function PUT(
       } else if (orderStatus === 'cancelled') {
         updateData.cancelledAt = new Date();
       }
+    }
+
+    if (paymentStatus) {
+      updateData.paymentStatus = paymentStatus;
     }
 
     if (orderNotes !== undefined) {
@@ -207,6 +223,9 @@ export async function PUT(
     // Send email notification to customer if order status was updated
     if (orderStatus && customerData?.email) {
       try {
+        // Dynamically import email functions to avoid worker issues
+        const { sendEmail, emailTemplates } = await import('@/lib/email');
+        
         const emailTemplate = emailTemplates.orderStatusUpdate({
           orderId: order.orderId,
           customerName: order.customerName,
