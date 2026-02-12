@@ -53,6 +53,7 @@ export default function VendorRegistrationPage() {
   const [isVerifying, setIsVerifying] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
   
   const [formData, setFormData] = useState<FormData>({
     hasGST: true,
@@ -84,17 +85,178 @@ export default function VendorRegistrationPage() {
   ];
   const TOTAL_STEPS = 4;
 
-  const handleInputChange = (field: keyof FormData, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+  const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const PHONE_REGEX = /^\d{10}$/;
+  const PINCODE_REGEX = /^\d{6}$/;
+  const GSTIN_REGEX = /^\d{2}[A-Z]{5}\d{4}[A-Z]{1}[A-Z\d]{1}Z[A-Z\d]{1}$/;
+  const IFSC_REGEX = /^[A-Z]{4}0[A-Z0-9]{6}$/;
+  const ACCOUNT_NUMBER_REGEX = /^\d{9,18}$/;
+  const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/;
+
+  const validateField = (field: keyof FormData, value: string, data: FormData) => {
+    const trimmed = value?.trim?.() ?? '';
+    switch (field) {
+      case 'gstin':
+        if (!data.hasGST) return '';
+        if (!trimmed) return 'GSTIN is required';
+        if (!GSTIN_REGEX.test(trimmed)) return 'Enter a valid GSTIN';
+        return '';
+      case 'businessName':
+        return trimmed ? '' : 'Business name is required';
+      case 'businessEmail':
+        if (!trimmed) return 'Business email is required';
+        return EMAIL_REGEX.test(trimmed) ? '' : 'Enter a valid email';
+      case 'businessPhone':
+        if (!trimmed) return 'Business phone is required';
+        return PHONE_REGEX.test(trimmed) ? '' : 'Enter a valid 10-digit phone number';
+      case 'addressLine1':
+        return trimmed ? '' : 'Address line 1 is required';
+      case 'city':
+        return trimmed ? '' : 'City is required';
+      case 'state':
+        return trimmed ? '' : 'State is required';
+      case 'pincode':
+        if (!trimmed) return 'Pincode is required';
+        return PINCODE_REGEX.test(trimmed) ? '' : 'Enter a valid 6-digit pincode';
+      case 'accountHolderName':
+        return trimmed ? '' : 'Account holder name is required';
+      case 'accountNumber':
+        if (!trimmed) return 'Account number is required';
+        return ACCOUNT_NUMBER_REGEX.test(trimmed) ? '' : 'Enter a valid account number';
+      case 'ifscCode':
+        if (!trimmed) return 'IFSC code is required';
+        return IFSC_REGEX.test(trimmed) ? '' : 'Enter a valid IFSC code';
+      case 'bankName':
+        return trimmed ? '' : 'Bank name is required';
+      case 'supplierName':
+        return trimmed ? '' : 'Contact person name is required';
+      case 'supplierEmail':
+        if (!trimmed) return 'Contact email is required';
+        return EMAIL_REGEX.test(trimmed) ? '' : 'Enter a valid email';
+      case 'supplierPhone':
+        if (!trimmed) return 'Contact phone is required';
+        return PHONE_REGEX.test(trimmed) ? '' : 'Enter a valid 10-digit phone number';
+      case 'password':
+        if (!trimmed) return 'Password is required';
+        return PASSWORD_REGEX.test(trimmed)
+          ? ''
+          : 'Use 8+ chars with upper, lower, number & special';
+      case 'confirmPassword':
+        if (!trimmed) return 'Confirm password is required';
+        return trimmed === data.password ? '' : 'Passwords do not match';
+      default:
+        return '';
+    }
   };
 
-  const handleVerifyGSTIN = async () => {
-    if (!formData.gstin) {
-      toast({
-        title: 'Error',
-        description: 'Please enter GSTIN',
-        variant: 'destructive',
+  const normalizeValue = (field: keyof FormData, value: string) => {
+    if (field === 'businessPhone' || field === 'supplierPhone') {
+      return value.replace(/\D/g, '').slice(0, 10);
+    }
+    if (field === 'pincode') {
+      return value.replace(/\D/g, '').slice(0, 6);
+    }
+    if (field === 'accountNumber') {
+      return value.replace(/\D/g, '').slice(0, 18);
+    }
+    if (field === 'gstin' || field === 'ifscCode') {
+      return value.replace(/\s+/g, '').toUpperCase();
+    }
+    return value;
+  };
+
+  const handleInputChange = (field: keyof FormData, value: any) => {
+    const normalized = typeof value === 'string' ? normalizeValue(field, value) : value;
+    setFormData(prev => {
+      const next = { ...prev, [field]: normalized };
+      setErrors(prevErrors => {
+        const nextErrors = { ...prevErrors };
+        const fieldError = validateField(field, String(normalized ?? ''), next);
+        if (fieldError) {
+          nextErrors[field] = fieldError;
+        } else {
+          delete nextErrors[field];
+        }
+        if (field === 'password' || field === 'confirmPassword') {
+          const confirmError = validateField('confirmPassword', next.confirmPassword, next);
+          if (confirmError) {
+            nextErrors.confirmPassword = confirmError;
+          } else {
+            delete nextErrors.confirmPassword;
+          }
+        }
+        if (field === 'hasGST') {
+          const gstError = validateField('gstin', next.gstin, next);
+          if (gstError) {
+            nextErrors.gstin = gstError;
+          } else {
+            delete nextErrors.gstin;
+          }
+        }
+        return nextErrors;
       });
+      return next;
+    });
+  };
+
+  const getStepFields = (step: number) => {
+    switch (step) {
+      case 1:
+        return (formData.hasGST ? ['gstin'] : []).concat(['businessName', 'businessEmail', 'businessPhone']) as (keyof FormData)[];
+      case 2:
+        return ['addressLine1', 'city', 'state', 'pincode'];
+      case 3:
+        return ['accountHolderName', 'accountNumber', 'ifscCode', 'bankName'];
+      case 4:
+        return ['supplierName', 'supplierEmail', 'supplierPhone', 'password', 'confirmPassword'];
+      default:
+        return [];
+    }
+  };
+
+  const validateFields = (fields: (keyof FormData)[], data: FormData) => {
+    const nextErrors: Partial<Record<keyof FormData, string>> = {};
+    fields.forEach(field => {
+      const error = validateField(field, data[field], data);
+      if (error) {
+        nextErrors[field] = error;
+      }
+    });
+    return nextErrors;
+  };
+
+  const renderError = (field: keyof FormData) => {
+    if (!errors[field]) return null;
+    return <p className='text-xs text-red-600'>{errors[field]}</p>;
+  };
+
+  const allFields = ([
+    ...(formData.hasGST ? ['gstin'] : []),
+    'businessName',
+    'businessEmail',
+    'businessPhone',
+    'addressLine1',
+    'city',
+    'state',
+    'pincode',
+    'accountHolderName',
+    'accountNumber',
+    'ifscCode',
+    'bankName',
+    'supplierName',
+    'supplierEmail',
+    'supplierPhone',
+    'password',
+    'confirmPassword',
+  ] as (keyof FormData)[]);
+
+  const isCurrentStepValid = Object.keys(validateFields(getStepFields(currentStep), formData)).length === 0;
+  const isFormValid = Object.keys(validateFields(allFields, formData)).length === 0;
+
+  const handleVerifyGSTIN = async () => {
+    const gstError = validateField('gstin', formData.gstin, formData);
+    if (gstError) {
+      setErrors(prev => ({ ...prev, gstin: gstError }));
       return;
     }
 
@@ -119,78 +281,20 @@ export default function VendorRegistrationPage() {
   };
 
   const validateStep = () => {
-    switch (currentStep) {
-      case 1:
-        if (formData.hasGST && !formData.gstin) {
-          toast({
-            title: 'Error',
-            description: 'Please enter GSTIN',
-            variant: 'destructive',
-          });
-          return false;
+    const fields = getStepFields(currentStep);
+    setErrors(prevErrors => {
+      const nextErrors = { ...prevErrors };
+      fields.forEach(field => {
+        const error = validateField(field, formData[field], formData);
+        if (error) {
+          nextErrors[field] = error;
+        } else {
+          delete nextErrors[field];
         }
-        if (!formData.businessName || !formData.businessEmail || !formData.businessPhone) {
-          toast({
-            title: 'Error',
-            description: 'Please fill all business details',
-            variant: 'destructive',
-          });
-          return false;
-        }
-        return true;
-      
-      case 2:
-        if (!formData.addressLine1 || !formData.city || !formData.state || !formData.pincode) {
-          toast({
-            title: 'Error',
-            description: 'Please fill all address details',
-            variant: 'destructive',
-          });
-          return false;
-        }
-        return true;
-      
-      case 3:
-        if (!formData.accountHolderName || !formData.accountNumber || !formData.ifscCode || !formData.bankName) {
-          toast({
-            title: 'Error',
-            description: 'Please fill all bank details',
-            variant: 'destructive',
-          });
-          return false;
-        }
-        return true;
-      
-      case 4:
-        if (!formData.supplierName || !formData.supplierEmail || !formData.supplierPhone) {
-          toast({
-            title: 'Error',
-            description: 'Please fill all supplier details',
-            variant: 'destructive',
-          });
-          return false;
-        }
-        if (!formData.password || formData.password.length < 6) {
-          toast({
-            title: 'Error',
-            description: 'Password must be at least 6 characters long',
-            variant: 'destructive',
-          });
-          return false;
-        }
-        if (formData.password !== formData.confirmPassword) {
-          toast({
-            title: 'Error',
-            description: 'Passwords do not match',
-            variant: 'destructive',
-          });
-          return false;
-        }
-        return true;
-
-      default:
-        return true;
-    }
+      });
+      return nextErrors;
+    });
+    return Object.keys(validateFields(fields, formData)).length === 0;
   };
 
   const handleNext = () => {
@@ -204,7 +308,11 @@ export default function VendorRegistrationPage() {
   };
 
   const handleSubmit = async () => {
-    if (!validateStep()) return;
+    const allErrors = validateFields(allFields, formData);
+    if (Object.keys(allErrors).length > 0) {
+      setErrors(prevErrors => ({ ...prevErrors, ...allErrors }));
+      return;
+    }
 
     setIsSubmitting(true);
     try {
@@ -336,7 +444,7 @@ export default function VendorRegistrationPage() {
                         value={formData.gstin}
                         onChange={(e) => handleInputChange('gstin', e.target.value.toUpperCase())}
                         placeholder='27AACPP9212H1ZO'
-                        className='flex-1'
+                        className={`flex-1 ${errors.gstin ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
                         maxLength={15}
                       />
                       <Button 
@@ -346,6 +454,7 @@ export default function VendorRegistrationPage() {
                         {isVerifying ? 'Verifying...' : 'Verify'}
                       </Button>
                     </div>
+                    {renderError('gstin')}
                   </div>
                 )}
 
@@ -357,7 +466,9 @@ export default function VendorRegistrationPage() {
                       value={formData.businessName}
                       onChange={(e) => handleInputChange('businessName', e.target.value)}
                       placeholder='Enter business name'
+                      className={errors.businessName ? 'border-red-500 focus-visible:ring-red-500' : ''}
                     />
+                    {renderError('businessName')}
                   </div>
 
                   <div className='space-y-2'>
@@ -368,7 +479,9 @@ export default function VendorRegistrationPage() {
                       value={formData.businessEmail}
                       onChange={(e) => handleInputChange('businessEmail', e.target.value)}
                       placeholder='business@example.com'
+                      className={errors.businessEmail ? 'border-red-500 focus-visible:ring-red-500' : ''}
                     />
+                    {renderError('businessEmail')}
                   </div>
 
                   <div className='space-y-2'>
@@ -379,7 +492,9 @@ export default function VendorRegistrationPage() {
                       value={formData.businessPhone}
                       onChange={(e) => handleInputChange('businessPhone', e.target.value)}
                       placeholder='Enter phone number'
+                      className={errors.businessPhone ? 'border-red-500 focus-visible:ring-red-500' : ''}
                     />
+                    {renderError('businessPhone')}
                   </div>
                 </div>
               </div>
@@ -398,7 +513,9 @@ export default function VendorRegistrationPage() {
                       value={formData.addressLine1}
                       onChange={(e) => handleInputChange('addressLine1', e.target.value)}
                       placeholder='House No., Building Name'
+                      className={errors.addressLine1 ? 'border-red-500 focus-visible:ring-red-500' : ''}
                     />
+                    {renderError('addressLine1')}
                   </div>
 
                   <div className='space-y-2'>
@@ -419,7 +536,9 @@ export default function VendorRegistrationPage() {
                         value={formData.city}
                         onChange={(e) => handleInputChange('city', e.target.value)}
                         placeholder='Enter city'
+                        className={errors.city ? 'border-red-500 focus-visible:ring-red-500' : ''}
                       />
+                      {renderError('city')}
                     </div>
 
                     <div className='space-y-2'>
@@ -429,7 +548,9 @@ export default function VendorRegistrationPage() {
                         value={formData.state}
                         onChange={(e) => handleInputChange('state', e.target.value)}
                         placeholder='Enter state'
+                        className={errors.state ? 'border-red-500 focus-visible:ring-red-500' : ''}
                       />
+                      {renderError('state')}
                     </div>
                   </div>
 
@@ -441,7 +562,9 @@ export default function VendorRegistrationPage() {
                       onChange={(e) => handleInputChange('pincode', e.target.value)}
                       placeholder='Enter pincode'
                       maxLength={6}
+                      className={errors.pincode ? 'border-red-500 focus-visible:ring-red-500' : ''}
                     />
+                    {renderError('pincode')}
                   </div>
                 </div>
               </div>
@@ -460,7 +583,9 @@ export default function VendorRegistrationPage() {
                       value={formData.accountHolderName}
                       onChange={(e) => handleInputChange('accountHolderName', e.target.value)}
                       placeholder='Enter account holder name'
+                      className={errors.accountHolderName ? 'border-red-500 focus-visible:ring-red-500' : ''}
                     />
+                    {renderError('accountHolderName')}
                   </div>
 
                   <div className='space-y-2'>
@@ -470,7 +595,9 @@ export default function VendorRegistrationPage() {
                       value={formData.accountNumber}
                       onChange={(e) => handleInputChange('accountNumber', e.target.value)}
                       placeholder='Enter account number'
+                      className={errors.accountNumber ? 'border-red-500 focus-visible:ring-red-500' : ''}
                     />
+                    {renderError('accountNumber')}
                   </div>
 
                   <div className='space-y-2'>
@@ -480,7 +607,9 @@ export default function VendorRegistrationPage() {
                       value={formData.ifscCode}
                       onChange={(e) => handleInputChange('ifscCode', e.target.value.toUpperCase())}
                       placeholder='Enter IFSC code'
+                      className={errors.ifscCode ? 'border-red-500 focus-visible:ring-red-500' : ''}
                     />
+                    {renderError('ifscCode')}
                   </div>
 
                   <div className='space-y-2'>
@@ -490,7 +619,9 @@ export default function VendorRegistrationPage() {
                       value={formData.bankName}
                       onChange={(e) => handleInputChange('bankName', e.target.value)}
                       placeholder='Enter bank name'
+                      className={errors.bankName ? 'border-red-500 focus-visible:ring-red-500' : ''}
                     />
+                    {renderError('bankName')}
                   </div>
                 </div>
               </div>
@@ -509,7 +640,9 @@ export default function VendorRegistrationPage() {
                       value={formData.supplierName}
                       onChange={(e) => handleInputChange('supplierName', e.target.value)}
                       placeholder='Enter contact person name'
+                      className={errors.supplierName ? 'border-red-500 focus-visible:ring-red-500' : ''}
                     />
+                    {renderError('supplierName')}
                   </div>
 
                   <div className='space-y-2'>
@@ -520,7 +653,9 @@ export default function VendorRegistrationPage() {
                       value={formData.supplierEmail}
                       onChange={(e) => handleInputChange('supplierEmail', e.target.value)}
                       placeholder='contact@example.com'
+                      className={errors.supplierEmail ? 'border-red-500 focus-visible:ring-red-500' : ''}
                     />
+                    {renderError('supplierEmail')}
                   </div>
 
                   <div className='space-y-2'>
@@ -531,7 +666,9 @@ export default function VendorRegistrationPage() {
                       value={formData.supplierPhone}
                       onChange={(e) => handleInputChange('supplierPhone', e.target.value)}
                       placeholder='Enter contact phone number'
+                      className={errors.supplierPhone ? 'border-red-500 focus-visible:ring-red-500' : ''}
                     />
+                    {renderError('supplierPhone')}
                   </div>
 
                   <div className='space-y-2'>
@@ -541,8 +678,10 @@ export default function VendorRegistrationPage() {
                       type='password'
                       value={formData.password}
                       onChange={(e) => handleInputChange('password', e.target.value)}
-                      placeholder='Enter password (min 6 characters)'
+                      placeholder='Enter password (min 8 characters)'
+                      className={errors.password ? 'border-red-500 focus-visible:ring-red-500' : ''}
                     />
+                    {renderError('password')}
                   </div>
 
                   <div className='space-y-2'>
@@ -553,7 +692,9 @@ export default function VendorRegistrationPage() {
                       value={formData.confirmPassword}
                       onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
                       placeholder='Confirm your password'
+                      className={errors.confirmPassword ? 'border-red-500 focus-visible:ring-red-500' : ''}
                     />
+                    {renderError('confirmPassword')}
                   </div>
                 </div>
               </div>
@@ -574,6 +715,7 @@ export default function VendorRegistrationPage() {
               {currentStep < TOTAL_STEPS ? (
                 <Button
                   onClick={handleNext}
+                  disabled={!isCurrentStepValid}
                   className='flex-1 bg-[#1F3B29] hover:bg-[#2d5a3f]'>
                   Next
                   <ArrowRight className='w-4 h-4 ml-2' />
@@ -581,7 +723,7 @@ export default function VendorRegistrationPage() {
               ) : (
                 <Button
                   onClick={handleSubmit}
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || !isFormValid}
                   className='flex-1 bg-[#1F3B29] hover:bg-[#2d5a3f]'>
                   {isSubmitting ? 'Submitting...' : 'Submit Registration'}
                 </Button>
