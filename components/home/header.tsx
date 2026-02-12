@@ -327,21 +327,32 @@ const HomeHeader = () => {
                       <ChevronDown className='w-3 h-3' />
                     </button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align='end' className='w-48'>
-                    <DropdownMenuItem asChild>
-                      <Link href='/customer-profile' className='flex items-center gap-2 cursor-pointer'>
+                  <DropdownMenuContent
+                    align='end'
+                    className='w-56 rounded-xl border border-[#E6D3C2] bg-white p-2 shadow-lg'
+                  >
+                    <div className='px-3 py-2'>
+                      <p className='text-xs text-gray-500'>Signed in as</p>
+                      <p className='truncate text-sm font-semibold text-[#001e38]'>{customerName}</p>
+                    </div>
+                    <DropdownMenuSeparator className='bg-[#E6D3C2]' />
+                      <DropdownMenuItem asChild className='text-[#001e38] hover:bg-gray-100 hover:text-[#001e38] focus:bg-gray-100 focus:text-[#001e38]'>
+                      <Link href='/customer-profile' className='text-[#001e38] flex items-center gap-2 cursor-pointer rounded-lg px-2 py-2 text-sm'>
                         <User className='w-4 h-4' />
                         <span>My Profile</span>
                       </Link>
                     </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link href='/my-orders' className='flex items-center gap-2 cursor-pointer'>
+                      <DropdownMenuItem asChild className='text-[#001e38] hover:bg-gray-100 hover:text-[#001e38] focus:bg-gray-100 focus:text-[#001e38]'>
+                      <Link href='/my-orders' className=' text-[#001e38] flex items-center gap-2 cursor-pointer rounded-lg px-2 py-2 text-sm'>
                         <Package className='w-4 h-4' />
                         <span>My Orders</span>
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleLogout} className='cursor-pointer'>
+                    <DropdownMenuItem
+                      onClick={handleLogout}
+                      className='cursor-pointer text-[#001e38] rounded-lg px-2 py-2 text-sm hover:bg-gray-100 hover:text-[#001e38] focus:bg-gray-100 focus:text-[#001e38]'
+                    >
                       <LogOut className='w-4 h-4' />
                       <span>Logout</span>
                     </DropdownMenuItem>

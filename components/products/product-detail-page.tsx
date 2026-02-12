@@ -449,7 +449,7 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
 
     setCartButtonLoading(true);
     try {
-      await addToCart(product._id.toString(), quantity);
+      await addToCart(product._id.toString(), quantity, { suppressToast: true });
       router.push('/checkout');
     } catch (error) {
       console.error('Error adding to cart:', error);

@@ -22,7 +22,7 @@ interface CartContextType {
   cartItems: CartItem[];
   cartCount: number;
   isLoading: boolean;
-  addToCart: (productId: string, quantity?: number) => Promise<void>;
+  addToCart: (productId: string, quantity?: number, options?: { suppressToast?: boolean }) => Promise<void>;
   removeFromCart: (productId: string) => Promise<void>;
   updateQuantity: (productId: string, quantity: number) => Promise<void>;
   fetchCart: () => Promise<void>;
@@ -89,7 +89,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   }, [isLoggedIn, fetchCart]);
 
-  const addToCart = async (productId: string, quantity: number = 1) => {
+  const addToCart = async (productId: string, quantity: number = 1, options?: { suppressToast?: boolean }) => {
+    const suppressToast = options?.suppressToast ?? false;
     if (!isLoggedIn) {
       // Dispatch event to open login modal
       window.dispatchEvent(new Event('openLoginModal'));
@@ -108,16 +109,20 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
       if (response.ok) {
         if (data.alreadyInCart) {
-          toast('This item already exists in cart', {
-            icon: '⚠️',
-            style: {
-              background: '#FEF3C7',
-              color: '#92400E',
-              border: '1px solid #FCD34D',
-            },
-          });
+          if (!suppressToast) {
+            toast('This item already exists in cart', {
+              icon: '⚠️',
+              style: {
+                background: '#FEF3C7',
+                color: '#92400E',
+                border: '1px solid #FCD34D',
+              },
+            });
+          }
         } else {
-          toast.success('Product added to cart successfully');
+          if (!suppressToast) {
+            toast.success('Product added to cart successfully');
+          }
           await fetchCart(true); // Refresh cart with loader
         }
       } else {
