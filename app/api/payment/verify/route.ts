@@ -154,6 +154,7 @@ export async function POST(req: NextRequest) {
     console.log('[Payment Verify] Creating order with customer ID:', customerObjectId.toString());
 
     // Create order in database
+    const couponId = orderData.couponId ? new mongoose.Types.ObjectId(orderData.couponId) : undefined;
     const order = await Order.create({
       orderId,
       customer: customerObjectId,
@@ -163,6 +164,9 @@ export async function POST(req: NextRequest) {
       subtotal: orderData.subtotal || 0,
       shippingCharges: orderData.shippingCharges || 0,
       tax: orderData.tax || 0,
+      discountAmount: orderData.discountAmount || 0,
+      couponCode: orderData.couponCode || undefined,
+      couponId,
       total: orderData.total,
       shippingAddress: orderData.shippingAddress,
       billingAddress: orderData.billingAddress || orderData.shippingAddress,
@@ -203,6 +207,23 @@ export async function POST(req: NextRequest) {
 
     // Also verify by orderId
     const orderByOrderId = await Order.findOne({ orderId: savedOrder.orderId }).lean();
+    if (couponId) {
+      try {
+        const { db } = await connectToDatabase();
+        await db.collection('coupons').updateOne(
+          { _id: couponId },
+          { $inc: { totalUsage: 1 } }
+        );
+        await db.collection('coupon_usages').updateOne(
+          { couponId, customerId: customer.id },
+          { $inc: { usageCount: 1 } },
+          { upsert: true }
+        );
+      } catch (usageError) {
+        console.error('[Payment Verify] Failed to update coupon usage:', usageError);
+      }
+    }
+
     if (!orderByOrderId) {
       console.error('[Payment Verify] Order not found by orderId:', savedOrder.orderId);
     } else {

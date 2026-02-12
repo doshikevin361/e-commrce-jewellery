@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { ShoppingCart, Minus, Plus, Trash2, ArrowRight, Loader2 } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
@@ -12,6 +12,17 @@ export function CartPage() {
   const { cartItems, isLoading, updateQuantity, removeFromCart, fetchCart } = useCart();
   const [updatingItems, setUpdatingItems] = useState<Set<string>>(new Set());
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
+  const [couponCode, setCouponCode] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState<{
+    code: string;
+    couponId: string;
+    discountAmount: number;
+    type: string;
+    amount: number;
+    title?: string;
+  } | null>(null);
+  const [couponError, setCouponError] = useState('');
+  const [couponLoading, setCouponLoading] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -58,9 +69,82 @@ export function CartPage() {
 
   const subtotal = cartItems.reduce((sum, item) => sum + item.displayPrice * item.quantity, 0);
   const shipping = subtotal > 5000 ? 0 : 100; // Free shipping over ₹5000
-  const total = subtotal + shipping;
+  const discountAmount = appliedCoupon?.discountAmount || 0;
+  const total = Math.max(0, subtotal + shipping - discountAmount);
 
   const formatCurrency = (value: number) => `₹${value.toLocaleString()}`;
+
+  const cartPayload = useMemo(
+    () =>
+      cartItems.map(item => ({
+        productId: item._id,
+        quantity: item.quantity,
+        price: item.displayPrice,
+      })),
+    [cartItems]
+  );
+
+  const saveAppliedCoupon = (data: typeof appliedCoupon) => {
+    if (typeof window === 'undefined') return;
+    if (!data) {
+      localStorage.removeItem('appliedCoupon');
+      return;
+    }
+    localStorage.setItem('appliedCoupon', JSON.stringify(data));
+  };
+
+  const applyCoupon = async (code: string, silent = false) => {
+    if (!code.trim()) {
+      setCouponError('Please enter a coupon code');
+      return;
+    }
+    setCouponLoading(true);
+    setCouponError('');
+    try {
+      const response = await fetch('/api/coupons/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          code: code.trim(),
+          items: cartPayload,
+          subtotal,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        setAppliedCoupon(null);
+        saveAppliedCoupon(null);
+        setCouponError(data.error || 'Invalid coupon');
+        return;
+      }
+      const next = {
+        code: data.coupon.code,
+        couponId: data.coupon.id,
+        discountAmount: data.discountAmount,
+        type: data.coupon.type,
+        amount: data.coupon.amount,
+        title: data.coupon.title,
+      };
+      setAppliedCoupon(next);
+      setCouponCode(data.coupon.code);
+      saveAppliedCoupon(next);
+      if (!silent) {
+        setCouponError('');
+      }
+    } catch (error) {
+      setCouponError('Failed to apply coupon');
+    } finally {
+      setCouponLoading(false);
+    }
+  };
+
+  const removeCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponCode('');
+    setCouponError('');
+    saveAppliedCoupon(null);
+  };
 
   // Only show full page loader on initial load, not during quantity updates
   const [initialLoad, setInitialLoad] = useState(true);
@@ -70,6 +154,29 @@ export function CartPage() {
       setInitialLoad(false);
     }
   }, [isLoading, initialLoad]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const stored = localStorage.getItem('appliedCoupon');
+    if (!stored) return;
+    try {
+      const parsed = JSON.parse(stored);
+      if (parsed?.code) {
+        setCouponCode(parsed.code);
+        applyCoupon(parsed.code, true);
+      }
+    } catch {
+      localStorage.removeItem('appliedCoupon');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (appliedCoupon?.code) {
+      applyCoupon(appliedCoupon.code, true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [subtotal, cartItems.length]);
 
   if (isLoggedIn === null || (isLoading && initialLoad)) {
     return <PageLoader message='Loading cart...' />;
@@ -211,6 +318,35 @@ export function CartPage() {
 
         <div className='rounded-2xl border-2 border-[#001e38] bg-white p-4 sm:p-5 md:p-6'>
           <h2 className='text-lg sm:text-xl font-bold text-[#1F3B29] mb-4'>Order Summary</h2>
+          <div className='mb-5 space-y-3'>
+            <label className='text-sm font-semibold text-[#4F3A2E]'>Apply Coupon</label>
+            <div className='flex gap-2'>
+              <input
+                value={couponCode}
+                onChange={e => setCouponCode(e.target.value.toUpperCase())}
+                placeholder='Enter coupon code'
+                className='flex-1 rounded-lg border border-[#E6D3C2] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#001e38]/20'
+              />
+              <button
+                onClick={() => applyCoupon(couponCode)}
+                disabled={couponLoading || !couponCode.trim()}
+                className='rounded-lg bg-[#001e38] px-4 py-2 text-xs font-semibold text-white hover:bg-[#2a4d3a] disabled:opacity-50 disabled:cursor-not-allowed'>
+                {couponLoading ? 'Applying...' : 'Apply'}
+              </button>
+            </div>
+            {couponError && <p className='text-xs text-red-600'>{couponError}</p>}
+            {appliedCoupon && !couponError && (
+              <div className='flex items-center justify-between rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-xs text-green-700'>
+                <span>
+                  {appliedCoupon.code} applied
+                  {appliedCoupon.title ? ` · ${appliedCoupon.title}` : ''}
+                </span>
+                <button onClick={removeCoupon} className='font-semibold text-green-700 hover:text-green-900'>
+                  Remove
+                </button>
+              </div>
+            )}
+          </div>
           <div className='space-y-3 text-sm text-[#4F3A2E]'>
             <div className='flex justify-between'>
               <span>Subtotal</span>
@@ -220,6 +356,12 @@ export function CartPage() {
               <span>Shipping</span>
               <span className='font-semibold'>{shipping === 0 ? 'Free' : formatCurrency(shipping)}</span>
             </div>
+            {discountAmount > 0 && (
+              <div className='flex justify-between text-green-700'>
+                <span>Discount</span>
+                <span className='font-semibold'>- {formatCurrency(discountAmount)}</span>
+              </div>
+            )}
             <div className='border-t border-[#E6D3C2] pt-3 flex justify-between text-base font-bold text-[#1F3B29]'>
               <span>Total</span>
               <span>{formatCurrency(total)}</span>

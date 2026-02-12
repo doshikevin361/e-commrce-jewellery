@@ -29,6 +29,9 @@ export interface IOrder extends Document {
   subtotal: number;
   shippingCharges: number;
   tax: number;
+  discountAmount?: number;
+  couponCode?: string;
+  couponId?: mongoose.Types.ObjectId;
   total: number;
   shippingAddress: IShippingAddress;
   billingAddress?: IShippingAddress;
@@ -78,6 +81,9 @@ const OrderSchema = new Schema<IOrder>(
     subtotal: { type: Number, required: true },
     shippingCharges: { type: Number, required: true, default: 0 },
     tax: { type: Number, required: true, default: 0 },
+    discountAmount: { type: Number, default: 0 },
+    couponCode: { type: String },
+    couponId: { type: Schema.Types.ObjectId },
     total: { type: Number, required: true },
     shippingAddress: { type: ShippingAddressSchema, required: true },
     billingAddress: { type: ShippingAddressSchema },

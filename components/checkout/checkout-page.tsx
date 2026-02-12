@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Loader2, MapPin, CreditCard, Check, AlertCircle, Plus, Edit2, Trash2, Home, Briefcase, MapPinned, X } from 'lucide-react';
@@ -55,6 +55,17 @@ export function CheckoutPage() {
   const [showAddressForm, setShowAddressForm] = useState(false);
   const [editingAddress, setEditingAddress] = useState<Address | null>(null);
   const [showBillingForm, setShowBillingForm] = useState(false);
+  const [couponCode, setCouponCode] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState<{
+    code: string;
+    couponId: string;
+    discountAmount: number;
+    type: string;
+    amount: number;
+    title?: string;
+  } | null>(null);
+  const [couponError, setCouponError] = useState('');
+  const [couponLoading, setCouponLoading] = useState(false);
 
   const [shippingAddress, setShippingAddress] = useState<ShippingAddress>({
     fullName: '',
@@ -325,7 +336,104 @@ export function CheckoutPage() {
   const subtotal = cartItems.reduce((sum, item) => sum + item.displayPrice * item.quantity, 0);
   const shippingCharges = subtotal > 5000 ? 0 : 100;
   const tax = Math.round(subtotal * 0.03); // 3% GST
-  const total = subtotal + shippingCharges + tax;
+  const discountAmount = appliedCoupon?.discountAmount || 0;
+  const totalBeforeDiscount = subtotal + shippingCharges + tax;
+  const total = Math.max(0, totalBeforeDiscount - discountAmount);
+
+  const cartPayload = useMemo(
+    () =>
+      cartItems.map(item => ({
+        productId: item._id,
+        quantity: item.quantity,
+        price: item.displayPrice,
+      })),
+    [cartItems]
+  );
+
+  const saveAppliedCoupon = (data: typeof appliedCoupon) => {
+    if (typeof window === 'undefined') return;
+    if (!data) {
+      localStorage.removeItem('appliedCoupon');
+      return;
+    }
+    localStorage.setItem('appliedCoupon', JSON.stringify(data));
+  };
+
+  const applyCoupon = async (code: string, silent = false) => {
+    if (!code.trim()) {
+      setCouponError('Please enter a coupon code');
+      return;
+    }
+    setCouponLoading(true);
+    setCouponError('');
+    try {
+      const response = await fetch('/api/coupons/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          code: code.trim(),
+          items: cartPayload,
+          subtotal,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        setAppliedCoupon(null);
+        saveAppliedCoupon(null);
+        setCouponError(data.error || 'Invalid coupon');
+        return;
+      }
+      const next = {
+        code: data.coupon.code,
+        couponId: data.coupon.id,
+        discountAmount: data.discountAmount,
+        type: data.coupon.type,
+        amount: data.coupon.amount,
+        title: data.coupon.title,
+      };
+      setAppliedCoupon(next);
+      setCouponCode(data.coupon.code);
+      saveAppliedCoupon(next);
+      if (!silent) {
+        toast.success('Coupon applied');
+      }
+    } catch (error) {
+      setCouponError('Failed to apply coupon');
+    } finally {
+      setCouponLoading(false);
+    }
+  };
+
+  const removeCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponCode('');
+    setCouponError('');
+    saveAppliedCoupon(null);
+  };
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const stored = localStorage.getItem('appliedCoupon');
+    if (!stored) return;
+    try {
+      const parsed = JSON.parse(stored);
+      if (parsed?.code) {
+        setCouponCode(parsed.code);
+        applyCoupon(parsed.code, true);
+      }
+    } catch {
+      localStorage.removeItem('appliedCoupon');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (appliedCoupon?.code) {
+      applyCoupon(appliedCoupon.code, true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [subtotal, cartItems.length]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -455,6 +563,9 @@ export function CheckoutPage() {
         subtotal,
         shippingCharges,
         tax,
+        discountAmount,
+        couponCode: appliedCoupon?.code,
+        couponId: appliedCoupon?.couponId,
         total,
         shippingAddress,
         billingAddress: useSameAsShipping ? shippingAddress : billingAddress,
@@ -1161,6 +1272,36 @@ export function CheckoutPage() {
               ))}
             </div>
 
+            <div className='mb-4 rounded-lg border border-[#E6D3C2] p-3'>
+              <p className='text-sm font-semibold text-web mb-2'>Apply Coupon</p>
+              <div className='flex gap-2'>
+                <input
+                  value={couponCode}
+                  onChange={e => setCouponCode(e.target.value.toUpperCase())}
+                  placeholder='Enter coupon code'
+                  className='flex-1 rounded-md border border-[#E6D3C2] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-web/20'
+                />
+                <button
+                  onClick={() => applyCoupon(couponCode)}
+                  disabled={couponLoading || !couponCode.trim()}
+                  className='rounded-md bg-web px-3 py-2 text-xs font-semibold text-white hover:bg-web/80 disabled:opacity-50 disabled:cursor-not-allowed'>
+                  {couponLoading ? 'Applying...' : 'Apply'}
+                </button>
+              </div>
+              {couponError && <p className='text-xs text-red-600 mt-2'>{couponError}</p>}
+              {appliedCoupon && !couponError && (
+                <div className='mt-2 flex items-center justify-between rounded-md border border-green-200 bg-green-50 px-2 py-1 text-xs text-green-700'>
+                  <span>
+                    {appliedCoupon.code} applied
+                    {appliedCoupon.title ? ` · ${appliedCoupon.title}` : ''}
+                  </span>
+                  <button onClick={removeCoupon} className='font-semibold text-green-700 hover:text-green-900'>
+                    Remove
+                  </button>
+                </div>
+              )}
+            </div>
+
             <div className='space-y-3 pt-4 border-t border-[#E6D3C2]'>
               <div className='flex justify-between text-sm text-black'>
                 <span>Subtotal</span>
@@ -1174,6 +1315,12 @@ export function CheckoutPage() {
                 <span>Tax (GST 3%)</span>
                 <span className='font-semibold'>₹{tax.toLocaleString()}</span>
               </div>
+              {discountAmount > 0 && (
+                <div className='flex justify-between text-sm text-green-700'>
+                  <span>Discount</span>
+                  <span className='font-semibold'>- ₹{discountAmount.toLocaleString()}</span>
+                </div>
+              )}
               <div className='border-t border-[#E6D3C2] pt-3 flex justify-between text-lg font-bold text-web'>
                 <span>Total</span>
                 <span>₹{total.toLocaleString()}</span>
