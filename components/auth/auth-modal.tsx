@@ -52,6 +52,14 @@ export function AuthModal({ open, onOpenChange, mode, onSwitchMode, onSwitchToFo
   const [resendLoading, setResendLoading] = useState(false);
   const [cooldownSeconds, setCooldownSeconds] = useState(0);
 
+  const handleModalOpenChange = (nextOpen: boolean) => {
+    // Prevent accidental close while a login/register request is in flight.
+    if (!nextOpen && loading) {
+      return;
+    }
+    onOpenChange(nextOpen);
+  };
+
   useEffect(() => {
     if (showSuccessMessage) {
       setSuccess(showSuccessMessage);
@@ -375,7 +383,7 @@ export function AuthModal({ open, onOpenChange, mode, onSwitchMode, onSwitchToFo
   // Success screen for registration
   if (mode === 'register' && registerSuccess) {
     return (
-      <Dialog open={open} onOpenChange={onOpenChange}>
+      <Dialog open={open} onOpenChange={handleModalOpenChange}>
         <DialogContent className='sm:max-w-md p-0 overflow-hidden rounded-none' showCloseButton={true}>
           <div className='flex items-center justify-center p-6 sm:p-8 bg-white'>
             <div className='w-full space-y-4'>
@@ -427,7 +435,7 @@ export function AuthModal({ open, onOpenChange, mode, onSwitchMode, onSwitchToFo
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleModalOpenChange}>
       <DialogContent
         className='sm:max-w-md p-0 overflow-hidden animate-in fade-in-0 zoom-in-95 duration-300 rounded-none'
         showCloseButton={true}>

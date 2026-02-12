@@ -331,11 +331,14 @@ export function CheckoutPage() {
     const { name, value } = e.target;
     if (showAddressForm) {
       setNewAddress(prev => ({ ...prev, [name]: value }));
-    } else if (showBillingForm && !useSameAsShipping) {
-      setBillingAddress(prev => ({ ...prev, [name]: value }));
-    } else {
-      setShippingAddress(prev => ({ ...prev, [name]: value }));
+      return;
     }
+    setShippingAddress(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleBillingInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setBillingAddress(prev => ({ ...prev, [name]: value }));
   };
 
   const validateForm = (): boolean => {
@@ -992,7 +995,7 @@ export function CheckoutPage() {
                           type='text'
                           name='fullName'
                           value={billingAddress.fullName}
-                          onChange={handleInputChange}
+                          onChange={handleBillingInputChange}
                           className='w-full px-4 py-2 border border-[#E6D3C2] rounded-lg focus:outline-none focus:ring-2 focus:ring-web'
                           placeholder='John Doe'
                         />
@@ -1005,7 +1008,7 @@ export function CheckoutPage() {
                           type='tel'
                           name='phone'
                           value={billingAddress.phone}
-                          onChange={handleInputChange}
+                          onChange={handleBillingInputChange}
                           className='w-full px-4 py-2 border border-[#E6D3C2] rounded-lg focus:outline-none focus:ring-2 focus:ring-web'
                           placeholder='9876543210'
                           maxLength={10}
@@ -1021,7 +1024,7 @@ export function CheckoutPage() {
                         type='text'
                         name='addressLine1'
                         value={billingAddress.addressLine1}
-                        onChange={handleInputChange}
+                        onChange={handleBillingInputChange}
                         className='w-full px-4 py-2 border border-[#E6D3C2] rounded-lg focus:outline-none focus:ring-2 focus:ring-web'
                         placeholder='House No., Building Name'
                       />
@@ -1033,7 +1036,7 @@ export function CheckoutPage() {
                         type='text'
                         name='addressLine2'
                         value={billingAddress.addressLine2}
-                        onChange={handleInputChange}
+                        onChange={handleBillingInputChange}
                         className='w-full px-4 py-2 border border-[#E6D3C2] rounded-lg focus:outline-none focus:ring-2 focus:ring-web'
                         placeholder='Road Name, Area, Colony'
                       />
@@ -1048,7 +1051,7 @@ export function CheckoutPage() {
                           type='text'
                           name='city'
                           value={billingAddress.city}
-                          onChange={handleInputChange}
+                          onChange={handleBillingInputChange}
                           className='w-full px-4 py-2 border border-[#E6D3C2] rounded-lg focus:outline-none focus:ring-2 focus:ring-web'
                           placeholder='Mumbai'
                         />
@@ -1061,7 +1064,7 @@ export function CheckoutPage() {
                           type='text'
                           name='state'
                           value={billingAddress.state}
-                          onChange={handleInputChange}
+                          onChange={handleBillingInputChange}
                           className='w-full px-4 py-2 border border-[#E6D3C2] rounded-lg focus:outline-none focus:ring-2 focus:ring-web'
                           placeholder='Maharashtra'
                         />
@@ -1077,7 +1080,7 @@ export function CheckoutPage() {
                           type='text'
                           name='postalCode'
                           value={billingAddress.postalCode}
-                          onChange={handleInputChange}
+                          onChange={handleBillingInputChange}
                           className='w-full px-4 py-2 border border-[#E6D3C2] rounded-lg focus:outline-none focus:ring-2 focus:ring-web'
                           placeholder='400001'
                           maxLength={6}
@@ -1089,7 +1092,7 @@ export function CheckoutPage() {
                           type='text'
                           name='country'
                           value={billingAddress.country}
-                          onChange={handleInputChange}
+                          onChange={handleBillingInputChange}
                           className='w-full px-4 py-2 border border-[#E6D3C2] rounded-lg bg-gray-50'
                           readOnly
                         />
