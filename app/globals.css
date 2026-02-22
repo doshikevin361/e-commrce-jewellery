@@ -47,7 +47,10 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.45 0.2 142);
-  --web : #001e38;
+  /* Theme: overridden by PublicThemeLoader from DB. Use text-web/bg-web/border-web for primary; text-theme-secondary/bg-theme-secondary/hover:text-theme-secondary for secondary. */
+  --theme-primary: #001e38;
+  --theme-secondary: #C8A15B;
+  --web: var(--theme-primary);
 }
 
 .dark {
@@ -127,6 +130,8 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-web: var(--web);
+  --color-theme-primary: var(--theme-primary);
+  --color-theme-secondary: var(--theme-secondary);
 }
 
 @layer base {

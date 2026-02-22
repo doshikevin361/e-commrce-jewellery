@@ -391,9 +391,9 @@ export function AuthModal({ open, onOpenChange, mode, onSwitchMode, onSwitchToFo
                 <div className='w-12 h-12 bg-green-100 flex items-center justify-center mx-auto mb-3'>
                   <CheckCircle className='w-6 h-6 text-green-600' />
                 </div>
-                <h2 className='text-xl font-bold text-[#001e38] mb-2'>Check Your Email</h2>
+                <h2 className='text-xl font-bold text-web mb-2'>Check Your Email</h2>
                 <p className='text-sm text-gray-600 mb-2'>
-                  We've sent a verification email to <strong className='break-all text-[#001e38]'>{formData.email}</strong>
+                  We've sent a verification email to <strong className='break-all text-web'>{formData.email}</strong>
                 </p>
                 <p className='text-xs text-gray-500 mb-4'>
                   Please check your inbox and click the verification link to activate your account. You will not be able to login until you
@@ -443,7 +443,7 @@ export function AuthModal({ open, onOpenChange, mode, onSwitchMode, onSwitchToFo
           <div className='w-full space-y-4'>
             {/* Header */}
             <div className='text-center mb-4'>
-              <h2 className='text-xl sm:text-2xl font-bold text-[#001e38] mb-1'>{mode === 'login' ? 'Login' : 'Create Account'}</h2>
+              <h2 className='text-xl sm:text-2xl font-bold text-web mb-1'>{mode === 'login' ? 'Login' : 'Create Account'}</h2>
               <p className='text-gray-600 text-sm'>
                 {mode === 'login' ? 'Enter your credentials to access your account' : 'Fill in your details to create a new account'}
               </p>
@@ -463,7 +463,7 @@ export function AuthModal({ open, onOpenChange, mode, onSwitchMode, onSwitchToFo
             {mode === 'login' ? (
               <form onSubmit={handleLogin} className='space-y-4'>
                 <div>
-                  <label className='block text-xs font-medium text-[#001e38] mb-1.5'>Email Address *</label>
+                  <label className='block text-xs font-medium text-web mb-1.5'>Email Address *</label>
                   <div className='relative'>
                     <Mail className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4' />
                     <input
@@ -490,7 +490,7 @@ export function AuthModal({ open, onOpenChange, mode, onSwitchMode, onSwitchToFo
                 </div>
 
                 <div>
-                  <label className='block text-xs font-medium text-[#001e38] mb-1.5'>Password *</label>
+                  <label className='block text-xs font-medium text-web mb-1.5'>Password *</label>
                   <div className='relative'>
                     <Lock className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4' />
                     <input
@@ -559,7 +559,7 @@ export function AuthModal({ open, onOpenChange, mode, onSwitchMode, onSwitchToFo
                   <button
                     type='submit'
                     disabled={loading || !!loginErrors.email || !!loginErrors.password}
-                    className='w-full bg-[#001e38] text-white py-2.5 text-sm font-semibold transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed'>
+                    className='w-full bg-web text-white py-2.5 text-sm font-semibold transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed'>
                     {loading ? 'Logging in...' : 'Login'}
                   </button>
                 </div>
@@ -573,7 +573,7 @@ export function AuthModal({ open, onOpenChange, mode, onSwitchMode, onSwitchToFo
                         onClick={() => {
                           onSwitchMode();
                         }}
-                        className='text-[#001e38] font-semibold hover:text-[#001e38] transition-colors'>
+                        className='text-web font-semibold hover:text-web transition-colors'>
                         Register here
                       </button>
                     </p>
@@ -583,7 +583,7 @@ export function AuthModal({ open, onOpenChange, mode, onSwitchMode, onSwitchToFo
             ) : (
               <form onSubmit={handleRegister} className='space-y-4'>
                 <div>
-                  <label className='block text-xs font-medium text-[#001e38] mb-1.5'>Full Name *</label>
+                  <label className='block text-xs font-medium text-web mb-1.5'>Full Name *</label>
                   <div className='relative'>
                     <User className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4' />
                     <input
@@ -599,7 +599,7 @@ export function AuthModal({ open, onOpenChange, mode, onSwitchMode, onSwitchToFo
                 </div>
 
                 <div>
-                  <label className='block text-xs font-medium text-[#001e38] mb-1.5'>Email Address *</label>
+                  <label className='block text-xs font-medium text-web mb-1.5'>Email Address *</label>
                   <div className='relative'>
                     <Mail className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4' />
                     <input
@@ -627,7 +627,7 @@ export function AuthModal({ open, onOpenChange, mode, onSwitchMode, onSwitchToFo
                 </div>
 
                 <div>
-                  <label className='block text-xs font-medium text-[#001e38] mb-1.5'>Phone Number *</label>
+                  <label className='block text-xs font-medium text-web mb-1.5'>Phone Number *</label>
                   <div className='relative'>
                     <Phone className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4' />
                     <input
@@ -657,7 +657,7 @@ export function AuthModal({ open, onOpenChange, mode, onSwitchMode, onSwitchToFo
                 </div>
 
                 <div>
-                  <label className='block text-xs font-medium text-[#001e38] mb-1.5'>Password *</label>
+                  <label className='block text-xs font-medium text-web mb-1.5'>Password *</label>
                   <div className='relative'>
                     <Lock className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4' />
                     <input
@@ -679,7 +679,7 @@ export function AuthModal({ open, onOpenChange, mode, onSwitchMode, onSwitchToFo
                 </div>
 
                 <div>
-                  <label className='block text-xs font-medium text-[#001e38] mb-1.5'>Confirm Password *</label>
+                  <label className='block text-xs font-medium text-web mb-1.5'>Confirm Password *</label>
                   <div className='relative'>
                     <Lock className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4' />
                     <input
@@ -711,7 +711,7 @@ export function AuthModal({ open, onOpenChange, mode, onSwitchMode, onSwitchToFo
                       !!registerErrors.confirmPassword ||
                       !!registerErrors.name
                     }
-                    className='w-full bg-[#001e38] text-white py-2.5 text-sm font-semibold hover:bg-[#001e38] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed'>
+                    className='w-full bg-web text-white py-2.5 text-sm font-semibold hover:bg-web transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed'>
                     {loading ? 'Creating Account...' : 'Create Account'}
                   </button>
                 </div>
@@ -725,7 +725,7 @@ export function AuthModal({ open, onOpenChange, mode, onSwitchMode, onSwitchToFo
                         onClick={() => {
                           onSwitchMode();
                         }}
-                        className='text-[#001e38] font-semibold hover:text-[#001e38] transition-colors'>
+                        className='text-web font-semibold hover:text-web transition-colors'>
                         Login here
                       </button>
                     </p>

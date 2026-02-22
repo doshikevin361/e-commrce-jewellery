@@ -15,7 +15,7 @@ export function Sidebar({ onLogout }: SidebarProps) {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const { settings } = useSettings();
-  const primaryColor = settings.primaryColor || '#22c55e';
+  const primaryColor = settings.adminPrimaryColor || '#22c55e';
   const brandName = settings.siteName || 'E-commerce';
   const brandInitials = useMemo(() => brandName.split(' ').map(part => part[0]).join('').slice(0, 2).toUpperCase(), [brandName]);
 

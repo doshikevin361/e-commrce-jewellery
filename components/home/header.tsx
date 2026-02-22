@@ -422,7 +422,7 @@ const HomeHeader = () => {
               />
               <button
                 type='submit'
-                className='absolute right-0 top-0 cursor-pointer h-full border-l-0 border-3 border-[#e4e4e4] px-6 bg-emerald-400 hover:bg-emerald-500 text-white'>
+                className='absolute right-0 top-0 cursor-pointer h-full border-l-0 border-3 border-[#e4e4e4] px-6 bg-theme-secondary text-white'>
                 <Search className='w-5 h-5' />
               </button>
               <SearchDialog
@@ -507,7 +507,7 @@ const HomeHeader = () => {
               aria-label='Wishlist'>
               <Heart className='w-6 h-6' />
               {wishlistCount > 0 && (
-                <span className='absolute -top-2 -right-2 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-emerald-400 px-1 text-[10px] font-semibold text-white'>
+                <span className='absolute -top-2 -right-2 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-theme-secondary px-1 text-[10px] font-semibold text-white'>
                   {wishlistCount}
                 </span>
               )}
@@ -528,7 +528,7 @@ const HomeHeader = () => {
               aria-label='Cart'>
               <ShoppingCart className='w-6 h-6' />
               {cartCount > 0 && (
-                <span className='absolute -top-2 -right-2 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-emerald-400 px-1 text-[10px] font-semibold text-white'>
+                <span className='absolute -top-2 -right-2 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-theme-secondary px-1 text-[10px] font-semibold text-white'>
                   {cartCount}
                 </span>
               )}
@@ -539,7 +539,7 @@ const HomeHeader = () => {
 
       {/* Navigation Menu - Sticky */}
       <div
-        className={`bg-gradient-to-br from-slate-700 via-slate-800 to-slate-900
+        className={`bg-web
  text-white transition-all duration-300 ${isSticky ? 'fixed top-0 left-0 right-0 z-50 shadow-lg' : ''}`}
         onMouseLeave={() => setOpenDropdown(null)}>
         <div className='max-w-[1440px] mx-auto relative'>
@@ -598,9 +598,7 @@ const HomeHeader = () => {
               }}>
               <button
                 onClick={() => setLiveRateOpen(prev => !prev)}
-                className={`px-6 py-4 text-sm font-medium flex items-center gap-2 hover:bg-[#002e50] ${
-                  liveRateOpen ? 'text-emerald-400' : ''
-                }`}>
+                className={`px-6 py-4 text-sm font-medium flex items-center gap-2`}>
                 Gold Rate
                 <ChevronDown className='w-4 h-4' />
               </button>

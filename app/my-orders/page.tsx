@@ -47,7 +47,7 @@ export default function MyOrdersPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<string[]>([]);
   const [filterTime, setFilterTime] = useState<string[]>([]);
-  const [isFilterFlipped, setIsFilterFlipped] = useState(false);
+  const [isFilterFlipped, setIsFilterFlipped] = useState(true);
 
   useEffect(() => {
     const token = localStorage.getItem('customerToken');
@@ -205,25 +205,25 @@ export default function MyOrdersPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#F5EEE5] to-white">
+    <div className="min-h-screen bg-white">
       {/* Header */}
-      <div className="bg-[#1F3B29] text-white py-6 px-4 sm:px-6 lg:px-8">
+      <div className="bg-white text-black py-6 px-4 sm:px-6">
         <div className="max-w-7xl mx-auto">
           <Link 
             href="/" 
-            className="inline-flex items-center gap-2 text-white/80 hover:text-white transition-colors mb-4"
+            className="inline-flex items-center gap-2 text-black/80 hover:text-white transition-colors mb-4"
           >
             <ArrowLeft size={20} />
             <span>Back to Home</span>
           </Link>
           <h1 className="text-3xl font-bold">My Orders</h1>
-          <p className="text-white/80 mt-2">Track and manage all your orders in one place</p>
+          <p className="text-black/80 mt-2">Track and manage all your orders in one place</p>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto py-8">
         {/* Search */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
+        <div className="bg-gray-100 te rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
             <input
@@ -231,7 +231,7 @@ export default function MyOrdersPage() {
               placeholder="Search by product name, order ID, or brand..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F3B29] focus:border-transparent"
+              className="w-full pl-10 pr-4 py-2.5 border border-gray-300 bg-white rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F3B29] focus:border-transparent"
             />
           </div>
         </div>
@@ -282,7 +282,7 @@ export default function MyOrdersPage() {
 
                 {/* Back of Card - Filters */}
                 <div 
-                  className="absolute inset-0 bg-white rounded-2xl shadow-2xl p-6 overflow-hidden"
+                  className="absolute inset-0 bg-gray-100 rounded-2xl shadow-2xl p-6 overflow-hidden"
                   style={{ 
                     backfaceVisibility: 'hidden', 
                     WebkitBackfaceVisibility: 'hidden',
@@ -297,15 +297,6 @@ export default function MyOrdersPage() {
                         </div>
                         <h2 className="font-bold text-lg text-gray-900">Filters</h2>
                       </div>
-                      <button
-                        onClick={() => setIsFilterFlipped(false)}
-                        className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                        title="Close Filters"
-                      >
-                        <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </button>
                     </div>
 
                     <div 

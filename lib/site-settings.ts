@@ -21,7 +21,9 @@ export type SiteSettings = {
   siteName: string;
   siteTitle: string;
   tagline: string;
+  adminPrimaryColor: string;
   primaryColor: string;
+  secondaryColor: string;
   accentColor: string;
   logo: string;
   favicon: string;
@@ -33,7 +35,9 @@ export const defaultSiteSettings: SiteSettings = {
   siteName: "Grocify Admin",
   siteTitle: "Grocify – Admin Panel",
   tagline: "Manage every part of your storefront",
-  primaryColor: "#16a34a",
+  adminPrimaryColor: "#16a34a",
+  primaryColor: "#001e38",
+  secondaryColor: "#C8A15B",
   accentColor: "#0f172a",
   logo: "",
   favicon: "",

@@ -35,7 +35,7 @@ export function TopBar() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
 
-  const primaryColor = settings.primaryColor || '#16a34a';
+  const primaryColor = settings.adminPrimaryColor || '#16a34a';
   const accentColor = settings.accentColor || '#0f172a';
   const tagline = settings.tagline;
   const siteName = settings.siteName;

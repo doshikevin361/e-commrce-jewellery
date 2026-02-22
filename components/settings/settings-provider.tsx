@@ -25,7 +25,8 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     if (typeof document === 'undefined') return;
 
     const root = document.documentElement;
-    root.style.setProperty('--brand-primary', data.primaryColor || defaultSiteSettings.primaryColor);
+    // Admin panel only: primary and accent (do not set website theme vars here)
+    root.style.setProperty('--brand-primary', data.adminPrimaryColor ?? defaultSiteSettings.adminPrimaryColor);
     root.style.setProperty('--brand-accent', data.accentColor || defaultSiteSettings.accentColor);
 
     if (data.siteTitle) {

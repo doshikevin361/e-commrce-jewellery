@@ -9,6 +9,7 @@ import { WishlistProvider } from '@/contexts/WishlistContext';
 import { WebsiteLayout } from '@/components/layout/website-layout';
 import { CustomerAuthHandler } from '@/components/layout/customer-auth-handler';
 import { ScrollToTop } from '@/components/scroll-to-top';
+import { PublicThemeLoader } from '@/components/theme/public-theme-loader';
 import './globals.css';
 import { Toaster } from 'react-hot-toast';
 
@@ -57,6 +58,7 @@ export default function RootLayout({
     <html lang='en' suppressHydrationWarning>
       <body className={`${geist.className} ${geistMono.variable} antialiased`}>
         <ThemeProvider attribute='class' defaultTheme='light' enableSystem>
+          <PublicThemeLoader />
           <SettingsProvider>
             <CustomerAuthHandler />
             <CategoriesProvider>

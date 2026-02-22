@@ -184,7 +184,9 @@ export function SettingsPanel() {
         siteName: formData.siteName,
         siteTitle: formData.siteTitle,
         tagline: formData.tagline,
+        adminPrimaryColor: formData.adminPrimaryColor,
         primaryColor: formData.primaryColor,
+        secondaryColor: formData.secondaryColor,
         accentColor: formData.accentColor,
         logo: formData.logo,
         favicon: formData.favicon,
@@ -304,10 +306,50 @@ export function SettingsPanel() {
                   />
               </FieldRow>
 
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-white mt-8 pt-6 border-t border-slate-200 dark:border-slate-700">
+                Admin panel
+              </h2>
+              <p className="text-sm text-slate-600 dark:text-slate-400 -mt-1 mb-4">
+                Colors used only in the admin panel (sidebar, buttons, links). Does not affect the customer-facing website.
+              </p>
               <div className="grid gap-8 md:grid-cols-2">
                 <FieldRow
-                  label="Primary color"
-                  description="Buttons, accents, highlights."
+                  label="Admin primary color"
+                  description="Buttons, sidebar, active links and highlights in the admin panel."
+                  alignTop
+                >
+                  <ColorPicker
+                    value={formData.adminPrimaryColor}
+                    onChange={(value: string) =>
+                      updateField("adminPrimaryColor", value)
+                    }
+                  />
+                </FieldRow>
+
+                <FieldRow
+                  label="Admin accent color"
+                  description="Sidebar accents, backgrounds, outlines in the admin panel."
+                  alignTop
+                >
+                  <ColorPicker
+                    value={formData.accentColor}
+                    onChange={(value: string) =>
+                      updateField("accentColor", value)
+                    }
+                  />
+                </FieldRow>
+              </div>
+
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-white mt-8 pt-6 border-t border-slate-200 dark:border-slate-700">
+                Website theme
+              </h2>
+              <p className="text-sm text-slate-600 dark:text-slate-400 -mt-1 mb-4">
+                Colors for the customer-facing website: navbar, buttons, stars, links, hover states. Changes apply after customers refresh the site.
+              </p>
+              <div className="grid gap-8 md:grid-cols-2">
+                <FieldRow
+                  label="Website primary color"
+                  description="Navbar, buttons, rating stars, active links, highlights on the website."
                   alignTop
                 >
                   <ColorPicker
@@ -319,18 +361,18 @@ export function SettingsPanel() {
                 </FieldRow>
 
                 <FieldRow
-                  label="Accent color"
-                  description="Sidebar, backgrounds, outlines."
+                  label="Website secondary color"
+                  description="Hover states, secondary buttons, borders and accents on the website."
                   alignTop
                 >
                   <ColorPicker
-                    value={formData.accentColor}
+                    value={formData.secondaryColor}
                     onChange={(value: string) =>
-                      updateField("accentColor", value)
+                      updateField("secondaryColor", value)
                     }
                   />
                 </FieldRow>
-            </div>
+              </div>
 
               <div className="grid gap-8 md:grid-cols-2">
                 <FieldRow
@@ -406,15 +448,23 @@ export function SettingsPanel() {
                   {formData.tagline || "Your message will appear here."}
                 </p>
               </div>
-              <div className="flex items-center gap-6">
-                <div
-                  className="h-16 w-16 rounded-xl border border-white/40 shadow-sm"
-                  style={{ backgroundColor: formData.primaryColor }}
-                />
-                <div
-                  className="h-16 w-16 rounded-xl border border-white/40 shadow-sm"
-                  style={{ backgroundColor: formData.accentColor }}
-                />
+              <div className="flex flex-wrap items-center gap-6">
+                <div className="flex flex-col items-center gap-1">
+                  <div title="Admin primary" className="h-14 w-14 rounded-xl border border-white/40 shadow-sm" style={{ backgroundColor: formData.adminPrimaryColor }} />
+                  <span className="text-xs text-slate-500">Admin</span>
+                </div>
+                <div className="flex flex-col items-center gap-1">
+                  <div title="Website primary" className="h-14 w-14 rounded-xl border border-white/40 shadow-sm" style={{ backgroundColor: formData.primaryColor }} />
+                  <span className="text-xs text-slate-500">Web primary</span>
+                </div>
+                <div className="flex flex-col items-center gap-1">
+                  <div title="Website secondary" className="h-14 w-14 rounded-xl border border-white/40 shadow-sm" style={{ backgroundColor: formData.secondaryColor }} />
+                  <span className="text-xs text-slate-500">Web secondary</span>
+                </div>
+                <div className="flex flex-col items-center gap-1">
+                  <div title="Admin accent" className="h-14 w-14 rounded-xl border border-white/40 shadow-sm" style={{ backgroundColor: formData.accentColor }} />
+                  <span className="text-xs text-slate-500">Admin accent</span>
+                </div>
             </div>
           </div>
         </Card>

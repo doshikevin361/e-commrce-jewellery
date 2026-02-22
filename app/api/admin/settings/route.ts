@@ -8,7 +8,9 @@ const DEFAULT_SETTINGS = {
   siteName: 'Grocify Admin',
   siteTitle: 'Grocify – Admin Panel',
   tagline: '',
-  primaryColor: '#16a34a',
+  adminPrimaryColor: '#16a34a',
+  primaryColor: '#001e38',
+  secondaryColor: '#C8A15B',
   accentColor: '#0f172a',
   logo: '',
   favicon: '',
@@ -29,7 +31,9 @@ function normalizeSettings(doc: any = {}) {
     siteName: doc.siteName ?? DEFAULT_SETTINGS.siteName,
     siteTitle: doc.siteTitle ?? DEFAULT_SETTINGS.siteTitle,
     tagline: doc.tagline ?? DEFAULT_SETTINGS.tagline,
+    adminPrimaryColor: doc.adminPrimaryColor ?? DEFAULT_SETTINGS.adminPrimaryColor,
     primaryColor: doc.primaryColor ?? DEFAULT_SETTINGS.primaryColor,
+    secondaryColor: doc.secondaryColor ?? DEFAULT_SETTINGS.secondaryColor,
     accentColor: doc.accentColor ?? DEFAULT_SETTINGS.accentColor,
     logo: doc.logo ?? DEFAULT_SETTINGS.logo,
     favicon: doc.favicon ?? DEFAULT_SETTINGS.favicon,
@@ -72,8 +76,10 @@ export async function PUT(request: NextRequest) {
     const siteName = (body.siteName || '').trim();
     const siteTitle = (body.siteTitle || '').trim();
     const tagline = (body.tagline || '').trim();
-    const primaryColor = (body.primaryColor || DEFAULT_SETTINGS.primaryColor).trim();
-    const accentColor = (body.accentColor || DEFAULT_SETTINGS.accentColor).trim();
+    const adminPrimaryColor = (body.adminPrimaryColor ?? DEFAULT_SETTINGS.adminPrimaryColor).toString().trim();
+    const primaryColor = (body.primaryColor ?? DEFAULT_SETTINGS.primaryColor).toString().trim();
+    const secondaryColor = (body.secondaryColor ?? DEFAULT_SETTINGS.secondaryColor).toString().trim();
+    const accentColor = (body.accentColor ?? DEFAULT_SETTINGS.accentColor).toString().trim();
     const logo = body.logo || '';
     const favicon = body.favicon || '';
     const productType = body.productType ?? DEFAULT_SETTINGS.productType;
@@ -111,7 +117,9 @@ export async function PUT(request: NextRequest) {
           siteName,
           siteTitle,
           tagline,
+          adminPrimaryColor,
           primaryColor,
+          secondaryColor,
           accentColor,
           logo,
           favicon,

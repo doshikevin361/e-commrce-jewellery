@@ -824,7 +824,7 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
                     ? 'bg-web text-white cursor-default'
                     : product.stock === 0
                       ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                      : 'bg-[#001e38] text-white hover:scale-[1.02] active:scale-[0.98] hover:bg-[#002a52]',
+                      : 'bg-web text-white hover:scale-[1.02] active:scale-[0.98] hover:bg-[#002a52]',
                 )}>
                 {cartButtonLoading ? (
                   <>

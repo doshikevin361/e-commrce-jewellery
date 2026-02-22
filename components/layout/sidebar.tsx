@@ -122,7 +122,7 @@ export function Sidebar() {
     localStorage.setItem('sidebarOpen', String(newState));
   };
 
-  const primaryColor = settings.primaryColor || '#22C55E';
+  const primaryColor = settings.adminPrimaryColor || '#22C55E';
   const accentColor = settings.accentColor || '#16A34A';
 
   const brandBadgeStyle = useMemo(
