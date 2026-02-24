@@ -152,7 +152,7 @@ export default function LoginPage() {
               </Button>
             </form>
 
-            <div className='mt-6 text-center'>
+            <div className='mt-6 text-center space-y-2'>
               <p className='text-sm text-slate-600 dark:text-slate-400'>
                 Don't have an account?{' '}
                 <a
@@ -160,6 +160,16 @@ export default function LoginPage() {
                   className='font-semibold hover:underline'
                   style={{ color: primaryColor }}>
                   Create your account
+                </a>
+              </p>
+              <p className='text-sm text-slate-500 dark:text-slate-500'>
+                B2B / Retailer?{' '}
+                <a href='/retailer/login' className='font-medium hover:underline' style={{ color: primaryColor }}>
+                  Retailer login
+                </a>
+                {' or '}
+                <a href='/retailer/register' className='font-medium hover:underline' style={{ color: primaryColor }}>
+                  Register as B2B
                 </a>
               </p>
             </div>

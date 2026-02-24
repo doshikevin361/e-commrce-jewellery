@@ -7,11 +7,12 @@ import Footer from '../home/footer';
 export function WebsiteLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
-  // Don't show header/footer for admin routes, login, vendor routes, or become-vendor page
+  // Don't show header/footer for admin routes, login, vendor routes, retailer (B2B) panel, or become-vendor page
   const isAdminRoute =
     pathname?.startsWith('/admin') ||
     pathname?.startsWith('/login') ||
     pathname?.startsWith('/vendors') ||
+    pathname?.startsWith('/retailer') ||
     pathname?.startsWith('/become-vendor') ||
     pathname?.startsWith('/vendor-registration');
 

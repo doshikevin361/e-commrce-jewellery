@@ -101,3 +101,22 @@ export function isAdmin(user: DecodedToken | null): boolean {
 export function isAdminOrVendor(user: DecodedToken | null): boolean {
   return isAdmin(user) || isVendor(user);
 }
+
+export function isRetailer(user: DecodedToken | null): boolean {
+  return user?.role === 'retailer';
+}
+
+export function getRetailerFromRequest(request: NextRequest): DecodedToken | null {
+  try {
+    const retailerToken = request.cookies.get('retailerToken')?.value;
+    const authHeader = request.headers.get('authorization');
+    const tokenFromHeader = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null;
+    const token = retailerToken || tokenFromHeader;
+    if (!token) return null;
+    const decoded = verifyToken(token);
+    if (decoded && decoded.role === 'retailer') return decoded;
+    return null;
+  } catch {
+    return null;
+  }
+}
