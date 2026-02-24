@@ -80,7 +80,11 @@ export function VendorCommissionSettings({
   const [setupRows, setSetupRows] = useState<SetupRow[]>([
     { productType: "", category: "", designType: "", metal: "", purityKarat: "", vendorCommission: 0 },
   ]);
+  const [b2bSetupRows, setB2bSetupRows] = useState<SetupRow[]>([
+    { productType: "", category: "", designType: "", metal: "", purityKarat: "", vendorCommission: 0 },
+  ]);
   const hasInitializedVendorRows = useRef(false);
+  const hasInitializedB2bRows = useRef(false);
 
   const isVendor = userRole === "vendor";
 
@@ -125,6 +129,7 @@ export function VendorCommissionSettings({
       const loadedProductTypes = Array.isArray(commData.productTypes) ? commData.productTypes : [];
       const loadedCategories = Array.isArray(commData.categories) ? commData.categories : [];
       const loadedCommissionRows = Array.isArray(commData.commissionRows) ? commData.commissionRows : [];
+      const loadedB2bCommissionRows = Array.isArray(commData.b2bCommissionRows) ? commData.b2bCommissionRows : [];
       setCommissions(loadedCommissions);
       setLastSaved(loadedCommissions);
       setSelectedProductTypes(loadedProductTypes);
@@ -143,6 +148,18 @@ export function VendorCommissionSettings({
         }));
         setSetupRows(rows);
         hasInitializedVendorRows.current = true;
+      }
+      if (loadedB2bCommissionRows.length > 0) {
+        const b2bRows: SetupRow[] = loadedB2bCommissionRows.map((r: any) => ({
+          productType: String(r?.productType ?? "").trim(),
+          category: String(r?.category ?? "").trim(),
+          designType: String(r?.designType ?? "").trim(),
+          metal: String(r?.metal ?? "").trim(),
+          purityKarat: String(r?.purityKarat ?? "").trim(),
+          vendorCommission: typeof r?.vendorCommission === "number" ? r.vendorCommission : 0,
+        }));
+        setB2bSetupRows(b2bRows);
+        hasInitializedB2bRows.current = true;
       }
 
       if (catRes.ok) {
@@ -220,6 +237,27 @@ export function VendorCommissionSettings({
     });
   };
 
+  const addB2bSetupRow = () => {
+    setB2bSetupRows((prev) => [
+      ...prev,
+      { productType: "", category: "", designType: "", metal: "", purityKarat: "", vendorCommission: 0 },
+    ]);
+  };
+  const updateB2bSetupRow = (index: number, field: keyof SetupRow, value: string | number) => {
+    setB2bSetupRows((prev) => {
+      const next = [...prev];
+      if (index >= 0 && index < next.length) next[index] = { ...next[index], [field]: value };
+      return next;
+    });
+  };
+  const removeB2bSetupRow = (index: number) => {
+    setB2bSetupRows((prev) => {
+      const next = prev.filter((_, i) => i !== index);
+      if (next.length === 0) next.push({ productType: "", category: "", designType: "", metal: "", purityKarat: "", vendorCommission: 0 });
+      return next;
+    });
+  };
+
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const filled = setupRows.filter(
@@ -265,6 +303,37 @@ export function VendorCommissionSettings({
         vendorCommission: r.vendorCommission,
       }));
 
+      const b2bFilled = b2bSetupRows.filter(
+        (r) =>
+          (r.productType?.trim() ?? "") !== "" &&
+          (r.category?.trim() ?? "") !== "" &&
+          typeof r.vendorCommission === "number" &&
+          r.vendorCommission >= 0 &&
+          r.vendorCommission <= 100
+      );
+      const b2bCommissionRowsPayload = b2bFilled.map((r) => ({
+        productType: r.productType.trim(),
+        category: r.category.trim(),
+        designType: r.designType.trim(),
+        metal: r.metal.trim(),
+        purityKarat: r.purityKarat.trim(),
+        vendorCommission: r.vendorCommission,
+      }));
+      const b2bProductTypeCommissionsPayload: Record<string, number> = {
+        Gold: 0,
+        Silver: 0,
+        Platinum: 0,
+        Gemstone: 0,
+        Diamonds: 0,
+        Imitation: 0,
+      };
+      for (const row of b2bFilled) {
+        const pt = row.productType.trim();
+        if (pt && b2bProductTypeCommissionsPayload[pt] !== undefined) {
+          b2bProductTypeCommissionsPayload[pt] = row.vendorCommission;
+        }
+      }
+
       setSaving(true);
       try {
         const response = await fetch("/api/vendor/commission-settings", {
@@ -275,6 +344,8 @@ export function VendorCommissionSettings({
             productTypes,
             categories,
             commissionRows: commissionRowsPayload,
+            b2bCommissionRows: b2bCommissionRowsPayload,
+            b2bProductTypeCommissions: b2bProductTypeCommissionsPayload,
             markSetupComplete: isSetup,
           }),
         });
@@ -439,6 +510,127 @@ export function VendorCommissionSettings({
           </div>
           <div className="px-6 py-4 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center gap-3">
             <Button type="button" variant="outline" size="sm" onClick={addSetupRow} className="border-slate-300">
+              <Plus className="w-4 h-4 mr-2" />
+              Add row
+            </Button>
+          </div>
+        </Card>
+
+        <Card className="border border-slate-200 dark:border-slate-800 overflow-hidden w-full mt-6">
+          <div className="px-6 py-5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/20">
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+              B2B Commission Setting
+            </h2>
+            <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+              Set B2B commission by product type, category, design, metal and purity. Same structure as above; used for retailer/B2B orders.
+            </p>
+          </div>
+          <div className="overflow-x-auto w-full">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-slate-50 dark:bg-slate-900/20">
+                  <TableHead className="whitespace-nowrap">Product Type</TableHead>
+                  <TableHead className="whitespace-nowrap">Category</TableHead>
+                  <TableHead className="whitespace-nowrap">Design Type</TableHead>
+                  <TableHead className="whitespace-nowrap">Metal (Gold/Silver)</TableHead>
+                  <TableHead className="whitespace-nowrap">Purity / Karat</TableHead>
+                  <TableHead className="whitespace-nowrap">B2B Commission (%)</TableHead>
+                  <TableHead className="w-12" />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {b2bSetupRows.map((row, index) => (
+                  <TableRow key={`b2b-${index}`}>
+                    <TableCell className="p-2">
+                      <select
+                        value={row.productType || ""}
+                        onChange={(e) => updateB2bSetupRow(index, "productType", e.target.value)}
+                        className="h-9 min-w-[100px] w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                      >
+                        <option value="">Product Type</option>
+                        {PRODUCT_TYPES_SETUP.map((t) => (
+                          <option key={t} value={t}>{t}</option>
+                        ))}
+                      </select>
+                    </TableCell>
+                    <TableCell className="p-2">
+                      <select
+                        value={row.category || ""}
+                        onChange={(e) => updateB2bSetupRow(index, "category", e.target.value)}
+                        className="h-9 min-w-[120px] w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                      >
+                        <option value="">Category</option>
+                        {flatCategoryOptions.map((c) => (
+                          <option key={c.value} value={c.value}>{c.label}</option>
+                        ))}
+                      </select>
+                    </TableCell>
+                    <TableCell className="p-2">
+                      <select
+                        value={row.designType || ""}
+                        onChange={(e) => updateB2bSetupRow(index, "designType", e.target.value)}
+                        className="h-9 min-w-[110px] w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                      >
+                        <option value="">Design Type</option>
+                        {designTypeOptions.map((d) => (
+                          <option key={d.value} value={d.value}>{d.label}</option>
+                        ))}
+                      </select>
+                    </TableCell>
+                    <TableCell className="p-2">
+                      <select
+                        value={row.metal || ""}
+                        onChange={(e) => updateB2bSetupRow(index, "metal", e.target.value)}
+                        className="h-9 min-w-[100px] w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                      >
+                        <option value="">Metal</option>
+                        {METAL_OPTIONS.map((m) => (
+                          <option key={m} value={m}>{m}</option>
+                        ))}
+                      </select>
+                    </TableCell>
+                    <TableCell className="p-2">
+                      <select
+                        value={row.purityKarat || ""}
+                        onChange={(e) => updateB2bSetupRow(index, "purityKarat", e.target.value)}
+                        className="h-9 min-w-[90px] w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                      >
+                        <option value="">Purity</option>
+                        {PURITY_KARAT_OPTIONS.map((p) => (
+                          <option key={p} value={p}>{p}</option>
+                        ))}
+                      </select>
+                    </TableCell>
+                    <TableCell className="p-2">
+                      <Input
+                        type="number"
+                        min={0}
+                        max={100}
+                        step={0.5}
+                        className="h-9 w-24"
+                        value={row.vendorCommission ?? ""}
+                        onChange={(e) => updateB2bSetupRow(index, "vendorCommission", parseFloat(e.target.value) || 0)}
+                        placeholder="%"
+                      />
+                    </TableCell>
+                    <TableCell className="p-2">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-9 w-9 text-red-600 hover:text-red-700 hover:bg-red-50"
+                        onClick={() => removeB2bSetupRow(index)}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+          <div className="px-6 py-4 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center gap-3">
+            <Button type="button" variant="outline" size="sm" onClick={addB2bSetupRow} className="border-slate-300">
               <Plus className="w-4 h-4 mr-2" />
               Add row
             </Button>

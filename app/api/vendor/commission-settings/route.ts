@@ -50,14 +50,27 @@ export async function GET(request: NextRequest) {
     const setupCompleted = Boolean(
       vendor.commissionSetupCompleted ?? vendor.productTypeCommissions
     );
+    const b2bCommissionRows = Array.isArray(vendor.b2bCommissionRows)
+      ? vendor.b2bCommissionRows.map((r: any) => ({
+          productType: String(r?.productType ?? ''),
+          category: String(r?.category ?? ''),
+          designType: String(r?.designType ?? ''),
+          metal: String(r?.metal ?? ''),
+          purityKarat: String(r?.purityKarat ?? ''),
+          vendorCommission: typeof r?.vendorCommission === 'number' ? r.vendorCommission : 0,
+        }))
+      : [];
+    const b2bProductTypeCommissions = vendor.b2bProductTypeCommissions || defaultCommissions;
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       commissions,
       productTypes,
       categories,
       commissionRows,
       vendorId: vendor._id.toString(),
       setupCompleted,
+      b2bCommissionRows,
+      b2bProductTypeCommissions: b2bProductTypeCommissions,
     });
   } catch (error) {
     console.error('[v0] Failed to fetch vendor commission settings:', error);
@@ -79,6 +92,7 @@ export async function PUT(request: NextRequest) {
     const productTypesInput = Array.isArray(body?.productTypes) ? body.productTypes : [];
     const categoriesInput = Array.isArray(body?.categories) ? body.categories : [];
     const commissionRowsInput = Array.isArray(body?.commissionRows) ? body.commissionRows : [];
+    const b2bCommissionRowsInput = Array.isArray(body?.b2bCommissionRows) ? body.b2bCommissionRows : [];
     const strict = Boolean(body?.strict);
     const markSetupComplete = Boolean(body?.markSetupComplete);
 
@@ -127,6 +141,29 @@ export async function PUT(request: NextRequest) {
         vendorCommission: typeof r?.vendorCommission === 'number' && Number.isFinite(r.vendorCommission) ? r.vendorCommission : 0,
       }));
 
+    const safeB2bCommissionRows = b2bCommissionRowsInput
+      .filter((r: any) => r && (typeof r.productType === 'string' || typeof r.category === 'string'))
+      .map((r: any) => ({
+        productType: String(r?.productType ?? '').trim(),
+        category: String(r?.category ?? '').trim(),
+        designType: String(r?.designType ?? '').trim(),
+        metal: String(r?.metal ?? '').trim(),
+        purityKarat: String(r?.purityKarat ?? '').trim(),
+        vendorCommission: typeof r?.vendorCommission === 'number' && Number.isFinite(r.vendorCommission) ? Math.max(0, Math.min(100, r.vendorCommission)) : 0,
+      }));
+
+    const productTypesList = ['Gold', 'Silver', 'Platinum', 'Gemstone', 'Diamonds', 'Imitation'];
+    const b2bProductTypeCommissions: Record<string, number> = {};
+    for (const pt of productTypesList) {
+      b2bProductTypeCommissions[pt] = 0;
+    }
+    for (const r of safeB2bCommissionRows) {
+      const pt = r.productType;
+      if (pt && productTypesList.includes(pt)) {
+        b2bProductTypeCommissions[pt] = r.vendorCommission;
+      }
+    }
+
     const result = await db.collection('vendors').updateOne(
       { _id: new ObjectId(user.id) },
       {
@@ -139,6 +176,8 @@ export async function PUT(request: NextRequest) {
             (item: unknown) => typeof item === 'string' && item.trim().length > 0
           ),
           commissionRows: safeCommissionRows,
+          b2bCommissionRows: safeB2bCommissionRows,
+          b2bProductTypeCommissions: b2bProductTypeCommissions,
           ...(markSetupComplete
             ? {
                 commissionSetupCompleted: true,
