@@ -4,10 +4,11 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { useSettings } from '@/components/settings/settings-provider';
-import { LogOut, LayoutDashboard, Package, ChevronLeft, ChevronRight } from 'lucide-react';
+import { LogOut, LayoutDashboard, Package, ShoppingBag, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const menuItems = [
   { label: 'Dashboard', href: '/retailer', icon: LayoutDashboard },
+  { label: 'Products', href: '/retailer/products', icon: ShoppingBag },
   { label: 'Orders', href: '/retailer/orders', icon: Package },
 ];
 
