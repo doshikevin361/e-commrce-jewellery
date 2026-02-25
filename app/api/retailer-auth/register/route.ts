@@ -37,9 +37,7 @@ export async function POST(request: NextRequest) {
     if (!companyName) {
       return NextResponse.json({ error: 'Company/Store name is required' }, { status: 400 });
     }
-    if (!gstNumber) {
-      return NextResponse.json({ error: 'GST Number / Tax ID is required' }, { status: 400 });
-    }
+    const gstNumberVal = gstNumber || '';
     if (!contactNumber) {
       return NextResponse.json({ error: 'Contact number is required' }, { status: 400 });
     }
@@ -69,7 +67,7 @@ export async function POST(request: NextRequest) {
       email,
       password: hashedPassword,
       companyName,
-      gstNumber,
+      gstNumber: gstNumberVal,
       contactNumber,
       businessAddress,
       trustedVendorIds,
