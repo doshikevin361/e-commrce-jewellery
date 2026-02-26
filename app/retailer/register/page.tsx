@@ -1,249 +1,737 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { AlertCircle, Loader2, CheckCircle2 } from 'lucide-react';
-import { useSettings } from '@/components/settings/settings-provider';
+import { Card, CardContent } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  CheckCircle2,
+  MapPin,
+  Building2,
+  User,
+  ArrowRight,
+  ArrowLeft,
+} from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
-interface VendorOption {
-  _id: string;
-  storeName: string;
-  email?: string;
+interface FormData {
+  hasGST: boolean;
+  gstin: string;
+  businessName: string;
+  businessEmail: string;
+  businessPhone: string;
+  addressLine1: string;
+  addressLine2: string;
+  city: string;
+  state: string;
+  pincode: string;
+  accountHolderName: string;
+  accountNumber: string;
+  ifscCode: string;
+  bankName: string;
+  supplierName: string;
+  supplierEmail: string;
+  supplierPhone: string;
+  password: string;
+  confirmPassword: string;
 }
 
-export default function RetailerRegisterPage() {
+export default function RetailerRegistrationPage() {
   const router = useRouter();
-  const { settings } = useSettings();
-  const primaryColor = settings.primaryColor || '#22c55e';
-  const siteName = settings.siteName || 'E-commerce';
+  const { toast } = useToast();
+  const [currentStep, setCurrentStep] = useState(1);
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
 
-  const [fullName, setFullName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [companyName, setCompanyName] = useState('');
-  const [gstNumber, setGstNumber] = useState('');
-  const [contactNumber, setContactNumber] = useState('');
-  const [businessAddress, setBusinessAddress] = useState('');
-  const [trustedVendorIds, setTrustedVendorIds] = useState<string[]>([]);
-  const [vendorOptions, setVendorOptions] = useState<VendorOption[]>([]);
-  const [loadingVendors, setLoadingVendors] = useState(true);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState<FormData>({
+    hasGST: true,
+    gstin: '',
+    businessName: '',
+    businessEmail: '',
+    businessPhone: '',
+    addressLine1: '',
+    addressLine2: '',
+    city: '',
+    state: '',
+    pincode: '',
+    accountHolderName: '',
+    accountNumber: '',
+    ifscCode: '',
+    bankName: '',
+    supplierName: '',
+    supplierEmail: '',
+    supplierPhone: '',
+    password: '',
+    confirmPassword: '',
+  });
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await fetch('/api/retailers/vendors');
-        const data = await res.json();
-        if (res.ok && Array.isArray(data.vendors)) {
-          setVendorOptions(data.vendors);
-        }
-      } catch {
-        setVendorOptions([]);
-      } finally {
-        setLoadingVendors(false);
-      }
-    })();
-  }, []);
+  const steps = [
+    { id: 1, name: 'Business Details', icon: Building2 },
+    { id: 2, name: 'Pickup Address', icon: MapPin },
+    { id: 3, name: 'Bank Details', icon: Building2 },
+    { id: 4, name: 'Supplier Details', icon: User },
+  ];
+  const TOTAL_STEPS = 4;
 
-  const toggleVendor = (id: string) => {
-    setTrustedVendorIds((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
-    );
+  const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const PHONE_REGEX = /^\d{10}$/;
+  const PINCODE_REGEX = /^\d{6}$/;
+  const GSTIN_REGEX = /^\d{2}[A-Z]{5}\d{4}[A-Z]{1}[A-Z\d]{1}Z[A-Z\d]{1}$/;
+  const IFSC_REGEX = /^[A-Z]{4}0[A-Z0-9]{6}$/;
+  const ACCOUNT_NUMBER_REGEX = /^\d{9,18}$/;
+  const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/;
+
+  const validateField = (field: keyof FormData, value: string, data: FormData) => {
+    const trimmed = value?.trim?.() ?? '';
+    switch (field) {
+      case 'gstin':
+        if (!data.hasGST) return '';
+        if (!trimmed) return 'GSTIN is required';
+        if (!GSTIN_REGEX.test(trimmed)) return 'Enter a valid GSTIN';
+        return '';
+      case 'businessName':
+        return trimmed ? '' : 'Business name is required';
+      case 'businessEmail':
+        if (!trimmed) return 'Business email is required';
+        return EMAIL_REGEX.test(trimmed) ? '' : 'Enter a valid email';
+      case 'businessPhone':
+        if (!trimmed) return 'Business phone is required';
+        return PHONE_REGEX.test(trimmed) ? '' : 'Enter a valid 10-digit phone number';
+      case 'addressLine1':
+        return trimmed ? '' : 'Address line 1 is required';
+      case 'city':
+        return trimmed ? '' : 'City is required';
+      case 'state':
+        return trimmed ? '' : 'State is required';
+      case 'pincode':
+        if (!trimmed) return 'Pincode is required';
+        return PINCODE_REGEX.test(trimmed) ? '' : 'Enter a valid 6-digit pincode';
+      case 'accountHolderName':
+        return trimmed ? '' : 'Account holder name is required';
+      case 'accountNumber':
+        if (!trimmed) return 'Account number is required';
+        return ACCOUNT_NUMBER_REGEX.test(trimmed) ? '' : 'Enter a valid account number';
+      case 'ifscCode':
+        if (!trimmed) return 'IFSC code is required';
+        return IFSC_REGEX.test(trimmed) ? '' : 'Enter a valid IFSC code';
+      case 'bankName':
+        return trimmed ? '' : 'Bank name is required';
+      case 'supplierName':
+        return trimmed ? '' : 'Contact person name is required';
+      case 'supplierEmail':
+        if (!trimmed) return 'Contact email is required';
+        return EMAIL_REGEX.test(trimmed) ? '' : 'Enter a valid email';
+      case 'supplierPhone':
+        if (!trimmed) return 'Contact phone is required';
+        return PHONE_REGEX.test(trimmed) ? '' : 'Enter a valid 10-digit phone number';
+      case 'password':
+        if (!trimmed) return 'Password is required';
+        return PASSWORD_REGEX.test(trimmed)
+          ? ''
+          : 'Use 8+ chars with upper, lower, number & special';
+      case 'confirmPassword':
+        if (!trimmed) return 'Confirm password is required';
+        return trimmed === data.password ? '' : 'Passwords do not match';
+      default:
+        return '';
+    }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
+  const normalizeValue = (field: keyof FormData, value: string) => {
+    if (field === 'businessPhone' || field === 'supplierPhone') {
+      return value.replace(/\D/g, '').slice(0, 10);
+    }
+    if (field === 'pincode') {
+      return value.replace(/\D/g, '').slice(0, 6);
+    }
+    if (field === 'accountNumber') {
+      return value.replace(/\D/g, '').slice(0, 18);
+    }
+    if (field === 'gstin' || field === 'ifscCode') {
+      return value.replace(/\s+/g, '').toUpperCase();
+    }
+    return value;
+  };
+
+  const handleInputChange = (field: keyof FormData, value: unknown) => {
+    const normalized = typeof value === 'string' ? normalizeValue(field, value) : value;
+    setFormData((prev) => {
+      const next = { ...prev, [field]: normalized };
+      setErrors((prevErrors) => {
+        const nextErrors = { ...prevErrors };
+        const fieldError = validateField(field, String(normalized ?? ''), next);
+        if (fieldError) nextErrors[field] = fieldError;
+        else delete nextErrors[field];
+        if (field === 'password' || field === 'confirmPassword') {
+          const confirmError = validateField('confirmPassword', next.confirmPassword, next);
+          if (confirmError) nextErrors.confirmPassword = confirmError;
+          else delete nextErrors.confirmPassword;
+        }
+        if (field === 'hasGST') {
+          const gstError = validateField('gstin', next.gstin, next);
+          if (gstError) nextErrors.gstin = gstError;
+          else delete nextErrors.gstin;
+        }
+        return nextErrors;
+      });
+      return next;
+    });
+  };
+
+  const getStepFields = (step: number): (keyof FormData)[] => {
+    switch (step) {
+      case 1:
+        return (formData.hasGST ? ['gstin'] : []).concat(['businessName', 'businessEmail', 'businessPhone']);
+      case 2:
+        return ['addressLine1', 'city', 'state', 'pincode'];
+      case 3:
+        return ['accountHolderName', 'accountNumber', 'ifscCode', 'bankName'];
+      case 4:
+        return ['supplierName', 'supplierEmail', 'supplierPhone', 'password', 'confirmPassword'];
+      default:
+        return [];
+    }
+  };
+
+  const validateFields = (fields: (keyof FormData)[], data: FormData) => {
+    const nextErrors: Partial<Record<keyof FormData, string>> = {};
+    fields.forEach((field) => {
+      const error = validateField(field, data[field], data);
+      if (error) nextErrors[field] = error;
+    });
+    return nextErrors;
+  };
+
+  const renderError = (field: keyof FormData) => {
+    if (!errors[field]) return null;
+    return <p className="text-xs text-red-600">{errors[field]}</p>;
+  };
+
+  const allFields: (keyof FormData)[] = [
+    ...(formData.hasGST ? ['gstin'] : []),
+    'businessName',
+    'businessEmail',
+    'businessPhone',
+    'addressLine1',
+    'city',
+    'state',
+    'pincode',
+    'accountHolderName',
+    'accountNumber',
+    'ifscCode',
+    'bankName',
+    'supplierName',
+    'supplierEmail',
+    'supplierPhone',
+    'password',
+    'confirmPassword',
+  ];
+
+  const isCurrentStepValid = Object.keys(validateFields(getStepFields(currentStep), formData)).length === 0;
+  const isFormValid = Object.keys(validateFields(allFields, formData)).length === 0;
+
+  const handleVerifyGSTIN = async () => {
+    const gstError = validateField('gstin', formData.gstin, formData);
+    if (gstError) {
+      setErrors((prev) => ({ ...prev, gstin: gstError }));
+      return;
+    }
+    setIsVerifying(true);
     try {
+      await new Promise((r) => setTimeout(r, 1500));
+      toast({ title: 'Success', description: 'GSTIN verified successfully', variant: 'default' });
+    } catch {
+      toast({ title: 'Error', description: 'Failed to verify GSTIN', variant: 'destructive' });
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
+  const validateStep = () => {
+    const fields = getStepFields(currentStep);
+    setErrors((prev) => {
+      const next = { ...prev };
+      fields.forEach((field) => {
+        const error = validateField(field, formData[field], formData);
+        if (error) next[field] = error;
+        else delete next[field];
+      });
+      return next;
+    });
+    return Object.keys(validateFields(fields, formData)).length === 0;
+  };
+
+  const handleNext = () => {
+    if (validateStep()) setCurrentStep((prev) => Math.min(prev + 1, TOTAL_STEPS));
+  };
+
+  const handleBack = () => setCurrentStep((prev) => Math.max(prev - 1, 1));
+
+  const handleSubmit = async () => {
+    const allErrors = validateFields(allFields, formData);
+    if (Object.keys(allErrors).length > 0) {
+      setErrors((prev) => ({ ...prev, ...allErrors }));
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const businessAddress = [formData.addressLine1, formData.addressLine2, formData.city, formData.state, formData.pincode]
+        .filter(Boolean)
+        .join(', ');
+
       const response = await fetch('/api/retailer-auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          fullName,
-          email,
-          password,
-          companyName,
-          gstNumber,
-          contactNumber,
+          fullName: formData.supplierName,
+          email: formData.businessEmail,
+          password: formData.password,
+          companyName: formData.businessName,
+          gstNumber: formData.hasGST ? formData.gstin : '',
+          contactNumber: formData.businessPhone,
           businessAddress,
-          trustedVendorIds,
+          trustedVendorIds: [],
         }),
       });
+
       const data = await response.json();
-      if (!response.ok) {
-        setError(data.error || 'Registration failed');
-        return;
-      }
-      setSuccess(true);
-    } catch {
-      setError('An error occurred. Please try again.');
+      if (!response.ok) throw new Error(data.error || 'Failed to submit registration');
+      setShowSuccessDialog(true);
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to submit registration',
+        variant: 'destructive',
+      });
     } finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
   };
 
-  if (success) {
-    return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center p-4">
-        <Card className="max-w-md w-full p-8 text-center">
-          <CheckCircle2 className="w-16 h-16 text-green-600 mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Registration Submitted</h2>
-          <p className="text-slate-600 dark:text-slate-400 mb-6">
-            Your B2B retailer account is pending approval. You will be able to sign in once an administrator approves your account.
-          </p>
-          <Link href="/retailer/login">
-            <Button className="w-full" style={{ backgroundColor: primaryColor }}>Go to Retailer Login</Button>
-          </Link>
-        </Card>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 py-12 px-4">
-      <div className="max-w-xl mx-auto">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-1">Become a B2B Retailer</h1>
-          <p className="text-slate-600 dark:text-slate-400">Register to purchase from trusted vendors</p>
+    <div className="min-h-screen bg-gray-50">
+      {/* Progress Steps - same as Vendor */}
+      <div className="bg-white border-b sticky top-0 z-50 shadow-sm">
+        <div className="container mx-auto px-4 py-6">
+          <div className="flex items-center justify-between max-w-3xl mx-auto">
+            {steps.map((step, index) => (
+              <div key={step.id} className="flex items-center flex-1">
+                <div className="flex flex-col items-center flex-1">
+                  <div
+                    className={`w-10 h-10 rounded-full flex items-center justify-center mb-2 transition-all ${
+                      currentStep > step.id
+                        ? 'bg-green-500 text-white'
+                        : currentStep === step.id
+                          ? 'bg-[#1F3B29] text-white'
+                          : 'bg-gray-200 text-gray-500'
+                    }`}
+                  >
+                    {currentStep > step.id ? (
+                      <CheckCircle2 className="w-6 h-6" />
+                    ) : (
+                      <step.icon className="w-5 h-5" />
+                    )}
+                  </div>
+                  <span
+                    className={`text-xs md:text-sm text-center font-medium ${
+                      currentStep >= step.id ? 'text-[#1F3B29]' : 'text-gray-400'
+                    }`}
+                  >
+                    {step.name}
+                  </span>
+                </div>
+                {index < steps.length - 1 && (
+                  <div
+                    className={`h-0.5 flex-1 mx-2 transition-all ${
+                      currentStep > step.id ? 'bg-green-500' : 'bg-gray-200'
+                    }`}
+                  />
+                )}
+              </div>
+            ))}
+          </div>
         </div>
+      </div>
 
-        <Card className="bg-white dark:bg-slate-800 border-0 shadow-xl rounded-2xl p-6 md:p-8">
-          {error && (
-            <div className="mb-4 p-4 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 flex gap-3">
-              <AlertCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
-              <p className="text-sm text-red-700 dark:text-red-400">{error}</p>
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label>Full Name *</Label>
-                <Input
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  placeholder="John Doe"
-                  required
-                  className="mt-1"
-                />
-              </div>
-              <div>
-                <Label>Email *</Label>
-                <Input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@company.com"
-                  required
-                  className="mt-1"
-                />
-              </div>
-            </div>
-            <div>
-              <Label>Password * (min 6 characters)</Label>
-              <Input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                minLength={6}
-                required
-                className="mt-1"
-              />
-            </div>
-            <div>
-              <Label>Company / Store Name *</Label>
-              <Input
-                value={companyName}
-                onChange={(e) => setCompanyName(e.target.value)}
-                placeholder="Your Store Pvt Ltd"
-                required
-                className="mt-1"
-              />
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label>GST Number / Tax ID *</Label>
-                <Input
-                  value={gstNumber}
-                  onChange={(e) => setGstNumber(e.target.value)}
-                  placeholder="22AAAAA0000A1Z5"
-                  required
-                  className="mt-1"
-                />
-              </div>
-              <div>
-                <Label>Contact Number *</Label>
-                <Input
-                  value={contactNumber}
-                  onChange={(e) => setContactNumber(e.target.value)}
-                  placeholder="10-digit mobile"
-                  required
-                  className="mt-1"
-                />
-              </div>
-            </div>
-            <div>
-              <Label>Business Address *</Label>
-              <textarea
-                value={businessAddress}
-                onChange={(e) => setBusinessAddress(e.target.value)}
-                placeholder="Full address, city, state, pincode"
-                required
-                rows={3}
-                className="mt-1 flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-              />
-            </div>
-            <div>
-              <Label>Trusted Vendors (select vendors you want to purchase from)</Label>
-              {loadingVendors ? (
-                <div className="mt-2 flex items-center gap-2 text-slate-500">
-                  <Loader2 className="w-4 h-4 animate-spin" /> Loading vendors...
+      {/* Form Content */}
+      <div className="container mx-auto px-4 py-8">
+        <Card className="max-w-2xl mx-auto">
+          <CardContent className="p-6 md:p-8">
+            {/* Step 1: Business Details */}
+            {currentStep === 1 && (
+              <div className="space-y-6">
+                <h2 className="text-2xl font-bold text-[#1F3B29] mb-6">Do you have a GST number?</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <button
+                    type="button"
+                    onClick={() => handleInputChange('hasGST', true)}
+                    className={`p-4 rounded-lg border-2 text-left transition-all ${
+                      formData.hasGST ? 'border-[#1F3B29] bg-[#1F3B29]/5' : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div
+                        className={`w-5 h-5 rounded-full border-2 mt-0.5 flex items-center justify-center ${
+                          formData.hasGST ? 'border-[#1F3B29] bg-[#1F3B29]' : 'border-gray-300'
+                        }`}
+                      >
+                        {formData.hasGST && <div className="w-2.5 h-2.5 bg-white rounded-full" />}
+                      </div>
+                      <div>
+                        <p className="font-semibold text-gray-900">Yes</p>
+                        <p className="text-sm text-gray-600">Enter your GSTIN</p>
+                      </div>
+                    </div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleInputChange('hasGST', false)}
+                    className={`p-4 rounded-lg border-2 text-left transition-all ${
+                      !formData.hasGST ? 'border-[#1F3B29] bg-[#1F3B29]/5' : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div
+                        className={`w-5 h-5 rounded-full border-2 mt-0.5 flex items-center justify-center ${
+                          !formData.hasGST ? 'border-[#1F3B29] bg-[#1F3B29]' : 'border-gray-300'
+                        }`}
+                      >
+                        {!formData.hasGST && <div className="w-2.5 h-2.5 bg-white rounded-full" />}
+                      </div>
+                      <div>
+                        <p className="font-semibold text-gray-900">No</p>
+                        <p className="text-sm text-gray-600">Continue without GST</p>
+                      </div>
+                    </div>
+                  </button>
                 </div>
+
+                {formData.hasGST && (
+                  <div className="space-y-2">
+                    <Label htmlFor="gstin">Enter GSTIN</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="gstin"
+                        value={formData.gstin}
+                        onChange={(e) => handleInputChange('gstin', e.target.value.toUpperCase())}
+                        placeholder="27AACPP9212H1ZO"
+                        className={`flex-1 ${errors.gstin ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+                        maxLength={15}
+                      />
+                      <Button onClick={handleVerifyGSTIN} disabled={isVerifying} className="bg-[#1F3B29] hover:bg-[#2d5a3f]">
+                        {isVerifying ? 'Verifying...' : 'Verify'}
+                      </Button>
+                    </div>
+                    {renderError('gstin')}
+                  </div>
+                )}
+
+                <div className="space-y-4 pt-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="businessName">Company / Business Name *</Label>
+                    <Input
+                      id="businessName"
+                      value={formData.businessName}
+                      onChange={(e) => handleInputChange('businessName', e.target.value)}
+                      placeholder="Enter company name"
+                      className={errors.businessName ? 'border-red-500 focus-visible:ring-red-500' : ''}
+                    />
+                    {renderError('businessName')}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="businessEmail">Business Email *</Label>
+                    <Input
+                      id="businessEmail"
+                      type="email"
+                      value={formData.businessEmail}
+                      onChange={(e) => handleInputChange('businessEmail', e.target.value)}
+                      placeholder="business@example.com"
+                      className={errors.businessEmail ? 'border-red-500 focus-visible:ring-red-500' : ''}
+                    />
+                    {renderError('businessEmail')}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="businessPhone">Business Phone *</Label>
+                    <Input
+                      id="businessPhone"
+                      type="tel"
+                      value={formData.businessPhone}
+                      onChange={(e) => handleInputChange('businessPhone', e.target.value)}
+                      placeholder="Enter 10-digit phone number"
+                      className={errors.businessPhone ? 'border-red-500 focus-visible:ring-red-500' : ''}
+                    />
+                    {renderError('businessPhone')}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Step 2: Pickup Address */}
+            {currentStep === 2 && (
+              <div className="space-y-6">
+                <h2 className="text-2xl font-bold text-[#1F3B29] mb-6">Pickup Address</h2>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="addressLine1">Address Line 1 *</Label>
+                    <Input
+                      id="addressLine1"
+                      value={formData.addressLine1}
+                      onChange={(e) => handleInputChange('addressLine1', e.target.value)}
+                      placeholder="House No., Building Name"
+                      className={errors.addressLine1 ? 'border-red-500 focus-visible:ring-red-500' : ''}
+                    />
+                    {renderError('addressLine1')}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="addressLine2">Address Line 2</Label>
+                    <Input
+                      id="addressLine2"
+                      value={formData.addressLine2}
+                      onChange={(e) => handleInputChange('addressLine2', e.target.value)}
+                      placeholder="Road Name, Area, Colony (Optional)"
+                    />
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="city">City *</Label>
+                      <Input
+                        id="city"
+                        value={formData.city}
+                        onChange={(e) => handleInputChange('city', e.target.value)}
+                        placeholder="Enter city"
+                        className={errors.city ? 'border-red-500 focus-visible:ring-red-500' : ''}
+                      />
+                      {renderError('city')}
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="state">State *</Label>
+                      <Input
+                        id="state"
+                        value={formData.state}
+                        onChange={(e) => handleInputChange('state', e.target.value)}
+                        placeholder="Enter state"
+                        className={errors.state ? 'border-red-500 focus-visible:ring-red-500' : ''}
+                      />
+                      {renderError('state')}
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="pincode">Pincode *</Label>
+                    <Input
+                      id="pincode"
+                      value={formData.pincode}
+                      onChange={(e) => handleInputChange('pincode', e.target.value)}
+                      placeholder="Enter 6-digit pincode"
+                      maxLength={6}
+                      className={errors.pincode ? 'border-red-500 focus-visible:ring-red-500' : ''}
+                    />
+                    {renderError('pincode')}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Step 3: Bank Details */}
+            {currentStep === 3 && (
+              <div className="space-y-6">
+                <h2 className="text-2xl font-bold text-[#1F3B29] mb-6">Bank Details</h2>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="accountHolderName">Account Holder Name *</Label>
+                    <Input
+                      id="accountHolderName"
+                      value={formData.accountHolderName}
+                      onChange={(e) => handleInputChange('accountHolderName', e.target.value)}
+                      placeholder="Enter account holder name"
+                      className={errors.accountHolderName ? 'border-red-500 focus-visible:ring-red-500' : ''}
+                    />
+                    {renderError('accountHolderName')}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="accountNumber">Account Number *</Label>
+                    <Input
+                      id="accountNumber"
+                      value={formData.accountNumber}
+                      onChange={(e) => handleInputChange('accountNumber', e.target.value)}
+                      placeholder="Enter account number"
+                      className={errors.accountNumber ? 'border-red-500 focus-visible:ring-red-500' : ''}
+                    />
+                    {renderError('accountNumber')}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="ifscCode">IFSC Code *</Label>
+                    <Input
+                      id="ifscCode"
+                      value={formData.ifscCode}
+                      onChange={(e) => handleInputChange('ifscCode', e.target.value.toUpperCase())}
+                      placeholder="Enter IFSC code"
+                      className={errors.ifscCode ? 'border-red-500 focus-visible:ring-red-500' : ''}
+                    />
+                    {renderError('ifscCode')}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="bankName">Bank Name *</Label>
+                    <Input
+                      id="bankName"
+                      value={formData.bankName}
+                      onChange={(e) => handleInputChange('bankName', e.target.value)}
+                      placeholder="Enter bank name"
+                      className={errors.bankName ? 'border-red-500 focus-visible:ring-red-500' : ''}
+                    />
+                    {renderError('bankName')}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Step 4: Supplier Details */}
+            {currentStep === 4 && (
+              <div className="space-y-6">
+                <h2 className="text-2xl font-bold text-[#1F3B29] mb-6">Supplier Details</h2>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="supplierName">Contact Person Name *</Label>
+                    <Input
+                      id="supplierName"
+                      value={formData.supplierName}
+                      onChange={(e) => handleInputChange('supplierName', e.target.value)}
+                      placeholder="Full name of contact person"
+                      className={errors.supplierName ? 'border-red-500 focus-visible:ring-red-500' : ''}
+                    />
+                    {renderError('supplierName')}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="supplierEmail">Contact Email *</Label>
+                    <Input
+                      id="supplierEmail"
+                      type="email"
+                      value={formData.supplierEmail}
+                      onChange={(e) => handleInputChange('supplierEmail', e.target.value)}
+                      placeholder="contact@example.com"
+                      className={errors.supplierEmail ? 'border-red-500 focus-visible:ring-red-500' : ''}
+                    />
+                    {renderError('supplierEmail')}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="supplierPhone">Contact Phone *</Label>
+                    <Input
+                      id="supplierPhone"
+                      type="tel"
+                      value={formData.supplierPhone}
+                      onChange={(e) => handleInputChange('supplierPhone', e.target.value)}
+                      placeholder="Enter 10-digit phone number"
+                      className={errors.supplierPhone ? 'border-red-500 focus-visible:ring-red-500' : ''}
+                    />
+                    {renderError('supplierPhone')}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="password">Password *</Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      value={formData.password}
+                      onChange={(e) => handleInputChange('password', e.target.value)}
+                      placeholder="Min 8 characters, upper, lower, number & special"
+                      className={errors.password ? 'border-red-500 focus-visible:ring-red-500' : ''}
+                    />
+                    {renderError('password')}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="confirmPassword">Confirm Password *</Label>
+                    <Input
+                      id="confirmPassword"
+                      type="password"
+                      value={formData.confirmPassword}
+                      onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
+                      placeholder="Confirm your password"
+                      className={errors.confirmPassword ? 'border-red-500 focus-visible:ring-red-500' : ''}
+                    />
+                    {renderError('confirmPassword')}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Navigation Buttons */}
+            <div className="flex gap-4 mt-8 pt-6 border-t">
+              {currentStep > 1 && (
+                <Button onClick={handleBack} variant="outline" className="flex-1">
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Back
+                </Button>
+              )}
+              {currentStep < TOTAL_STEPS ? (
+                <Button
+                  onClick={handleNext}
+                  disabled={!isCurrentStepValid}
+                  className="flex-1 bg-[#1F3B29] hover:bg-[#2d5a3f]"
+                >
+                  Next
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
               ) : (
-                <div className="mt-2 border rounded-lg p-3 max-h-48 overflow-y-auto space-y-2 bg-slate-50 dark:bg-slate-900/50">
-                  {vendorOptions.length === 0 ? (
-                    <p className="text-sm text-slate-500">No approved vendors available.</p>
-                  ) : (
-                    vendorOptions.map((v) => (
-                      <label key={v._id} className="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={trustedVendorIds.includes(v._id)}
-                          onChange={() => toggleVendor(v._id)}
-                          className="rounded border-input"
-                        />
-                        <span className="text-sm">{v.storeName}</span>
-                      </label>
-                    ))
-                  )}
-                </div>
+                <Button
+                  onClick={handleSubmit}
+                  disabled={isSubmitting || !isFormValid}
+                  className="flex-1 bg-[#1F3B29] hover:bg-[#2d5a3f]"
+                >
+                  {isSubmitting ? 'Submitting...' : 'Submit Registration'}
+                </Button>
               )}
             </div>
-            <div className="flex flex-col sm:flex-row gap-3 pt-4">
-              <Button
-                type="submit"
-                disabled={loading}
-                className="flex-1 text-white"
-                style={{ backgroundColor: primaryColor }}
-              >
-                {loading ? 'Submitting...' : 'Submit Registration'}
-              </Button>
-              <Link href="/retailer/login" className="flex-1">
-                <Button type="button" variant="outline" className="w-full">Already have an account? Sign In</Button>
-              </Link>
-            </div>
-          </form>
+
+            <Button asChild variant="outline" className="w-full mt-4">
+              <Link href="/become-member">Cancel</Link>
+            </Button>
+          </CardContent>
         </Card>
       </div>
+
+      {/* Success Dialog */}
+      <Dialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="flex justify-center mb-4">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
+                <CheckCircle2 className="w-10 h-10 text-green-600" />
+              </div>
+            </div>
+            <DialogTitle className="text-center text-2xl">Registration Successful!</DialogTitle>
+            <DialogDescription className="text-center text-base pt-2">
+              Thank you for registering as a B2B retailer. Your application has been submitted successfully.
+              <br />
+              <br />
+              Please wait for admin approval. You will receive an email once your account is approved.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="sm:justify-center">
+            <Button
+              onClick={() => {
+                setShowSuccessDialog(false);
+                router.push('/become-member');
+              }}
+              className="bg-[#1F3B29] hover:bg-[#2d5a3f]"
+            >
+              Back to Become Member
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -13,6 +13,7 @@ export function WebsiteLayout({ children }: { children: React.ReactNode }) {
     pathname?.startsWith('/login') ||
     pathname?.startsWith('/vendors') ||
     pathname?.startsWith('/retailer') ||
+    pathname?.startsWith('/become-member') ||
     pathname?.startsWith('/become-vendor') ||
     pathname?.startsWith('/vendor-registration');
 

@@ -312,33 +312,10 @@ const HomeHeader = () => {
               Free Delivery
             </div>
             <span className='h-3 w-px bg-gray-500'></span>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className='flex items-center gap-1 text-[#3579b8] hover:text-gray-900 focus:outline-none'>
-                  <User className='w-4 h-4' />
-                  <span>Become Member</span>
-                  <ChevronDown className='w-3 h-3' />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align='end' className='w-56 rounded-xl border border-[#E6D3C2] bg-white p-2 shadow-lg'>
-                <DropdownMenuItem asChild className='text-[#001e38] !hover-none cursor-pointer rounded-lg px-2 py-2 text-sm'>
-                  <Link href='/become-vendor' className='flex items-center gap-2'>
-                    <User className='w-4 h-4' />
-                    <span>Become a Vendor</span>
-                  </Link>
-                </DropdownMenuItem>
-
-                <DropdownMenuItem asChild className='text-[#001e38] !hover-none cursor-pointer rounded-lg px-2 py-2 text-sm'>
-                  <Link href='/retailer/register' className='flex flex-col items-start gap-0.5'>
-                    <span className='flex items-center gap-2'>
-                      <Store className='w-4 h-4' />
-                      Become a Retailer
-                    </span>
-                    <span className='text-xs text-gray-500 pl-6'>From trusted vendors · B2B</span>
-                  </Link>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <Link href='/become-member' className='flex items-center gap-1 text-[#3579b8] hover:text-gray-900'>
+              <User className='w-4 h-4' />
+              <span>Become Member</span>
+            </Link>
             <span className='h-3 w-px bg-gray-500'></span>
             {isLoggedIn ? (
               <>

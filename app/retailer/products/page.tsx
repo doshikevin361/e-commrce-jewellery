@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { RetailerLayout } from '@/components/layout/retailer-layout';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
   Select,
   SelectContent,
@@ -12,372 +13,278 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Search, Package, ChevronLeft, ChevronRight, Filter, ShoppingCart } from 'lucide-react';
-import Image from 'next/image';
-import { toast } from 'react-toastify';
+import { Search, Package, Filter, X, Store, Tag, Loader2 } from 'lucide-react';
 
-type Category = { _id: string; name: string; slug: string };
-
-type Product = {
+interface RetailerProduct {
   _id: string;
   name: string;
-  shortDescription?: string;
   sku?: string;
-  categoryName?: string;
-  categoryId?: string;
-  subcategory?: string;
-  brand?: string;
-  mainImage?: string;
-  galleryImages?: string[];
+  category: string;
   product_type?: string;
-  stock?: number;
-  displayPrice?: number;
-  originalPrice?: number;
+  vendorId?: string;
+  vendorName: string;
+  price?: number;
   sellingPrice?: number;
   regularPrice?: number;
-  mrp?: number;
-  hasDiscount?: boolean;
-  discountPercent?: number;
-  retailerDiscountPercent?: number;
-  retailerPrice?: number;
-};
-
-function getAuthHeaders(): HeadersInit {
-  if (typeof window === 'undefined') return {};
-  const token = localStorage.getItem('retailerToken');
-  const headers: HeadersInit = { 'Content-Type': 'application/json' };
-  if (token) (headers as Record<string, string>)['Authorization'] = `Bearer ${token}`;
-  return headers;
+  stock: number;
+  status: string;
+  mainImage?: string;
+  urlSlug?: string;
+  createdAt?: string;
 }
 
 export default function RetailerProductsPage() {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [productTypes] = useState<string[]>([
-    'Gold',
-    'Silver',
-    'Platinum',
-    'Diamonds',
-    'Gemstone',
-    'Imitation',
-  ]);
+  const [products, setProducts] = useState<RetailerProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [searchInput, setSearchInput] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState<string>('all');
-  const [typeFilter, setTypeFilter] = useState<string>('all');
-  const [page, setPage] = useState(1);
-  const [pagination, setPagination] = useState({
-    total: 0,
-    page: 1,
-    limit: 24,
-    pages: 1,
-  });
-  const [addingToCart, setAddingToCart] = useState<string | null>(null);
+  const [categoryFilter, setCategoryFilter] = useState('');
+  const [vendorFilter, setVendorFilter] = useState('');
 
-  const addToCart = async (productId: string) => {
-    setAddingToCart(productId);
-    try {
-      const res = await fetch('/api/retailer/cart', {
-        method: 'POST',
-        credentials: 'include',
-        headers: getAuthHeaders(),
-        body: JSON.stringify({ productId, quantity: 1 }),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        if (data.alreadyInCart) {
-          toast.info('Already in cart. Update quantity in Cart.');
-        } else {
-          toast.success('Added to cart');
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (search) params.set('search', search);
+    if (categoryFilter) params.set('category', categoryFilter);
+    if (vendorFilter) params.set('vendorId', vendorFilter);
+    fetch(`/api/retailer/products?${params.toString()}`, { credentials: 'include' })
+      .then((res) => {
+        if (res.status === 401) {
+          window.location.href = '/retailer/login';
+          return [];
         }
-        window.dispatchEvent(new CustomEvent('retailer-cart-update'));
-      } else {
-        toast.error(data.error || 'Failed to add to cart');
-      }
-    } catch {
-      toast.error('Failed to add to cart');
-    } finally {
-      setAddingToCart(null);
-    }
+        return res.json();
+      })
+      .then((data) => {
+        setProducts(Array.isArray(data) ? data : []);
+      })
+      .catch(() => setProducts([]))
+      .finally(() => setLoading(false));
+  }, [search, categoryFilter, vendorFilter]);
+
+  const categories = [...new Set(products.map((p) => p.category).filter(Boolean))].sort();
+  const vendors = [...new Set(products.map((p) => ({ id: p.vendorId, name: p.vendorName })).filter((v) => v.id))];
+  const vendorOptions = Array.from(new Map(vendors.map((v) => [v.id, v.name])).entries());
+  const hasFilters = search || categoryFilter || vendorFilter;
+
+  const clearFilters = () => {
+    setSearch('');
+    setCategoryFilter('');
+    setVendorFilter('');
   };
 
-  const fetchCategories = useCallback(async () => {
-    try {
-      const res = await fetch('/api/retailer/categories', {
-        credentials: 'include',
-        headers: getAuthHeaders(),
-      });
-      if (!res.ok) return;
-      const data = await res.json();
-      setCategories(Array.isArray(data.categories) ? data.categories : []);
-    } catch {
-      setCategories([]);
-    }
-  }, []);
+  const formatPrice = (value?: number) =>
+    typeof value === 'number'
+      ? new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(value)
+      : '—';
 
-  const fetchProducts = useCallback(async () => {
-    setLoading(true);
-    try {
-      const params = new URLSearchParams();
-      params.set('page', String(page));
-      params.set('limit', '24');
-      if (categoryFilter && categoryFilter !== 'all') params.set('category', categoryFilter);
-      if (typeFilter && typeFilter !== 'all') params.set('type', typeFilter);
-      if (search.trim()) params.set('search', search.trim());
-
-      const res = await fetch(`/api/retailer/products?${params.toString()}`, {
-        credentials: 'include',
-        headers: getAuthHeaders(),
-      });
-      if (!res.ok) {
-        setProducts([]);
-        return;
-      }
-      const data = await res.json();
-      setProducts(Array.isArray(data.products) ? data.products : []);
-      if (data.pagination) setPagination(data.pagination);
-    } catch {
-      setProducts([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [page, categoryFilter, typeFilter, search]);
-
-  useEffect(() => {
-    fetchCategories();
-  }, [fetchCategories]);
-
-  useEffect(() => {
-    fetchProducts();
-  }, [fetchProducts]);
-
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setSearch(searchInput);
-    setPage(1);
+  const getStockStyle = (stock: number) => {
+    if (stock === 0) return 'bg-red-100 text-red-700 border-red-200';
+    if (stock <= 10) return 'bg-amber-100 text-amber-800 border-amber-200';
+    return 'bg-emerald-100 text-emerald-800 border-emerald-200';
   };
-
-  const handleCategoryChange = (value: string) => {
-    setCategoryFilter(value);
-    setPage(1);
-  };
-
-  const handleTypeChange = (value: string) => {
-    setTypeFilter(value);
-    setPage(1);
-  };
-
-  const hasFilters = categoryFilter !== 'all' || typeFilter !== 'all' || search.trim() !== '';
 
   return (
     <RetailerLayout>
-      <div className="space-y-6 p-6 bg-gray-50 min-h-screen">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <h1 className="text-2xl font-bold text-gray-900">Product Catalog</h1>
+      <div className="space-y-6 p-0 bg-slate-50 min-h-full min-w-0 max-w-full overflow-x-hidden">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 px-6 pt-4">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900">Vendor Products</h1>
+            <p className="text-slate-600 mt-1 text-sm">Browse all products from vendors available for B2B.</p>
+          </div>
+          {!loading && products.length > 0 && (
+            <div className="flex items-center gap-2 text-sm text-slate-500">
+              <span className="font-medium text-slate-700">{products.length}</span>
+              <span>product{products.length !== 1 ? 's' : ''}</span>
+            </div>
+          )}
         </div>
 
-        {/* Filters */}
-        <Card className="bg-white border border-gray-200 p-4">
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
-              <Filter className="w-4 h-4" />
+        <Card className="bg-white border border-slate-200 shadow-sm overflow-hidden rounded-xl min-w-0">
+          <CardHeader className="border-b border-slate-100 bg-slate-50/50 pb-4">
+            <CardTitle className="text-base font-semibold text-slate-800 flex items-center gap-2">
+              <Filter className="w-4 h-4 text-slate-500" />
               Filters
-            </div>
-            <form
-              onSubmit={handleSearchSubmit}
-              className="flex flex-1 min-w-[200px] max-w-sm items-center gap-2"
-            >
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            </CardTitle>
+            <div className="flex flex-wrap items-center gap-3 pt-3">
+              <div className="relative flex-1 min-w-[220px] max-w-sm">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <Input
-                  type="search"
-                  placeholder="Search products..."
-                  value={searchInput}
-                  onChange={(e) => setSearchInput(e.target.value)}
-                  className="pl-9"
+                  placeholder="Search by name or SKU..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="pl-9 h-9 bg-white border-slate-200 focus-visible:ring-2 focus-visible:ring-emerald-500/20"
                 />
               </div>
-              <Button type="submit" size="sm">
-                Search
-              </Button>
-            </form>
-            <Select value={categoryFilter} onValueChange={handleCategoryChange}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Category" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All categories</SelectItem>
-                {categories.map((c) => (
-                  <SelectItem key={c._id} value={c._id}>
-                    {c.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={typeFilter} onValueChange={handleTypeChange}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Product type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All types</SelectItem>
-                {productTypes.map((t) => (
-                  <SelectItem key={t} value={t}>
-                    {t}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {hasFilters && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setCategoryFilter('all');
-                  setTypeFilter('all');
-                  setSearch('');
-                  setSearchInput('');
-                  setPage(1);
-                }}
-              >
-                Clear filters
-              </Button>
-            )}
-          </div>
-        </Card>
-
-        {/* Product grid */}
-        {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <Card key={i} className="bg-white overflow-hidden animate-pulse">
-                <div className="aspect-square bg-gray-200" />
-                <div className="p-4 space-y-2">
-                  <div className="h-4 bg-gray-200 rounded w-3/4" />
-                  <div className="h-3 bg-gray-200 rounded w-1/2" />
-                  <div className="h-5 bg-gray-200 rounded w-1/3" />
-                </div>
-              </Card>
-            ))}
-          </div>
-        ) : products.length === 0 ? (
-          <Card className="bg-white border-0 p-12 text-center">
-            <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-600">No products found. Try changing filters or search.</p>
-          </Card>
-        ) : (
-          <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {products.map((p) => (
-                <Card
-                  key={p._id}
-                  className="bg-white overflow-hidden border border-gray-200 hover:shadow-md transition-shadow"
+              <Select value={categoryFilter || 'all'} onValueChange={(v) => setCategoryFilter(v === 'all' ? '' : v)}>
+                <SelectTrigger className="w-[180px] h-9 bg-white border-slate-200">
+                  <Tag className="w-4 h-4 text-slate-400 shrink-0" />
+                  <SelectValue placeholder="Category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All categories</SelectItem>
+                  {categories.map((c) => (
+                    <SelectItem key={c} value={c}>
+                      {c}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={vendorFilter || 'all'} onValueChange={(v) => setVendorFilter(v === 'all' ? '' : v)}>
+                <SelectTrigger className="w-[200px] h-9 bg-white border-slate-200">
+                  <Store className="w-4 h-4 text-slate-400 shrink-0" />
+                  <SelectValue placeholder="Vendor" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All vendors</SelectItem>
+                  {vendorOptions.map(([id, name]) => (
+                    <SelectItem key={id} value={id!}>
+                      {name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {hasFilters && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={clearFilters}
+                  className="h-9 text-slate-600 hover:text-slate-900 hover:bg-slate-100"
                 >
-                  <div className="aspect-square relative bg-gray-100">
-                    {p.mainImage ? (
-                      <Image
-                        src={p.mainImage}
-                        alt={p.name}
-                        fill
-                        className="object-cover"
-                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-gray-400">
-                        <Package className="w-16 h-16" />
-                      </div>
-                    )}
-                    {p.hasDiscount && p.discountPercent && (
-                      <span className="absolute top-2 right-2 bg-red-500 text-white text-xs font-medium px-2 py-0.5 rounded">
-                        {p.discountPercent}% off
-                      </span>
-                    )}
-                    {p.retailerDiscountPercent != null && p.retailerDiscountPercent > 0 && (
-                      <span className="absolute top-2 left-2 bg-emerald-600 text-white text-xs font-medium px-2 py-0.5 rounded">
-                        B2B {p.retailerDiscountPercent}% off
-                      </span>
-                    )}
-                  </div>
-                  <div className="p-4">
-                    <p className="text-xs text-gray-500 uppercase tracking-wide">
-                      {p.categoryName || '—'} {p.product_type ? ` · ${p.product_type}` : ''}
-                    </p>
-                    <h3 className="font-semibold text-gray-900 mt-1 line-clamp-2">{p.name}</h3>
-                    {p.sku && (
-                      <p className="text-xs text-gray-400 mt-0.5">SKU: {p.sku}</p>
-                    )}
-                    <div className="mt-2 flex items-baseline gap-2 flex-wrap">
-                      <span className="text-lg font-bold text-gray-900">
-                        {p.displayPrice != null
-                          ? `₹${Number(p.displayPrice).toLocaleString('en-IN')}`
-                          : p.retailerPrice != null
-                            ? `₹${Number(p.retailerPrice).toLocaleString('en-IN')}`
-                            : p.sellingPrice != null
-                              ? `₹${Number(p.sellingPrice).toLocaleString('en-IN')}`
-                              : '—'}
-                      </span>
-                      {(p.retailerDiscountPercent != null && p.retailerDiscountPercent > 0 && p.originalPrice != null) && (
-                        <span className="text-sm text-gray-500 line-through">
-                          ₹{Number(p.originalPrice).toLocaleString('en-IN')}
-                        </span>
-                      )}
-                      {p.retailerDiscountPercent == null && p.originalPrice != null && p.hasDiscount && (
-                        <span className="text-sm text-gray-500 line-through">
-                          ₹{Number(p.originalPrice).toLocaleString('en-IN')}
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-xs text-gray-500 mt-1">
-                      Stock: {p.stock != null ? p.stock : '—'}
-                    </p>
-                    <Button
-                      size="sm"
-                      className="w-full mt-3"
-                      onClick={() => addToCart(p._id)}
-                      disabled={addingToCart === p._id || (p.stock != null && p.stock < 1)}
-                    >
-                      {addingToCart === p._id ? (
-                        <span className="flex items-center justify-center gap-2"><span className="animate-spin rounded-full h-3 w-3 border-2 border-white border-t-transparent" /> Adding...</span>
-                      ) : (
-                        <>
-                          <ShoppingCart className="w-4 h-4 mr-1" />
-                          Add to Cart
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                </Card>
-              ))}
+                  <X className="w-4 h-4 mr-1" />
+                  Clear
+                </Button>
+              )}
             </div>
+          </CardHeader>
 
-            {/* Pagination */}
-            {pagination.pages > 1 && (
-              <div className="flex items-center justify-center gap-2 pt-4">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPage((prev) => Math.max(1, prev - 1))}
-                  disabled={page <= 1}
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                  Previous
-                </Button>
-                <span className="text-sm text-gray-600 px-2">
-                  Page {pagination.page} of {pagination.pages} ({pagination.total} products)
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPage((prev) => Math.min(pagination.pages, prev + 1))}
-                  disabled={page >= pagination.pages}
-                >
-                  Next
-                  <ChevronRight className="w-4 h-4" />
-                </Button>
+          <CardContent className="p-0">
+            {loading ? (
+              <div className="flex flex-col items-center justify-center py-20 text-slate-500">
+                <Loader2 className="w-10 h-10 animate-spin text-slate-400 mb-4" />
+                <p className="text-sm font-medium">Loading products...</p>
+                <p className="text-xs text-slate-400 mt-1">Fetching from vendors</p>
+              </div>
+            ) : products.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-20 px-4">
+                <div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mb-4">
+                  <Package className="w-8 h-8 text-slate-400" />
+                </div>
+                <h3 className="text-base font-semibold text-slate-800">No products found</h3>
+                <p className="text-sm text-slate-500 mt-1 text-center max-w-sm">
+                  {hasFilters
+                    ? 'Try adjusting your filters or search term.'
+                    : 'There are no vendor products available at the moment.'}
+                </p>
+                {hasFilters && (
+                  <Button variant="outline" size="sm" onClick={clearFilters} className="mt-4">
+                    Clear filters
+                  </Button>
+                )}
+              </div>
+            ) : (
+              <div className="w-full min-w-0 overflow-x-auto border-t border-slate-100">
+                <Table className="min-w-[800px]">
+                  <TableHeader>
+                    <TableRow className="bg-slate-50/80 border-b border-slate-200 hover:bg-slate-50/80">
+                      <TableHead className="py-4 px-5 font-semibold text-slate-800 text-xs uppercase tracking-wider">
+                        Product
+                      </TableHead>
+                      <TableHead className="py-4 px-5 font-semibold text-slate-800 text-xs uppercase tracking-wider">
+                        SKU
+                      </TableHead>
+                      <TableHead className="py-4 px-5 font-semibold text-slate-800 text-xs uppercase tracking-wider">
+                        Category
+                      </TableHead>
+                      <TableHead className="py-4 px-5 font-semibold text-slate-800 text-xs uppercase tracking-wider">
+                        Vendor
+                      </TableHead>
+                      <TableHead className="py-4 px-5 font-semibold text-slate-800 text-xs uppercase tracking-wider">
+                        Price
+                      </TableHead>
+                      <TableHead className="py-4 px-5 font-semibold text-slate-800 text-xs uppercase tracking-wider text-center">
+                        Stock
+                      </TableHead>
+                      <TableHead className="py-4 px-5 font-semibold text-slate-800 text-xs uppercase tracking-wider text-center">
+                        Status
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {products.map((p) => (
+                      <TableRow
+                        key={p._id}
+                        className="border-b border-slate-100 hover:bg-emerald-50/30 transition-colors last:border-0"
+                      >
+                        <TableCell className="py-4 px-5">
+                          <div className="flex items-center gap-4">
+                            {p.mainImage ? (
+                              <img
+                                src={p.mainImage}
+                                alt={p.name}
+                                className="w-14 h-14 rounded-xl border border-slate-200 object-cover shadow-sm"
+                              />
+                            ) : (
+                              <div className="w-14 h-14 rounded-xl border border-slate-200 bg-slate-100 flex items-center justify-center shrink-0">
+                                <Package className="w-7 h-7 text-slate-400" />
+                              </div>
+                            )}
+                            <div className="min-w-0">
+                              <p className="font-medium text-slate-900 truncate max-w-[220px]" title={p.name}>
+                                {p.name}
+                              </p>
+                              {p.product_type && (
+                                <span className="inline-block mt-1 text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
+                                  {p.product_type}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell className="py-4 px-5">
+                          <code className="text-xs text-slate-600 bg-slate-100 px-2 py-1 rounded font-mono">
+                            {p.sku || '—'}
+                          </code>
+                        </TableCell>
+                        <TableCell className="py-4 px-5">
+                          <span className="text-sm text-slate-600">{p.category || '—'}</span>
+                        </TableCell>
+                        <TableCell className="py-4 px-5">
+                          <span className="flex items-center gap-1.5 text-sm text-slate-700">
+                            <Store className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                            {p.vendorName}
+                          </span>
+                        </TableCell>
+                        <TableCell className="py-4 px-5">
+                          <span className="font-semibold text-slate-900">{formatPrice(p.sellingPrice ?? p.price)}</span>
+                        </TableCell>
+                        <TableCell className="py-4 px-5 text-center">
+                          <span
+                            className={`inline-flex items-center justify-center min-w-9 px-2 py-1 text-xs font-semibold rounded-lg border ${getStockStyle(
+                              p.stock
+                            )}`}
+                          >
+                            {p.stock}
+                          </span>
+                        </TableCell>
+                        <TableCell className="py-4 px-5 text-center">
+                          <span
+                            className={
+                              p.status === 'active'
+                                ? 'inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-emerald-100 text-emerald-800 border border-emerald-200'
+                                : 'inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200'
+                            }
+                          >
+                            {p.status === 'active' ? 'Active' : 'Inactive'}
+                          </span>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               </div>
             )}
-          </>
-        )}
+          </CardContent>
+        </Card>
       </div>
     </RetailerLayout>
   );
