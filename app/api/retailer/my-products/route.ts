@@ -42,6 +42,7 @@ export async function GET(request: NextRequest) {
       sourceProductId: (p.sourceProductId as ObjectId)?.toString(),
       name: p.name,
       mainImage: p.mainImage,
+      shortDescription: p.shortDescription,
       shopName: p.shopName,
       sellingPrice: p.sellingPrice,
       quantity: p.quantity,

@@ -110,17 +110,46 @@ export async function GET(request: NextRequest) {
 
     const categoryMap = new Map(categories.map(category => [category._id.toString(), category.name]));
 
-    return NextResponse.json({
-      products: products.map((product) => {
+    // Fetch active retailer products and merge into same listing (no separate section)
+    const retailerQuery = {
+      $or: [
+        { status: "active" },
+        { status: { $regex: /^active$/i } },
+        { status: { $exists: false } },
+        { status: null },
+      ],
+    };
+    const retailerProducts = await db
+      .collection("retailer_products")
+      .find(retailerQuery)
+      .sort({ updatedAt: -1 })
+      .limit(limit)
+      .toArray();
+
+    const retailerList = retailerProducts.map((rp: any) => ({
+      _id: (rp._id as ObjectId).toString(),
+      name: rp.name,
+      mainImage: rp.mainImage || null,
+      category: rp.shopName ? `Sold by ${rp.shopName}` : "Partner Store",
+      displayPrice: Number(rp.sellingPrice) || 0,
+      originalPrice: Number(rp.sellingPrice) || 0,
+      sellingPrice: Number(rp.sellingPrice) || 0,
+      regularPrice: Number(rp.sellingPrice) || 0,
+      stock: rp.quantity ?? 0,
+      urlSlug: (rp._id as ObjectId).toString(),
+      sellerType: "retailer",
+      retailerId: (rp.retailerId as ObjectId)?.toString(),
+    }));
+
+    const mergedProducts = [
+      ...products.map((product) => {
         const priceData = formatProductPrice(product);
         const categoryId = normalizeCategoryId(product.category);
         const categoryName = categoryId ? categoryMap.get(categoryId) : null;
-
         return {
           ...product,
           _id: product._id.toString(),
           category: categoryName ? categoryName : product.category,
-          // Format price display using calculated prices
           displayPrice: priceData.displayPrice,
           originalPrice: priceData.originalPrice,
           sellingPrice: priceData.sellingPrice,
@@ -128,13 +157,19 @@ export async function GET(request: NextRequest) {
           mrp: priceData.mrp,
           hasDiscount: priceData.hasDiscount,
           discountPercent: priceData.discountPercent,
+          sellerType: "vendor",
         };
       }),
+      ...retailerList,
+    ];
+
+    return NextResponse.json({
+      products: mergedProducts,
       pagination: {
-        total,
+        total: total + retailerList.length,
         page,
         limit,
-        pages: Math.ceil(total / limit),
+        pages: Math.ceil((total + retailerList.length) / limit),
       },
     });
   } catch (error) {

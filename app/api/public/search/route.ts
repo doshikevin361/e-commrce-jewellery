@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
 import { formatProductPrice } from '@/lib/utils/price-calculator';
+import { ObjectId } from 'mongodb';
 
 export async function GET(request: NextRequest) {
   try {
@@ -55,8 +56,8 @@ export async function GET(request: NextRequest) {
       .limit(10)
       .toArray();
 
-    // Fetch products matching the query
-    const products = await db
+    // Fetch vendor products matching the query
+    const vendorProducts = await db
       .collection('products')
       .find({
         status: 'active',
@@ -73,6 +74,73 @@ export async function GET(request: NextRequest) {
       })
       .limit(6)
       .toArray();
+
+    // Fetch retailer products matching the query (so "Boutique" etc. shows retailer listing too)
+    const retailerProducts = await db
+      .collection('retailer_products')
+      .find({
+        $and: [
+          {
+            $or: [
+              { status: 'active' },
+              { status: { $regex: /^active$/i } },
+              { status: { $exists: false } },
+              { status: null },
+            ],
+          },
+          {
+            $or: [
+              { name: searchRegex },
+              { shortDescription: searchRegex },
+            ],
+          },
+        ],
+      })
+      .limit(4)
+      .toArray();
+
+    // Map vendor products
+    const vendorList = vendorProducts.map((product: any) => {
+      const priceData = formatProductPrice(product);
+      return {
+        _id: product._id.toString(),
+        name: product.name,
+        category: product.category,
+        brand: product.brand,
+        mainImage: product.mainImage,
+        displayPrice: priceData.displayPrice,
+        originalPrice: priceData.originalPrice,
+        hasDiscount: priceData.hasDiscount,
+        discountPercent: priceData.discountPercent,
+        slug: product.urlSlug || product._id.toString(),
+        metalType: product.metalType,
+        metalPurity: product.metalPurity,
+        stoneType: product.stoneType,
+        sellerType: 'vendor',
+      };
+    });
+
+    // Map retailer products (same shape, with sellerType + retailerId for link)
+    const retailerList = retailerProducts.map((rp: any) => ({
+      _id: (rp._id as ObjectId).toString(),
+      name: rp.name,
+      category: rp.shopName ? `Sold by ${rp.shopName}` : 'Partner Store',
+      brand: undefined,
+      mainImage: rp.mainImage || '',
+      displayPrice: Number(rp.sellingPrice) || 0,
+      originalPrice: Number(rp.sellingPrice) || 0,
+      hasDiscount: false,
+      discountPercent: 0,
+      slug: (rp._id as ObjectId).toString(),
+      metalType: undefined,
+      metalPurity: undefined,
+      stoneType: undefined,
+      sellerType: 'retailer',
+      retailerId: (rp.retailerId as ObjectId)?.toString(),
+    }));
+
+    // Merge: vendor first, then retailer (so both show in search)
+    const products = [...vendorList, ...retailerList].slice(0, 10);
 
     // Extract keywords from attributes and common jewellery terms
     const keywords: string[] = [];
@@ -118,38 +186,21 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       keywords: limitedKeywords,
-      categories: categories.map(cat => ({
+      categories: categories.map((cat: any) => ({
         _id: cat._id.toString(),
         name: cat.name,
         slug: cat.slug,
       })),
-      brands: brands.map(brand => ({
+      brands: brands.map((brand: any) => ({
         _id: brand._id.toString(),
         name: brand.name,
       })),
-      attributes: attributes.map(attr => ({
+      attributes: attributes.map((attr: any) => ({
         _id: attr._id.toString(),
         name: attr.name,
         values: attr.values || [],
       })),
-      products: products.map(product => {
-        const priceData = formatProductPrice(product);
-        return {
-          _id: product._id.toString(),
-          name: product.name,
-          category: product.category,
-          brand: product.brand,
-          mainImage: product.mainImage,
-          displayPrice: priceData.displayPrice,
-          originalPrice: priceData.originalPrice,
-          hasDiscount: priceData.hasDiscount,
-          discountPercent: priceData.discountPercent,
-          slug: product.urlSlug || product._id.toString(),
-          metalType: product.metalType,
-          metalPurity: product.metalPurity,
-          stoneType: product.stoneType,
-        };
-      }),
+      products,
     });
   } catch (error) {
     console.error('[v0] Error in search API:', error);

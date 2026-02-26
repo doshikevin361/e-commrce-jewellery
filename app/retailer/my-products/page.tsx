@@ -6,14 +6,14 @@ import Link from 'next/link';
 import { RetailerLayout } from '@/components/layout/retailer-layout';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Store, Loader2, ChevronLeft, ChevronRight, Package, Pencil, Check, X } from 'lucide-react';
+import { Store, Loader2, ChevronLeft, ChevronRight, Package, Pencil } from 'lucide-react';
 import { toast } from 'react-toastify';
 
 type RetailerProduct = {
   _id: string;
   name: string;
   mainImage: string;
+  shortDescription?: string;
   shopName: string;
   sellingPrice: number;
   quantity: number;
@@ -35,8 +35,6 @@ export default function RetailerMyProductsPage() {
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState({ page: 1, limit: 20, total: 0, pages: 1 });
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editPrice, setEditPrice] = useState<string>('');
   const [savingId, setSavingId] = useState<string | null>(null);
 
   const fetchProducts = useCallback(async () => {
@@ -59,48 +57,6 @@ export default function RetailerMyProductsPage() {
   useEffect(() => {
     fetchProducts();
   }, [fetchProducts]);
-
-  const handleStartEdit = (p: RetailerProduct) => {
-    setEditingId(p._id);
-    setEditPrice(String(p.sellingPrice));
-  };
-
-  const handleCancelEdit = () => {
-    setEditingId(null);
-    setEditPrice('');
-  };
-
-  const handleSavePrice = async (id: string) => {
-    const num = parseFloat(editPrice);
-    if (isNaN(num) || num < 0) {
-      toast.error('Enter a valid price');
-      return;
-    }
-    setSavingId(id);
-    try {
-      const res = await fetch(`/api/retailer/my-products/${id}`, {
-        method: 'PATCH',
-        credentials: 'include',
-        headers: getAuthHeaders(),
-        body: JSON.stringify({ sellingPrice: num }),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setProducts((prev) =>
-          prev.map((q) => (q._id === id ? { ...q, sellingPrice: num } : q))
-        );
-        setEditingId(null);
-        setEditPrice('');
-        toast.success('Price updated');
-      } else {
-        toast.error(data.error || 'Failed to update price');
-      }
-    } catch {
-      toast.error('Failed to update price');
-    } finally {
-      setSavingId(null);
-    }
-  };
 
   const handleStatusChange = async (id: string, newStatus: 'active' | 'inactive') => {
     try {
@@ -156,7 +112,7 @@ export default function RetailerMyProductsPage() {
         </div>
 
         <p className="text-sm text-gray-600">
-          Products you added via &quot;Sell to Portal&quot; from your B2B orders. Edit price and visibility here.
+          Products you added via &quot;Sell to Portal&quot; from your B2B orders. Click <strong>Edit</strong> to open the full edit page (same UI as vendor/admin product edit).
         </p>
 
         {products.length === 0 ? (
@@ -194,49 +150,10 @@ export default function RetailerMyProductsPage() {
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-gray-900 truncate">{p.name}</p>
-                    <p className="text-sm text-gray-500">Qty: {p.quantity}</p>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-3">
-                    <div className="flex items-center gap-2">
-                      {editingId === p._id ? (
-                        <>
-                          <span className="text-sm text-gray-600">₹</span>
-                          <Input
-                            type="number"
-                            min={0}
-                            step={1}
-                            value={editPrice}
-                            onChange={(e) => setEditPrice(e.target.value)}
-                            className="w-28 h-9"
-                          />
-                          <Button
-                            size="sm"
-                            onClick={() => handleSavePrice(p._id)}
-                            disabled={savingId === p._id}
-                          >
-                            {savingId === p._id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-                          </Button>
-                          <Button size="sm" variant="ghost" onClick={handleCancelEdit}>
-                            <X className="w-4 h-4" />
-                          </Button>
-                        </>
-                      ) : (
-                        <>
-                          <span className="font-semibold text-gray-900">{formatCurrency(p.sellingPrice)}</span>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="h-8 w-8 p-0"
-                            onClick={() => handleStartEdit(p)}
-                            title="Edit price"
-                          >
-                            <Pencil className="w-4 h-4" />
-                          </Button>
-                        </>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2">
+                    <p className="font-medium text-gray-900">{p.name}</p>
+                    {p.shortDescription && <p className="text-sm text-gray-600 line-clamp-2 mt-0.5">{p.shortDescription}</p>}
+                    <p className="text-sm text-gray-500 mt-1">Qty: {p.quantity} · {formatCurrency(p.sellingPrice)}</p>
+                    <div className="flex flex-wrap items-center gap-3 mt-2">
                       <span className={`text-xs font-medium px-2 py-1 rounded ${p.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-200 text-gray-700'}`}>
                         {p.status || 'active'}
                       </span>
@@ -244,10 +161,16 @@ export default function RetailerMyProductsPage() {
                         value={p.status || 'active'}
                         onChange={(e) => handleStatusChange(p._id, e.target.value as 'active' | 'inactive')}
                         className="text-sm border border-gray-300 rounded px-2 py-1"
+                        disabled={savingId === p._id}
                       >
                         <option value="active">Active</option>
                         <option value="inactive">Inactive</option>
                       </select>
+                      <Button size="sm" variant="outline" asChild className="gap-1">
+                        <Link href={`/retailer/my-products/${p._id}/edit`}>
+                          <Pencil className="w-4 h-4" /> Edit
+                        </Link>
+                      </Button>
                     </div>
                   </div>
                 </Card>

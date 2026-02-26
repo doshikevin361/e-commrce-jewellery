@@ -14,11 +14,18 @@ export async function GET(request: NextRequest) {
     const limit = Math.min(24, Math.max(8, parseInt(searchParams.get('limit') || '12')));
     const skip = (page - 1) * limit;
 
+    // Only active retailer products. Exclude inactive so they don't show on website.
     const query = {
-      $or: [
-        { status: { $regex: '^active$', $options: 'i' } },
-        { status: { $exists: false } },
-        { status: null },
+      $and: [
+        {
+          $or: [
+            { status: 'active' },
+            { status: { $regex: '^active$', $options: 'i' } },
+            { status: { $exists: false } },
+            { status: null },
+          ],
+        },
+        { status: { $nin: ['inactive', 'Inactive', 'INACTIVE'] } },
       ],
     };
 
