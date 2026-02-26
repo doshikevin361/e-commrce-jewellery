@@ -61,7 +61,7 @@ interface Order {
   };
 }
 
-export function OrderList() {
+export function OrderList({ orderType }: { orderType?: 'b2b' } = {}) {
   const router = useRouter();
   const { toast } = useToast();
   const [orders, setOrders] = useState<Order[]>([]);
@@ -80,7 +80,7 @@ export function OrderList() {
 
   useEffect(() => {
     fetchOrders();
-  }, []);
+  }, [orderType]);
 
   // Filter orders based on all filters
   const filteredOrders = orders.filter(order => {
@@ -109,7 +109,8 @@ export function OrderList() {
   const fetchOrders = async () => {
     try {
       setLoading(true);
-      const res = await fetch('/api/admin/orders');
+      const url = orderType === 'b2b' ? '/api/admin/orders?orderType=b2b' : '/api/admin/orders';
+      const res = await fetch(url);
       const data = await res.json();
 
       if (res.ok) {
@@ -302,7 +303,7 @@ export function OrderList() {
       <div className='space-y-6'>
         <div className='flex items-center justify-between'>
           <div>
-            <h1 className='text-3xl font-bold text-slate-900 dark:text-white'>Orders</h1>
+            <h1 className='text-3xl font-bold text-slate-900 dark:text-white'>{orderType === 'b2b' ? 'B2B Orders' : 'Orders'}</h1>
             <p className='text-slate-600 dark:text-slate-400 mt-1'>
               Showing {filteredOrders.length} of {orders.length} orders
             </p>

@@ -37,6 +37,9 @@ type ProductCardProps = {
   onDelete?: () => void;
   actionSlot?: React.ReactNode;
   hideDefaultAction?: boolean;
+  /** When set, Add to cart uses retailer product flow */
+  retailerProductId?: string;
+  retailerId?: string;
 };
 
 export const ProductCard = memo(
@@ -49,6 +52,8 @@ export const ProductCard = memo(
     onDelete,
     actionSlot,
     hideDefaultAction = false,
+    retailerProductId,
+    retailerId,
   }: ProductCardProps) => {
     const router = useRouter();
     const { addToCart, cartItems } = useCart();
@@ -140,7 +145,11 @@ export const ProductCard = memo(
 
       setCartLoading(true);
       try {
-        await addToCart(productId, 1);
+        if (retailerProductId && retailerId) {
+          await addToCart(productId, 1, { retailerProductId, retailerId });
+        } else {
+          await addToCart(productId, 1);
+        }
       } catch (error) {
         console.error('Error adding to cart:', error);
       } finally {

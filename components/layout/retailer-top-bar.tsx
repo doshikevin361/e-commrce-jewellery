@@ -1,10 +1,19 @@
 'use client';
 
+import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Search } from 'lucide-react';
+import { Search, ShoppingCart } from 'lucide-react';
 import { useSettings } from '@/components/settings/settings-provider';
+
+function getAuthHeaders(): HeadersInit {
+  if (typeof window === 'undefined') return {};
+  const token = localStorage.getItem('retailerToken');
+  const h: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (token) h['Authorization'] = `Bearer ${token}`;
+  return h;
+}
 
 export function RetailerTopBar() {
   const pathname = usePathname();
@@ -12,8 +21,21 @@ export function RetailerTopBar() {
   const { settings } = useSettings();
   const [mounted, setMounted] = useState(false);
   const [userData, setUserData] = useState<{ fullName?: string; companyName?: string; email?: string } | null>(null);
+  const [cartCount, setCartCount] = useState(0);
 
   const primaryColor = settings.adminPrimaryColor || settings.primaryColor || '#16a34a';
+
+  const fetchCartCount = useCallback(async () => {
+    try {
+      const res = await fetch('/api/retailer/cart', { credentials: 'include', headers: getAuthHeaders() });
+      if (!res.ok) return setCartCount(0);
+      const data = await res.json();
+      const items = Array.isArray(data.items) ? data.items : [];
+      setCartCount(items.reduce((sum: number, i: { quantity?: number }) => sum + (i.quantity || 1), 0));
+    } catch {
+      setCartCount(0);
+    }
+  }, []);
 
   useEffect(() => {
     setMounted(true);
@@ -24,6 +46,17 @@ export function RetailerTopBar() {
       setUserData(null);
     }
   }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
+    fetchCartCount();
+  }, [mounted, fetchCartCount, pathname]);
+
+  useEffect(() => {
+    const handler = () => fetchCartCount();
+    window.addEventListener('retailer-cart-update', handler);
+    return () => window.removeEventListener('retailer-cart-update', handler);
+  }, [fetchCartCount]);
 
   const handleLogout = () => {
     localStorage.removeItem('retailerToken');
@@ -47,22 +80,39 @@ export function RetailerTopBar() {
   if (!mounted) return null;
 
   return (
-    <header className="bg-white border-b border-gray-200 px-6 py-4 sticky top-0 z-40">
-      <div className="flex items-center justify-between">
-        <div className="flex flex-col w-full max-w-2xl">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-            <input
-              type="text"
-              placeholder="Search..."
-              className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2"
-              style={searchInputStyle}
-            />
+    <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
+      <div className="px-6 py-4">
+        <div className="flex items-center justify-between">
+          <div className="flex flex-col w-full max-w-2xl">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+              <input
+                type="text"
+                placeholder="Search..."
+                className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2"
+                style={searchInputStyle}
+              />
+            </div>
           </div>
-        </div>
 
-        <div className="flex items-center space-x-4 ml-6">
-          <DropdownMenu>
+          <div className="flex items-center space-x-4 ml-6">
+            <Link
+              href="/retailer/cart"
+              className="relative flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+              title="Cart"
+            >
+              <ShoppingCart className="w-5 h-5 text-gray-600" />
+              <span className="text-sm font-medium text-gray-700 hidden sm:inline">Cart</span>
+              {cartCount > 0 && (
+                <span
+                  className="absolute -top-1 -right-1 min-w-[18px] h-[18px] flex items-center justify-center rounded-full text-xs font-bold text-white px-1"
+                  style={{ background: primaryColor }}
+                >
+                  {cartCount > 99 ? '99+' : cartCount}
+                </span>
+              )}
+            </Link>
+            <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="flex items-center gap-3 pl-4 border-l border-none cursor-pointer">
                 <div
@@ -89,6 +139,25 @@ export function RetailerTopBar() {
           </DropdownMenu>
         </div>
       </div>
+      </div>
+      {/* Cart bar - visible when cart has items */}
+      {cartCount > 0 && (
+        <div
+          className="px-6 py-2 flex items-center justify-between text-sm border-t border-gray-100"
+          style={{ backgroundColor: `${primaryColor}12` }}
+        >
+          <span className="font-medium text-gray-800">
+            {cartCount} {cartCount === 1 ? 'item' : 'items'} in cart
+          </span>
+          <Link
+            href="/retailer/cart"
+            className="font-semibold hover:underline"
+            style={{ color: primaryColor }}
+          >
+            View Cart →
+          </Link>
+        </div>
+      )}
     </header>
   );
 }

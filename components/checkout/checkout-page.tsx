@@ -549,10 +549,11 @@ export function CheckoutPage() {
       toast.success('Payment gateway ready', { id: 'payment-order' });
 
       // Prepare order data for after payment
+      const isRetailerOrder = cartItems.length > 0 && cartItems.every((i: { sellerType?: string }) => i.sellerType === 'retailer');
       const fullOrderData = {
         customerEmail: customerEmail,
         customerName: shippingAddress.fullName,
-        items: cartItems.map(item => ({
+        items: cartItems.map((item: { _id: string; title: string; image: string; quantity: number; displayPrice: number }) => ({
           product: item._id,
           productName: item.title,
           productImage: item.image,
@@ -569,6 +570,7 @@ export function CheckoutPage() {
         total,
         shippingAddress,
         billingAddress: useSameAsShipping ? shippingAddress : billingAddress,
+        ...(isRetailerOrder && cartItems[0] ? { orderType: 'retailer' as const, retailerId: (cartItems[0] as { retailerId?: string }).retailerId } : {}),
       };
 
       // Initialize Razorpay

@@ -155,11 +155,16 @@ export async function POST(req: NextRequest) {
 
     // Create order in database
     const couponId = orderData.couponId ? new mongoose.Types.ObjectId(orderData.couponId) : undefined;
+    const orderType = orderData.orderType === 'retailer' ? 'retailer' : undefined;
+    const retailerId = orderData.retailerId && orderType === 'retailer' ? new mongoose.Types.ObjectId(orderData.retailerId) : undefined;
+
     const order = await Order.create({
       orderId,
       customer: customerObjectId,
       customerEmail: customer.email || orderData.customerEmail,
       customerName: orderData.customerName,
+      orderType: orderType || undefined,
+      retailerId: retailerId || undefined,
       items: orderData.items,
       subtotal: orderData.subtotal || 0,
       shippingCharges: orderData.shippingCharges || 0,
@@ -187,6 +192,24 @@ export async function POST(req: NextRequest) {
       paymentStatus: order.paymentStatus,
       orderStatus: order.orderStatus,
     });
+
+    // If retailer order, decrease retailer_products quantity
+    if (orderType === 'retailer' && order.items && order.items.length > 0) {
+      try {
+        const { db } = await connectToDatabase();
+        for (const item of order.items) {
+          const productId = item.product?.toString?.() || item.product;
+          if (productId) {
+            await db.collection('retailer_products').updateOne(
+              { _id: new (await import('mongodb')).ObjectId(productId) },
+              { $inc: { quantity: -Math.max(0, item.quantity || 1) }, $set: { updatedAt: new Date() } }
+            );
+          }
+        }
+      } catch (invErr) {
+        console.error('[Payment Verify] Failed to decrease retailer inventory:', invErr);
+      }
+    }
 
     // Verify the order was actually saved by querying it back
     const savedOrder = await Order.findById(order._id).lean();
