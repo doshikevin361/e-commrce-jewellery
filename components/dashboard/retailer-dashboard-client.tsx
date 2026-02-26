@@ -93,8 +93,20 @@ export function RetailerDashboardClient() {
   }, [fetchData]);
 
   const formatCurrency = (n: number) => `₹${n.toLocaleString('en-IN')}`;
-  const formatDate = (d: string) =>
-    d ? new Date(d).toLocaleDateString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }).replace(',', ' ·') : '—';
+  const formatDate = (d: string) => {
+    if (!d) return '—';
+    const date = new Date(d);
+    const datePart = date.toLocaleDateString('en-IN', {
+      year: 'numeric',
+      month: 'short',
+      day: '2-digit',
+    });
+    const timePart = date.toLocaleTimeString('en-IN', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+    return `${datePart} · ${timePart}`;
+  };
 
   if (loading) {
     return (
