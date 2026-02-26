@@ -22,6 +22,8 @@ interface SearchResult {
     hasDiscount: boolean;
     discountPercent: number;
     slug: string;
+    sellerType?: 'vendor' | 'retailer';
+    retailerId?: string;
   }>;
 }
 
@@ -187,10 +189,14 @@ export function SearchDialog({ open, onOpenChange, query, inputRef, listboxId = 
     onOpenChange(false);
   };
 
-  // Handle product click
+  // Handle product click (vendor → /products/slug, retailer → /products/retailer/id)
   const handleProductClick = (product: SearchResult['products'][0]) => {
-    const slug = product.slug || product._id;
-    router.push(`/products/${slug}`);
+    if (product.sellerType === 'retailer' && product._id) {
+      router.push(`/products/retailer/${product._id}`);
+    } else {
+      const slug = product.slug || product._id;
+      router.push(`/products/${slug}`);
+    }
     onOpenChange(false);
   };
 

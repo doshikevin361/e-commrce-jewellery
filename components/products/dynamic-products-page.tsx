@@ -22,21 +22,24 @@ interface Category {
 interface Product {
   _id: string;
   name: string;
-  shortDescription: string;
+  shortDescription?: string;
   category: string;
   brand?: string;
   mainImage: string;
   displayPrice: number;
-  originalPrice: number;
-  hasDiscount: boolean;
-  discountPercent: number;
+  originalPrice?: number;
+  hasDiscount?: boolean;
+  discountPercent?: number;
   rating?: number;
   reviewCount?: number;
   stock: number;
-  featured: boolean;
-  trending: boolean;
-  tags: string[];
+  featured?: boolean;
+  trending?: boolean;
+  tags?: string[];
   urlSlug?: string;
+  /** 'retailer' = from retailer_products, show Sold by X; cart uses retailerProductId */
+  sellerType?: 'vendor' | 'retailer';
+  retailerId?: string;
   // Product Type
   product_type?: string;
   // Material flags
@@ -98,24 +101,27 @@ interface Product {
 
 // Convert Product to ProductCardData
 const convertToProductCard = (product: Product): ProductCardData => {
-  const productId = product._id.toString();
+  const productId = typeof product._id === 'string' ? product._id : String(product._id);
+  const displayPrice = typeof product.displayPrice === 'number' ? product.displayPrice : 0;
+  const originalPrice = typeof product.originalPrice === 'number' ? product.originalPrice : displayPrice;
+  const hasDiscount = product.hasDiscount === true || (originalPrice > displayPrice && displayPrice > 0);
   return {
     id: productId,
-    _id: productId, // Ensure _id is set as string for ProductCard component
+    _id: productId,
     title: product.name,
     category: product.category,
-    price: `₹${product.displayPrice.toLocaleString()}`,
-    originalPrice: product.hasDiscount ? `₹${product.originalPrice.toLocaleString()}` : undefined,
-    rating: product.rating || 4.5,
-    reviews: product.reviewCount || 0,
+    price: `₹${displayPrice.toLocaleString()}`,
+    originalPrice: hasDiscount ? `₹${originalPrice.toLocaleString()}` : undefined,
+    rating: product.rating ?? 4.5,
+    reviews: product.reviewCount ?? 0,
     image: product.mainImage || 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=600&q=80',
-    badge: product.featured ? 'Featured' : product.trending ? 'Trending' : undefined,
-    // Extended attributes for filtering
+    badge: product.featured ? 'Featured' : product.trending ? 'Trending' : product.sellerType === 'retailer' ? undefined : undefined,
     material: product.metalType || 'Gold',
     brand: product.brand || 'Unknown',
-    inStock: product.stock > 0,
+    inStock: (product.stock ?? 0) > 0,
     color: product.metalPurity || 'Gold',
     size: product.size || 'Medium',
+    urlSlug: product.urlSlug,
   };
 };
 
@@ -531,6 +537,10 @@ export function DynamicProductsPage() {
 
   // Handle product click
   const handleProductClick = (product: Product) => {
+    if (product.sellerType === 'retailer' && product._id) {
+      router.push(`/products/retailer/${product._id}`);
+      return;
+    }
     const slug = product.urlSlug || product._id;
     router.push(`/products/${slug}`);
   };
@@ -1282,7 +1292,13 @@ export function DynamicProductsPage() {
                   viewMode === 'grid' ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' : 'grid-cols-1'
                 }`}>
                 {paginatedProducts.map(product => (
-                  <ProductCard key={product._id} product={convertToProductCard(product)} onClick={() => handleProductClick(product)} />
+                  <ProductCard
+                    key={product._id}
+                    product={convertToProductCard(product)}
+                    onClick={() => handleProductClick(product)}
+                    retailerProductId={product.sellerType === 'retailer' ? product._id : undefined}
+                    retailerId={product.sellerType === 'retailer' ? product.retailerId : undefined}
+                  />
                 ))}
               </div>
 
