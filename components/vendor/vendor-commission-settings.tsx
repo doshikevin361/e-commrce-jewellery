@@ -399,7 +399,7 @@ export function VendorCommissionSettings({
         <Card className="border border-slate-200 dark:border-slate-800 overflow-hidden w-full">
           <div className="px-6 py-5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/20">
             <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-              Product & Commission
+              Product & Commission for Vendor Orders
             </h2>
             <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
               Add one or more rows. Each row defines a product type, category, design, metal, purity and your commission %.
@@ -519,7 +519,7 @@ export function VendorCommissionSettings({
         <Card className="border border-slate-200 dark:border-slate-800 overflow-hidden w-full mt-6">
           <div className="px-6 py-5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/20">
             <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-              B2B Commission Setting
+              B2B Commission Setting For Retailers
             </h2>
             <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
               Set B2B commission by product type, category, design, metal and purity. Same structure as above; used for retailer/B2B orders.
