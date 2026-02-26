@@ -110,6 +110,7 @@ export async function GET(request: NextRequest) {
 
     const orderStatus = searchParams.get('orderStatus');
     const paymentStatus = searchParams.get('paymentStatus');
+    const orderType = searchParams.get('orderType'); // 'b2b' = only B2B orders
 
     if (orderStatus && orderStatus !== 'all') {
       filter.orderStatus = orderStatus;
@@ -117,6 +118,10 @@ export async function GET(request: NextRequest) {
 
     if (paymentStatus && paymentStatus !== 'all') {
       filter.paymentStatus = paymentStatus;
+    }
+
+    if (orderType && orderType === 'b2b') {
+      filter.orderType = 'b2b';
     }
 
     // Legacy support for 'status' parameter (maps to paymentStatus)

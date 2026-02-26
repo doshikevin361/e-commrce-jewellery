@@ -158,6 +158,7 @@ export function Sidebar() {
       allowedRoles: ['superadmin', 'admin', 'vendor'],
     },
     { label: 'Orders', href: '/admin/orders', badge: null, icon: Package, allowedRoles: ['superadmin', 'admin', 'vendor'] },
+    { label: 'B2B Orders', href: '/admin/orders/b2b', badge: null, icon: Store, allowedRoles: ['superadmin', 'admin', 'vendor'] },
     { label: 'Coupons', href: '/admin/coupons', badge: null, icon: Ticket, allowedRoles: ['superadmin', 'admin', 'vendor'] },
     {
       label: 'Users',

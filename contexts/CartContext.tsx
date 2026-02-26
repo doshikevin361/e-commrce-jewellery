@@ -22,7 +22,7 @@ interface CartContextType {
   cartItems: CartItem[];
   cartCount: number;
   isLoading: boolean;
-  addToCart: (productId: string, quantity?: number, options?: { suppressToast?: boolean }) => Promise<void>;
+  addToCart: (productId: string, quantity?: number, options?: { suppressToast?: boolean; retailerProductId?: string; retailerId?: string }) => Promise<void>;
   removeFromCart: (productId: string) => Promise<void>;
   updateQuantity: (productId: string, quantity: number) => Promise<void>;
   fetchCart: () => Promise<void>;
@@ -89,20 +89,24 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   }, [isLoggedIn, fetchCart]);
 
-  const addToCart = async (productId: string, quantity: number = 1, options?: { suppressToast?: boolean }) => {
+  const addToCart = async (productId: string, quantity: number = 1, options?: { suppressToast?: boolean; retailerProductId?: string; retailerId?: string }) => {
     const suppressToast = options?.suppressToast ?? false;
     if (!isLoggedIn) {
-      // Dispatch event to open login modal
       window.dispatchEvent(new Event('openLoginModal'));
       toast.error('Please login to add items to cart');
       return;
     }
 
     try {
+      const body = options?.retailerProductId && options?.retailerId
+        ? { retailerProductId: options.retailerProductId, retailerId: options.retailerId, quantity }
+        : { productId, quantity };
+
       const response = await fetch('/api/customer/cart', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ productId, quantity }),
+        credentials: 'include',
+        body: JSON.stringify(body),
       });
 
       const data = await response.json();
@@ -123,7 +127,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
           if (!suppressToast) {
             toast.success('Product added to cart successfully');
           }
-          await fetchCart(true); // Refresh cart with loader
+          await fetchCart(true);
         }
       } else {
         toast.error(data.error || 'Failed to add product to cart');

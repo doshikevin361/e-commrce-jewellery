@@ -10,6 +10,7 @@ const menuItems = [
   { label: 'Dashboard', href: '/retailer', icon: LayoutDashboard },
   { label: 'Products', href: '/retailer/products', icon: ShoppingBag },
   { label: 'Orders', href: '/retailer/orders', icon: Package },
+  { label: 'My Sales', href: '/retailer/my-sales', icon: Truck },
 ];
 
 export function RetailerSidebar() {

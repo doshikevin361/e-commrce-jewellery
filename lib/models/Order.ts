@@ -25,6 +25,10 @@ export interface IOrder extends Document {
   customer: mongoose.Types.ObjectId;
   customerEmail: string;
   customerName: string;
+  /** 'b2b' = retailer order; 'retailer' = customer bought from retailer on website */
+  orderType?: 'b2b' | 'retailer';
+  /** When orderType === 'retailer', the retailer who sold these items */
+  retailerId?: mongoose.Types.ObjectId;
   items: IOrderItem[];
   subtotal: number;
   shippingCharges: number;
@@ -77,6 +81,8 @@ const OrderSchema = new Schema<IOrder>(
     customer: { type: Schema.Types.ObjectId, ref: 'Customer', required: true },
     customerEmail: { type: String, required: true },
     customerName: { type: String, required: true },
+    orderType: { type: String, enum: ['b2b', 'retailer'], required: false },
+    retailerId: { type: Schema.Types.ObjectId, ref: 'Retailer', required: false },
     items: [OrderItemSchema],
     subtotal: { type: Number, required: true },
     shippingCharges: { type: Number, required: true, default: 0 },
@@ -116,6 +122,8 @@ OrderSchema.index({ customer: 1, createdAt: -1 });
 OrderSchema.index({ orderId: 1 });
 OrderSchema.index({ orderStatus: 1 });
 OrderSchema.index({ paymentStatus: 1 });
+OrderSchema.index({ orderType: 1 });
+OrderSchema.index({ retailerId: 1 });
 
 // Explicitly set collection name to ensure consistency
 OrderSchema.set('collection', 'orders');

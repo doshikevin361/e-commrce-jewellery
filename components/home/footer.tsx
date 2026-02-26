@@ -204,6 +204,13 @@ export default function Footer() {
           <div>
             <h3 className='text-sm font-semibold mb-4 tracking-wide'>{SECTION_LABELS.about}</h3>
             {renderSectionLinks('about')}
+            <ul className='space-y-2.5 mt-2'>
+              <li>
+                <Link href='/partner-stores' className='text-gray-300 hover:text-white text-sm transition-colors'>
+                  Partner Stores
+                </Link>
+              </li>
+            </ul>
 
             <h3 className='text-sm font-semibold mt-8 mb-4 tracking-wide'>{SECTION_LABELS['customer-delight']}</h3>
             {renderSectionLinks('customer-delight')}
