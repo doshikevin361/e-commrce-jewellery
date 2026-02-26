@@ -113,34 +113,33 @@ export function RetailerTopBar() {
               )}
             </Link>
             <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button className="flex items-center gap-3 pl-4 border-l border-none cursor-pointer">
-                <div
-                  className="w-10 h-10 rounded-full font-semibold flex items-center justify-center text-white text-sm"
-                  style={{ background: primaryColor }}
-                >
-                  {userData?.fullName ? getInitials(userData.fullName) : userData?.companyName ? getInitials(userData.companyName) : 'R'}
-                </div>
-                <div className="hidden lg:block text-left">
-                  <p className="text-sm font-medium text-gray-900">{userData?.companyName || userData?.fullName || 'Retailer'}</p>
-                  <p className="text-xs text-gray-500">{userData?.email || ''}</p>
-                </div>
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem disabled className="flex flex-col py-2 hover:bg-transparent cursor-default">
-                <span className="text-sm font-medium">{userData?.companyName || userData?.fullName || 'Retailer'}</span>
-                <span className="text-xs">{userData?.email || ''}</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem className="text-red-600 cursor-pointer hover:bg-transparent" onClick={handleLogout}>
-                Logout
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="flex items-center gap-3 pl-4 border-l border-none cursor-pointer">
+                  <div
+                    className="w-10 h-10 rounded-full font-semibold flex items-center justify-center text-white text-sm"
+                    style={{ background: primaryColor }}
+                  >
+                    {userData?.fullName ? getInitials(userData.fullName) : userData?.companyName ? getInitials(userData.companyName) : 'R'}
+                  </div>
+                  <div className="hidden lg:block text-left">
+                    <p className="text-sm font-medium text-gray-900">{userData?.companyName || userData?.fullName || 'Retailer'}</p>
+                    <p className="text-xs text-gray-500">{userData?.email || ''}</p>
+                  </div>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem disabled className="flex flex-col py-2 hover:bg-transparent cursor-default">
+                  <span className="text-sm font-medium">{userData?.companyName || userData?.fullName || 'Retailer'}</span>
+                  <span className="text-xs">{userData?.email || ''}</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem className="text-red-600 cursor-pointer hover:bg-transparent" onClick={handleLogout}>
+                  Logout
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
       </div>
-      </div>
-      {/* Cart bar - visible when cart has items */}
       {cartCount > 0 && (
         <div
           className="px-6 py-2 flex items-center justify-between text-sm border-t border-gray-100"

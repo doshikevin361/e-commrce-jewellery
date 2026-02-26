@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
+import Link from 'next/link';
 import { RetailerLayout } from '@/components/layout/retailer-layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
   Select,
   SelectContent,
@@ -13,73 +13,157 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Search, Package, Filter, X, Store, Tag, Loader2 } from 'lucide-react';
+import { Search, Package, Filter, X, Tag, Loader2, ShoppingCart, ChevronLeft, ChevronRight } from 'lucide-react';
+import Image from 'next/image';
+import { toast } from 'react-toastify';
 
 interface RetailerProduct {
   _id: string;
   name: string;
   sku?: string;
-  category: string;
+  categoryId?: string;
+  categoryName?: string;
   product_type?: string;
-  vendorId?: string;
-  vendorName: string;
-  price?: number;
-  sellingPrice?: number;
-  regularPrice?: number;
+  retailerPrice: number;
+  originalPrice: number;
+  retailerDiscountPercent: number;
   stock: number;
   status: string;
   mainImage?: string;
   urlSlug?: string;
-  createdAt?: string;
+}
+
+interface CategoryOption {
+  _id: string;
+  name: string;
+  slug?: string;
+}
+
+function getAuthHeaders(): HeadersInit {
+  if (typeof window === 'undefined') return {};
+  const token = localStorage.getItem('retailerToken');
+  const h: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (token) h['Authorization'] = `Bearer ${token}`;
+  return h;
+}
+
+function dispatchCartUpdate() {
+  if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('retailer-cart-update'));
 }
 
 export default function RetailerProductsPage() {
   const [products, setProducts] = useState<RetailerProduct[]>([]);
+  const [categories, setCategories] = useState<CategoryOption[]>([]);
+  const [productTypes, setProductTypes] = useState<string[]>([]);
+  const [pagination, setPagination] = useState({ page: 1, limit: 24, total: 0, pages: 1 });
   const [loading, setLoading] = useState(true);
+  const [addingId, setAddingId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
+  const [searchInput, setSearchInput] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
-  const [vendorFilter, setVendorFilter] = useState('');
+  const [typeFilter, setTypeFilter] = useState('');
+
+  const fetchCategories = useCallback(async () => {
+    try {
+      const res = await fetch('/api/retailer/categories', { credentials: 'include', headers: getAuthHeaders() });
+      if (!res.ok) return;
+      const data = await res.json();
+      setCategories(Array.isArray(data.categories) ? data.categories : []);
+    } catch {
+      setCategories([]);
+    }
+  }, []);
+
+  const fetchProducts = useCallback(async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (search) params.set('search', search);
+      if (categoryFilter && categoryFilter !== 'all') params.set('category', categoryFilter);
+      if (typeFilter && typeFilter !== 'all') params.set('type', typeFilter);
+      params.set('page', String(pagination.page));
+      params.set('limit', String(pagination.limit));
+      const res = await fetch(`/api/retailer/products?${params.toString()}`, {
+        credentials: 'include',
+        headers: getAuthHeaders(),
+      });
+      if (res.status === 401) {
+        window.location.href = '/retailer/login';
+        return;
+      }
+      const data = await res.json();
+      setProducts(Array.isArray(data.products) ? data.products : []);
+      setPagination(
+        data.pagination
+          ? {
+              page: data.pagination.page ?? 1,
+              limit: data.pagination.limit ?? 24,
+              total: data.pagination.total ?? 0,
+              pages: data.pagination.pages ?? 1,
+            }
+          : { page: 1, limit: 24, total: 0, pages: 1 }
+      );
+      if (Array.isArray(data.productTypes)) setProductTypes(data.productTypes);
+    } catch {
+      setProducts([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [search, categoryFilter, typeFilter, pagination.page, pagination.limit]);
 
   useEffect(() => {
-    const params = new URLSearchParams();
-    if (search) params.set('search', search);
-    if (categoryFilter) params.set('category', categoryFilter);
-    if (vendorFilter) params.set('vendorId', vendorFilter);
-    fetch(`/api/retailer/products?${params.toString()}`, { credentials: 'include' })
-      .then((res) => {
-        if (res.status === 401) {
-          window.location.href = '/retailer/login';
-          return [];
-        }
-        return res.json();
-      })
-      .then((data) => {
-        setProducts(Array.isArray(data) ? data : []);
-      })
-      .catch(() => setProducts([]))
-      .finally(() => setLoading(false));
-  }, [search, categoryFilter, vendorFilter]);
+    fetchCategories();
+  }, [fetchCategories]);
 
-  const categories = [...new Set(products.map((p) => p.category).filter(Boolean))].sort();
-  const vendors = [...new Set(products.map((p) => ({ id: p.vendorId, name: p.vendorName })).filter((v) => v.id))];
-  const vendorOptions = Array.from(new Map(vendors.map((v) => [v.id, v.name])).entries());
-  const hasFilters = search || categoryFilter || vendorFilter;
+  useEffect(() => {
+    fetchProducts();
+  }, [fetchProducts]);
 
+  const applySearch = () => {
+    setSearch(searchInput.trim());
+    setPagination((p) => ({ ...p, page: 1 }));
+  };
+  const hasFilters = search || (categoryFilter && categoryFilter !== 'all') || (typeFilter && typeFilter !== 'all');
   const clearFilters = () => {
     setSearch('');
+    setSearchInput('');
     setCategoryFilter('');
-    setVendorFilter('');
+    setTypeFilter('');
+    setPagination((p) => ({ ...p, page: 1 }));
   };
 
-  const formatPrice = (value?: number) =>
-    typeof value === 'number'
-      ? new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(value)
-      : '—';
+  const formatPrice = (value: number) =>
+    new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(value);
 
-  const getStockStyle = (stock: number) => {
-    if (stock === 0) return 'bg-red-100 text-red-700 border-red-200';
-    if (stock <= 10) return 'bg-amber-100 text-amber-800 border-amber-200';
-    return 'bg-emerald-100 text-emerald-800 border-emerald-200';
+  const addToCart = async (productId: string) => {
+    setAddingId(productId);
+    try {
+      const res = await fetch('/api/retailer/cart', {
+        method: 'POST',
+        credentials: 'include',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ productId, quantity: 1 }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        if (data.alreadyInCart) {
+          toast.info('Already in cart');
+        } else {
+          toast.success('Added to cart');
+        }
+        dispatchCartUpdate();
+      } else {
+        toast.error(data.error || 'Failed to add to cart');
+      }
+    } catch {
+      toast.error('Failed to add to cart');
+    } finally {
+      setAddingId(null);
+    }
+  };
+
+  const goToPage = (page: number) => {
+    setPagination((p) => ({ ...p, page: Math.max(1, Math.min(p.pages, page)) }));
   };
 
   return (
@@ -87,34 +171,40 @@ export default function RetailerProductsPage() {
       <div className="space-y-6 p-0 bg-slate-50 min-h-full min-w-0 max-w-full overflow-x-hidden">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 px-6 pt-4">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900">Vendor Products</h1>
-            <p className="text-slate-600 mt-1 text-sm">Browse all products from vendors available for B2B.</p>
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900">B2B Catalog</h1>
+            <p className="text-slate-600 mt-1 text-sm">Browse products and add to cart to place B2B orders. Prices shown are your retailer price (after commission).</p>
           </div>
-          {!loading && products.length > 0 && (
+          {!loading && pagination.total > 0 && (
             <div className="flex items-center gap-2 text-sm text-slate-500">
-              <span className="font-medium text-slate-700">{products.length}</span>
-              <span>product{products.length !== 1 ? 's' : ''}</span>
+              <span className="font-medium text-slate-700">{pagination.total}</span>
+              <span>product{pagination.total !== 1 ? 's' : ''}</span>
             </div>
           )}
         </div>
 
-        <Card className="bg-white border border-slate-200 shadow-sm overflow-hidden rounded-xl min-w-0">
+        <Card className="bg-white border border-slate-200 shadow-sm overflow-hidden rounded-xl min-w-0 mx-6">
           <CardHeader className="border-b border-slate-100 bg-slate-50/50 pb-4">
             <CardTitle className="text-base font-semibold text-slate-800 flex items-center gap-2">
               <Filter className="w-4 h-4 text-slate-500" />
               Filters
             </CardTitle>
             <div className="flex flex-wrap items-center gap-3 pt-3">
-              <div className="relative flex-1 min-w-[220px] max-w-sm">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                <Input
-                  placeholder="Search by name or SKU..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="pl-9 h-9 bg-white border-slate-200 focus-visible:ring-2 focus-visible:ring-emerald-500/20"
-                />
+              <div className="relative flex-1 min-w-[220px] max-w-sm flex gap-2">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <Input
+                    placeholder="Search by name or SKU..."
+                    value={searchInput}
+                    onChange={(e) => setSearchInput(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && applySearch()}
+                    className="pl-9 h-9 bg-white border-slate-200 focus-visible:ring-2 focus-visible:ring-emerald-500/20"
+                  />
+                </div>
+                <Button type="button" size="sm" onClick={applySearch} className="h-9 shrink-0">
+                  Search
+                </Button>
               </div>
-              <Select value={categoryFilter || 'all'} onValueChange={(v) => setCategoryFilter(v === 'all' ? '' : v)}>
+              <Select value={categoryFilter || 'all'} onValueChange={(v) => { setCategoryFilter(v === 'all' ? '' : v); setPagination((p) => ({ ...p, page: 1 })); }}>
                 <SelectTrigger className="w-[180px] h-9 bg-white border-slate-200">
                   <Tag className="w-4 h-4 text-slate-400 shrink-0" />
                   <SelectValue placeholder="Category" />
@@ -122,22 +212,22 @@ export default function RetailerProductsPage() {
                 <SelectContent>
                   <SelectItem value="all">All categories</SelectItem>
                   {categories.map((c) => (
-                    <SelectItem key={c} value={c}>
-                      {c}
+                    <SelectItem key={c._id} value={c._id}>
+                      {c.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              <Select value={vendorFilter || 'all'} onValueChange={(v) => setVendorFilter(v === 'all' ? '' : v)}>
-                <SelectTrigger className="w-[200px] h-9 bg-white border-slate-200">
-                  <Store className="w-4 h-4 text-slate-400 shrink-0" />
-                  <SelectValue placeholder="Vendor" />
+              <Select value={typeFilter || 'all'} onValueChange={(v) => { setTypeFilter(v === 'all' ? '' : v); setPagination((p) => ({ ...p, page: 1 })); }}>
+                <SelectTrigger className="w-[180px] h-9 bg-white border-slate-200">
+                  <Package className="w-4 h-4 text-slate-400 shrink-0" />
+                  <SelectValue placeholder="Type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All vendors</SelectItem>
-                  {vendorOptions.map(([id, name]) => (
-                    <SelectItem key={id} value={id!}>
-                      {name}
+                  <SelectItem value="all">All types</SelectItem>
+                  {productTypes.map((t) => (
+                    <SelectItem key={t} value={t}>
+                      {t}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -157,12 +247,11 @@ export default function RetailerProductsPage() {
             </div>
           </CardHeader>
 
-          <CardContent className="p-0">
+          <CardContent className="p-6">
             {loading ? (
               <div className="flex flex-col items-center justify-center py-20 text-slate-500">
                 <Loader2 className="w-10 h-10 animate-spin text-slate-400 mb-4" />
                 <p className="text-sm font-medium">Loading products...</p>
-                <p className="text-xs text-slate-400 mt-1">Fetching from vendors</p>
               </div>
             ) : products.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-20 px-4">
@@ -173,7 +262,7 @@ export default function RetailerProductsPage() {
                 <p className="text-sm text-slate-500 mt-1 text-center max-w-sm">
                   {hasFilters
                     ? 'Try adjusting your filters or search term.'
-                    : 'There are no vendor products available at the moment.'}
+                    : 'There are no products available at the moment.'}
                 </p>
                 {hasFilters && (
                   <Button variant="outline" size="sm" onClick={clearFilters} className="mt-4">
@@ -182,109 +271,120 @@ export default function RetailerProductsPage() {
                 )}
               </div>
             ) : (
-              <div className="w-full min-w-0 overflow-x-auto border-t border-slate-100">
-                <Table className="min-w-[800px]">
-                  <TableHeader>
-                    <TableRow className="bg-slate-50/80 border-b border-slate-200 hover:bg-slate-50/80">
-                      <TableHead className="py-4 px-5 font-semibold text-slate-800 text-xs uppercase tracking-wider">
-                        Product
-                      </TableHead>
-                      <TableHead className="py-4 px-5 font-semibold text-slate-800 text-xs uppercase tracking-wider">
-                        SKU
-                      </TableHead>
-                      <TableHead className="py-4 px-5 font-semibold text-slate-800 text-xs uppercase tracking-wider">
-                        Category
-                      </TableHead>
-                      <TableHead className="py-4 px-5 font-semibold text-slate-800 text-xs uppercase tracking-wider">
-                        Vendor
-                      </TableHead>
-                      <TableHead className="py-4 px-5 font-semibold text-slate-800 text-xs uppercase tracking-wider">
-                        Price
-                      </TableHead>
-                      <TableHead className="py-4 px-5 font-semibold text-slate-800 text-xs uppercase tracking-wider text-center">
-                        Stock
-                      </TableHead>
-                      <TableHead className="py-4 px-5 font-semibold text-slate-800 text-xs uppercase tracking-wider text-center">
-                        Status
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {products.map((p) => (
-                      <TableRow
-                        key={p._id}
-                        className="border-b border-slate-100 hover:bg-emerald-50/30 transition-colors last:border-0"
-                      >
-                        <TableCell className="py-4 px-5">
-                          <div className="flex items-center gap-4">
-                            {p.mainImage ? (
-                              <img
-                                src={p.mainImage}
-                                alt={p.name}
-                                className="w-14 h-14 rounded-xl border border-slate-200 object-cover shadow-sm"
-                              />
-                            ) : (
-                              <div className="w-14 h-14 rounded-xl border border-slate-200 bg-slate-100 flex items-center justify-center shrink-0">
-                                <Package className="w-7 h-7 text-slate-400" />
-                              </div>
-                            )}
-                            <div className="min-w-0">
-                              <p className="font-medium text-slate-900 truncate max-w-[220px]" title={p.name}>
-                                {p.name}
-                              </p>
-                              {p.product_type && (
-                                <span className="inline-block mt-1 text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
-                                  {p.product_type}
-                                </span>
-                              )}
-                            </div>
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {products.map((p) => (
+                    <Card key={p._id} className="overflow-hidden border border-slate-200 hover:border-emerald-200 hover:shadow-md transition-all">
+                      <div className="aspect-square relative bg-slate-100">
+                        {p.mainImage ? (
+                          <Image
+                            src={p.mainImage}
+                            alt={p.name}
+                            fill
+                            className="object-cover"
+                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                          />
+                        ) : (
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <Package className="w-16 h-16 text-slate-300" />
                           </div>
-                        </TableCell>
-                        <TableCell className="py-4 px-5">
-                          <code className="text-xs text-slate-600 bg-slate-100 px-2 py-1 rounded font-mono">
-                            {p.sku || '—'}
-                          </code>
-                        </TableCell>
-                        <TableCell className="py-4 px-5">
-                          <span className="text-sm text-slate-600">{p.category || '—'}</span>
-                        </TableCell>
-                        <TableCell className="py-4 px-5">
-                          <span className="flex items-center gap-1.5 text-sm text-slate-700">
-                            <Store className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                            {p.vendorName}
+                        )}
+                        {p.retailerDiscountPercent > 0 && (
+                          <span className="absolute top-2 left-2 rounded-md bg-emerald-600 text-white text-xs font-semibold px-2 py-1">
+                            {p.retailerDiscountPercent}% B2B off
                           </span>
-                        </TableCell>
-                        <TableCell className="py-4 px-5">
-                          <span className="font-semibold text-slate-900">{formatPrice(p.sellingPrice ?? p.price)}</span>
-                        </TableCell>
-                        <TableCell className="py-4 px-5 text-center">
-                          <span
-                            className={`inline-flex items-center justify-center min-w-9 px-2 py-1 text-xs font-semibold rounded-lg border ${getStockStyle(
-                              p.stock
-                            )}`}
-                          >
-                            {p.stock}
+                        )}
+                        {p.stock <= 0 && (
+                          <span className="absolute top-2 right-2 rounded-md bg-red-500 text-white text-xs font-semibold px-2 py-1">
+                            Out of stock
                           </span>
-                        </TableCell>
-                        <TableCell className="py-4 px-5 text-center">
-                          <span
-                            className={
-                              p.status === 'active'
-                                ? 'inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-emerald-100 text-emerald-800 border border-emerald-200'
-                                : 'inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200'
-                            }
-                          >
-                            {p.status === 'active' ? 'Active' : 'Inactive'}
-                          </span>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+                        )}
+                      </div>
+                      <CardContent className="p-4">
+                        <p className="font-semibold text-slate-900 line-clamp-2 min-h-[2.5rem]" title={p.name}>
+                          {p.name}
+                        </p>
+                        <div className="flex flex-wrap gap-1.5 mt-1">
+                          {p.product_type && (
+                            <span className="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
+                              {p.product_type}
+                            </span>
+                          )}
+                          {p.categoryName && (
+                            <span className="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
+                              {p.categoryName}
+                            </span>
+                          )}
+                        </div>
+                        {p.sku && (
+                          <code className="text-xs text-slate-400 mt-1 block font-mono">{p.sku}</code>
+                        )}
+                        <div className="mt-3 flex flex-wrap items-baseline gap-2">
+                          <span className="font-bold text-slate-900">{formatPrice(p.retailerPrice)}</span>
+                          {p.retailerDiscountPercent > 0 && p.originalPrice > p.retailerPrice && (
+                            <span className="text-sm text-slate-400 line-through">
+                              {formatPrice(p.originalPrice)}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-slate-500 mt-1">Stock: {p.stock}</p>
+                        <Button
+                          type="button"
+                          size="sm"
+                          className="w-full mt-3"
+                          disabled={p.stock <= 0 || addingId === p._id}
+                          onClick={() => addToCart(p._id)}
+                        >
+                          {addingId === p._id ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <>
+                              <ShoppingCart className="w-4 h-4 mr-2" />
+                              Add to cart
+                            </>
+                          )}
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+
+                {pagination.pages > 1 && (
+                  <div className="flex items-center justify-center gap-2 mt-8">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={pagination.page <= 1}
+                      onClick={() => goToPage(pagination.page - 1)}
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </Button>
+                    <span className="text-sm text-slate-600 px-4">
+                      Page {pagination.page} of {pagination.pages}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={pagination.page >= pagination.pages}
+                      onClick={() => goToPage(pagination.page + 1)}
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </Button>
+                  </div>
+                )}
+              </>
             )}
           </CardContent>
         </Card>
+
+        <div className="px-6 pb-6">
+          <Button variant="outline" asChild>
+            <Link href="/retailer/cart" className="flex items-center gap-2">
+              <ShoppingCart className="w-4 h-4" />
+              View cart
+            </Link>
+          </Button>
+        </div>
       </div>
     </RetailerLayout>
   );
