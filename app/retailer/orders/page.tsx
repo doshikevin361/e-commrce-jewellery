@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { Suspense, useEffect, useState, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { RetailerLayout } from '@/components/layout/retailer-layout';
@@ -38,7 +38,7 @@ const statusColor: Record<string, string> = {
   cancelled: 'bg-red-100 text-red-800',
 };
 
-export default function RetailerOrdersPage() {
+function RetailerOrdersContent() {
   const searchParams = useSearchParams();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -99,16 +99,13 @@ export default function RetailerOrdersPage() {
 
   if (loading) {
     return (
-      <RetailerLayout>
-        <div className="p-6 flex items-center justify-center min-h-[40vh]">
-          <Loader2 className="w-8 h-8 animate-spin text-gray-500" />
-        </div>
-      </RetailerLayout>
+      <div className="p-6 flex items-center justify-center min-h-[40vh]">
+        <Loader2 className="w-8 h-8 animate-spin text-gray-500" />
+      </div>
     );
   }
 
   return (
-    <RetailerLayout>
       <div className="space-y-6 p-6 bg-gray-50 min-h-screen">
         <h1 className="text-2xl font-bold text-gray-900">My Orders</h1>
 
@@ -186,6 +183,20 @@ export default function RetailerOrdersPage() {
           </>
         )}
       </div>
+  );
+}
+
+export default function RetailerOrdersPage() {
+  return (
+    <RetailerLayout>
+      <Suspense
+        fallback={
+          <div className="p-6 flex items-center justify-center min-h-[40vh]">
+            <Loader2 className="w-8 h-8 animate-spin text-gray-500" />
+          </div>
+        }>
+        <RetailerOrdersContent />
+      </Suspense>
     </RetailerLayout>
   );
 }
