@@ -5,8 +5,8 @@ import { revalidatePath, revalidateTag } from 'next/cache';
 import { calculateAdminProductPrice } from '@/lib/utils/admin-price-calculator';
 
 const DEFAULT_SETTINGS = {
-  siteName: 'Grocify Admin',
-  siteTitle: 'Grocify – Admin Panel',
+  siteName: 'Jewels Manas Admin',
+  siteTitle: 'Jewels Manas – Admin Panel',
   tagline: '',
   adminPrimaryColor: '#16a34a',
   primaryColor: '#001e38',
@@ -23,7 +23,14 @@ const DEFAULT_SETTINGS = {
     Diamonds: 10,
     Imitation: 3,
   },
-  commissionRows: [] as Array<{ productType: string; category: string; designType: string; metal: string; purityKarat: string; vendorCommission: number }>,
+  commissionRows: [] as Array<{
+    productType: string;
+    category: string;
+    designType: string;
+    metal: string;
+    purityKarat: string;
+    vendorCommission: number;
+  }>,
 };
 
 function normalizeSettings(doc: any = {}) {
@@ -83,8 +90,7 @@ export async function PUT(request: NextRequest) {
     const logo = body.logo || '';
     const favicon = body.favicon || '';
     const productType = body.productType ?? DEFAULT_SETTINGS.productType;
-    const incomingCommissions =
-      body.productTypeCommissions ?? DEFAULT_SETTINGS.productTypeCommissions;
+    const incomingCommissions = body.productTypeCommissions ?? DEFAULT_SETTINGS.productTypeCommissions;
     const productTypeCommissions = {
       ...DEFAULT_SETTINGS.productTypeCommissions,
       ...incomingCommissions,
@@ -99,7 +105,9 @@ export async function PUT(request: NextRequest) {
           vendorCommission: typeof r?.vendorCommission === 'number' && Number.isFinite(r.vendorCommission) ? r.vendorCommission : 0,
           platformCommission: typeof r?.platformCommission === 'number' && Number.isFinite(r.platformCommission) ? r.platformCommission : 0,
         }))
-      : (existingSettings?.commissionRows && Array.isArray(existingSettings.commissionRows) ? existingSettings.commissionRows : []);
+      : existingSettings?.commissionRows && Array.isArray(existingSettings.commissionRows)
+        ? existingSettings.commissionRows
+        : [];
 
     if (!siteName) {
       return NextResponse.json({ error: 'Website name is required' }, { status: 400 });
@@ -143,24 +151,14 @@ export async function PUT(request: NextRequest) {
       ...(existingSettings?.productTypeCommissions ?? {}),
     };
     const commissionKeys = Object.keys(DEFAULT_SETTINGS.productTypeCommissions);
-    const changedTypes = commissionKeys.filter(
-      (key) => previousCommissions[key] !== productTypeCommissions[key]
-    );
+    const changedTypes = commissionKeys.filter(key => previousCommissions[key] !== productTypeCommissions[key]);
 
     if (changedTypes.length > 0) {
-      const changedTypeVariants = Array.from(
-        new Set([
-          ...changedTypes,
-          ...changedTypes.map((type) => type.toLowerCase()),
-        ])
-      );
+      const changedTypeVariants = Array.from(new Set([...changedTypes, ...changedTypes.map(type => type.toLowerCase())]));
       const products = await db
         .collection('products')
         .find({
-          $or: [
-            { productType: { $in: changedTypeVariants } },
-            { product_type: { $in: changedTypeVariants } },
-          ],
+          $or: [{ productType: { $in: changedTypeVariants } }, { product_type: { $in: changedTypeVariants } }],
         })
         .toArray();
 
@@ -168,18 +166,13 @@ export async function PUT(request: NextRequest) {
         const rawProductType = product.productType || product.product_type;
         const normalizedType =
           typeof rawProductType === 'string'
-            ? rawProductType.charAt(0).toUpperCase() +
-              rawProductType.slice(1).toLowerCase()
+            ? rawProductType.charAt(0).toUpperCase() + rawProductType.slice(1).toLowerCase()
             : rawProductType;
-        if (
-          !normalizedType ||
-          productTypeCommissions[normalizedType] === undefined
-        ) {
+        if (!normalizedType || productTypeCommissions[normalizedType] === undefined) {
           return;
         }
 
-        const platformCommissionRate =
-          productTypeCommissions[normalizedType] ?? 0;
+        const platformCommissionRate = productTypeCommissions[normalizedType] ?? 0;
         const newPrice = calculateAdminProductPrice(product, {
           platformCommissionRate,
         });
@@ -194,7 +187,7 @@ export async function PUT(request: NextRequest) {
               totalAmount: newPrice,
               updatedAt: new Date(),
             },
-          }
+          },
         );
       });
 
@@ -224,4 +217,3 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ error: 'Failed to update settings' }, { status: 500 });
   }
 }
-

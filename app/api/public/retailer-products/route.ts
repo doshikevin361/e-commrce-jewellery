@@ -14,7 +14,13 @@ export async function GET(request: NextRequest) {
     const limit = Math.min(24, Math.max(8, parseInt(searchParams.get('limit') || '12')));
     const skip = (page - 1) * limit;
 
-    const query = { status: 'active', quantity: { $gt: 0 } };
+    const query = {
+      $or: [
+        { status: { $regex: '^active$', $options: 'i' } },
+        { status: { $exists: false } },
+        { status: null },
+      ],
+    };
 
     const [products, total] = await Promise.all([
       db

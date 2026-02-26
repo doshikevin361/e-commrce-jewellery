@@ -32,15 +32,15 @@ export type SiteSettings = {
 };
 
 export const defaultSiteSettings: SiteSettings = {
-  siteName: "Grocify Admin",
-  siteTitle: "Grocify – Admin Panel",
-  tagline: "Manage every part of your storefront",
-  adminPrimaryColor: "#16a34a",
-  primaryColor: "#001e38",
-  secondaryColor: "#C8A15B",
-  accentColor: "#0f172a",
-  logo: "",
-  favicon: "",
+  siteName: 'Jewels Manas Admin',
+  siteTitle: 'Jewels Manas – Admin Panel',
+  tagline: 'Manage every part of your storefront',
+  adminPrimaryColor: '#16a34a',
+  primaryColor: '#001e38',
+  secondaryColor: '#C8A15B',
+  accentColor: '#0f172a',
+  logo: '',
+  favicon: '',
   productTypeCommissions: {
     Gold: 5,
     Silver: 4,

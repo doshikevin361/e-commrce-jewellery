@@ -271,7 +271,7 @@ export function SettingsPanel() {
                   onChange={(event) =>
                     updateField("siteName", event.target.value)
                   }
-                  placeholder="eg. Grocify Admin"
+                  placeholder="eg. Jewels Manas Admin"
                   className="h-12"
                 />
               </FieldRow>
@@ -287,7 +287,7 @@ export function SettingsPanel() {
                   onChange={(event) =>
                     updateField("siteTitle", event.target.value)
                   }
-                  placeholder="eg. Grocify – Admin panel"
+                  placeholder="eg. Jewels Manas – Admin panel"
                   className="h-12"
                   />
               </FieldRow>
