@@ -2,6 +2,7 @@ import { connectToDatabase } from "@/lib/mongodb";
 import { NextRequest, NextResponse } from "next/server";
 import { ObjectId } from "mongodb";
 import { formatProductPrice } from "@/lib/utils/price-calculator";
+import { findRetailerCommissionFromRows, getCustomerPriceFromRetailer } from "@/lib/retailer-commission";
 
 export async function GET(request: NextRequest) {
   try {
@@ -126,20 +127,47 @@ export async function GET(request: NextRequest) {
       .limit(limit)
       .toArray();
 
-    const retailerList = retailerProducts.map((rp: any) => ({
-      _id: (rp._id as ObjectId).toString(),
-      name: rp.name,
-      mainImage: rp.mainImage || null,
-      category: rp.shopName ? `Sold by ${rp.shopName}` : "Partner Store",
-      displayPrice: Number(rp.sellingPrice) || 0,
-      originalPrice: Number(rp.sellingPrice) || 0,
-      sellingPrice: Number(rp.sellingPrice) || 0,
-      regularPrice: Number(rp.sellingPrice) || 0,
-      stock: rp.quantity ?? 0,
-      urlSlug: (rp._id as ObjectId).toString(),
-      sellerType: "retailer",
-      retailerId: (rp.retailerId as ObjectId)?.toString(),
-    }));
+    // Resolve retailer commission: customer price = sellingPrice + (sellingPrice * retailerCommission%)
+    const sourceIds = [...new Set((retailerProducts as any[]).map((rp) => rp.sourceProductId).filter(Boolean))].map((id) => (id instanceof ObjectId ? id : new ObjectId(String(id))));
+    const retailerIds = [...new Set((retailerProducts as any[]).map((rp) => rp.retailerId).filter(Boolean))].map((id) => (id instanceof ObjectId ? id : new ObjectId(String(id))));
+    const [sourceProducts, retailerDocs] = await Promise.all([
+      sourceIds.length > 0 ? db.collection("products").find({ _id: { $in: sourceIds } }).project({ _id: 1, product_type: 1, category: 1, designType: 1, goldPurity: 1, silverPurity: 1 }).toArray() : [],
+      retailerIds.length > 0 ? db.collection("retailers").find({ _id: { $in: retailerIds } }).project({ _id: 1, retailerCommissionRows: 1 }).toArray() : [],
+    ]);
+    const sourceMap = new Map(sourceProducts.map((p: any) => [p._id.toString(), p]));
+    const retailerMap = new Map(retailerDocs.map((r: any) => [r._id.toString(), r]));
+    const allCatIds = [...new Set(sourceProducts.map((p: any) => normalizeCategoryId(p.category)).filter(Boolean))].filter((id): id is string => !!id && ObjectId.isValid(id));
+    const catDocs = allCatIds.length > 0 ? await db.collection("categories").find({ _id: { $in: allCatIds.map((id) => new ObjectId(id)) } }).project({ _id: 1, name: 1 }).toArray() : [];
+    const catNameMap = new Map(catDocs.map((c: any) => [c._id.toString(), c.name]));
+
+    const retailerList = (retailerProducts as any[]).map((rp) => {
+      const sellingPrice = Number(rp.sellingPrice) || 0;
+      const source = rp.sourceProductId ? sourceMap.get((rp.sourceProductId instanceof ObjectId ? rp.sourceProductId : new ObjectId(String(rp.sourceProductId))).toString()) : null;
+      const retailer = rp.retailerId ? retailerMap.get((rp.retailerId instanceof ObjectId ? rp.retailerId : new ObjectId(String(rp.retailerId))).toString()) : null;
+      const rows = Array.isArray((retailer as any)?.retailerCommissionRows) ? (retailer as any).retailerCommissionRows : [];
+      const productType = (source?.product_type || "").trim();
+      const categoryId = source?.category ? normalizeCategoryId(source.category) : null;
+      const categoryName = categoryId ? (catNameMap.get(categoryId) || "") : "";
+      const designType = (source?.designType || "").trim();
+      const metal = productType === "Gold" || productType === "Silver" || productType === "Platinum" ? productType : "";
+      const purity = (source?.goldPurity || source?.silverPurity || "").trim();
+      const commissionPct = findRetailerCommissionFromRows(rows, productType, categoryName, designType, metal, purity);
+      const customerPrice = getCustomerPriceFromRetailer(sellingPrice, commissionPct);
+      return {
+        _id: (rp._id as ObjectId).toString(),
+        name: rp.name,
+        mainImage: rp.mainImage || null,
+        category: rp.shopName ? `Sold by ${rp.shopName}` : "Partner Store",
+        displayPrice: customerPrice,
+        originalPrice: sellingPrice,
+        sellingPrice: customerPrice,
+        regularPrice: customerPrice,
+        stock: rp.quantity ?? 0,
+        urlSlug: (rp._id as ObjectId).toString(),
+        sellerType: "retailer",
+        retailerId: (rp.retailerId as ObjectId)?.toString(),
+      };
+    });
 
     const mergedProducts = [
       ...products.map((product) => {

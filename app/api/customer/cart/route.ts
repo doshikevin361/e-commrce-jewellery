@@ -3,6 +3,15 @@ import { connectToDatabase } from '@/lib/mongodb';
 import { getCustomerFromRequest } from '@/lib/auth';
 import { ObjectId } from 'mongodb';
 import { formatProductPrice } from '@/lib/utils/price-calculator';
+import { findRetailerCommissionFromRows, getCustomerPriceFromRetailer } from '@/lib/retailer-commission';
+
+function normalizeCategoryId(value: unknown): string | null {
+  if (!value) return null;
+  if (value instanceof ObjectId) return value.toString();
+  if (typeof value === 'string') return value;
+  if (typeof value === 'object' && value && '_id' in value) return (value as { _id: ObjectId })._id.toString();
+  return null;
+}
 
 // Get cart items (vendor + retailer)
 export async function GET(request: NextRequest) {
@@ -96,22 +105,48 @@ export async function GET(request: NextRequest) {
       const rps = await db.collection('retailer_products').find({ _id: { $in: rpIds }, status: 'active' }).toArray();
       const rpMap = new Map(rps.map((p: { _id: ObjectId }) => [p._id.toString(), p]));
 
+      const srcIds = [...new Set((rps as any[]).map((p) => p.sourceProductId).filter(Boolean))].map((id) => (id instanceof ObjectId ? id : new ObjectId(String(id))));
+      const retIds = [...new Set((rps as any[]).map((p) => p.retailerId).filter(Boolean))].map((id) => (id instanceof ObjectId ? id : new ObjectId(String(id))));
+      const [sourceProducts, retailerDocs] = await Promise.all([
+        srcIds.length > 0 ? db.collection('products').find({ _id: { $in: srcIds } }).project({ _id: 1, product_type: 1, category: 1, designType: 1, goldPurity: 1, silverPurity: 1 }).toArray() : [],
+        retIds.length > 0 ? db.collection('retailers').find({ _id: { $in: retIds } }).project({ _id: 1, retailerCommissionRows: 1 }).toArray() : [],
+      ]);
+      const srcMap = new Map(sourceProducts.map((p: any) => [p._id.toString(), p]));
+      const retMap = new Map(retailerDocs.map((r: any) => [r._id.toString(), r]));
+      const catIds = [...new Set(sourceProducts.map((p: any) => normalizeCategoryId(p.category)).filter(Boolean))].filter((id): id is string => !!id && ObjectId.isValid(id));
+      const catDocs = catIds.length > 0 ? await db.collection('categories').find({ _id: { $in: catIds.map((id) => new ObjectId(id)) } }).project({ _id: 1, name: 1 }).toArray() : [];
+      const catNameMap = new Map(catDocs.map((c: any) => [c._id.toString(), c.name]));
+
       for (const item of retailerItems) {
         const rp = rpMap.get(item.retailerProductId);
         if (!rp) continue;
         const qty = Math.max(1, item.quantity || 1);
-        const price = Number((rp as { sellingPrice?: number }).sellingPrice) || 0;
+        const sellingPrice = Number((rp as { sellingPrice?: number }).sellingPrice) || 0;
+        const source = (rp as any).sourceProductId ? srcMap.get(((rp as any).sourceProductId instanceof ObjectId ? (rp as any).sourceProductId : new ObjectId(String((rp as any).sourceProductId))).toString()) : null;
+        const retailer = (rp as any).retailerId ? retMap.get(((rp as any).retailerId instanceof ObjectId ? (rp as any).retailerId : new ObjectId(String((rp as any).retailerId))).toString()) : null;
+        const rows = Array.isArray((retailer as any)?.retailerCommissionRows) ? (retailer as any).retailerCommissionRows : [];
+        let customerPrice = sellingPrice;
+        if (source && rows.length > 0) {
+          const productType = (source.product_type || '').trim();
+          const categoryId = source.category ? normalizeCategoryId(source.category) : null;
+          const categoryName = categoryId ? catNameMap.get(categoryId) || '' : '';
+          const designType = (source.designType || '').trim();
+          const metal = productType === 'Gold' || productType === 'Silver' || productType === 'Platinum' ? productType : '';
+          const purity = (source.goldPurity || source.silverPurity || '').trim();
+          const pct = findRetailerCommissionFromRows(rows, productType, categoryName, designType, metal, purity);
+          customerPrice = getCustomerPriceFromRetailer(sellingPrice, pct);
+        }
         formatted.push({
           _id: (rp._id as ObjectId).toString(),
           id: (rp._id as ObjectId).toString(),
           name: (rp as { name?: string }).name || 'Product',
           title: (rp as { name?: string }).name || 'Product',
           category: 'Partner Store',
-          price: `₹${price.toLocaleString()}`,
+          price: `₹${customerPrice.toLocaleString()}`,
           image: (rp as { mainImage?: string }).mainImage || 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=600&q=80',
           quantity: qty,
-          displayPrice: price,
-          originalPriceNum: price,
+          displayPrice: customerPrice,
+          originalPriceNum: sellingPrice,
           stock: (rp as { quantity?: number }).quantity || 0,
           sellerType: 'retailer',
           retailerId: (rp as { retailerId?: ObjectId }).retailerId?.toString(),

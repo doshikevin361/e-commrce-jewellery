@@ -4,12 +4,13 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { useSettings } from '@/components/settings/settings-provider';
-import { LogOut, LayoutDashboard, Package, ShoppingBag, ShoppingCart, Store, Truck, ChevronLeft, ChevronRight } from 'lucide-react';
+import { LogOut, LayoutDashboard, Package, ShoppingBag, ShoppingCart, Store, Truck, Percent, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const menuItems = [
   { label: 'Dashboard', href: '/retailer', icon: LayoutDashboard },
   { label: 'Products', href: '/retailer/products', icon: ShoppingBag },
   { label: 'My Products', href: '/retailer/my-products', icon: Store },
+  { label: 'Retailer Commission', href: '/retailer/commission', icon: Percent },
   { label: 'Cart', href: '/retailer/cart', icon: ShoppingCart },
   { label: 'Orders', href: '/retailer/orders', icon: Package },
   { label: 'My Sales', href: '/retailer/my-sales', icon: Truck },

@@ -16,6 +16,8 @@ type RetailerProduct = {
   mainImage?: string;
   shopName?: string;
   sellingPrice: number;
+  /** Customer-facing price = sellingPrice + retailer commission (when set). */
+  customerPrice?: number;
   quantity: number;
   retailerId: string;
   description?: string;
@@ -109,7 +111,7 @@ export default function RetailerProductDetailPage() {
             {product.shopName ? `Sold by ${product.shopName}` : 'Partner Store'}
           </p>
           <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">{product.name}</h1>
-          <p className="text-2xl font-semibold text-gray-900 mb-6">{formatPrice(product.sellingPrice)}</p>
+          <p className="text-2xl font-semibold text-gray-900 mb-6">{formatPrice(product.customerPrice ?? product.sellingPrice)}</p>
           {product.description && (
             <p className="text-gray-600 mb-6 whitespace-pre-wrap">{product.description}</p>
           )}

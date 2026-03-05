@@ -28,7 +28,6 @@ import {
 
 const PRODUCT_TYPES = ["Gold", "Silver", "Platinum", "Diamonds", "Gemstone", "Imitation"];
 const METAL_OPTIONS = ["Gold", "Silver", "Platinum"];
-const PURITY_OPTIONS = ["24kt", "22kt", "20kt", "18kt", "14kt", "80%"];
 
 export function PricingSettingsPanel() {
   const { toast } = useToast();
@@ -40,6 +39,7 @@ export function PricingSettingsPanel() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [categoryOptions, setCategoryOptions] = useState<{ value: string; label: string }[]>([]);
   const [designTypeOptions, setDesignTypeOptions] = useState<{ value: string; label: string }[]>([]);
+  const [purityOptions, setPurityOptions] = useState<{ value: string; label: string }[]>([]);
 
   const hasChanges = useMemo(
     () =>
@@ -107,9 +107,10 @@ export function PricingSettingsPanel() {
   useEffect(() => {
     const fetchOptions = async () => {
       try {
-        const [catRes, designRes] = await Promise.all([
+        const [catRes, designRes, purityRes] = await Promise.all([
           fetch("/api/admin/categories", { cache: "no-store" }),
           fetch("/api/admin/design-types", { cache: "no-store" }),
+          fetch("/api/admin/purities", { cache: "no-store" }),
         ]);
         if (catRes.ok) {
           const d = await catRes.json();
@@ -129,6 +130,11 @@ export function PricingSettingsPanel() {
           const d = await designRes.json();
           const list = Array.isArray(d.designTypes) ? d.designTypes : [];
           setDesignTypeOptions(list.map((item: any) => ({ value: item.name || item._id, label: item.name || item._id })));
+        }
+        if (purityRes.ok) {
+          const d = await purityRes.json();
+          const list = Array.isArray(d.purities) ? d.purities : [];
+          setPurityOptions(list.filter((item: any) => item.status === "active").map((item: any) => ({ value: item.name || "", label: item.name || "" })));
         }
       } catch (_) {}
     };
@@ -350,7 +356,9 @@ export function PricingSettingsPanel() {
                             className="h-9 min-w-[90px] w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm"
                           >
                             <option value="">Select</option>
-                            {PURITY_OPTIONS.map((p) => <option key={p} value={p}>{p}</option>)}
+                            {purityOptions.map((p) => (
+                              <option key={p.value} value={p.value}>{p.label}</option>
+                            ))}
                           </select>
                         </TableCell>
                         <TableCell className="p-2">
