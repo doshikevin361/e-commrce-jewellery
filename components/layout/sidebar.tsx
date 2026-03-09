@@ -783,8 +783,8 @@ export function Sidebar() {
           );
         })}
 
-        {/* Vendor Terms link at end of panel for vendor role */}
-        {isOpen && userRole === 'vendor' && (
+        {/* Vendor Terms & Conditions link at end of panel for vendor role */}
+        {isOpen && userRole?.toLowerCase() === 'vendor' && (
           <div className='pt-2 mt-2 border-t border-gray-200'>
             <Link
               href='/terms/vendor'

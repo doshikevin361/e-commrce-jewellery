@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { useSettings } from '@/components/settings/settings-provider';
-import { LogOut, LayoutDashboard, Package, ShoppingBag, ShoppingCart, Store, Truck, Percent, ChevronLeft, ChevronRight } from 'lucide-react';
+import { LogOut, LayoutDashboard, Package, ShoppingBag, ShoppingCart, Store, Truck, Percent, ChevronLeft, ChevronRight, FileText } from 'lucide-react';
 
 const menuItems = [
   { label: 'Dashboard', href: '/retailer', icon: LayoutDashboard },
@@ -136,6 +136,21 @@ export function RetailerSidebar() {
             </Link>
           );
         })}
+
+        {/* Retailer Terms & Conditions link at end of sidebar */}
+        {isOpen && (
+          <div className="pt-2 mt-2 border-t border-gray-200">
+            <Link
+              href="/terms/retailer"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="relative flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-all duration-200 text-sm font-medium"
+            >
+              <FileText className="w-5 h-5 shrink-0" />
+              <span className="truncate">Retailer Terms & Conditions</span>
+            </Link>
+          </div>
+        )}
       </nav>
 
       <div className="p-3 border-t border-gray-200">
