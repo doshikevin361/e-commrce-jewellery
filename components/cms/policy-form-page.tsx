@@ -23,7 +23,7 @@ interface PolicyFormData {
 }
 
 interface PolicyFormPageProps {
-  policyType: 'privacy' | 'terms' | 'refund' | 'cancellation' | 'shipping';
+  policyType: 'privacy' | 'terms' | 'refund' | 'cancellation' | 'shipping' | 'vendor_terms' | 'retailer_terms';
 }
 
 const policyConfig = {
@@ -36,6 +36,16 @@ const policyConfig = {
     title: 'Terms & Conditions',
     apiPath: '/api/admin/cms/policies/terms',
     route: '/admin/cms/terms-conditions',
+  },
+  vendor_terms: {
+    title: 'Vendor Terms & Conditions',
+    apiPath: '/api/admin/cms/policies/vendor-terms',
+    route: '/admin/cms/vendor-retailer-terms',
+  },
+  retailer_terms: {
+    title: 'Retailer Terms & Conditions',
+    apiPath: '/api/admin/cms/policies/retailer-terms',
+    route: '/admin/cms/vendor-retailer-terms',
   },
   refund: {
     title: 'Refund and Return Policy',

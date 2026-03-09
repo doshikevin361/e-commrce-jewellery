@@ -392,6 +392,10 @@ export function Sidebar() {
       href: '/admin/cms/terms-conditions',
     },
     {
+      label: 'Vendor & Retailer Terms',
+      href: '/admin/cms/vendor-retailer-terms',
+    },
+    {
       label: 'Refund & Return Policy',
       href: '/admin/cms/refund-return',
     },
@@ -778,6 +782,21 @@ export function Sidebar() {
             </Link>
           );
         })}
+
+        {/* Vendor Terms link at end of panel for vendor role */}
+        {isOpen && userRole === 'vendor' && (
+          <div className='pt-2 mt-2 border-t border-gray-200'>
+            <Link
+              href='/terms/vendor'
+              target='_blank'
+              rel='noopener noreferrer'
+              className='relative flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-all duration-200 text-sm font-medium'
+            >
+              <FileText className='w-5 h-5 flex-shrink-0' />
+              <span className='truncate'>Vendor Terms & Conditions</span>
+            </Link>
+          </div>
+        )}
       </nav>
 
       <div className='p-3 border-t border-gray-200'>
