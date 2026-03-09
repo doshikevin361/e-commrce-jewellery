@@ -4,8 +4,18 @@ import { AdminLayout } from '@/components/layout/admin-layout';
 import { PolicyFormPage } from '@/components/cms/policy-form-page';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Store, Users } from 'lucide-react';
+import { useEffect } from 'react';
 
 export default function VendorRetailerTermsPage() {
+  useEffect(() => {
+    // Disable scroll
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      // Enable scroll when leaving page
+      document.body.style.overflow = "auto";
+    };
+  }, []);
   return (
     <AdminLayout>
       <div className="space-y-6">
