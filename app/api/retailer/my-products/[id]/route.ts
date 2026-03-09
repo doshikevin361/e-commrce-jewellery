@@ -30,18 +30,40 @@ export async function GET(
     }
 
     const p = product as Record<string, unknown> & { retailerId?: ObjectId; _id: ObjectId };
-    return NextResponse.json({
+    const out: Record<string, unknown> = {
       _id: (p._id as ObjectId).toString(),
-      name: p.name,
-      mainImage: p.mainImage,
-      shortDescription: p.shortDescription,
-      shopName: p.shopName,
-      sellingPrice: p.sellingPrice,
-      quantity: p.quantity,
-      status: p.status,
+      name: p.name ?? '',
+      mainImage: p.mainImage ?? '',
+      shortDescription: p.shortDescription ?? '',
+      description: p.description ?? p.shortDescription ?? '',
+      shopName: p.shopName ?? '',
+      sellingPrice: p.sellingPrice ?? 0,
+      quantity: p.quantity ?? 0,
+      status: p.status ?? 'active',
+      retailerCommissionRate: typeof p.retailerCommissionRate === 'number' ? p.retailerCommissionRate : 0,
       createdAt: p.createdAt,
       updatedAt: p.updatedAt,
-    });
+      category: p.category ?? '',
+      product_type: p.product_type ?? '',
+      designType: p.designType ?? '',
+      metalType: p.metalType ?? '',
+      goldPurity: p.goldPurity ?? '',
+      silverPurity: p.silverPurity ?? '',
+      metalColour: p.metalColour ?? '',
+      weight: p.weight ?? 0,
+      size: p.size ?? '',
+      gender: Array.isArray(p.gender) ? p.gender : [],
+      sku: p.sku ?? '',
+      hsnCode: p.hsnCode ?? '',
+      tags: Array.isArray(p.tags) ? p.tags : (typeof p.tags === 'string' ? (p.tags ? p.tags.split(',').map((s: string) => s.trim()).filter(Boolean) : []) : []),
+      specifications: Array.isArray(p.specifications) ? p.specifications : [{ key: '', value: '' }],
+      images: Array.isArray(p.images) ? p.images : [],
+      seoTitle: p.seoTitle ?? '',
+      seoDescription: p.seoDescription ?? '',
+      seoTags: p.seoTags ?? '',
+      urlSlug: p.urlSlug ?? '',
+    };
+    return NextResponse.json(out);
   } catch (e) {
     console.error('[Retailer My Products] GET error:', e);
     return NextResponse.json({ error: 'Failed to fetch product' }, { status: 500 });
@@ -65,31 +87,44 @@ export async function PATCH(
     }
 
     const body = await request.json().catch(() => ({}));
-    const { name, mainImage, shortDescription, description, sellingPrice, quantity, status } = body;
 
     const updates: Record<string, unknown> = { updatedAt: new Date() };
-    if (typeof name === 'string' && name.trim()) {
-      updates.name = name.trim();
-    }
-    if (mainImage !== undefined) {
-      updates.mainImage = typeof mainImage === 'string' ? mainImage : '';
-    }
-    const desc = shortDescription ?? description;
-    if (desc !== undefined) {
-      updates.shortDescription = typeof desc === 'string' ? desc : '';
-    }
-    if (typeof sellingPrice === 'number' && sellingPrice >= 0) {
-      updates.sellingPrice = sellingPrice;
-    }
-    if (typeof quantity === 'number' && quantity >= 0) {
-      updates.quantity = Math.floor(quantity);
-    }
-    if (status === 'active' || status === 'inactive') {
-      updates.status = status;
-    }
+    const str = (v: unknown) => (typeof v === 'string' ? v : '');
+    const num = (v: unknown, def: number) => (typeof v === 'number' && Number.isFinite(v) ? v : def);
+    if (body.name !== undefined) updates.name = str(body.name).trim() || undefined;
+    if (body.mainImage !== undefined) updates.mainImage = str(body.mainImage);
+    if (body.shortDescription !== undefined) updates.shortDescription = str(body.shortDescription);
+    if (body.description !== undefined) updates.description = str(body.description);
+    if (body.sellingPrice !== undefined) updates.sellingPrice = num(body.sellingPrice, 0);
+    if (body.quantity !== undefined) updates.quantity = Math.max(0, Math.floor(num(body.quantity, 0)));
+    if (body.status === 'active' || body.status === 'inactive') updates.status = body.status;
+    if (body.retailerCommissionRate !== undefined) updates.retailerCommissionRate = Math.max(0, Math.min(100, num(body.retailerCommissionRate, 0)));
+    if (body.category !== undefined) updates.category = str(body.category);
+    if (body.product_type !== undefined) updates.product_type = str(body.product_type);
+    if (body.designType !== undefined) updates.designType = str(body.designType);
+    if (body.metalType !== undefined) updates.metalType = str(body.metalType);
+    if (body.goldPurity !== undefined) updates.goldPurity = str(body.goldPurity);
+    if (body.silverPurity !== undefined) updates.silverPurity = str(body.silverPurity);
+    if (body.metalColour !== undefined) updates.metalColour = str(body.metalColour);
+    if (body.weight !== undefined) updates.weight = num(body.weight, 0);
+    if (body.size !== undefined) updates.size = str(body.size);
+    if (body.gender !== undefined) updates.gender = Array.isArray(body.gender) ? body.gender : [];
+    if (body.sku !== undefined) updates.sku = str(body.sku);
+    if (body.hsnCode !== undefined) updates.hsnCode = str(body.hsnCode);
+    if (body.tags !== undefined) updates.tags = Array.isArray(body.tags) ? body.tags : (typeof body.tags === 'string' ? body.tags.split(',').map((s: string) => s.trim()).filter(Boolean) : []);
+    if (body.specifications !== undefined) updates.specifications = Array.isArray(body.specifications) ? body.specifications : [];
+    if (body.images !== undefined) updates.images = Array.isArray(body.images) ? body.images : [];
+    if (body.seoTitle !== undefined) updates.seoTitle = str(body.seoTitle);
+    if (body.seoDescription !== undefined) updates.seoDescription = str(body.seoDescription);
+    if (body.seoTags !== undefined) updates.seoTags = str(body.seoTags);
+    if (body.urlSlug !== undefined) updates.urlSlug = str(body.urlSlug);
 
-    if (Object.keys(updates).length <= 1) {
-      return NextResponse.json({ error: 'Provide at least one field to update (name, mainImage, shortDescription, sellingPrice, quantity, status)' }, { status: 400 });
+    const cleanUpdates: Record<string, unknown> = { updatedAt: new Date() };
+    for (const [k, v] of Object.entries(updates)) {
+      if (k === 'updatedAt' || v !== undefined) cleanUpdates[k] = v;
+    }
+    if (Object.keys(cleanUpdates).length <= 1) {
+      return NextResponse.json({ error: 'Provide at least one field to update' }, { status: 400 });
     }
 
     const { db } = await connectToDatabase();
@@ -98,7 +133,7 @@ export async function PATCH(
 
     const result = await db.collection('retailer_products').findOneAndUpdate(
       { _id: productId, retailerId },
-      { $set: updates },
+      { $set: cleanUpdates },
       { returnDocument: 'after' }
     );
 

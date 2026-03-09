@@ -34,6 +34,7 @@ import {
   Coins,
   Percent,
   Mail,
+  BarChart2,
 } from 'lucide-react';
 
 export function Sidebar() {
@@ -211,6 +212,13 @@ export function Sidebar() {
       badge: null,
       icon: Percent,
       allowedRoles: ['vendor'],
+    },
+    {
+      label: 'Price Compare',
+      href: '/admin/price-compare',
+      badge: null,
+      icon: BarChart2,
+      allowedRoles: ['superadmin', 'admin', 'vendor'],
     },
   ];
 

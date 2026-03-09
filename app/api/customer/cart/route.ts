@@ -122,19 +122,24 @@ export async function GET(request: NextRequest) {
         if (!rp) continue;
         const qty = Math.max(1, item.quantity || 1);
         const sellingPrice = Number((rp as { sellingPrice?: number }).sellingPrice) || 0;
-        const source = (rp as any).sourceProductId ? srcMap.get(((rp as any).sourceProductId instanceof ObjectId ? (rp as any).sourceProductId : new ObjectId(String((rp as any).sourceProductId))).toString()) : null;
-        const retailer = (rp as any).retailerId ? retMap.get(((rp as any).retailerId instanceof ObjectId ? (rp as any).retailerId : new ObjectId(String((rp as any).retailerId))).toString()) : null;
-        const rows = Array.isArray((retailer as any)?.retailerCommissionRows) ? (retailer as any).retailerCommissionRows : [];
         let customerPrice = sellingPrice;
-        if (source && rows.length > 0) {
-          const productType = (source.product_type || '').trim();
-          const categoryId = source.category ? normalizeCategoryId(source.category) : null;
-          const categoryName = categoryId ? catNameMap.get(categoryId) || '' : '';
-          const designType = (source.designType || '').trim();
-          const metal = productType === 'Gold' || productType === 'Silver' || productType === 'Platinum' ? productType : '';
-          const purity = (source.goldPurity || source.silverPurity || '').trim();
-          const pct = findRetailerCommissionFromRows(rows, productType, categoryName, designType, metal, purity);
-          customerPrice = getCustomerPriceFromRetailer(sellingPrice, pct);
+        const storedPct = (rp as { retailerCommissionRate?: number }).retailerCommissionRate;
+        if (typeof storedPct === 'number' && Number.isFinite(storedPct)) {
+          customerPrice = getCustomerPriceFromRetailer(sellingPrice, storedPct);
+        } else {
+          const source = (rp as any).sourceProductId ? srcMap.get(((rp as any).sourceProductId instanceof ObjectId ? (rp as any).sourceProductId : new ObjectId(String((rp as any).sourceProductId))).toString()) : null;
+          const retailer = (rp as any).retailerId ? retMap.get(((rp as any).retailerId instanceof ObjectId ? (rp as any).retailerId : new ObjectId(String((rp as any).retailerId))).toString()) : null;
+          const rows = Array.isArray((retailer as any)?.retailerCommissionRows) ? (retailer as any).retailerCommissionRows : [];
+          if (rows.length > 0) {
+            const productType = (source?.product_type || (rp as any).product_type || '').trim();
+            const categoryId = source?.category ? normalizeCategoryId(source.category) : null;
+            const categoryName = categoryId ? catNameMap.get(categoryId) || '' : ((rp as any).category || '').trim();
+            const designType = (source?.designType || (rp as any).designType || '').trim();
+            const metal = productType === 'Gold' || productType === 'Silver' || productType === 'Platinum' ? productType : '';
+            const purity = (source?.goldPurity || source?.silverPurity || (rp as any).goldPurity || (rp as any).silverPurity || '').trim();
+            const pct = findRetailerCommissionFromRows(rows, productType, categoryName, designType, metal, purity);
+            customerPrice = getCustomerPriceFromRetailer(sellingPrice, pct);
+          }
         }
         formatted.push({
           _id: (rp._id as ObjectId).toString(),

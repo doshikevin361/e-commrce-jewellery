@@ -66,6 +66,7 @@
     "gcp-metadata": "latest",
     "input-otp": "latest",
     "jsonwebtoken": "latest",
+    "jspdf": "^4.2.0",
     "kerberos": "latest",
     "lucide-react": "^0.454.0",
     "mongodb": "latest",

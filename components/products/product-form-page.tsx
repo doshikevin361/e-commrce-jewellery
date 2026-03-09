@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -344,6 +344,7 @@ interface ProductFormData {
   // Pricing & charges
   vendorCommissionRate: number; // %
   platformCommissionRate: number; // %
+  retailerCommissionRate: number; // % (retailer context: from Retailer Commission combination)
   makingChargePerGram: number; // per gram
   diamondValue: number; // total diamond value in ₹
   shippingCharges: number;
@@ -360,13 +361,24 @@ interface ProductFormData {
 
 interface ProductFormPageProps {
   productId?: string;
+  /** When 'retailer', use retailer APIs and save to retailer_products (same UI as vendor). */
+  context?: 'admin' | 'vendor' | 'retailer';
 }
 
-export function ProductFormPage({ productId }: ProductFormPageProps) {
+function getRetailerAuthHeaders(): HeadersInit {
+  if (typeof window === 'undefined') return {};
+  const token = localStorage.getItem('retailerToken');
+  const h: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (token) h['Authorization'] = `Bearer ${token}`;
+  return h;
+}
+
+export function ProductFormPage({ productId, context: contextProp }: ProductFormPageProps) {
   const router = useRouter();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [userRole, setUserRole] = useState<string>('admin');
+  const isRetailerContext = contextProp === 'retailer';
   const [categories, setCategories] = useState<any[]>([]);
   const [categoryOptions, setCategoryOptions] = useState<{ label: string; value: string }[]>([]);
   const [designTypes, setDesignTypes] = useState<{ label: string; value: string }[]>([]);
@@ -399,6 +411,7 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
   const [selectedRelatedProducts, setSelectedRelatedProducts] = useState<string[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [originalPrice, setOriginalPrice] = useState<number | null>(null); // Store original price when editing
+  const subTotalRef = useRef<number>(0); // For retailer submit to read latest calculated price
 
   const isDiamondComplete = (d: Diamond) =>
     !!(
@@ -720,6 +733,7 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
     stock: 1,
     vendorCommissionRate: 0,
     platformCommissionRate: 0,
+    retailerCommissionRate: 0,
     makingChargePerGram: 500,
     diamondValue: 0,
     shippingCharges: 0,
@@ -735,18 +749,28 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
   });
 
   useEffect(() => {
-    // Get user role from localStorage
-    const userStr = localStorage.getItem('adminUser');
-    let detectedRole = 'admin';
-    if (userStr) {
-      try {
-        const user = JSON.parse(userStr);
-        detectedRole = user.role || 'admin';
-        setUserRole(detectedRole);
-      } catch (error) {
-        console.error('Failed to parse user data:', error);
+    if (isRetailerContext) {
+      setUserRole('retailer');
+    } else {
+      const userStr = localStorage.getItem('adminUser');
+      let detectedRole = 'admin';
+      if (userStr) {
+        try {
+          const user = JSON.parse(userStr);
+          detectedRole = user.role || 'admin';
+          setUserRole(detectedRole);
+        } catch (error) {
+          console.error('Failed to parse user data:', error);
+        }
       }
     }
+
+    const detectedRole = isRetailerContext ? 'retailer' : (typeof window !== 'undefined' ? (() => {
+      try {
+        const u = localStorage.getItem('adminUser');
+        return u ? (JSON.parse(u).role || 'admin') : 'admin';
+      } catch { return 'admin'; }
+    })() : 'admin');
 
     fetchCategories();
     fetchDesignTypes();
@@ -763,14 +787,12 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
     fetchMetalRates();
     fetchAllProducts(); // Fetch all products for related products selection
     
-    // Fetch settings to have them available when product type is selected
-    // Don't apply commission initially - will be applied when product type is selected
     fetchAdminDefaultCommission(detectedRole, undefined);
-    
+
     if (productId) {
       fetchProduct();
     }
-  }, [productId]);
+  }, [productId, isRetailerContext]);
 
   useEffect(() => {
     console.log('[DEBUG] platformCommissionRate changed to:', formData.platformCommissionRate);
@@ -784,52 +806,44 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
 
   const fetchCategories = async () => {
     try {
+      if (isRetailerContext) {
+        const response = await fetch('/api/retailer/categories', { credentials: 'include', headers: getRetailerAuthHeaders() });
+        if (response.ok) {
+          const data = await response.json();
+          const list = Array.isArray(data.categories) ? data.categories : [];
+          setCategories(list);
+          setCategoryOptions(list.map((c: any) => ({ label: c.name || '', value: c.name || '' })));
+        }
+        return;
+      }
       const response = await fetch('/api/admin/categories');
       if (response.ok) {
         const data = await response.json();
         const allCategories = Array.isArray(data.categories) ? data.categories : [];
         setCategories(allCategories);
 
-        // Build tree structure and flatten for dropdown
         const categoryMap = new Map<string, any>();
         const rootCategories: any[] = [];
-
-        // First pass: create map
         allCategories.forEach((cat: any) => {
-          categoryMap.set(cat._id, {
-            ...cat,
-            children: [],
-          });
+          categoryMap.set(cat._id, { ...cat, children: [] });
         });
-
-        // Second pass: build tree
         categoryMap.forEach(category => {
-          if (!category.parentId) {
-            rootCategories.push(category);
-          } else {
+          if (!category.parentId) rootCategories.push(category);
+          else {
             const parent = categoryMap.get(category.parentId);
-            if (parent) {
-              if (!parent.children) parent.children = [];
-              parent.children.push(category);
-            } else {
-              rootCategories.push(category); // Orphaned category
-            }
+            if (parent) { if (!parent.children) parent.children = []; parent.children.push(category); }
+            else rootCategories.push(category);
           }
         });
-
-        // Flatten tree for dropdown (include both parent and children)
         const flattenCategories = (cats: any[], prefix = ''): { label: string; value: string }[] => {
           const result: { label: string; value: string }[] = [];
           cats.forEach(cat => {
             const label = prefix ? `${prefix} > ${cat.name}` : cat.name;
             result.push({ label, value: cat._id || cat.name });
-            if (cat.children && cat.children.length > 0) {
-              result.push(...flattenCategories(cat.children, cat.name));
-            }
+            if (cat.children && cat.children.length > 0) result.push(...flattenCategories(cat.children, cat.name));
           });
           return result;
         };
-
         setCategoryOptions(flattenCategories(rootCategories));
       }
     } catch (error) {
@@ -839,6 +853,15 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
 
   const fetchDesignTypes = async () => {
     try {
+      if (isRetailerContext) {
+        const response = await fetch('/api/retailer/design-types', { credentials: 'include', headers: getRetailerAuthHeaders() });
+        if (response.ok) {
+          const data = await response.json();
+          const options = (data.designTypes || []).map((item: any) => ({ label: item.name || '', value: item.name || '' }));
+          setDesignTypes(options);
+        }
+        return;
+      }
       const response = await fetch('/api/admin/design-types');
       if (response.ok) {
         const data = await response.json();
@@ -855,6 +878,15 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
 
   const fetchKarats = async () => {
     try {
+      if (isRetailerContext) {
+        const response = await fetch('/api/retailer/karats', { credentials: 'include', headers: getRetailerAuthHeaders() });
+        if (response.ok) {
+          const data = await response.json();
+          const options = (data.karats || []).map((item: any) => ({ label: item.name || '', value: item.name || '' }));
+          setKarats(options);
+        }
+        return;
+      }
       const response = await fetch('/api/admin/karats');
       if (response.ok) {
         const data = await response.json();
@@ -871,6 +903,15 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
 
   const fetchPurities = async () => {
     try {
+      if (isRetailerContext) {
+        const response = await fetch('/api/retailer/purities', { credentials: 'include', headers: getRetailerAuthHeaders() });
+        if (response.ok) {
+          const data = await response.json();
+          const options = (data.purities || []).map((item: any) => ({ label: item.name || '', value: item.name || '' }));
+          setPurities(options);
+        }
+        return;
+      }
       const response = await fetch('/api/admin/purities');
       if (response.ok) {
         const data = await response.json();
@@ -887,6 +928,15 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
 
   const fetchMetalColors = async () => {
     try {
+      if (isRetailerContext) {
+        const response = await fetch('/api/retailer/metal-colors', { credentials: 'include', headers: getRetailerAuthHeaders() });
+        if (response.ok) {
+          const data = await response.json();
+          const options = (data.metalColors || []).map((item: any) => ({ label: item.name || '', value: item.name || '' }));
+          setMetalColors(options);
+        }
+        return;
+      }
       const response = await fetch('/api/admin/metal-colors');
       if (response.ok) {
         const data = await response.json();
@@ -1057,26 +1107,29 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
         }
       }
 
-      let vendorCommissionRate = 0; // Fallback default (vendor gets rate from their commission rows)
-      let platformCommissionRate = 0; // Fallback default
+      let vendorCommissionRate = 0;
+      let platformCommissionRate = 0;
+      let retailerCommissionRate = 0;
       let vendorCommissions: any = null;
       let adminCommissions: any = null;
 
       let adminCommissionRows: Array<{ productType: string; category: string; designType: string; metal: string; purityKarat: string; platformCommission?: number }> = [];
       let vendorCommissionRows: Array<{ productType: string; category: string; designType: string; metal: string; purityKarat: string; vendorCommission: number }> = [];
-      try {
-        const adminResponse = await fetch('/api/admin/settings');
-        if (adminResponse.ok) {
-          const adminData = await adminResponse.json();
-          adminCommissions = adminData.productTypeCommissions;
-          if (Array.isArray(adminData.commissionRows)) {
-            adminCommissionRows = adminData.commissionRows;
-            console.log('[DEBUG] Fetched admin commission rows (for platform):', adminCommissionRows.length);
+      let retailerCommissionRows: Array<{ productType: string; category: string; designType: string; metal: string; purityKarat: string; retailerCommission: number }> = [];
+
+      if (roleToUse !== 'retailer') {
+        try {
+          const adminResponse = await fetch('/api/admin/settings');
+          if (adminResponse.ok) {
+            const adminData = await adminResponse.json();
+            adminCommissions = adminData.productTypeCommissions;
+            if (Array.isArray(adminData.commissionRows)) {
+              adminCommissionRows = adminData.commissionRows;
+            }
           }
-          console.log('[DEBUG] Fetched admin commission settings:', adminCommissions);
+        } catch (error) {
+          console.error('[DEBUG] Failed to fetch admin commission settings:', error);
         }
-      } catch (error) {
-        console.error('[DEBUG] Failed to fetch admin commission settings:', error);
       }
 
       if (roleToUse === 'vendor') {
@@ -1086,10 +1139,21 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
             const vendorData = await vendorResponse.json();
             vendorCommissions = vendorData.commissions;
             vendorCommissionRows = Array.isArray(vendorData.commissionRows) ? vendorData.commissionRows : [];
-            console.log('[DEBUG] Fetched vendor commission rows:', vendorCommissionRows.length);
           }
         } catch (error) {
           console.error('[DEBUG] Failed to fetch vendor commission settings:', error);
+        }
+      }
+
+      if (roleToUse === 'retailer') {
+        try {
+          const retailerResponse = await fetch('/api/retailer/commission-settings', { credentials: 'include', headers: getRetailerAuthHeaders() });
+          if (retailerResponse.ok) {
+            const retailerData = await retailerResponse.json();
+            retailerCommissionRows = Array.isArray(retailerData.commissionRows) ? retailerData.commissionRows : [];
+          }
+        } catch (error) {
+          console.error('[DEBUG] Failed to fetch retailer commission settings:', error);
         }
       }
 
@@ -1101,7 +1165,7 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
       const categoryName = optionMaps?.categoryOptions?.find((o) => o.value === rawCategory)?.label?.split(' > ').pop()?.trim() || rawCategory;
       const designTypeName = optionMaps?.designTypes?.find((o) => o.value === rawDesignType)?.label?.trim() || rawDesignType;
 
-      // Full combination match: ALL fields (category, designType, metal, purity) must match the row. No partial match.
+      const norm = (s: string) => (s || '').trim().toLowerCase();
       const findCommissionFromRows = (
         rows: any[],
         pt: string,
@@ -1110,7 +1174,6 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
         met: string,
         pur: string
       ): { platform?: number; vendor?: number } | null => {
-        const norm = (s: string) => (s || '').trim().toLowerCase();
         const nPt = norm(pt);
         const nCat = norm(cat);
         const nDes = norm(des);
@@ -1118,15 +1181,10 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
         const nPur = norm(pur);
         for (const row of rows) {
           if (norm(row.productType) !== nPt) continue;
-          const rowCat = norm(row.category);
-          const rowDes = norm(row.designType);
-          const rowMetal = norm(row.metal);
-          const rowPur = norm(row.purityKarat);
-          // Every field must match: category, designType, metal, purity (exact combination)
-          if (rowCat !== nCat) continue;
-          if (rowDes !== nDes) continue;
-          if (rowMetal !== nMet) continue;
-          if (rowPur !== nPur) continue;
+          if (norm(row.category) !== nCat) continue;
+          if (norm(row.designType) !== nDes) continue;
+          if (norm(row.metal) !== nMet) continue;
+          if (norm(row.purityKarat) !== nPur) continue;
           return {
             platform: typeof row.platformCommission === 'number' ? row.platformCommission : undefined,
             vendor: typeof row.vendorCommission === 'number' ? row.vendorCommission : undefined,
@@ -1134,14 +1192,40 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
         }
         return null;
       };
+      const findRetailerCommissionFromRows = (
+        rows: Array<{ productType: string; category: string; designType: string; metal: string; purityKarat: string; retailerCommission: number }>,
+        pt: string,
+        cat: string,
+        des: string,
+        met: string,
+        pur: string
+      ): number => {
+        const nPt = norm(pt);
+        const nCat = norm(cat);
+        const nDes = norm(des);
+        const nMet = norm(met);
+        const nPur = norm(pur);
+        for (const row of rows) {
+          if (norm(row.productType) !== nPt) continue;
+          if (norm(row.category) !== nCat) continue;
+          if (norm(row.designType) !== nDes) continue;
+          if (norm(row.metal) !== nMet) continue;
+          if (norm(row.purityKarat) !== nPur) continue;
+          const rate = typeof row.retailerCommission === 'number' ? row.retailerCommission : 0;
+          return Math.max(0, Math.min(100, rate));
+        }
+        return 0;
+      };
 
       setFormData(prev => ({
         ...prev,
         settingsData: {
+          ...prev.settingsData,
           productTypeCommissions: adminCommissions,
           vendorCommissions: vendorCommissions,
           adminCommissionRows,
           vendorCommissionRows,
+          retailerCommissionRows,
         },
       }));
 
@@ -1178,15 +1262,19 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
           console.log('[DEBUG] Vendor Commission for', productType, ':', vendorCommissionRate);
         } else if (roleToUse === 'admin') {
           vendorCommissionRate = 0;
-          console.log('[DEBUG] Admin adding product: vendor commission 0');
         }
 
-        const updateData = {
+        if (roleToUse === 'retailer' && retailerCommissionRows.length > 0) {
+          retailerCommissionRate = findRetailerCommissionFromRows(retailerCommissionRows, productType, categoryName, designTypeName, metal, purity);
+        }
+
+        const updateData: Record<string, number> = {
           vendorCommissionRate: vendorCommissionRate,
           platformCommissionRate: platformCommissionRate,
         };
-        
-        console.log('[DEBUG] About to update with:', updateData);
+        if (roleToUse === 'retailer') {
+          updateData.retailerCommissionRate = retailerCommissionRate;
+        }
 
         setFormData(prev => {
           const newData = {
@@ -1196,11 +1284,12 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
               ...prev.settingsData,
               adminCommissionRows,
               vendorCommissionRows,
+              retailerCommissionRows,
               platformCommissionMatched: adminCommissionRows.length === 0 ? true : platformCommissionMatched,
               vendorCommissionMatched: roleToUse !== 'vendor' ? true : (vendorCommissionRows.length === 0 ? true : vendorCommissionMatched),
+              retailerCommissionMatched: roleToUse !== 'retailer' ? true : (retailerCommissionRows.length === 0 ? true : retailerCommissionRate > 0),
             },
           };
-          console.log('[DEBUG] Updated commission rates - Platform:', newData.platformCommissionRate, 'Vendor:', newData.vendorCommissionRate);
           return newData;
         });
       } else {
@@ -1252,6 +1341,110 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
   const fetchProduct = async () => {
     try {
       setLoading(true);
+      if (isRetailerContext && productId) {
+        const response = await fetch(`/api/retailer/my-products/${productId}`, { credentials: 'include', headers: getRetailerAuthHeaders() });
+        if (response.status === 401) {
+          router.replace('/retailer/login');
+          setLoading(false);
+          return;
+        }
+        if (!response.ok) {
+          toast({ title: 'Error', description: 'Failed to load product', variant: 'destructive' });
+          setLoading(false);
+          return;
+        }
+        const product = await response.json();
+        setFormData({
+          productType: product.product_type || '',
+          category: product.category || '',
+          sku: product.sku || '',
+          designType: product.designType || '',
+          goldPurity: product.goldPurity || '',
+          silverPurity: product.silverPurity || '',
+          metalColour: product.metalColour || '',
+          goldWeight: product.weight || 0,
+          lessDiamondWeight: 0,
+          lessStoneWeight: 0,
+          netGoldWeight: product.weight || 0,
+          size: product.size || '',
+          gender: Array.isArray(product.gender) ? product.gender : [],
+          itemsPair: '',
+          pincode: '',
+          huidHallmarkNo: '',
+          hsnCode: product.hsnCode || '',
+          diamondsType: '',
+          noOfDiamonds: 0,
+          totalNoOfDiamonds: 0,
+          diamondWeight: 0,
+          totalDiamondsWeight: 0,
+          diamondSize: '',
+          settingType: '',
+          clarity: '',
+          diamondsColour: '',
+          diamondsShape: '',
+          diamondSetting: '',
+          certifiedLabs: '',
+          certificateNo: '',
+          discount: 0,
+          diamonds: [],
+          occasion: '',
+          dimension: '',
+          height: 0,
+          width: 0,
+          length: 0,
+          brand: '',
+          collection: '',
+          thickness: 0,
+          description: product.description || product.shortDescription || '',
+          shortDescription: product.shortDescription || '',
+          specifications: Array.isArray(product.specifications) && product.specifications.length > 0 ? product.specifications : [{ key: '', value: '' }],
+          images: Array.isArray(product.images) ? product.images : [],
+          seoTitle: product.seoTitle || '',
+          seoDescription: product.seoDescription || '',
+          seoTags: product.seoTags || '',
+          gemstoneName: '',
+          reportNo: '',
+          gemstoneCertificateLab: '',
+          gemstoneColour: '',
+          gemstoneShape: '',
+          gemstoneWeight: 0,
+          gemstonePrice: 0,
+          diamondsPrice: 0,
+          ratti: 0,
+          specificGravity: 0,
+          hardness: 0,
+          refractiveIndex: 0,
+          magnification: 0,
+          remarks: '',
+          gemstoneDescription: '',
+          mainImage: product.mainImage || '',
+          certificateImages: [],
+          gemstonePhoto: '',
+          gemstoneCertificate: '',
+          name: product.name || '',
+          urlSlug: product.urlSlug || '',
+          weight: product.weight || 0,
+          stock: product.quantity ?? 1,
+          vendorCommissionRate: 0,
+          platformCommissionRate: 0,
+          makingChargePerGram: 500,
+          diamondValue: 0,
+          shippingCharges: 0,
+          hallMarkingCharges: 0,
+          insuranceCharges: 0,
+          packingCharges: 0,
+          rtoCharges: 0,
+          diamondCertCharges: 0,
+          otherCharges: 0,
+          gstRate: 3,
+          customMetalRate: undefined,
+          diamonds: [],
+          relatedProducts: [],
+        });
+        setOriginalPrice(product.sellingPrice ?? null);
+        setLoading(false);
+        return;
+      }
       const response = await fetch(`/api/admin/products/${productId}`);
       if (response.ok) {
         const product = await response.json();
@@ -1342,6 +1535,7 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
           stock: product.stock ?? 1,
           vendorCommissionRate: product.vendorCommissionRate ?? 0,
           platformCommissionRate: product.platformCommissionRate ?? 0,
+          retailerCommissionRate: product.retailerCommissionRate ?? 0,
           makingChargePerGram: product.makingChargePerGram ?? 500,
           diamondValue: product.diamondValue ?? 0,
           shippingCharges: product.shippingCharges ?? 0,
@@ -1396,39 +1590,36 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
       const showGoldFields = ['Gold', 'Silver', 'Platinum'].includes(formData.productType);
       const showDiamondFields = formData.productType === 'Diamonds' || showGoldFields;
       const nextErrors: Record<string, string> = {};
-      
-      // Common validations for all product types
-      if (!formData.productType) nextErrors.productType = 'This field is required';
-      if (!formData.category) nextErrors.category = 'This field is required';
-      if (!formData.name?.trim()) nextErrors.name = 'This field is required';
-      if (!computedSlug) nextErrors.urlSlug = 'This field is required';
-      if (!computedSku) nextErrors.sku = 'This field is required';
-      if (!formData.hsnCode?.trim()) nextErrors.hsnCode = 'This field is required';
-      if (!formData.shortDescription?.trim() && !formData.description?.trim()) nextErrors.description = 'Description is required';
-      if (!formData.mainImage?.trim()) nextErrors.mainImage = 'This field is required';
-      if (!formData.seoTitle?.trim()) nextErrors.seoTitle = 'This field is required';
-      if (!formData.seoDescription?.trim()) nextErrors.seoDescription = 'This field is required';
-      if (!formData.seoTags?.trim()) nextErrors.seoTags = 'This field is required';
-      
-      // Validations only for Gold/Silver/Platinum (fields that are shown and required)
-      // For Diamonds product type, designType, purity, and weight are optional (metals are optional)
-      if (showGoldFields) {
-        // Gold/Silver/Platinum - these fields are required
-        if (!formData.designType) nextErrors.designType = 'This field is required';
-        if (!selectedPurityValue) {
-          nextErrors.silverPurity = 'This field is required';
-        }
-        if (!formData.weight || formData.weight <= 0) {
-          nextErrors.weight = 'This field is required';
-        }
-      } else if (formData.productType === 'Diamonds') {
-        // For Diamonds product type, only validate designType (it's shown in the form)
-        // Purity and weight are not required since metals are optional
-        if (!formData.designType) nextErrors.designType = 'This field is required';
+
+      if (isRetailerContext) {
+        if (!formData.name?.trim()) nextErrors.name = 'This field is required';
+      } else {
+        // Common validations for all product types (admin/vendor)
+        if (!formData.productType) nextErrors.productType = 'This field is required';
+        if (!formData.category) nextErrors.category = 'This field is required';
+        if (!formData.name?.trim()) nextErrors.name = 'This field is required';
+        if (!computedSlug) nextErrors.urlSlug = 'This field is required';
+        if (!computedSku) nextErrors.sku = 'This field is required';
+        if (!formData.hsnCode?.trim()) nextErrors.hsnCode = 'This field is required';
+        if (!formData.shortDescription?.trim() && !formData.description?.trim()) nextErrors.description = 'Description is required';
+        if (!formData.mainImage?.trim()) nextErrors.mainImage = 'This field is required';
+        if (!formData.seoTitle?.trim()) nextErrors.seoTitle = 'This field is required';
+        if (!formData.seoDescription?.trim()) nextErrors.seoDescription = 'This field is required';
+        if (!formData.seoTags?.trim()) nextErrors.seoTags = 'This field is required';
       }
       
-      // Validations only for Gemstone/Imitation (fields that are shown)
-      if (isSimpleProductType && userRole !== 'vendor') {
+      // Validations only for Gold/Silver/Platinum - skip for retailer
+      if (!isRetailerContext) {
+        if (showGoldFields) {
+          if (!formData.designType) nextErrors.designType = 'This field is required';
+          if (!selectedPurityValue) nextErrors.silverPurity = 'This field is required';
+          if (!formData.weight || formData.weight <= 0) nextErrors.weight = 'This field is required';
+        } else if (formData.productType === 'Diamonds') {
+          if (!formData.designType) nextErrors.designType = 'This field is required';
+        }
+      }
+      
+      if (isSimpleProductType && userRole !== 'vendor' && !isRetailerContext) {
         if (!formData.gemstonePrice || formData.gemstonePrice <= 0) {
           nextErrors.gemstonePrice = 'Price is required';
         }
@@ -1450,6 +1641,55 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
         urlSlug: computedSlug,
         sku: computedSku,
       }));
+
+      if (isRetailerContext) {
+        const sellingPrice = (productId && originalPrice !== null) ? originalPrice : subTotalRef.current;
+        const retailerPayload = {
+          name: formData.name.trim(),
+          mainImage: formData.mainImage || '',
+          shortDescription: formData.shortDescription || '',
+          description: formData.description || '',
+          sellingPrice: Number(sellingPrice) || 0,
+          quantity: Math.max(0, formData.stock ?? 1),
+          status: 'active',
+          retailerCommissionRate: formData.retailerCommissionRate ?? 0,
+          category: formData.category || '',
+          product_type: formData.productType || '',
+          designType: formData.designType || '',
+          metalType: formData.productType || '',
+          goldPurity: formData.goldPurity || '',
+          silverPurity: formData.silverPurity || '',
+          metalColour: formData.metalColour || '',
+          weight: formData.weight || 0,
+          size: formData.size || '',
+          gender: Array.isArray(formData.gender) ? formData.gender : [],
+          sku: computedSku || '',
+          hsnCode: formData.hsnCode || '',
+          tags: formData.tags || [],
+          specifications: formData.specifications || [],
+          images: formData.images || [],
+          seoTitle: formData.seoTitle || '',
+          seoDescription: formData.seoDescription || '',
+          seoTags: formData.seoTags || '',
+          urlSlug: computedSlug || '',
+        };
+        const retailerUrl = productId ? `/api/retailer/my-products/${productId}` : '/api/retailer/my-products';
+        const retailerMethod = productId ? 'PATCH' : 'POST';
+        const res = await fetch(retailerUrl, {
+          method: retailerMethod,
+          credentials: 'include',
+          headers: getRetailerAuthHeaders(),
+          body: JSON.stringify(retailerPayload),
+        });
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.error || 'Failed to save product');
+        }
+        toast({ title: 'Success', description: productId ? 'Product updated' : 'Product created', variant: 'success' });
+        router.push('/retailer/my-products');
+        setLoading(false);
+        return;
+      }
 
       // API expects these normalized jewellery fields even when we capture per-gram inputs
       const weightInput = formData.weight || formData.goldWeight || 0;
@@ -1612,12 +1852,14 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
           // Don't reset commission rates for vendors - keep the admin's and vendor's set values
           platformCommissionRate: userRole === 'vendor' ? prev.platformCommissionRate : 0,
           vendorCommissionRate: userRole === 'vendor' ? prev.vendorCommissionRate : 0,
+          retailerCommissionRate: isRetailerContext ? prev.retailerCommissionRate : 0,
           otherCharges: 0,
           discount: 0,
         };
         return { ...prev, ...resetData };
       });
-      fetchAdminDefaultCommission(userRole, value);
+      const roleForCommission = isRetailerContext ? 'retailer' : userRole;
+      fetchAdminDefaultCommission(roleForCommission, value);
     } else {
       setFormData(prev => ({ ...prev, [field]: value }));
       const snapshot = {
@@ -1627,7 +1869,8 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
         silverPurity: field === 'silverPurity' ? (value as string) : formData.silverPurity,
       };
       if ((field === 'category' || field === 'designType' || field === 'goldPurity' || field === 'silverPurity') && formData.productType) {
-        fetchAdminDefaultCommission(userRole, formData.productType, snapshot, { categoryOptions, designTypes });
+        const roleForCommission = isRetailerContext ? 'retailer' : userRole;
+        fetchAdminDefaultCommission(roleForCommission, formData.productType, snapshot, { categoryOptions, designTypes });
       }
     }
     if (errors[field]) {
@@ -1723,7 +1966,11 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
     hasFourFieldsForCommission &&
     (formData.settingsData?.vendorCommissionRows?.length ?? 0) > 0 &&
     formData.settingsData?.vendorCommissionMatched === true;
-  
+  const showRetailerCommissionField =
+    isRetailerContext &&
+    hasFourFieldsForCommission &&
+    (formData.settingsData?.retailerCommissionRows?.length ?? 0) > 0;
+
   // For Diamonds product type, check if metals are added
   const hasMetalsInDiamonds = formData.productType === 'Diamonds' && formData.diamonds.some(d => d.metalType);
   
@@ -1745,6 +1992,9 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
   const vendorCommissionValue = (formData.vendorCommissionRate > 0)
     ? commissionBase * (formData.vendorCommissionRate / 100)
     : 0;
+  const retailerCommissionValue = (formData.retailerCommissionRate ?? 0) > 0
+    ? commissionBase * ((formData.retailerCommissionRate ?? 0) / 100)
+    : 0;
   const extraCharges = formData.otherCharges ?? 0;
   // Original price - GST and discount are NOT included in calculation, only stored for invoice
   // For Diamonds: calculated price (metals + diamonds including direct price) + commission (no other charges)
@@ -1755,6 +2005,7 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
       : isSimpleProductType
         ? gemstoneValue + platformCommissionValue
         : goldValue + makingChargesValue + diamondValueAuto + platformCommissionValue + extraCharges; // Removed vendorCommissionValue
+  subTotalRef.current = subTotal;
   // GST and discount are stored but NOT calculated here - will be calculated on website invoice
   const totalAmount = subTotal;
 
@@ -3487,6 +3738,26 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                 </p>
               </div>
             )}
+
+            {/* Retailer Commission (retailer only): from Retailer Commission tab combination */}
+            {showRetailerCommissionField && (
+              <div className='p-3 bg-white rounded border'>
+                <p className='text-sm text-gray-600'>Retailer Commission (%)</p>
+                <FormField
+                  label=''
+                  value={formData.retailerCommissionRate ?? 0}
+                  onChange={e => updateField('retailerCommissionRate', parseFloat(e.target.value) || 0)}
+                  type='number'
+                  placeholder='0'
+                />
+                {(formData.retailerCommissionRate ?? 0) > 0 && (
+                  <p className='text-xs text-gray-500 mt-1'>Value: {formatINR(retailerCommissionValue)} (added to selling price for customer)</p>
+                )}
+                <p className='text-xs text-blue-600 mt-1 cursor-pointer hover:underline' onClick={() => window.open('/retailer/commission', '_blank')}>
+                  Set in Retailer Commission
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Price Summary for all product types */}
@@ -3508,6 +3779,12 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                   <div className='flex justify-between text-sm text-gray-700'>
                     <span>Vendor Commission</span>
                     <span>{formatINR(vendorCommissionValue)}</span>
+                  </div>
+                )}
+                {isRetailerContext && (formData.retailerCommissionRate ?? 0) > 0 && (
+                  <div className='flex justify-between text-sm text-gray-700'>
+                    <span>Retailer Commission</span>
+                    <span>{formatINR(retailerCommissionValue)}</span>
                   </div>
                 )}
                 <div className='flex justify-between font-semibold text-gray-900 pt-2 border-t'>
@@ -3582,6 +3859,12 @@ export function ProductFormPage({ productId }: ProductFormPageProps) {
                   <div className='flex justify-between text-sm text-gray-700'>
                     <span>Vendor Commission</span>
                     <span>{formatINR(vendorCommissionValue)}</span>
+                  </div>
+                )}
+                {isRetailerContext && (formData.retailerCommissionRate ?? 0) > 0 && (
+                  <div className='flex justify-between text-sm text-gray-700'>
+                    <span>Retailer Commission</span>
+                    <span>{formatINR(retailerCommissionValue)}</span>
                   </div>
                 )}
                 <div className='flex justify-between text-sm text-gray-700'>

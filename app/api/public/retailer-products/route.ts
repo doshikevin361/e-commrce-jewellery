@@ -62,16 +62,19 @@ export async function GET(request: NextRequest) {
 
     const list = (products as any[]).map((p) => {
       const sellingPrice = Number(p.sellingPrice) || 0;
-      const source = p.sourceProductId ? sourceMap.get((p.sourceProductId instanceof ObjectId ? p.sourceProductId : new ObjectId(String(p.sourceProductId))).toString()) : null;
-      const retailer = p.retailerId ? retailerMap.get((p.retailerId instanceof ObjectId ? p.retailerId : new ObjectId(String(p.retailerId))).toString()) : null;
-      const rows = Array.isArray((retailer as any)?.retailerCommissionRows) ? (retailer as any).retailerCommissionRows : [];
-      const productType = (source?.product_type || '').trim();
-      const categoryId = source?.category ? normalizeCategoryId(source.category) : null;
-      const categoryName = categoryId ? catNameMap.get(categoryId) || '' : '';
-      const designType = (source?.designType || '').trim();
-      const metal = productType === 'Gold' || productType === 'Silver' || productType === 'Platinum' ? productType : '';
-      const purity = (source?.goldPurity || source?.silverPurity || '').trim();
-      const commissionPct = findRetailerCommissionFromRows(rows, productType, categoryName, designType, metal, purity);
+      let commissionPct = typeof p.retailerCommissionRate === 'number' && Number.isFinite(p.retailerCommissionRate) ? p.retailerCommissionRate : NaN;
+      if (Number.isNaN(commissionPct)) {
+        const source = p.sourceProductId ? sourceMap.get((p.sourceProductId instanceof ObjectId ? p.sourceProductId : new ObjectId(String(p.sourceProductId))).toString()) : null;
+        const retailer = p.retailerId ? retailerMap.get((p.retailerId instanceof ObjectId ? p.retailerId : new ObjectId(String(p.retailerId))).toString()) : null;
+        const rows = Array.isArray((retailer as any)?.retailerCommissionRows) ? (retailer as any).retailerCommissionRows : [];
+        const productType = (source?.product_type || p.product_type || '').trim();
+        const categoryId = source?.category ? normalizeCategoryId(source.category) : null;
+        const categoryName = categoryId ? catNameMap.get(categoryId) || '' : (p.category || '').trim();
+        const designType = (source?.designType || p.designType || '').trim();
+        const metal = productType === 'Gold' || productType === 'Silver' || productType === 'Platinum' ? productType : '';
+        const purity = (source?.goldPurity || source?.silverPurity || p.goldPurity || p.silverPurity || '').trim();
+        commissionPct = findRetailerCommissionFromRows(rows, productType, categoryName, designType, metal, purity);
+      }
       const customerPrice = getCustomerPriceFromRetailer(sellingPrice, commissionPct);
       return {
         _id: (p._id as ObjectId)?.toString(),
