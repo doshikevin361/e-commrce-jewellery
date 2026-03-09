@@ -141,6 +141,17 @@ export default function RetailerLoginPage() {
                   Sign in here
                 </Link>
               </p>
+              <p className="text-sm text-slate-500 dark:text-slate-500 pt-2">
+                <Link
+                  href="/terms/retailer"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-medium hover:underline"
+                  style={{ color: primaryColor }}
+                >
+                  Retailer Terms & Conditions
+                </Link>
+              </p>
             </div>
           </div>
         </Card>

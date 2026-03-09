@@ -172,6 +172,16 @@ export default function LoginPage() {
                   Register as B2B
                 </a>
               </p>
+              <p className='text-sm text-slate-500 dark:text-slate-500 pt-2'>
+                <a
+                  href='/terms/vendor'
+                  target='_blank'
+                  rel='noopener noreferrer'
+                  className='font-medium hover:underline'
+                  style={{ color: primaryColor }}>
+                  Vendor Terms & Conditions
+                </a>
+              </p>
             </div>
           </div>
         </Card>
