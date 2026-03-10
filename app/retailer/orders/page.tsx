@@ -19,6 +19,7 @@ type Order = {
   items: Array<{ productName: string; quantity: number; price: number; subtotal: number }>;
   shippingAddress?: { fullName: string; city: string; state: string };
   createdAt: string;
+  soldToPortalAt?: string | null;
 };
 
 function getAuthHeaders(): HeadersInit {
@@ -151,21 +152,28 @@ function RetailerOrdersContent() {
                       {order.items.length > 3 && <li className="text-gray-500">+{order.items.length - 3} more</li>}
                     </ul>
                   )}
-                  <div className="mt-4 pt-4 border-t flex justify-end">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleSellToPortal(order.orderId)}
-                      disabled={sellingOrderId === order.orderId}
-                    >
-                      {sellingOrderId === order.orderId ? (
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      ) : (
-                        <Store className="w-4 h-4 mr-2" />
-                      )}
-                      Sell to Portal
-                    </Button>
-                  </div>
+                  {(order.orderStatus === 'delivered' && !order.soldToPortalAt) && (
+                    <div className="mt-4 pt-4 border-t flex justify-end">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleSellToPortal(order.orderId)}
+                        disabled={sellingOrderId === order.orderId}
+                      >
+                        {sellingOrderId === order.orderId ? (
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        ) : (
+                          <Store className="w-4 h-4 mr-2" />
+                        )}
+                        Sell to Portal
+                      </Button>
+                    </div>
+                  )}
+                  {order.orderStatus === 'delivered' && order.soldToPortalAt && (
+                    <div className="mt-4 pt-4 border-t flex justify-end">
+                      <span className="text-sm text-green-600 font-medium">Added to portal</span>
+                    </div>
+                  )}
                 </Card>
               ))}
             </div>

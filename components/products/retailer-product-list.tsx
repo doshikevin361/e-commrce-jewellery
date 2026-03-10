@@ -47,6 +47,7 @@ interface RetailerProduct {
   retailerCommissionRate?: number;
   updatedAt?: string;
   createdAt?: string;
+  relatedProducts?: { _id: string; name: string; mainImage?: string; sellingPrice: number; quantity: number; category?: string }[];
 }
 
 interface Category {
@@ -655,6 +656,31 @@ export function RetailerProductList() {
                     <div>
                       <p className="text-slate-500 mb-1">Short Description</p>
                       <p className="text-slate-700 dark:text-slate-300 whitespace-pre-line">{viewProductData.shortDescription}</p>
+                    </div>
+                  )}
+                  {Array.isArray(viewProductData.relatedProducts) && viewProductData.relatedProducts.length > 0 && (
+                    <div className="pt-4 border-t border-slate-200 dark:border-slate-600">
+                      <p className="text-slate-600 dark:text-slate-400 font-medium mb-2">Your related products (same category)</p>
+                      <div className="flex flex-wrap gap-2">
+                        {viewProductData.relatedProducts.slice(0, 6).map(rel => (
+                          <button
+                            key={rel._id}
+                            type="button"
+                            onClick={() => handleViewProduct(rel._id)}
+                            className="flex items-center gap-2 p-2 rounded-lg border border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700/50 text-left min-w-0 max-w-full"
+                          >
+                            {rel.mainImage ? (
+                              <Image src={rel.mainImage} alt={rel.name} width={40} height={40} className="rounded object-cover shrink-0" />
+                            ) : (
+                              <div className="w-10 h-10 rounded bg-slate-200 dark:bg-slate-600 shrink-0 flex items-center justify-center">
+                                <Package className="w-5 h-5 text-slate-500" />
+                              </div>
+                            )}
+                            <span className="truncate text-sm font-medium text-slate-900 dark:text-white">{rel.name}</span>
+                            <span className="text-xs text-slate-500 shrink-0">{formatCurrency(rel.sellingPrice)}</span>
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>

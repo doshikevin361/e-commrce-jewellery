@@ -29,7 +29,24 @@ export async function GET(
       return NextResponse.json({ error: 'Product not found or not yours' }, { status: 404 });
     }
 
-    const p = product as Record<string, unknown> & { retailerId?: ObjectId; _id: ObjectId };
+    const p = product as Record<string, unknown> & { retailerId?: ObjectId; _id: ObjectId; category?: string };
+    const retailerIdObj = new ObjectId(retailer.id);
+    const currentCategory = (p.category as string) || '';
+    const relatedProducts =
+      currentCategory
+        ? await db
+            .collection('retailer_products')
+            .find({
+              retailerId: retailerIdObj,
+              _id: { $ne: new ObjectId(id) },
+              status: 'active',
+              category: currentCategory,
+            })
+            .project({ _id: 1, name: 1, mainImage: 1, sellingPrice: 1, quantity: 1, category: 1 })
+            .limit(8)
+            .toArray()
+        : [];
+
     const out: Record<string, unknown> = {
       _id: (p._id as ObjectId).toString(),
       name: p.name ?? '',
@@ -62,6 +79,14 @@ export async function GET(
       seoDescription: p.seoDescription ?? '',
       seoTags: p.seoTags ?? '',
       urlSlug: p.urlSlug ?? '',
+      relatedProducts: relatedProducts.map((r: Record<string, unknown>) => ({
+        _id: (r._id as ObjectId)?.toString(),
+        name: r.name,
+        mainImage: r.mainImage,
+        sellingPrice: r.sellingPrice,
+        quantity: r.quantity,
+        category: r.category,
+      })),
     };
     return NextResponse.json(out);
   } catch (e) {
