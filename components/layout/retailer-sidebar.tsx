@@ -11,7 +11,7 @@ const menuItems = [
   { label: 'Products', href: '/retailer/products', icon: ShoppingBag },
   { label: 'My Products', href: '/retailer/my-products', icon: Store },
   { label: 'Retailer Commission', href: '/retailer/commission', icon: Percent },
-  { label: 'Price Compare', href: '/retailer/price-compare', icon: BarChart2 },
+  { label: 'Commission Compare', href: '/retailer/price-compare', icon: BarChart2 },
   { label: 'Cart', href: '/retailer/cart', icon: ShoppingCart },
   { label: 'Orders', href: '/retailer/orders', icon: Package },
   { label: 'My Sales', href: '/retailer/my-sales', icon: Truck },

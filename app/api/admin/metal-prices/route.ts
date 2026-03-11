@@ -3,7 +3,7 @@ import { connectToDatabase } from '@/lib/mongodb';
 import { getUserFromRequest, isAdmin } from '@/lib/auth';
 import { broadcastMetalPriceUpdate } from './events/route';
 import { revalidatePath, revalidateTag } from 'next/cache';
-import { calculateAdminProductPrice } from '@/lib/utils/admin-price-calculator';
+import { calculateFullProductPrice, getPriceBreakdown, getDetailedPriceBreakdown } from '@/lib/utils/admin-price-calculator';
 
 // GET: Fetch all unique metal types and their rates from products
 export async function GET(request: NextRequest) {
@@ -155,10 +155,6 @@ export async function PUT(request: NextRequest) {
     }
 
     const storedRates = await db.collection('metal_rates').findOne({});
-    const previousRate =
-      storedRates && typeof storedRates[metalType.toLowerCase()] === 'number'
-        ? storedRates[metalType.toLowerCase()]
-        : undefined;
 
     // Find all products using this metal type
     let query: any = {};
@@ -215,31 +211,54 @@ export async function PUT(request: NextRequest) {
       );
     }
 
+    // Build rate overrides so live formula (metal + making + platform + vendor/retailer commission) is used
+    const rateOverrides: { goldRate?: number; silverRate?: number; platinumRate?: number } = {};
+    if (metalType === 'Gold') rateOverrides.goldRate = newRate;
+    else if (metalType === 'Silver') rateOverrides.silverRate = newRate;
+    else if (metalType === 'Platinum') rateOverrides.platinumRate = newRate;
+
+    console.log(`\n[Metal Update] ${metalType} rate → ₹${newRate}/gram. Updating ${products.length} product(s).`);
     let updatedCount = 0;
     const updatePromises = products.map(async (product: any) => {
       try {
-        // Calculate new price
-        const newPrice = calculateAdminProductPrice(product, {
-          goldRate: metalType === 'Gold' ? newRate : undefined,
-          silverRate: metalType === 'Silver' ? newRate : undefined,
-          platinumRate: metalType === 'Platinum' ? newRate : undefined,
-        });
+        // Vendor commission only for vendor's product (has vendorId); retailer commission only in retailer_products
+        const isVendorProduct = !!product.vendorId;
+        const overrides = {
+          ...rateOverrides,
+          vendorCommissionRate: isVendorProduct ? (product.vendorCommissionRate ?? 0) : 0,
+          retailerCommissionRate: 0,
+        };
+        const breakdown = getPriceBreakdown(product, overrides);
+        const newPrice = Math.max(0, breakdown.total);
 
-        // Prepare update object
+        const productName = (product.name || product.sku || product._id?.toString() || 'Unnamed').toString().trim();
+        const isRing = productName.toLowerCase() === 'ring';
+        if (isRing) {
+          const d = getDetailedPriceBreakdown(product, overrides);
+          console.log(`\n  [Metal Update] --- "${productName}" (${product._id}) ---`);
+          console.log(`    Metal Value          = ₹${d.metalValue.toFixed(2)}`);
+          console.log(`    Making Charges       = ₹${d.makingCharges.toFixed(2)}`);
+          console.log(`    Diamonds Value       = ₹${d.diamondValue.toFixed(2)}`);
+          console.log(`    Platform Commission  = ₹${d.platformCommission.toFixed(2)}`);
+          console.log(`    Other Charges        = ₹${d.otherCharges.toFixed(2)}`);
+          console.log(`    Vendor Commission    = ₹${d.vendorCommission.toFixed(2)}`);
+          console.log(`    Retailer Commission  = ₹${d.retailerCommission.toFixed(2)}`);
+          console.log(`    Total                = ₹${d.total.toFixed(2)}\n`);
+        }
+
+        // One price everywhere: same value in all price keys
         const updateFields: any = {
           price: newPrice,
           subTotal: newPrice,
           totalAmount: newPrice,
+          sellingPrice: newPrice,
+          regularPrice: newPrice,
+          mrp: newPrice,
+          costPrice: product.costPrice ?? 0,
           updatedAt: new Date(),
         };
 
-        // Update the metal rate in product
-        const shouldUpdateCustomRate =
-          product.customMetalRate === undefined ||
-          product.customMetalRate === null ||
-          (typeof previousRate === 'number' &&
-            product.customMetalRate === previousRate);
-
+        // Always set product rate = new rate so form "live price" and stored price match
         const productTypeValue = (product.productType || product.product_type || '')
           .toString()
           .toLowerCase();
@@ -247,45 +266,25 @@ export async function PUT(request: NextRequest) {
         if (metalType === 'Gold') {
           if (product.hasGold || productTypeValue === 'gold') {
             updateFields.goldRatePerGram = newRate;
-            if (shouldUpdateCustomRate) {
-              updateFields.customMetalRate = newRate;
-            }
+            updateFields.customMetalRate = newRate;
           }
-          // Update in diamonds array if present
           if (product.diamonds && Array.isArray(product.diamonds)) {
             updateFields.diamonds = product.diamonds.map((d: any) => {
               if ((d.metalType || '').toString().toLowerCase() === 'gold') {
-                const shouldUpdateDiamondRate =
-                  d.customMetalRate === undefined ||
-                  d.customMetalRate === null ||
-                  (typeof previousRate === 'number' &&
-                    d.customMetalRate === previousRate);
-                return shouldUpdateDiamondRate
-                  ? { ...d, customMetalRate: newRate }
-                  : d;
+                return { ...d, customMetalRate: newRate };
               }
               return d;
             });
           }
         } else if (metalType === 'Platinum') {
           if (productTypeValue === 'platinum') {
-            updateFields.goldRatePerGram = newRate; // Platinum uses goldRatePerGram field
-            if (shouldUpdateCustomRate) {
-              updateFields.customMetalRate = newRate;
-            }
+            updateFields.goldRatePerGram = newRate;
+            updateFields.customMetalRate = newRate;
           }
-          // Update in diamonds array if present
           if (product.diamonds && Array.isArray(product.diamonds)) {
             updateFields.diamonds = product.diamonds.map((d: any) => {
               if ((d.metalType || '').toString().toLowerCase() === 'platinum') {
-                const shouldUpdateDiamondRate =
-                  d.customMetalRate === undefined ||
-                  d.customMetalRate === null ||
-                  (typeof previousRate === 'number' &&
-                    d.customMetalRate === previousRate);
-                return shouldUpdateDiamondRate
-                  ? { ...d, customMetalRate: newRate }
-                  : d;
+                return { ...d, customMetalRate: newRate };
               }
               return d;
             });
@@ -293,41 +292,21 @@ export async function PUT(request: NextRequest) {
         } else if (metalType === 'Silver') {
           if (product.hasSilver || productTypeValue === 'silver') {
             updateFields.silverRatePerGram = newRate;
-            if (shouldUpdateCustomRate) {
-              updateFields.customMetalRate = newRate;
-            }
+            updateFields.customMetalRate = newRate;
           }
-          // Update in diamonds array if present
           if (product.diamonds && Array.isArray(product.diamonds)) {
             updateFields.diamonds = product.diamonds.map((d: any) => {
               if ((d.metalType || '').toString().toLowerCase() === 'silver') {
-                const shouldUpdateDiamondRate =
-                  d.customMetalRate === undefined ||
-                  d.customMetalRate === null ||
-                  (typeof previousRate === 'number' &&
-                    d.customMetalRate === previousRate);
-                return shouldUpdateDiamondRate
-                  ? { ...d, customMetalRate: newRate }
-                  : d;
+                return { ...d, customMetalRate: newRate };
               }
               return d;
             });
           }
         } else {
-          // For other metal types, update in diamonds array
           if (product.diamonds && Array.isArray(product.diamonds)) {
             updateFields.diamonds = product.diamonds.map((d: any) => {
-              if (
-                (d.metalType || '').toString().toLowerCase() === normalizedMetalType
-              ) {
-                const shouldUpdateDiamondRate =
-                  d.customMetalRate === undefined ||
-                  d.customMetalRate === null ||
-                  (typeof previousRate === 'number' &&
-                    d.customMetalRate === previousRate);
-                return shouldUpdateDiamondRate
-                  ? { ...d, customMetalRate: newRate }
-                  : d;
+              if ((d.metalType || '').toString().toLowerCase() === normalizedMetalType) {
+                return { ...d, customMetalRate: newRate };
               }
               return d;
             });
@@ -346,6 +325,53 @@ export async function PUT(request: NextRequest) {
     });
 
     await Promise.all(updatePromises);
+
+    // Update retailer_products: full recalc (same formula as form: metal + making + platform + retailer commission)
+    let retailerUpdatedCount = 0;
+    if (['Gold', 'Silver', 'Platinum'].includes(metalType)) {
+      const retailerQuery: any = {
+        product_type: { $in: [metalType, metalType.toLowerCase()] },
+        weight: { $gt: 0 },
+      };
+      const retailerProducts = await db.collection('retailer_products').find(retailerQuery).toArray();
+      if (retailerProducts.length > 0) {
+        console.log(`[Metal Update] ${metalType} → ${retailerProducts.length} retailer product(s).`);
+      }
+      for (const rp of retailerProducts as any[]) {
+        const rpOverrides = { ...rateOverrides, vendorCommissionRate: 0, retailerCommissionRate: rp.retailerCommissionRate };
+        const rpBreakdown = getPriceBreakdown(rp, rpOverrides);
+        const newSellingPrice = Math.max(0, rpBreakdown.total);
+        const rpName = (rp.name || rp.sku || rp._id?.toString() || 'Unnamed').toString().trim();
+        const rpIsRing = rpName.toLowerCase() === 'ring';
+        if (rpIsRing) {
+          const d = getDetailedPriceBreakdown(rp, rpOverrides);
+          console.log(`\n  [Metal Update] Retailer --- "${rpName}" (${rp._id}) ---`);
+          console.log(`    Metal Value          = ₹${d.metalValue.toFixed(2)}`);
+          console.log(`    Making Charges       = ₹${d.makingCharges.toFixed(2)}`);
+          console.log(`    Diamonds Value       = ₹${d.diamondValue.toFixed(2)}`);
+          console.log(`    Platform Commission  = ₹${d.platformCommission.toFixed(2)}`);
+          console.log(`    Other Charges        = ₹${d.otherCharges.toFixed(2)}`);
+          console.log(`    Retailer Commission  = ₹${d.retailerCommission.toFixed(2)}`);
+          console.log(`    Total                = ₹${d.total.toFixed(2)}\n`);
+        }
+        const rateFields: any = { sellingPrice: newSellingPrice, price: newSellingPrice, subTotal: newSellingPrice, totalAmount: newSellingPrice, regularPrice: newSellingPrice, updatedAt: new Date() };
+        if (metalType === 'Gold') {
+          rateFields.goldRatePerGram = newRate;
+          rateFields.customMetalRate = newRate;
+        } else if (metalType === 'Silver') {
+          rateFields.silverRatePerGram = newRate;
+          rateFields.customMetalRate = newRate;
+        } else if (metalType === 'Platinum') {
+          rateFields.goldRatePerGram = newRate;
+          rateFields.customMetalRate = newRate;
+        }
+        await db.collection('retailer_products').updateOne(
+          { _id: rp._id },
+          { $set: rateFields }
+        );
+        retailerUpdatedCount += 1;
+      }
+    }
 
     // Update metal_rates collection with current rates
     try {
@@ -391,16 +417,23 @@ export async function PUT(request: NextRequest) {
 
     // Broadcast update to all connected admin clients via SSE
     try {
-      broadcastMetalPriceUpdate(metalType, newRate, updatedCount);
+      broadcastMetalPriceUpdate(metalType, newRate, updatedCount + retailerUpdatedCount);
     } catch (error) {
       console.error('[v0] Failed to broadcast metal price update:', error);
       // Don't fail the request if broadcast fails
     }
 
+    const totalUpdated = updatedCount + retailerUpdatedCount;
+    const msg =
+      retailerUpdatedCount > 0
+        ? `Updated ${updatedCount} vendor/admin products and ${retailerUpdatedCount} retailer products with new ${metalType} rate of ₹${newRate}/gram.`
+        : `Updated ${updatedCount} products with new ${metalType} rate of ₹${newRate}/gram. Website will refresh automatically.`;
     return NextResponse.json({
       success: true,
-      message: `Updated ${updatedCount} products with new ${metalType} rate of ₹${newRate}/gram. Website will refresh automatically.`,
-      updatedCount,
+      message: msg,
+      updatedCount: totalUpdated,
+      productsUpdated: updatedCount,
+      retailerProductsUpdated: retailerUpdatedCount,
       metalType,
       newRate,
     });

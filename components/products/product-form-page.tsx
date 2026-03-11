@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { calculateFullProductPrice } from '@/lib/utils/admin-price-calculator';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -412,6 +413,8 @@ export function ProductFormPage({ productId, context: contextProp }: ProductForm
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [originalPrice, setOriginalPrice] = useState<number | null>(null); // Store original price when editing
   const subTotalRef = useRef<number>(0); // For retailer submit to read latest calculated price
+  const retailerSellingPriceRef = useRef<number>(0); // Retailer: base + commission = price shown in list
+  const totalIncludingCommissionsRef = useRef<number>(0); // Admin/vendor: base + vendor commission for save & list
 
   const isDiamondComplete = (d: Diamond) =>
     !!(
@@ -498,6 +501,16 @@ export function ProductFormPage({ productId, context: contextProp }: ProductForm
   const fetchAllProducts = async () => {
     setLoadingProducts(true);
     try {
+      if (isRetailerContext) {
+        const response = await fetch('/api/retailer/my-products?limit=500', { credentials: 'include', headers: getRetailerAuthHeaders() });
+        if (response.ok) {
+          const data = await response.json();
+          const products = (data.products || []).filter((p: { _id: string }) => p._id !== productId);
+          setAllProducts(products);
+          setDisplayedProducts(products);
+        }
+        return;
+      }
       const response = await fetch(`/api/admin/products/search?query=&all=true${productId ? `&excludeId=${productId}` : ''}`);
       if (response.ok) {
         const data = await response.json();
@@ -1552,14 +1565,14 @@ export function ProductFormPage({ productId, context: contextProp }: ProductForm
         });
         setIsCustomMetalRateOverride(false);
         
-        // Store original price to preserve it when editing
-        // Prefer price, then subTotal, then totalAmount
-        const savedPrice = product.price || product.subTotal || product.totalAmount || null;
-        setOriginalPrice(savedPrice);
+        // Store original price for edit: same key as list uses (sellingPrice || price || subTotal)
+        const savedPrice = product.sellingPrice ?? product.price ?? product.subTotal ?? product.totalAmount ?? null;
+        setOriginalPrice(savedPrice != null ? Number(savedPrice) : null);
         
         // Set selected related products for the UI
         if (product.relatedProducts && Array.isArray(product.relatedProducts)) {
-          setSelectedRelatedProducts(product.relatedProducts);
+          const ids = product.relatedProducts.map((r: { _id?: string } | string) => (typeof r === 'string' ? r : r._id || ''));
+          setSelectedRelatedProducts(ids.filter(Boolean));
         }
 
         // After loading product, don't override existing commission - keep what's saved
@@ -1643,7 +1656,8 @@ export function ProductFormPage({ productId, context: contextProp }: ProductForm
       }));
 
       if (isRetailerContext) {
-        const sellingPrice = (productId && originalPrice !== null) ? originalPrice : subTotalRef.current;
+        // Save selling price = base + retailer commission (same value shown in list and to customer)
+        const sellingPrice = retailerSellingPriceRef.current;
         const retailerPayload = {
           name: formData.name.trim(),
           mainImage: formData.mainImage || '',
@@ -1672,6 +1686,7 @@ export function ProductFormPage({ productId, context: contextProp }: ProductForm
           seoDescription: formData.seoDescription || '',
           seoTags: formData.seoTags || '',
           urlSlug: computedSlug || '',
+          relatedProducts: selectedRelatedProducts,
         };
         const retailerUrl = productId ? `/api/retailer/my-products/${productId}` : '/api/retailer/my-products';
         const retailerMethod = productId ? 'PATCH' : 'POST';
@@ -1691,13 +1706,16 @@ export function ProductFormPage({ productId, context: contextProp }: ProductForm
         return;
       }
 
-      // API expects these normalized jewellery fields even when we capture per-gram inputs
+      // API expects these normalized jewellery fields; use net weight for making (same as form display)
       const weightInput = formData.weight || formData.goldWeight || 0;
       const goldWeight = ['Gold', 'Platinum'].includes(formData.productType) ? weightInput : 0;
       const silverWeight = formData.productType === 'Silver' ? weightInput : 0;
+      const totalDiamondWeightCtSubmit = (formData.diamonds || []).reduce((s, d) => s + (d.diamondWeight || 0), 0);
+      const lessStoneSubmit = formData.lessStoneWeight ?? 0;
+      const netWeightSubmit = Math.max(0, (goldWeight || silverWeight) - totalDiamondWeightCtSubmit - lessStoneSubmit);
       const goldRatePerGram = purityMetalRate || metalLiveRate || (formData as any).goldRatePerGram || 0;
       const silverRatePerGram = purityMetalRate || metalLiveRate || (formData as any).silverRatePerGram || 0;
-      const makingCharges = Math.max(0, (formData.makingChargePerGram || 0) * (goldWeight || silverWeight));
+      const makingCharges = Math.max(0, (formData.makingChargePerGram || 0) * netWeightSubmit);
 
       // Store current configured rate in customMetalRate if no custom rate provided
       // This prevents price discrepancies when editing product later with different configured rates
@@ -1722,6 +1740,41 @@ export function ProductFormPage({ productId, context: contextProp }: ProductForm
         }
         return diamond;
       });
+
+      // Always save the price that matches form live calculation (same as display: admin = no vendor/retailer commission)
+      const vendorRateForSave = userRole === 'vendor' ? (formData.vendorCommissionRate ?? 0) : 0;
+      const retailerRateForSave = isRetailerContext ? (formData.retailerCommissionRate ?? 0) : 0;
+      const productShapeForPrice = {
+        productType: formData.productType,
+        product_type: formData.productType,
+        weight: weightInput,
+        goldWeight: goldWeight || weightInput,
+        silverWeight,
+        goldPurity: formData.goldPurity,
+        silverPurity: formData.silverPurity,
+        goldRatePerGram,
+        silverRatePerGram,
+        makingChargePerGram: formData.makingChargePerGram ?? 0,
+        lessStoneWeight: formData.lessStoneWeight ?? 0,
+        diamonds: processedDiamonds,
+        platformCommissionRate: formData.platformCommissionRate ?? 0,
+        otherCharges: formData.otherCharges ?? 0,
+        vendorCommissionRate: vendorRateForSave,
+        retailerCommissionRate: retailerRateForSave,
+        hasGold: ['Gold', 'Platinum'].includes(formData.productType),
+        hasSilver: formData.productType === 'Silver',
+        diamondsPrice: formData.diamondsPrice ?? 0,
+        gemstonePrice: formData.gemstonePrice ?? 0,
+      };
+      const rateOverrides: Record<string, number> = {
+        vendorCommissionRate: vendorRateForSave,
+        retailerCommissionRate: retailerRateForSave,
+      };
+      if (formData.productType === 'Gold') rateOverrides.goldRate = goldRatePerGram;
+      else if (formData.productType === 'Silver') rateOverrides.silverRate = silverRatePerGram;
+      else if (formData.productType === 'Platinum') rateOverrides.platinumRate = goldRatePerGram;
+      const calculatedTotal = calculateFullProductPrice(productShapeForPrice, rateOverrides);
+      const priceToSave = Math.max(0, Math.round(calculatedTotal * 100) / 100);
 
       const payload = {
         ...formData,
@@ -1748,14 +1801,12 @@ export function ProductFormPage({ productId, context: contextProp }: ProductForm
         taxRate: formData.gstRate || 3, // GST percentage stored (will be calculated on website for invoice)
         discount: formData.discount || 0, // Discount percentage stored (will be calculated on website for invoice)
         stock: formData.stock || 1,
-        regularPrice: 0,
-        sellingPrice: 0,
         costPrice: 0,
-      // When editing, preserve original price if it exists, otherwise use calculated subTotal
-      // This prevents price from changing automatically when configured rates change
-        price: (productId && originalPrice !== null) ? originalPrice : subTotal, // Preserve original price when editing
-        subTotal: (productId && originalPrice !== null) ? originalPrice : subTotal, // Preserve original price when editing
-        totalAmount: (productId && originalPrice !== null) ? originalPrice : subTotal, // Preserve original price when editing
+        price: priceToSave,
+        subTotal: priceToSave,
+        totalAmount: priceToSave,
+        sellingPrice: priceToSave,
+        regularPrice: priceToSave,
         goldWeight,
         goldRatePerGram,
         silverWeight,
@@ -2004,10 +2055,17 @@ export function ProductFormPage({ productId, context: contextProp }: ProductForm
       ? diamondValueAuto // Now includes direct price
       : isSimpleProductType
         ? gemstoneValue + platformCommissionValue
-        : goldValue + makingChargesValue + diamondValueAuto + platformCommissionValue + extraCharges; // Removed vendorCommissionValue
+        : goldValue + makingChargesValue + diamondValueAuto + platformCommissionValue + extraCharges;
   subTotalRef.current = subTotal;
-  // GST and discount are stored but NOT calculated here - will be calculated on website invoice
-  const totalAmount = subTotal;
+  // Total including vendor/retailer commission so one amount in list and form
+  const totalIncludingCommissions =
+    subTotal +
+    (userRole === 'vendor' ? vendorCommissionValue : 0) +
+    (isRetailerContext ? retailerCommissionValue : 0);
+  totalIncludingCommissionsRef.current = totalIncludingCommissions;
+  const retailerSellingPrice = subTotal + retailerCommissionValue;
+  retailerSellingPriceRef.current = retailerSellingPrice;
+  const totalAmount = totalIncludingCommissions;
 
   const showGoldFields = ['Gold', 'Silver', 'Platinum'].includes(formData.productType);
   const showDiamondFields = formData.productType === 'Diamonds' || showGoldFields;
@@ -3789,8 +3847,17 @@ export function ProductFormPage({ productId, context: contextProp }: ProductForm
                 )}
                 <div className='flex justify-between font-semibold text-gray-900 pt-2 border-t'>
                   <span>Total Amount</span>
-                  <span>{formatINR(subTotal)}</span>
+                  <span>{formatINR(totalAmount)}</span>
                 </div>
+                {!isRetailerContext && (
+                  <div className='text-xs text-slate-500 pt-1'>This amount is saved and shown in the product list.</div>
+                )}
+                {isRetailerContext && (
+                  <div className='flex justify-between text-sm font-semibold text-green-700 dark:text-green-400 pt-1'>
+                    <span>Selling price (to customer) — same as in list</span>
+                    <span>{formatINR(retailerSellingPrice)}</span>
+                  </div>
+                )}
                 <div className='text-xs text-gray-500 mt-2 pt-2 border-t'>
                   <p>Note: Discount ({formData.discount || 0}%) and GST ({formData.gstRate || 0}%) are stored and will be calculated on the invoice when the website is ready.</p>
                 </div>
@@ -3829,8 +3896,17 @@ export function ProductFormPage({ productId, context: contextProp }: ProductForm
                 )}
                 <div className='flex justify-between font-semibold text-gray-900 pt-2 border-t'>
                   <span>Total Amount</span>
-                  <span>{formatINR(subTotal)}</span>
+                  <span>{formatINR(totalAmount)}</span>
                 </div>
+                {!isRetailerContext && (
+                  <div className='text-xs text-slate-500 pt-1'>This amount is saved and shown in the product list.</div>
+                )}
+                {isRetailerContext && (
+                  <div className='flex justify-between text-sm font-semibold text-green-700 dark:text-green-400 pt-1'>
+                    <span>Selling price (to customer) — same as in list</span>
+                    <span>{formatINR(retailerSellingPrice)}</span>
+                  </div>
+                )}
                 <div className='text-xs text-gray-500 mt-2 pt-2 border-t'>
                   <p>Note: Discount ({formData.discount || 0}%) and GST ({formData.gstRate || 0}%) are stored and will be calculated on the invoice when the website is ready.</p>
                 </div>
@@ -3873,8 +3949,19 @@ export function ProductFormPage({ productId, context: contextProp }: ProductForm
                 </div>
                 <div className='flex justify-between font-semibold text-gray-900 pt-2 border-t'>
                   <span>Total Amount</span>
-                  <span>{formatINR(subTotal)}</span>
+                  <span>{formatINR(totalAmount)}</span>
                 </div>
+                {!isRetailerContext && (
+                  <div className='text-xs text-slate-500 pt-1'>
+                    This amount is saved and shown in the product list.
+                  </div>
+                )}
+                {isRetailerContext && (
+                  <div className='flex justify-between text-sm font-semibold text-green-700 dark:text-green-400 pt-1'>
+                    <span>Selling price (to customer) — same as in list</span>
+                    <span>{formatINR(retailerSellingPrice)}</span>
+                  </div>
+                )}
                 <div className='text-xs text-gray-500 mt-2 pt-2 border-t'>
                   <p>Note: Discount ({formData.discount || 0}%) and GST ({formData.gstRate || 0}%) are stored and will be calculated on the invoice when the website is ready.</p>
                 </div>

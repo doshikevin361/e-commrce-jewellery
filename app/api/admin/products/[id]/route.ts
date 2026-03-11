@@ -259,9 +259,18 @@ export async function PUT(
     
     console.log('[v0] Product found, updating...');
 
+    // Always persist price fields from body so list and form stay in sync (form sends calculated total)
+    const priceFields: Record<string, number> = {};
+    if (typeof body.price === 'number' && body.price >= 0) priceFields.price = body.price;
+    if (typeof body.sellingPrice === 'number' && body.sellingPrice >= 0) priceFields.sellingPrice = body.sellingPrice;
+    if (typeof body.subTotal === 'number' && body.subTotal >= 0) priceFields.subTotal = body.subTotal;
+    if (typeof body.totalAmount === 'number' && body.totalAmount >= 0) priceFields.totalAmount = body.totalAmount;
+    if (typeof body.regularPrice === 'number' && body.regularPrice >= 0) priceFields.regularPrice = body.regularPrice;
+    if (typeof body.mrp === 'number' && body.mrp >= 0) priceFields.mrp = body.mrp;
+
     const result = await db.collection('products').updateOne(
       { _id: new ObjectId(id) },
-      { $set: { ...normalizedUpdateData, updatedAt: new Date() } }
+      { $set: { ...normalizedUpdateData, ...priceFields, updatedAt: new Date() } }
     );
 
     console.log('[v0] Update result:', result);
