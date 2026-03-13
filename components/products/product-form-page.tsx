@@ -1354,14 +1354,15 @@ export function ProductFormPage({ productId, context: contextProp }: ProductForm
           return;
         }
         const product = await response.json();
+        const trim = (v: unknown) => (v != null ? String(v).trim() : '');
         setFormData({
-          productType: product.product_type || '',
-          category: product.category || '',
-          sku: product.sku || '',
-          designType: product.designType || '',
-          goldPurity: product.goldPurity || '',
-          silverPurity: product.silverPurity || '',
-          metalColour: product.metalColour || '',
+          productType: trim(product.product_type),
+          category: trim(product.category),
+          sku: trim(product.sku),
+          designType: trim(product.designType),
+          goldPurity: trim(product.goldPurity),
+          silverPurity: trim(product.silverPurity),
+          metalColour: trim(product.metalColour),
           goldWeight: product.weight || 0,
           lessDiamondWeight: 0,
           lessStoneWeight: 0,
@@ -1427,6 +1428,7 @@ export function ProductFormPage({ productId, context: contextProp }: ProductForm
           stock: product.quantity ?? 1,
           vendorCommissionRate: 0,
           platformCommissionRate: 0,
+          retailerCommissionRate: product.retailerCommissionRate ?? 0,
           makingChargePerGram: 500,
           diamondValue: 0,
           shippingCharges: 0,

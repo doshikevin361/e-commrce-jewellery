@@ -18,8 +18,9 @@ function norm(s: string): string {
 }
 
 /**
- * Find retailer commission % from rows by exact combination match
+ * Find retailer commission % from rows by combination match.
  * (productType, category, designType, metal, purityKarat).
+ * Empty string in a row field acts as wildcard (matches any value).
  * Returns 0 if no match.
  */
 export function findRetailerCommissionFromRows(
@@ -37,11 +38,11 @@ export function findRetailerCommissionFromRows(
   const nMet = norm(metal);
   const nPur = norm(purity);
   for (const row of rows) {
-    if (norm(row.productType) !== nPt) continue;
-    if (norm(row.category) !== nCat) continue;
-    if (norm(row.designType) !== nDes) continue;
-    if (norm(row.metal) !== nMet) continue;
-    if (norm(row.purityKarat) !== nPur) continue;
+    if (norm(row.productType) !== '' && norm(row.productType) !== nPt) continue;
+    if (norm(row.category) !== '' && norm(row.category) !== nCat) continue;
+    if (norm(row.designType) !== '' && norm(row.designType) !== nDes) continue;
+    if (norm(row.metal) !== '' && norm(row.metal) !== nMet) continue;
+    if (norm(row.purityKarat) !== '' && norm(row.purityKarat) !== nPur) continue;
     const pct = typeof row.retailerCommission === 'number' && Number.isFinite(row.retailerCommission) ? row.retailerCommission : 0;
     return Math.max(0, Math.min(100, pct));
   }

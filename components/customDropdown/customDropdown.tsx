@@ -55,14 +55,17 @@ const Dropdown: React.FC<DropdownProps> = ({
     }
   }, [isOpen, withSearch]);
 
-  // Update selected when value prop changes
+  // Update selected when value or options change (match by trimmed value so API/form whitespace doesn't break selection)
   useEffect(() => {
-    if (value) {
-      const foundOption = options.find(opt => opt.value === value);
-      setSelected(foundOption || null);
-    } else {
+    const v = (value ?? '').trim();
+    if (!v) {
       setSelected(null);
+      return;
     }
+    const foundOption =
+      options.find(opt => (opt.value || '').trim() === v) ??
+      options.find(opt => (opt.value || '').trim().toLowerCase() === v.toLowerCase());
+    setSelected(foundOption || null);
   }, [value, options]);
 
   const filteredOptions = options.filter(option => option.label.toLowerCase().includes(searchTerm.toLowerCase()));

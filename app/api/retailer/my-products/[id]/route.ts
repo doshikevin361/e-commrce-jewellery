@@ -3,8 +3,33 @@ import { connectToDatabase } from '@/lib/mongodb';
 import { getRetailerFromRequest } from '@/lib/auth';
 import { ObjectId } from 'mongodb';
 
+/** Return name for a given id from a collection, or the original value if not an id / not found. */
+async function resolveIdToName(
+  db: { collection: (n: string) => { findOne: (q: object) => Promise<{ name?: string } | null> } },
+  collection: string,
+  value: unknown
+): Promise<string> {
+  if (value == null) return '';
+  const str = value instanceof ObjectId ? value.toString() : String(value).trim();
+  if (str === '') return '';
+  if (!ObjectId.isValid(str) || str.length !== 24) return str;
+  try {
+    const doc = await db.collection(collection).findOne({ _id: new ObjectId(str) });
+    return (doc?.name as string) ?? str;
+  } catch {
+    return str;
+  }
+}
+
+function trimStr(v: unknown): string {
+  return (v != null ? String(v) : '').trim();
+}
+
 /**
  * GET - Fetch single retailer product for edit page.
+ * Resolves category, designType, goldPurity, silverPurity, metalColour from id to name when stored as id.
+ * When product_type or category is missing (e.g. older retailer_products), enriches from source product
+ * so dropdowns on the edit form show the correct selection.
  */
 export async function GET(
   request: NextRequest,
@@ -29,39 +54,73 @@ export async function GET(
       return NextResponse.json({ error: 'Product not found or not yours' }, { status: 404 });
     }
 
-    const p = product as Record<string, unknown> & { retailerId?: ObjectId; _id: ObjectId };
+    const p = product as Record<string, unknown> & { retailerId?: ObjectId; _id: ObjectId; sourceProductId?: ObjectId };
+
+    let product_type = trimStr(p.product_type);
+    let categoryRaw = p.category;
+    let designTypeRaw = p.designType;
+    let goldPurityRaw = p.goldPurity;
+    let silverPurityRaw = p.silverPurity;
+    let metalColourRaw = p.metalColour;
+
+    if (p.sourceProductId) {
+      const sourceId = p.sourceProductId instanceof ObjectId ? p.sourceProductId : new ObjectId(String(p.sourceProductId));
+      const source = await db.collection('products').findOne(
+        { _id: sourceId },
+        { projection: { product_type: 1, category: 1, designType: 1, goldPurity: 1, silverPurity: 1, metalColour: 1 } }
+      );
+      if (source) {
+        const src = source as Record<string, unknown>;
+        if (!product_type) product_type = trimStr(src.product_type);
+        if (categoryRaw == null || categoryRaw === '') categoryRaw = src.category;
+        if (designTypeRaw == null || designTypeRaw === '') designTypeRaw = src.designType;
+        if (goldPurityRaw == null || goldPurityRaw === '') goldPurityRaw = src.goldPurity;
+        if (silverPurityRaw == null || silverPurityRaw === '') silverPurityRaw = src.silverPurity;
+        if (metalColourRaw == null || metalColourRaw === '') metalColourRaw = src.metalColour;
+      }
+    }
+
+    const [categoryName, designTypeName, goldPurityName, silverPurityName, metalColourName] = await Promise.all([
+      resolveIdToName(db, 'categories', categoryRaw),
+      resolveIdToName(db, 'design_types', designTypeRaw),
+      resolveIdToName(db, 'karats', goldPurityRaw),
+      resolveIdToName(db, 'purities', silverPurityRaw),
+      resolveIdToName(db, 'metal_colors', metalColourRaw),
+    ]);
+
+    const mainImageVal = trimStr(p.mainImage);
     const out: Record<string, unknown> = {
       _id: (p._id as ObjectId).toString(),
-      name: p.name ?? '',
-      mainImage: p.mainImage ?? '',
-      shortDescription: p.shortDescription ?? '',
-      description: p.description ?? p.shortDescription ?? '',
-      shopName: p.shopName ?? '',
+      name: trimStr(p.name),
+      mainImage: mainImageVal,
+      shortDescription: trimStr(p.shortDescription),
+      description: trimStr(p.description) || trimStr(p.shortDescription),
+      shopName: trimStr(p.shopName),
       sellingPrice: p.sellingPrice ?? 0,
       quantity: p.quantity ?? 0,
       status: p.status ?? 'active',
       retailerCommissionRate: typeof p.retailerCommissionRate === 'number' ? p.retailerCommissionRate : 0,
       createdAt: p.createdAt,
       updatedAt: p.updatedAt,
-      category: p.category ?? '',
-      product_type: p.product_type ?? '',
-      designType: p.designType ?? '',
-      metalType: p.metalType ?? '',
-      goldPurity: p.goldPurity ?? '',
-      silverPurity: p.silverPurity ?? '',
-      metalColour: p.metalColour ?? '',
+      category: trimStr(categoryName || (categoryRaw != null ? String(categoryRaw) : '')),
+      product_type: product_type,
+      designType: trimStr(designTypeName || (designTypeRaw != null ? String(designTypeRaw) : '')),
+      metalType: trimStr(p.metalType),
+      goldPurity: trimStr(goldPurityName || (goldPurityRaw != null ? String(goldPurityRaw) : '')),
+      silverPurity: trimStr(silverPurityName || (silverPurityRaw != null ? String(silverPurityRaw) : '')),
+      metalColour: trimStr(metalColourName || (metalColourRaw != null ? String(metalColourRaw) : '')),
       weight: p.weight ?? 0,
-      size: p.size ?? '',
+      size: trimStr(p.size),
       gender: Array.isArray(p.gender) ? p.gender : [],
-      sku: p.sku ?? '',
-      hsnCode: p.hsnCode ?? '',
+      sku: trimStr(p.sku),
+      hsnCode: trimStr(p.hsnCode),
       tags: Array.isArray(p.tags) ? p.tags : (typeof p.tags === 'string' ? (p.tags ? p.tags.split(',').map((s: string) => s.trim()).filter(Boolean) : []) : []),
       specifications: Array.isArray(p.specifications) ? p.specifications : [{ key: '', value: '' }],
       images: Array.isArray(p.images) ? p.images : [],
-      seoTitle: p.seoTitle ?? '',
-      seoDescription: p.seoDescription ?? '',
-      seoTags: p.seoTags ?? '',
-      urlSlug: p.urlSlug ?? '',
+      seoTitle: trimStr(p.seoTitle),
+      seoDescription: trimStr(p.seoDescription),
+      seoTags: trimStr(p.seoTags),
+      urlSlug: trimStr(p.urlSlug),
     };
     return NextResponse.json(out);
   } catch (e) {
