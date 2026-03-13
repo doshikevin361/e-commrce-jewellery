@@ -56,6 +56,7 @@ export async function POST(request: NextRequest) {
       seoDescription: str(body.seoDescription) || '',
       seoTags: str(body.seoTags) || '',
       urlSlug: str(body.urlSlug) || '',
+      relatedProducts: Array.isArray(body.relatedProducts) ? body.relatedProducts : [],
       createdAt: now,
       updatedAt: now,
     };

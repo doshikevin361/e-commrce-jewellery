@@ -2,8 +2,8 @@ import { AdminLayout } from '@/components/layout/admin-layout';
 import { PriceCompareView } from '@/components/price-compare/price-compare-view';
 
 export const metadata = {
-  title: 'Price Compare | Admin',
-  description: 'Compare product rates across vendors and retailers by category',
+  title: 'Commission Compare | Admin',
+  description: 'Compare vendor and retailer commission by category',
 };
 
 export default function AdminPriceComparePage() {

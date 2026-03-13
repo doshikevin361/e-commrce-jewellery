@@ -33,6 +33,7 @@ export async function GET(request: NextRequest) {
       items: o.items,
       shippingAddress: o.shippingAddress,
       createdAt: o.createdAt,
+      soldToPortalAt: o.soldToPortalAt ?? null,
     }));
 
     return NextResponse.json({

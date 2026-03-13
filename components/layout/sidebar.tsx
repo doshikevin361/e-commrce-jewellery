@@ -214,7 +214,7 @@ export function Sidebar() {
       allowedRoles: ['vendor'],
     },
     {
-      label: 'Price Compare',
+      label: 'Commission Compare',
       href: '/admin/price-compare',
       badge: null,
       icon: BarChart2,

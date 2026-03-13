@@ -54,41 +54,82 @@ export async function GET(
       return NextResponse.json({ error: 'Product not found or not yours' }, { status: 404 });
     }
 
-    const p = product as Record<string, unknown> & { retailerId?: ObjectId; _id: ObjectId; sourceProductId?: ObjectId };
+    const p = product as Record<string, unknown> & { retailerId?: ObjectId; _id: ObjectId; category?: string };
+    const retailerIdObj = new ObjectId(retailer.id);
+    const currentCategory = (p.category as string) || '';
 
-    let product_type = trimStr(p.product_type);
-    let categoryRaw = p.category;
-    let designTypeRaw = p.designType;
-    let goldPurityRaw = p.goldPurity;
-    let silverPurityRaw = p.silverPurity;
-    let metalColourRaw = p.metalColour;
+    const looksLikeObjectId = (s: string) => /^[a-fA-F0-9]{24}$/.test(String(s).trim());
 
-    if (p.sourceProductId) {
-      const sourceId = p.sourceProductId instanceof ObjectId ? p.sourceProductId : new ObjectId(String(p.sourceProductId));
-      const source = await db.collection('products').findOne(
-        { _id: sourceId },
-        { projection: { product_type: 1, category: 1, designType: 1, goldPurity: 1, silverPurity: 1, metalColour: 1 } }
-      );
-      if (source) {
-        const src = source as Record<string, unknown>;
-        if (!product_type) product_type = trimStr(src.product_type);
-        if (categoryRaw == null || categoryRaw === '') categoryRaw = src.category;
-        if (designTypeRaw == null || designTypeRaw === '') designTypeRaw = src.designType;
-        if (goldPurityRaw == null || goldPurityRaw === '') goldPurityRaw = src.goldPurity;
-        if (silverPurityRaw == null || silverPurityRaw === '') silverPurityRaw = src.silverPurity;
-        if (metalColourRaw == null || metalColourRaw === '') metalColourRaw = src.metalColour;
-      }
+    let designTypeOut = (p.designType as string) ?? '';
+    if (designTypeOut && looksLikeObjectId(designTypeOut)) {
+      try {
+        const dt = await db.collection('design_types').findOne(
+          { _id: new ObjectId(designTypeOut) },
+          { projection: { name: 1 } }
+        );
+        if (dt && (dt as Record<string, unknown>).name) designTypeOut = (dt as Record<string, string>).name;
+      } catch (_) {}
     }
 
-    const [categoryName, designTypeName, goldPurityName, silverPurityName, metalColourName] = await Promise.all([
-      resolveIdToName(db, 'categories', categoryRaw),
-      resolveIdToName(db, 'design_types', designTypeRaw),
-      resolveIdToName(db, 'karats', goldPurityRaw),
-      resolveIdToName(db, 'purities', silverPurityRaw),
-      resolveIdToName(db, 'metal_colors', metalColourRaw),
-    ]);
+    let metalColourOut = (p.metalColour as string) ?? '';
+    if (metalColourOut && looksLikeObjectId(metalColourOut)) {
+      try {
+        const mc = await db.collection('metal_colors').findOne(
+          { _id: new ObjectId(metalColourOut) },
+          { projection: { name: 1 } }
+        );
+        if (mc && (mc as Record<string, unknown>).name) metalColourOut = (mc as Record<string, string>).name;
+      } catch (_) {}
+    }
 
-    const mainImageVal = trimStr(p.mainImage);
+    const rawGender = Array.isArray(p.gender) ? p.gender : [];
+    const genderMap: Record<string, string> = { Female: 'Women', Male: 'Man', Women: 'Women', Man: 'Man', Unisex: 'Unisex' };
+    const allowedGender = new Set(['Man', 'Women', 'Unisex']);
+    const genderOut = rawGender
+      .map((g: unknown) => genderMap[String(g).trim()] || String(g).trim())
+      .filter((g: string) => allowedGender.has(g));
+
+    const storedRelatedIds = Array.isArray(p.relatedProducts)
+      ? (p.relatedProducts as string[]).filter((x: unknown) => typeof x === 'string' && ObjectId.isValid(x))
+      : [];
+    let relatedList: Array<Record<string, unknown>> = [];
+    if (storedRelatedIds.length > 0) {
+      const ids = storedRelatedIds.map((x: string) => new ObjectId(x));
+      const resolved = await db
+        .collection('retailer_products')
+        .find({ _id: { $in: ids }, retailerId: retailerIdObj, status: 'active' })
+        .project({ _id: 1, name: 1, mainImage: 1, sellingPrice: 1, quantity: 1, category: 1 })
+        .toArray();
+      relatedList = resolved.map((r: Record<string, unknown>) => ({
+        _id: (r._id as ObjectId)?.toString(),
+        name: r.name,
+        mainImage: r.mainImage,
+        sellingPrice: r.sellingPrice,
+        quantity: r.quantity,
+        category: r.category,
+      }));
+    } else if (currentCategory) {
+      const sameCategory = await db
+        .collection('retailer_products')
+        .find({
+          retailerId: retailerIdObj,
+          _id: { $ne: new ObjectId(id) },
+          status: 'active',
+          category: currentCategory,
+        })
+        .project({ _id: 1, name: 1, mainImage: 1, sellingPrice: 1, quantity: 1, category: 1 })
+        .limit(8)
+        .toArray();
+      relatedList = sameCategory.map((r: Record<string, unknown>) => ({
+        _id: (r._id as ObjectId)?.toString(),
+        name: r.name,
+        mainImage: r.mainImage,
+        sellingPrice: r.sellingPrice,
+        quantity: r.quantity,
+        category: r.category,
+      }));
+    }
+
     const out: Record<string, unknown> = {
       _id: (p._id as ObjectId).toString(),
       name: trimStr(p.name),
@@ -102,25 +143,26 @@ export async function GET(
       retailerCommissionRate: typeof p.retailerCommissionRate === 'number' ? p.retailerCommissionRate : 0,
       createdAt: p.createdAt,
       updatedAt: p.updatedAt,
-      category: trimStr(categoryName || (categoryRaw != null ? String(categoryRaw) : '')),
-      product_type: product_type,
-      designType: trimStr(designTypeName || (designTypeRaw != null ? String(designTypeRaw) : '')),
-      metalType: trimStr(p.metalType),
-      goldPurity: trimStr(goldPurityName || (goldPurityRaw != null ? String(goldPurityRaw) : '')),
-      silverPurity: trimStr(silverPurityName || (silverPurityRaw != null ? String(silverPurityRaw) : '')),
-      metalColour: trimStr(metalColourName || (metalColourRaw != null ? String(metalColourRaw) : '')),
+      category: p.category ?? '',
+      product_type: p.product_type ?? '',
+      designType: designTypeOut,
+      metalType: p.metalType ?? '',
+      goldPurity: p.goldPurity ?? '',
+      silverPurity: p.silverPurity ?? '',
+      metalColour: metalColourOut,
       weight: p.weight ?? 0,
-      size: trimStr(p.size),
-      gender: Array.isArray(p.gender) ? p.gender : [],
-      sku: trimStr(p.sku),
-      hsnCode: trimStr(p.hsnCode),
+      size: p.size ?? '',
+      gender: genderOut,
+      sku: p.sku ?? '',
+      hsnCode: p.hsnCode ?? '',
       tags: Array.isArray(p.tags) ? p.tags : (typeof p.tags === 'string' ? (p.tags ? p.tags.split(',').map((s: string) => s.trim()).filter(Boolean) : []) : []),
       specifications: Array.isArray(p.specifications) ? p.specifications : [{ key: '', value: '' }],
       images: Array.isArray(p.images) ? p.images : [],
-      seoTitle: trimStr(p.seoTitle),
-      seoDescription: trimStr(p.seoDescription),
-      seoTags: trimStr(p.seoTags),
-      urlSlug: trimStr(p.urlSlug),
+      seoTitle: p.seoTitle ?? '',
+      seoDescription: p.seoDescription ?? '',
+      seoTags: p.seoTags ?? '',
+      urlSlug: p.urlSlug ?? '',
+      relatedProducts: relatedList,
     };
     return NextResponse.json(out);
   } catch (e) {
@@ -168,6 +210,7 @@ export async function PATCH(
     if (body.weight !== undefined) updates.weight = num(body.weight, 0);
     if (body.size !== undefined) updates.size = str(body.size);
     if (body.gender !== undefined) updates.gender = Array.isArray(body.gender) ? body.gender : [];
+    if (body.relatedProducts !== undefined) updates.relatedProducts = Array.isArray(body.relatedProducts) ? body.relatedProducts : [];
     if (body.sku !== undefined) updates.sku = str(body.sku);
     if (body.hsnCode !== undefined) updates.hsnCode = str(body.hsnCode);
     if (body.tags !== undefined) updates.tags = Array.isArray(body.tags) ? body.tags : (typeof body.tags === 'string' ? body.tags.split(',').map((s: string) => s.trim()).filter(Boolean) : []);
