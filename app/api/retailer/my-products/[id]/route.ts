@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
 import { getRetailerFromRequest } from '@/lib/auth';
 import { ObjectId } from 'mongodb';
+import { findRetailerCommissionFromRows } from '@/lib/retailer-commission';
 
 /** Return name for a given id from a collection, or the original value if not an id / not found. */
 async function resolveIdToName(
@@ -196,6 +197,29 @@ export async function GET(
 
     const mainImageVal = trimStr(p.mainImage);
     const metalTypeVal = product_type || trimStr(p.metalType);
+
+    const sellingPriceOut: number = typeof p.sellingPrice === 'number' && p.sellingPrice >= 0 ? p.sellingPrice : 0;
+
+    const retailerDoc = await db.collection('retailers').findOne(
+      { _id: retailerIdObj },
+      { projection: { retailerCommissionRows: 1 } }
+    );
+    const commissionRows = Array.isArray((retailerDoc as { retailerCommissionRows?: unknown[] })?.retailerCommissionRows)
+      ? (retailerDoc as { retailerCommissionRows: { productType?: string; category?: string; designType?: string; metal?: string; purityKarat?: string; retailerCommission?: number }[] }).retailerCommissionRows
+      : [];
+    const metalForMatch = product_type === 'Gold' || product_type === 'Silver' || product_type === 'Platinum' ? product_type : '';
+    const purityForMatch = goldPurityOut || silverPurityOut || '';
+    const fromRules = findRetailerCommissionFromRows(
+      commissionRows,
+      product_type,
+      categoryOut || '',
+      designTypeOut,
+      metalForMatch,
+      purityForMatch
+    );
+    const storedRate = typeof p.retailerCommissionRate === 'number' ? p.retailerCommissionRate : null;
+    const effectiveCommissionRate = fromRules > 0 ? fromRules : (storedRate !== null ? storedRate : 0);
+
     const out: Record<string, unknown> = {
       _id: (p._id as ObjectId).toString(),
       name: trimStr(p.name),
@@ -203,10 +227,10 @@ export async function GET(
       shortDescription: trimStr(p.shortDescription),
       description: trimStr(p.description) || trimStr(p.shortDescription),
       shopName: trimStr(p.shopName),
-      sellingPrice: p.sellingPrice ?? 0,
+      sellingPrice: sellingPriceOut,
       quantity: p.quantity ?? 0,
       status: p.status ?? 'active',
-      retailerCommissionRate: typeof p.retailerCommissionRate === 'number' ? p.retailerCommissionRate : 0,
+      retailerCommissionRate: effectiveCommissionRate,
       createdAt: p.createdAt,
       updatedAt: p.updatedAt,
       category: categoryOut,

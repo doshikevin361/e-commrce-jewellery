@@ -2,7 +2,6 @@ import { connectToDatabase } from "@/lib/mongodb";
 import { NextRequest, NextResponse } from "next/server";
 import { ObjectId } from "mongodb";
 import { formatProductPrice } from "@/lib/utils/price-calculator";
-import { findRetailerCommissionFromRows, getCustomerPriceFromRetailer } from "@/lib/retailer-commission";
 
 export async function GET(request: NextRequest) {
   try {
@@ -127,44 +126,18 @@ export async function GET(request: NextRequest) {
       .limit(limit)
       .toArray();
 
-    // Resolve retailer commission: customer price = sellingPrice + (sellingPrice * retailerCommission%)
-    const sourceIds = [...new Set((retailerProducts as any[]).map((rp) => rp.sourceProductId).filter(Boolean))].map((id) => (id instanceof ObjectId ? id : new ObjectId(String(id))));
-    const retailerIds = [...new Set((retailerProducts as any[]).map((rp) => rp.retailerId).filter(Boolean))].map((id) => (id instanceof ObjectId ? id : new ObjectId(String(id))));
-    const [sourceProducts, retailerDocs] = await Promise.all([
-      sourceIds.length > 0 ? db.collection("products").find({ _id: { $in: sourceIds } }).project({ _id: 1, product_type: 1, category: 1, designType: 1, goldPurity: 1, silverPurity: 1 }).toArray() : [],
-      retailerIds.length > 0 ? db.collection("retailers").find({ _id: { $in: retailerIds } }).project({ _id: 1, retailerCommissionRows: 1 }).toArray() : [],
-    ]);
-    const sourceMap = new Map(sourceProducts.map((p: any) => [p._id.toString(), p]));
-    const retailerMap = new Map(retailerDocs.map((r: any) => [r._id.toString(), r]));
-    const allCatIds = [...new Set(sourceProducts.map((p: any) => normalizeCategoryId(p.category)).filter(Boolean))].filter((id): id is string => !!id && ObjectId.isValid(id));
-    const catDocs = allCatIds.length > 0 ? await db.collection("categories").find({ _id: { $in: allCatIds.map((id) => new ObjectId(id)) } }).project({ _id: 1, name: 1 }).toArray() : [];
-    const catNameMap = new Map(catDocs.map((c: any) => [c._id.toString(), c.name]));
-
+    // Retailer products: website shows retailer's selling price (same as retailer panel)
     const retailerList = (retailerProducts as any[]).map((rp) => {
       const sellingPrice = Number(rp.sellingPrice) || 0;
-      let commissionPct = typeof rp.retailerCommissionRate === "number" && Number.isFinite(rp.retailerCommissionRate) ? rp.retailerCommissionRate : NaN;
-      if (Number.isNaN(commissionPct)) {
-        const source = rp.sourceProductId ? sourceMap.get((rp.sourceProductId instanceof ObjectId ? rp.sourceProductId : new ObjectId(String(rp.sourceProductId))).toString()) : null;
-        const retailer = rp.retailerId ? retailerMap.get((rp.retailerId instanceof ObjectId ? rp.retailerId : new ObjectId(String(rp.retailerId))).toString()) : null;
-        const rows = Array.isArray((retailer as any)?.retailerCommissionRows) ? (retailer as any).retailerCommissionRows : [];
-        const productType = (source?.product_type || rp.product_type || "").trim();
-        const categoryId = source?.category ? normalizeCategoryId(source.category) : null;
-        const categoryName = categoryId ? (catNameMap.get(categoryId) || "") : (rp.category || "").trim();
-        const designType = (source?.designType || rp.designType || "").trim();
-        const metal = productType === "Gold" || productType === "Silver" || productType === "Platinum" ? productType : "";
-        const purity = (source?.goldPurity || source?.silverPurity || rp.goldPurity || rp.silverPurity || "").trim();
-        commissionPct = findRetailerCommissionFromRows(rows, productType, categoryName, designType, metal, purity);
-      }
-      const customerPrice = getCustomerPriceFromRetailer(sellingPrice, commissionPct);
       return {
         _id: (rp._id as ObjectId).toString(),
         name: rp.name,
         mainImage: rp.mainImage || null,
         category: rp.shopName ? `Sold by ${rp.shopName}` : "Partner Store",
-        displayPrice: customerPrice,
+        displayPrice: sellingPrice,
         originalPrice: sellingPrice,
-        sellingPrice: customerPrice,
-        regularPrice: customerPrice,
+        sellingPrice,
+        regularPrice: sellingPrice,
         stock: rp.quantity ?? 0,
         urlSlug: (rp._id as ObjectId).toString(),
         sellerType: "retailer",

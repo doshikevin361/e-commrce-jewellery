@@ -38,6 +38,8 @@ interface Product {
   sellingPrice?: number;
   subTotal?: number;
   totalAmount?: number;
+  /** Total price to show (same as edit form total); prefer this when present */
+  displayPrice?: number;
   stock: number;
   status: string;
   image?: string;
@@ -278,7 +280,7 @@ export function ProductList() {
         p.sku || '',
         getCategoryName(p.category),
         p.vendor,
-        p.sellingPrice || p.price || 0,
+        p.displayPrice ?? p.sellingPrice ?? p.price ?? 0,
         p.stock,
         p.status,
       ]);
@@ -527,7 +529,7 @@ export function ProductList() {
                           )}
                         </TableCell>
                         <TableCell className='py-4 px-4 text-sm font-semibold text-slate-900 dark:text-white'>
-                          ₹{(Number(product.price ?? product.totalAmount) || 0).toFixed(2)}
+                          ₹{(Number(product.displayPrice ?? product.price ?? product.sellingPrice) || 0).toFixed(2)}
                         </TableCell>
                         <TableCell className='py-4 px-4 text-center'>
                           <span
@@ -662,7 +664,7 @@ export function ProductList() {
               </div>
             ) : (
               <div className='grid grid-cols-1 sm:grid-cols-4 gap-4'>
-                <DetailItem label='Selling Price' value={formatCurrency(viewProductData.sellingPrice || viewProductData.price)} />
+                <DetailItem label='Selling Price' value={formatCurrency(viewProductData.displayPrice ?? viewProductData.sellingPrice ?? viewProductData.price ?? 0)} />
                 <DetailItem label='Cost Price' value={formatCurrency(viewProductData.costPrice)} />
                 <DetailItem label='Regular Price' value={formatCurrency(viewProductData.regularPrice)} />
                 <DetailItem label='Stock' value={viewProductData.stock} />

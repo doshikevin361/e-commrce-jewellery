@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
 import { getUserFromRequest, isVendor } from '@/lib/auth';
 import { ObjectId } from 'mongodb';
+import { findRetailerCommissionFromRows } from '@/lib/retailer-commission';
 
 const normalizeProductPayload = (payload: any) => {
   if (!payload || typeof payload !== 'object') {
@@ -171,13 +172,19 @@ export async function GET(request: NextRequest) {
 
     const products = await db.collection('products').find(query).sort({ createdAt: -1, _id: -1 }).toArray();
 
+    // Vendor products: use same "total" as edit form (sellingPrice / price / subTotal / totalAmount)
+    const vendorDisplayPrice = (p: Record<string, unknown>) => {
+      const n = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) ? v : 0);
+      return n(p.sellingPrice) || n(p.price) || n(p.subTotal) || n(p.totalAmount) || 0;
+    };
     const serializedProducts = products.map((p: Record<string, unknown>) => ({
       ...p,
       _id: (p._id as ObjectId)?.toString(),
       sellerType: 'vendor',
+      displayPrice: vendorDisplayPrice(p),
     }));
 
-    // For admin (non-vendor), also include retailer portal products so they appear in the admin list
+    // For admin (non-vendor), also include retailer portal products; price = same total as edit form (base + effective commission)
     let retailerProducts: Record<string, unknown>[] = [];
     if (!currentUser || !isVendor(currentUser)) {
       const retailerDocs = await db
@@ -185,16 +192,42 @@ export async function GET(request: NextRequest) {
         .find({})
         .sort({ updatedAt: -1, _id: -1 })
         .toArray();
+
+      const retailerIds = [...new Set((retailerDocs as { retailerId?: ObjectId }[]).map((d) => d.retailerId).filter(Boolean))] as ObjectId[];
+      const retailerMap = new Map<string, { retailerCommissionRows?: { productType?: string; category?: string; designType?: string; metal?: string; purityKarat?: string; retailerCommission?: number }[] }>();
+      if (retailerIds.length > 0) {
+        const retailers = await db
+          .collection('retailers')
+          .find({ _id: { $in: retailerIds } }, { projection: { retailerCommissionRows: 1 } })
+          .toArray();
+        for (const r of retailers as { _id: ObjectId; retailerCommissionRows?: unknown[] }[]) {
+          retailerMap.set((r._id as ObjectId).toString(), {
+            retailerCommissionRows: Array.isArray(r.retailerCommissionRows) ? r.retailerCommissionRows : [],
+          });
+        }
+      }
+
       retailerProducts = retailerDocs.map((rp: Record<string, unknown>) => {
-        const sellingPrice = Number(rp.sellingPrice) || 0;
-        const commissionRate = typeof rp.retailerCommissionRate === 'number' ? rp.retailerCommissionRate : 0;
-        const finalPrice = commissionRate > 0 ? Math.round(sellingPrice * (1 + commissionRate / 100)) : sellingPrice;
+        const baseSellingPrice = Number(rp.sellingPrice) || 0;
+        const productType = String(rp.product_type ?? '').trim();
+        const categoryName = String(rp.category ?? '').trim();
+        const designType = String(rp.designType ?? '').trim();
+        const metal = productType === 'Gold' || productType === 'Silver' || productType === 'Platinum' ? productType : '';
+        const purity = String(rp.goldPurity ?? rp.silverPurity ?? '').trim();
+        const retailerIdStr = (rp.retailerId as ObjectId)?.toString();
+        const retailerDoc = retailerIdStr ? retailerMap.get(retailerIdStr) : null;
+        const commissionRows = (retailerDoc?.retailerCommissionRows ?? []) as { productType?: string; category?: string; designType?: string; metal?: string; purityKarat?: string; retailerCommission?: number }[];
+        const fromRules = findRetailerCommissionFromRows(commissionRows, productType, categoryName, designType, metal, purity);
+        const storedRate = typeof rp.retailerCommissionRate === 'number' ? rp.retailerCommissionRate : null;
+        const effectiveRate = fromRules > 0 ? fromRules : (storedRate !== null ? storedRate : 0);
+        const finalPrice = effectiveRate > 0 ? Math.round(baseSellingPrice * (1 + effectiveRate / 100)) : baseSellingPrice;
         return {
           _id: (rp._id as ObjectId)?.toString(),
           name: rp.name ?? '',
           category: rp.category ?? '',
           vendor: `${(rp.shopName as string) ?? 'Retailer'} (Retailer)`,
           sellerType: 'retailer',
+          displayPrice: finalPrice,
           sellingPrice: finalPrice,
           price: finalPrice,
           subTotal: finalPrice,

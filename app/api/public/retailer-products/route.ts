@@ -1,19 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
-import { findRetailerCommissionFromRows, getCustomerPriceFromRetailer } from '@/lib/retailer-commission';
-
-function normalizeCategoryId(value: unknown): string | null {
-  if (!value) return null;
-  if (value instanceof ObjectId) return value.toString();
-  if (typeof value === 'string') return value;
-  if (typeof value === 'object' && value && '_id' in value) return (value as { _id: ObjectId })._id.toString();
-  return null;
-}
 
 /**
  * GET - List active retailer products for website (customer-facing).
- * Customer price = sellingPrice + (sellingPrice * retailerCommission%).
+ * Website shows the retailer's selling price (same as in retailer panel).
  */
 export async function GET(request: NextRequest) {
   try {
@@ -48,41 +39,14 @@ export async function GET(request: NextRequest) {
       db.collection('retailer_products').countDocuments(query),
     ]);
 
-    const sourceIds = [...new Set((products as any[]).map((p) => p.sourceProductId).filter(Boolean))].map((id) => (id instanceof ObjectId ? id : new ObjectId(String(id))));
-    const retailerIds = [...new Set((products as any[]).map((p) => p.retailerId).filter(Boolean))].map((id) => (id instanceof ObjectId ? id : new ObjectId(String(id))));
-    const [sourceProducts, retailerDocs] = await Promise.all([
-      sourceIds.length > 0 ? db.collection('products').find({ _id: { $in: sourceIds } }).project({ _id: 1, product_type: 1, category: 1, designType: 1, goldPurity: 1, silverPurity: 1 }).toArray() : [],
-      retailerIds.length > 0 ? db.collection('retailers').find({ _id: { $in: retailerIds } }).project({ _id: 1, retailerCommissionRows: 1 }).toArray() : [],
-    ]);
-    const sourceMap = new Map(sourceProducts.map((p: any) => [p._id.toString(), p]));
-    const retailerMap = new Map(retailerDocs.map((r: any) => [r._id.toString(), r]));
-    const allCatIds = [...new Set(sourceProducts.map((p: any) => normalizeCategoryId(p.category)).filter(Boolean))].filter((id): id is string => !!id && ObjectId.isValid(id));
-    const catDocs = allCatIds.length > 0 ? await db.collection('categories').find({ _id: { $in: allCatIds.map((id) => new ObjectId(id)) } }).project({ _id: 1, name: 1 }).toArray() : [];
-    const catNameMap = new Map(catDocs.map((c: any) => [c._id.toString(), c.name]));
-
     const list = (products as any[]).map((p) => {
       const sellingPrice = Number(p.sellingPrice) || 0;
-      let commissionPct = typeof p.retailerCommissionRate === 'number' && Number.isFinite(p.retailerCommissionRate) ? p.retailerCommissionRate : NaN;
-      if (Number.isNaN(commissionPct)) {
-        const source = p.sourceProductId ? sourceMap.get((p.sourceProductId instanceof ObjectId ? p.sourceProductId : new ObjectId(String(p.sourceProductId))).toString()) : null;
-        const retailer = p.retailerId ? retailerMap.get((p.retailerId instanceof ObjectId ? p.retailerId : new ObjectId(String(p.retailerId))).toString()) : null;
-        const rows = Array.isArray((retailer as any)?.retailerCommissionRows) ? (retailer as any).retailerCommissionRows : [];
-        const productType = (source?.product_type || p.product_type || '').trim();
-        const categoryId = source?.category ? normalizeCategoryId(source.category) : null;
-        const categoryName = categoryId ? catNameMap.get(categoryId) || '' : (p.category || '').trim();
-        const designType = (source?.designType || p.designType || '').trim();
-        const metal = productType === 'Gold' || productType === 'Silver' || productType === 'Platinum' ? productType : '';
-        const purity = (source?.goldPurity || source?.silverPurity || p.goldPurity || p.silverPurity || '').trim();
-        commissionPct = findRetailerCommissionFromRows(rows, productType, categoryName, designType, metal, purity);
-      }
-      const customerPrice = getCustomerPriceFromRetailer(sellingPrice, commissionPct);
       return {
         _id: (p._id as ObjectId)?.toString(),
         name: p.name,
         mainImage: p.mainImage,
         shopName: p.shopName,
         sellingPrice,
-        customerPrice,
         quantity: p.quantity,
         retailerId: (p.retailerId as ObjectId)?.toString(),
       };

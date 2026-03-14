@@ -199,7 +199,7 @@ export async function POST(
       await db.collection('retailer_products').updateOne(
         { retailerId, sourceProductId },
         {
-          $set: baseSet,
+          $set: { ...baseSet, retailerCommissionRate },
           $inc: { quantity },
           $setOnInsert: { createdAt: new Date() },
         },

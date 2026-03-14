@@ -1791,6 +1791,8 @@ export function ProductFormPage({ productId, context: contextProp }: ProductForm
         diamondsPrice: formData.diamondsPrice ?? 0,
         gemstonePrice: formData.gemstonePrice ?? 0,
       };
+      // Save the same total shown in the form ("Total Amount (incl. commission)") so list and website match
+      const displayedTotal = totalIncludingCommissionsRef.current;
       const rateOverrides: Record<string, number> = {
         vendorCommissionRate: vendorRateForSave,
         retailerCommissionRate: retailerRateForSave,
@@ -1799,7 +1801,10 @@ export function ProductFormPage({ productId, context: contextProp }: ProductForm
       else if (formData.productType === 'Silver') rateOverrides.silverRate = silverRatePerGram;
       else if (formData.productType === 'Platinum') rateOverrides.platinumRate = goldRatePerGram;
       const calculatedTotal = calculateFullProductPrice(productShapeForPrice, rateOverrides);
-      const priceToSave = Math.max(0, Math.round(calculatedTotal * 100) / 100);
+      const priceToSave =
+        displayedTotal > 0
+          ? Math.max(0, Math.round(displayedTotal * 100) / 100)
+          : Math.max(0, Math.round(calculatedTotal * 100) / 100);
 
       const payload = {
         ...formData,

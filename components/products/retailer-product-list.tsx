@@ -555,12 +555,7 @@ export function RetailerProductList() {
                         {product.category || '-'}
                       </TableCell>
                       <TableCell className="py-4 px-4 text-sm font-semibold text-slate-900 dark:text-white">
-                        {(() => {
-                          const base = Number(product.sellingPrice) || 0;
-                          const rate = typeof product.retailerCommissionRate === 'number' ? product.retailerCommissionRate : 0;
-                          const finalPrice = rate > 0 ? Math.round(base * (1 + rate / 100)) : base;
-                          return formatCurrency(finalPrice);
-                        })()}
+                        {formatCurrency(Number(product.sellingPrice) || 0)}
                       </TableCell>
                       <TableCell className="py-4 px-4 text-center">
                         <span
@@ -648,8 +643,28 @@ export function RetailerProductList() {
                     <p className="font-medium">{viewProductData.category || '-'}</p>
                     <p className="text-slate-500">Product Type</p>
                     <p className="font-medium">{viewProductData.product_type || '-'}</p>
-                    <p className="text-slate-500">Price</p>
-                    <p className="font-medium">{formatCurrency(viewProductData.sellingPrice)}</p>
+                    <p className="text-slate-500">Base price</p>
+                    <p className="font-medium">{formatCurrency(viewProductData.sellingPrice ?? 0)}</p>
+                    <p className="text-slate-500">Commission</p>
+                    <p className="font-medium">
+                      {(viewProductData.retailerCommissionRate !== undefined && viewProductData.retailerCommissionRate !== null
+                        ? Number(viewProductData.retailerCommissionRate)
+                        : 0
+                      )}%
+                    </p>
+                    <p className="text-slate-500">Price (incl. commission)</p>
+                    <p className="font-medium">
+                      {(() => {
+                        const base = viewProductData.sellingPrice ?? 0;
+                        const rate =
+                          viewProductData.retailerCommissionRate !== undefined &&
+                          viewProductData.retailerCommissionRate !== null
+                            ? Number(viewProductData.retailerCommissionRate)
+                            : 0;
+                        const finalPrice = rate > 0 ? Math.round(base * (1 + rate / 100)) : base;
+                        return formatCurrency(finalPrice);
+                      })()}
+                    </p>
                     <p className="text-slate-500">Stock</p>
                     <p className="font-medium">{viewProductData.quantity ?? 0}</p>
                     <p className="text-slate-500">Status</p>

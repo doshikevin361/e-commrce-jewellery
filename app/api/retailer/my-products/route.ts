@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
 import { getRetailerFromRequest } from '@/lib/auth';
 import { ObjectId } from 'mongodb';
+import { findRetailerCommissionFromRows } from '@/lib/retailer-commission';
 
 /**
  * POST - Create new retailer product (same fields as vendor product form).
@@ -103,32 +104,59 @@ export async function GET(request: NextRequest) {
       db.collection('retailer_products').countDocuments(query),
     ]);
 
-    const list = products.map((p: Record<string, unknown>) => ({
-      _id: (p._id as ObjectId)?.toString(),
-      retailerId: (p.retailerId as ObjectId)?.toString(),
-      sourceProductId: (p.sourceProductId as ObjectId)?.toString(),
-      name: p.name,
-      mainImage: p.mainImage,
-      shortDescription: p.shortDescription,
-      shopName: p.shopName,
-      sellingPrice: p.sellingPrice,
-      quantity: p.quantity,
-      status: p.status,
-      retailerCommissionRate: p.retailerCommissionRate,
-      category: p.category,
-      sku: p.sku,
-      product_type: p.product_type,
-      designType: p.designType,
-      metalType: p.metalType,
-      goldPurity: p.goldPurity,
-      silverPurity: p.silverPurity,
-      metalColour: p.metalColour,
-      weight: p.weight,
-      size: p.size,
-      hsnCode: p.hsnCode,
-      createdAt: p.createdAt,
-      updatedAt: p.updatedAt,
-    }));
+    const retailerDoc = await db.collection('retailers').findOne(
+      { _id: retailerId },
+      { projection: { retailerCommissionRows: 1 } }
+    );
+    const commissionRows = Array.isArray((retailerDoc as { retailerCommissionRows?: unknown[] })?.retailerCommissionRows)
+      ? (retailerDoc as { retailerCommissionRows: { productType?: string; category?: string; designType?: string; metal?: string; purityKarat?: string; retailerCommission?: number }[] }).retailerCommissionRows
+      : [];
+
+    const list = products.map((p: Record<string, unknown>) => {
+      const productType = String(p.product_type ?? '').trim();
+      const categoryName = String(p.category ?? '').trim();
+      const designType = String(p.designType ?? '').trim();
+      const metal = productType === 'Gold' || productType === 'Silver' || productType === 'Platinum' ? productType : '';
+      const purity = String(p.goldPurity ?? p.silverPurity ?? '').trim();
+      const fromRules = findRetailerCommissionFromRows(
+        commissionRows,
+        productType,
+        categoryName,
+        designType,
+        metal,
+        purity
+      );
+      const storedRate = typeof p.retailerCommissionRate === 'number' ? p.retailerCommissionRate : null;
+      const effectiveRate = fromRules > 0 ? fromRules : (storedRate !== null ? storedRate : 0);
+      const sellingPrice = Number(p.sellingPrice) || 0;
+
+      return {
+        _id: (p._id as ObjectId)?.toString(),
+        retailerId: (p.retailerId as ObjectId)?.toString(),
+        sourceProductId: (p.sourceProductId as ObjectId)?.toString(),
+        name: p.name,
+        mainImage: p.mainImage,
+        shortDescription: p.shortDescription,
+        shopName: p.shopName,
+        sellingPrice,
+        quantity: p.quantity,
+        status: p.status,
+        retailerCommissionRate: effectiveRate,
+        category: p.category,
+        sku: p.sku,
+        product_type: p.product_type,
+        designType: p.designType,
+        metalType: p.metalType,
+        goldPurity: p.goldPurity,
+        silverPurity: p.silverPurity,
+        metalColour: p.metalColour,
+        weight: p.weight,
+        size: p.size,
+        hsnCode: p.hsnCode,
+        createdAt: p.createdAt,
+        updatedAt: p.updatedAt,
+      };
+    });
 
     return NextResponse.json({
       products: list,

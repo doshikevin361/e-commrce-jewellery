@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
 import { formatProductPrice } from '@/lib/utils/price-calculator';
 import { ObjectId } from 'mongodb';
-import { findRetailerCommissionFromRows, getCustomerPriceFromRetailer } from '@/lib/retailer-commission';
 
 function normalizeCategoryId(value: unknown): string | null {
   if (!value) return null;
@@ -129,42 +128,16 @@ export async function GET(request: NextRequest) {
       };
     });
 
-    // Map retailer products with customer price = sellingPrice + retailer commission
-    const rpSourceIds = [...new Set((retailerProducts as any[]).map((p) => p.sourceProductId).filter(Boolean))].map((id) => (id instanceof ObjectId ? id : new ObjectId(String(id))));
-    const rpRetailerIds = [...new Set((retailerProducts as any[]).map((p) => p.retailerId).filter(Boolean))].map((id) => (id instanceof ObjectId ? id : new ObjectId(String(id))));
-    const [rpSourceProducts, rpRetailerDocs] = await Promise.all([
-      rpSourceIds.length > 0 ? db.collection('products').find({ _id: { $in: rpSourceIds } }).project({ _id: 1, product_type: 1, category: 1, designType: 1, goldPurity: 1, silverPurity: 1 }).toArray() : [],
-      rpRetailerIds.length > 0 ? db.collection('retailers').find({ _id: { $in: rpRetailerIds } }).project({ _id: 1, retailerCommissionRows: 1 }).toArray() : [],
-    ]);
-    const rpSourceMap = new Map(rpSourceProducts.map((p: any) => [p._id.toString(), p]));
-    const rpRetailerMap = new Map(rpRetailerDocs.map((r: any) => [r._id.toString(), r]));
-    const rpCatIds = [...new Set(rpSourceProducts.map((p: any) => normalizeCategoryId(p.category)).filter(Boolean))].filter((id): id is string => !!id && ObjectId.isValid(id));
-    const rpCatDocs = rpCatIds.length > 0 ? await db.collection('categories').find({ _id: { $in: rpCatIds.map((id) => new ObjectId(id)) } }).project({ _id: 1, name: 1 }).toArray() : [];
-    const rpCatNameMap = new Map(rpCatDocs.map((c: any) => [c._id.toString(), c.name]));
-
+    // Retailer products: website shows retailer's selling price (same as retailer panel)
     const retailerList = (retailerProducts as any[]).map((rp) => {
       const sellingPrice = Number(rp.sellingPrice) || 0;
-      let commissionPct = typeof rp.retailerCommissionRate === 'number' && Number.isFinite(rp.retailerCommissionRate) ? rp.retailerCommissionRate : NaN;
-      if (Number.isNaN(commissionPct)) {
-        const source = rp.sourceProductId ? rpSourceMap.get((rp.sourceProductId instanceof ObjectId ? rp.sourceProductId : new ObjectId(String(rp.sourceProductId))).toString()) : null;
-        const retailer = rp.retailerId ? rpRetailerMap.get((rp.retailerId instanceof ObjectId ? rp.retailerId : new ObjectId(String(rp.retailerId))).toString()) : null;
-        const rows = Array.isArray((retailer as any)?.retailerCommissionRows) ? (retailer as any).retailerCommissionRows : [];
-        const productType = (source?.product_type || rp.product_type || '').trim();
-        const categoryId = source?.category ? normalizeCategoryId(source.category) : null;
-        const categoryName = categoryId ? rpCatNameMap.get(categoryId) || '' : (rp.category || '').trim();
-        const designType = (source?.designType || rp.designType || '').trim();
-        const metal = productType === 'Gold' || productType === 'Silver' || productType === 'Platinum' ? productType : '';
-        const purity = (source?.goldPurity || source?.silverPurity || rp.goldPurity || rp.silverPurity || '').trim();
-        commissionPct = findRetailerCommissionFromRows(rows, productType, categoryName, designType, metal, purity);
-      }
-      const customerPrice = getCustomerPriceFromRetailer(sellingPrice, commissionPct);
       return {
         _id: (rp._id as ObjectId).toString(),
         name: rp.name,
         category: rp.shopName ? `Sold by ${rp.shopName}` : 'Partner Store',
         brand: undefined,
         mainImage: rp.mainImage || '',
-        displayPrice: customerPrice,
+        displayPrice: sellingPrice,
         originalPrice: sellingPrice,
         hasDiscount: false,
         discountPercent: 0,
