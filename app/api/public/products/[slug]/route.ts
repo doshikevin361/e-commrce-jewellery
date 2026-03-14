@@ -138,6 +138,65 @@ export async function GET(
       );
     }
 
+    // If still not found, return retailer product in same shape as vendor product so detail page can render at /products/[slug]
+    if (!product && ObjectId.isValid(slug)) {
+      const rp = await db.collection("retailer_products").findOne({
+        _id: new ObjectId(slug),
+        $or: [
+          { status: "active" },
+          { status: { $regex: /^active$/i } },
+          { status: { $exists: false } },
+          { status: null },
+        ],
+      });
+      if (rp) {
+        const rpDoc = rp as Record<string, unknown> & { _id: ObjectId; retailerId?: ObjectId; mainImage?: string; images?: string[] };
+        const sellingPrice = Number(rpDoc.sellingPrice) || 0;
+        const mainImage = (rpDoc.mainImage as string) || '';
+        const galleryImages = Array.isArray(rpDoc.images) && rpDoc.images.length > 0
+          ? rpDoc.images as string[]
+          : (mainImage ? [mainImage] : []);
+        const retailerProductData = {
+          _id: (rpDoc._id as ObjectId).toString(),
+          name: (rpDoc.name as string) || 'Product',
+          shortDescription: (rpDoc.shortDescription as string) || '',
+          longDescription: (rpDoc.description as string) || (rpDoc.shortDescription as string) || '',
+          category: (rpDoc.category as string) || (rpDoc.shopName as string) || 'Jewellery',
+          categoryName: (rpDoc.shopName as string) ? `Sold by ${rpDoc.shopName}` : (rpDoc.category as string),
+          brand: rpDoc.shopName as string,
+          mainImage,
+          galleryImages,
+          displayPrice: sellingPrice,
+          originalPrice: sellingPrice,
+          sellingPrice,
+          regularPrice: sellingPrice,
+          mrp: sellingPrice,
+          hasDiscount: false,
+          discountPercent: 0,
+          discount: 0,
+          price: sellingPrice,
+          subTotal: sellingPrice,
+          totalAmount: sellingPrice,
+          taxRate: 0,
+          rating: undefined,
+          reviewCount: 0,
+          stock: Number(rpDoc.quantity) ?? 0,
+          featured: false,
+          trending: false,
+          tags: [],
+          urlSlug: (rpDoc._id as ObjectId).toString(),
+          specifications: Array.isArray(rpDoc.specifications) ? rpDoc.specifications : [],
+          variants: [],
+          relatedProducts: [],
+          sellerType: 'retailer',
+          retailerId: (rpDoc.retailerId as ObjectId)?.toString(),
+        };
+        const response = NextResponse.json(retailerProductData);
+        response.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');
+        return response;
+      }
+    }
+
     if (!product) {
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }

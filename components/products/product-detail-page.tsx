@@ -216,6 +216,9 @@ interface ProductDetail {
       image: string;
     }>;
   }>;
+  // Retailer product (same path /products/[slug])
+  sellerType?: 'vendor' | 'retailer';
+  retailerId?: string;
 }
 
 // Premium Accordion component
@@ -449,7 +452,12 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
 
     setCartButtonLoading(true);
     try {
-      await addToCart(product._id.toString(), quantity, { suppressToast: true });
+      const cartOptions: { suppressToast?: boolean; retailerProductId?: string; retailerId?: string } = { suppressToast: true };
+      if (product.sellerType === 'retailer' && product.retailerId) {
+        cartOptions.retailerProductId = product._id.toString();
+        cartOptions.retailerId = product.retailerId;
+      }
+      await addToCart(product._id.toString(), quantity, cartOptions);
       router.push('/checkout');
     } catch (error) {
       console.error('Error adding to cart:', error);
@@ -581,7 +589,11 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
 
     setCartButtonLoading(true);
     try {
-      await addToCart(product._id.toString(), quantity);
+      if (product.sellerType === 'retailer' && product.retailerId) {
+        await addToCart(product._id.toString(), quantity, { retailerProductId: product._id.toString(), retailerId: product.retailerId });
+      } else {
+        await addToCart(product._id.toString(), quantity);
+      }
     } finally {
       setCartButtonLoading(false);
     }

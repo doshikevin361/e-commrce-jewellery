@@ -535,12 +535,8 @@ export function DynamicProductsPage() {
     setCurrentPage(1);
   };
 
-  // Handle product click
+  // Handle product click - same path /products/[slug] for both vendor and retailer
   const handleProductClick = (product: Product) => {
-    if (product.sellerType === 'retailer' && product._id) {
-      router.push(`/products/retailer/${product._id}`);
-      return;
-    }
     const slug = product.urlSlug || product._id;
     router.push(`/products/${slug}`);
   };
