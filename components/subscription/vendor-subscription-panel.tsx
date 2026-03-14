@@ -72,7 +72,7 @@ export function VendorSubscriptionPanel() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || 'Purchase failed');
-      toast({ title: 'Success', description: 'Subscription activated successfully.' });
+      toast({ title: 'Success', variant : 'success', description : 'Subscription activated successfully.' });
       await fetchStatus();
     } catch (e) {
       toast({
