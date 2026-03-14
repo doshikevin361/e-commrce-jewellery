@@ -36,12 +36,16 @@ interface Product {
   allow_return?: boolean;
   price?: number;
   sellingPrice?: number;
+  subTotal?: number;
+  totalAmount?: number;
   stock: number;
   status: string;
   image?: string;
+  mainImage?: string;
   seoStatus?: string;
   sku?: string;
   brand?: string;
+  sellerType?: 'vendor' | 'retailer';
 }
 
 interface ProductDetails extends Product {
@@ -194,6 +198,10 @@ export function ProductList() {
   };
 
   const handleEditProduct = (product: Product) => {
+    if (product.sellerType === 'retailer') {
+      router.push(`/admin/products/retailer/${product._id || product.id}/edit`);
+      return;
+    }
     router.push(`/admin/products/edit/${product._id || product.id}`);
   };
 
@@ -483,7 +491,7 @@ export function ProductList() {
                       <TableHead className='font-semibold text-slate-900 dark:text-white py-4 px-4'>Product</TableHead>
                       <TableHead className='font-semibold text-slate-900 dark:text-white py-4 px-4'>Category</TableHead>
                       <TableHead className='font-semibold text-slate-900 dark:text-white py-4 px-4'>Vendor</TableHead>
-                      <TableHead className='font-semibold text-slate-900 dark:text-white py-4 px-4'>Price</TableHead>
+                      <TableHead className='font-semibold text-slate-900 dark:text-white py-4 px-4' title='Final price including platform commission'>Price (incl. commission)</TableHead>
                       <TableHead className='font-semibold text-slate-900 dark:text-white py-4 px-4 text-center'>Stock</TableHead>
                       <TableHead className='font-semibold text-slate-900 dark:text-white py-4 px-4 text-center'>Status</TableHead>
                       <TableHead className='font-semibold text-slate-900 dark:text-white py-4 px-4 text-right'>Actions</TableHead>
@@ -496,9 +504,9 @@ export function ProductList() {
                         className='border-b border-slate-100 dark:border-slate-700 hover:bg-green-50 dark:hover:bg-slate-700/50 transition-colors duration-150'>
                         <TableCell className='py-4 px-4'>
                           <div className='flex items-center gap-3'>
-                            {product.image && (
+                            {(product.image || product.mainImage) && (
                               <img
-                                src={product.image || '/placeholder.svg'}
+                                src={(product.image || product.mainImage) || '/placeholder.svg'}
                                 alt={product.name}
                                 className='w-12 h-12 rounded-lg border border-slate-200 dark:border-slate-600 object-cover shadow-sm'
                               />
@@ -512,9 +520,14 @@ export function ProductList() {
                         <TableCell className='py-4 px-4 text-sm text-slate-700 dark:text-slate-300 font-medium'>
                           {getCategoryName(product.category)}
                         </TableCell>
-                        <TableCell className='py-4 px-4 text-sm text-slate-700 dark:text-slate-300 font-medium'>{product.vendor}</TableCell>
+                        <TableCell className='py-4 px-4 text-sm text-slate-700 dark:text-slate-300 font-medium'>
+                          {product.vendor}
+                          {product.sellerType === 'retailer' && (
+                            <span className='ml-1.5 inline-flex items-center rounded bg-slate-200 dark:bg-slate-600 px-1.5 py-0.5 text-xs font-medium text-slate-700 dark:text-slate-200'>Retailer</span>
+                          )}
+                        </TableCell>
                         <TableCell className='py-4 px-4 text-sm font-semibold text-slate-900 dark:text-white'>
-                          ₹{(product.sellingPrice || product.price || 0).toFixed(2)}
+                          ₹{(Number(product.price ?? product.totalAmount) || 0).toFixed(2)}
                         </TableCell>
                         <TableCell className='py-4 px-4 text-center'>
                           <span
@@ -546,11 +559,10 @@ export function ProductList() {
                             {/* Edit Icon Button */}
                             <button
                               onClick={() => handleEditProduct(product)}
-                              title='Edit product'
+                              title={product.sellerType === 'retailer' ? 'Edit retailer product' : 'Edit product'}
                               className='text-gray-600 hover:text-gray-900 hover:bg-gray-100 cursor-pointer'>
                               <Pencil className='h-5 w-5' />
                             </button>
-                            {/* Delete Icon Button */}
                             <button
                               onClick={() => handleDeleteClick(product._id || product.id || '')}
                               title='Delete product'

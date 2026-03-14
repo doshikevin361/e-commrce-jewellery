@@ -363,7 +363,8 @@ interface ProductFormData {
 interface ProductFormPageProps {
   productId?: string;
   /** When 'retailer', use retailer APIs and save to retailer_products (same UI as vendor). */
-  context?: 'admin' | 'vendor' | 'retailer';
+  /** When 'admin-retailer', admin edits a retailer product: admin APIs + PATCH admin/retailer-products. */
+  context?: 'admin' | 'vendor' | 'retailer' | 'admin-retailer';
 }
 
 function getRetailerAuthHeaders(): HeadersInit {
@@ -380,6 +381,7 @@ export function ProductFormPage({ productId, context: contextProp }: ProductForm
   const [loading, setLoading] = useState(false);
   const [userRole, setUserRole] = useState<string>('admin');
   const isRetailerContext = contextProp === 'retailer';
+  const isAdminRetailerContext = contextProp === 'admin-retailer';
   const [categories, setCategories] = useState<any[]>([]);
   const [categoryOptions, setCategoryOptions] = useState<{ label: string; value: string }[]>([]);
   const [designTypes, setDesignTypes] = useState<{ label: string; value: string }[]>([]);
@@ -805,7 +807,7 @@ export function ProductFormPage({ productId, context: contextProp }: ProductForm
     if (productId) {
       fetchProduct();
     }
-  }, [productId, isRetailerContext]);
+  }, [productId, isRetailerContext, isAdminRetailerContext]);
 
   useEffect(() => {
     console.log('[DEBUG] platformCommissionRate changed to:', formData.platformCommissionRate);
@@ -1354,9 +1356,15 @@ export function ProductFormPage({ productId, context: contextProp }: ProductForm
   const fetchProduct = async () => {
     try {
       setLoading(true);
-      if (isRetailerContext && productId) {
-        const response = await fetch(`/api/retailer/my-products/${productId}`, { credentials: 'include', headers: getRetailerAuthHeaders() });
-        if (response.status === 401) {
+      if ((isRetailerContext || isAdminRetailerContext) && productId) {
+        const url = isAdminRetailerContext
+          ? `/api/admin/retailer-products/${productId}`
+          : `/api/retailer/my-products/${productId}`;
+        const opts: RequestInit = isAdminRetailerContext
+          ? { credentials: 'include' }
+          : { credentials: 'include', headers: getRetailerAuthHeaders() };
+        const response = await fetch(url, opts);
+        if (!isAdminRetailerContext && response.status === 401) {
           router.replace('/retailer/login');
           setLoading(false);
           return;
@@ -1657,8 +1665,7 @@ export function ProductFormPage({ productId, context: contextProp }: ProductForm
         sku: computedSku,
       }));
 
-      if (isRetailerContext) {
-        // Save selling price = base + retailer commission (same value shown in list and to customer)
+      if (isRetailerContext || isAdminRetailerContext) {
         const sellingPrice = retailerSellingPriceRef.current;
         const retailerPayload = {
           name: formData.name.trim(),
@@ -1690,6 +1697,22 @@ export function ProductFormPage({ productId, context: contextProp }: ProductForm
           urlSlug: computedSlug || '',
           relatedProducts: selectedRelatedProducts,
         };
+        if (isAdminRetailerContext && productId) {
+          const res = await fetch(`/api/admin/retailer-products/${productId}`, {
+            method: 'PATCH',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(retailerPayload),
+          });
+          if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            throw new Error(errData.error || 'Failed to save product');
+          }
+          toast({ title: 'Success', description: 'Product updated', variant: 'success' });
+          router.push('/admin/products');
+          setLoading(false);
+          return;
+        }
         const retailerUrl = productId ? `/api/retailer/my-products/${productId}` : '/api/retailer/my-products';
         const retailerMethod = productId ? 'PATCH' : 'POST';
         const res = await fetch(retailerUrl, {
@@ -2020,9 +2043,9 @@ export function ProductFormPage({ productId, context: contextProp }: ProductForm
     (formData.settingsData?.vendorCommissionRows?.length ?? 0) > 0 &&
     formData.settingsData?.vendorCommissionMatched === true;
   const showRetailerCommissionField =
-    isRetailerContext &&
+    (isRetailerContext || isAdminRetailerContext) &&
     hasFourFieldsForCommission &&
-    (formData.settingsData?.retailerCommissionRows?.length ?? 0) > 0;
+    ((formData.settingsData?.retailerCommissionRows?.length ?? 0) > 0 || isAdminRetailerContext);
 
   // For Diamonds product type, check if metals are added
   const hasMetalsInDiamonds = formData.productType === 'Diamonds' && formData.diamonds.some(d => d.metalType);
@@ -2063,7 +2086,7 @@ export function ProductFormPage({ productId, context: contextProp }: ProductForm
   const totalIncludingCommissions =
     subTotal +
     (userRole === 'vendor' ? vendorCommissionValue : 0) +
-    (isRetailerContext ? retailerCommissionValue : 0);
+    ((isRetailerContext || isAdminRetailerContext) ? retailerCommissionValue : 0);
   totalIncludingCommissionsRef.current = totalIncludingCommissions;
   const retailerSellingPrice = subTotal + retailerCommissionValue;
   retailerSellingPriceRef.current = retailerSellingPrice;
@@ -3758,7 +3781,12 @@ export function ProductFormPage({ productId, context: contextProp }: ProductForm
             {/* Platform Commission: show only when 4 fields selected AND combination matched */}
             {showPlatformCommissionField && (
               <div className='p-3 bg-white rounded border'>
-                <p className='text-sm text-gray-600'>Platform Commission (%)</p>
+                <p className='text-sm text-gray-600'>
+                  Platform Commission (%)
+                  {formData.platformCommissionRate > 0 && (
+                    <span className='text-slate-500 font-normal'> (Applied: Platform {formData.platformCommissionRate}%)</span>
+                  )}
+                </p>
                 <FormField
                   label=''
                   value={formData.platformCommissionRate}
@@ -3782,7 +3810,12 @@ export function ProductFormPage({ productId, context: contextProp }: ProductForm
             {/* Vendor Commission (vendor only): show only when 4 fields selected AND combination matched */}
             {showVendorCommissionField && (
               <div className='p-3 bg-white rounded border'>
-                <p className='text-sm text-gray-600'>Vendor Commission (%)</p>
+                <p className='text-sm text-gray-600'>
+                  Vendor Commission (%)
+                  {formData.vendorCommissionRate > 0 && (
+                    <span className='text-slate-500 font-normal'> (Applied: Vendor {formData.vendorCommissionRate}%)</span>
+                  )}
+                </p>
                 <FormField
                   label=''
                   value={formData.vendorCommissionRate}
@@ -3802,7 +3835,12 @@ export function ProductFormPage({ productId, context: contextProp }: ProductForm
             {/* Retailer Commission (retailer only): from Retailer Commission tab combination */}
             {showRetailerCommissionField && (
               <div className='p-3 bg-white rounded border'>
-                <p className='text-sm text-gray-600'>Retailer Commission (%)</p>
+                <p className='text-sm text-gray-600'>
+                  Retailer Commission (%)
+                  {(formData.retailerCommissionRate ?? 0) > 0 && (
+                    <span className='text-slate-500 font-normal'> (Applied: Retailer {formData.retailerCommissionRate}%)</span>
+                  )}
+                </p>
                 <FormField
                   label=''
                   value={formData.retailerCommissionRate ?? 0}
@@ -3831,30 +3869,30 @@ export function ProductFormPage({ productId, context: contextProp }: ProductForm
                 </div>
                 {formData.platformCommissionRate > 0 && (
                   <div className='flex justify-between text-sm text-gray-700'>
-                    <span>Platform Commission</span>
+                    <span>Platform Commission ({formData.platformCommissionRate}%)</span>
                     <span>{formatINR(platformCommissionValue)}</span>
                   </div>
                 )}
                 {userRole === 'vendor' && formData.vendorCommissionRate > 0 && (
                   <div className='flex justify-between text-sm text-gray-700'>
-                    <span>Vendor Commission</span>
+                    <span>Vendor Commission ({formData.vendorCommissionRate}%)</span>
                     <span>{formatINR(vendorCommissionValue)}</span>
                   </div>
                 )}
-                {isRetailerContext && (formData.retailerCommissionRate ?? 0) > 0 && (
+                {(isRetailerContext || isAdminRetailerContext) && (formData.retailerCommissionRate ?? 0) > 0 && (
                   <div className='flex justify-between text-sm text-gray-700'>
-                    <span>Retailer Commission</span>
+                    <span>Retailer Commission ({formData.retailerCommissionRate}%)</span>
                     <span>{formatINR(retailerCommissionValue)}</span>
                   </div>
                 )}
                 <div className='flex justify-between font-semibold text-gray-900 pt-2 border-t'>
-                  <span>Total Amount</span>
+                  <span>Total Amount (incl. commission)</span>
                   <span>{formatINR(totalAmount)}</span>
                 </div>
-                {!isRetailerContext && (
+                {!(isRetailerContext || isAdminRetailerContext) && (
                   <div className='text-xs text-slate-500 pt-1'>This amount is saved and shown in the product list.</div>
                 )}
-                {isRetailerContext && (
+                {(isRetailerContext || isAdminRetailerContext) && (
                   <div className='flex justify-between text-sm font-semibold text-green-700 dark:text-green-400 pt-1'>
                     <span>Selling price (to customer) — same as in list</span>
                     <span>{formatINR(retailerSellingPrice)}</span>
@@ -3886,24 +3924,24 @@ export function ProductFormPage({ productId, context: contextProp }: ProductForm
                 </div>
                 {formData.platformCommissionRate > 0 && (
                   <div className='flex justify-between text-sm text-gray-700'>
-                    <span>Platform Commission</span>
+                    <span>Platform Commission ({formData.platformCommissionRate}%)</span>
                     <span>{formatINR(platformCommissionValue)}</span>
                   </div>
                 )}
                 {userRole === 'vendor' && formData.vendorCommissionRate > 0 && (
                   <div className='flex justify-between text-sm text-gray-700'>
-                    <span>Vendor Commission</span>
+                    <span>Vendor Commission ({formData.vendorCommissionRate}%)</span>
                     <span>{formatINR(vendorCommissionValue)}</span>
                   </div>
                 )}
                 <div className='flex justify-between font-semibold text-gray-900 pt-2 border-t'>
-                  <span>Total Amount</span>
+                  <span>Total Amount (incl. commission)</span>
                   <span>{formatINR(totalAmount)}</span>
                 </div>
-                {!isRetailerContext && (
+                {!(isRetailerContext || isAdminRetailerContext) && (
                   <div className='text-xs text-slate-500 pt-1'>This amount is saved and shown in the product list.</div>
                 )}
-                {isRetailerContext && (
+                {(isRetailerContext || isAdminRetailerContext) && (
                   <div className='flex justify-between text-sm font-semibold text-green-700 dark:text-green-400 pt-1'>
                     <span>Selling price (to customer) — same as in list</span>
                     <span>{formatINR(retailerSellingPrice)}</span>
@@ -3929,19 +3967,19 @@ export function ProductFormPage({ productId, context: contextProp }: ProductForm
                 </div>
                 {formData.platformCommissionRate > 0 && (
                   <div className='flex justify-between text-sm text-gray-700'>
-                    <span>Platform Commission</span>
+                    <span>Platform Commission ({formData.platformCommissionRate}%)</span>
                     <span>{formatINR(platformCommissionValue)}</span>
                   </div>
                 )}
                 {userRole === 'vendor' && formData.vendorCommissionRate > 0 && (
                   <div className='flex justify-between text-sm text-gray-700'>
-                    <span>Vendor Commission</span>
+                    <span>Vendor Commission ({formData.vendorCommissionRate}%)</span>
                     <span>{formatINR(vendorCommissionValue)}</span>
                   </div>
                 )}
-                {isRetailerContext && (formData.retailerCommissionRate ?? 0) > 0 && (
+                {(isRetailerContext || isAdminRetailerContext) && (formData.retailerCommissionRate ?? 0) > 0 && (
                   <div className='flex justify-between text-sm text-gray-700'>
-                    <span>Retailer Commission</span>
+                    <span>Retailer Commission ({formData.retailerCommissionRate}%)</span>
                     <span>{formatINR(retailerCommissionValue)}</span>
                   </div>
                 )}
@@ -3950,15 +3988,15 @@ export function ProductFormPage({ productId, context: contextProp }: ProductForm
                   <span>{formatINR(extraCharges)}</span>
                 </div>
                 <div className='flex justify-between font-semibold text-gray-900 pt-2 border-t'>
-                  <span>Total Amount</span>
+                  <span>Total Amount (incl. commission)</span>
                   <span>{formatINR(totalAmount)}</span>
                 </div>
-                {!isRetailerContext && (
+                {!(isRetailerContext || isAdminRetailerContext) && (
                   <div className='text-xs text-slate-500 pt-1'>
                     This amount is saved and shown in the product list.
                   </div>
                 )}
-                {isRetailerContext && (
+                {(isRetailerContext || isAdminRetailerContext) && (
                   <div className='flex justify-between text-sm font-semibold text-green-700 dark:text-green-400 pt-1'>
                     <span>Selling price (to customer) — same as in list</span>
                     <span>{formatINR(retailerSellingPrice)}</span>

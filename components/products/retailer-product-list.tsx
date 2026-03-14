@@ -522,7 +522,7 @@ export function RetailerProductList() {
                   <TableRow className="border-b-2 border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/40 hover:bg-slate-50 dark:hover:bg-slate-700/40">
                     <TableHead className="font-semibold text-slate-900 dark:text-white py-4 px-4">Product</TableHead>
                     <TableHead className="font-semibold text-slate-900 dark:text-white py-4 px-4">Category</TableHead>
-                    <TableHead className="font-semibold text-slate-900 dark:text-white py-4 px-4">Price</TableHead>
+                    <TableHead className="font-semibold text-slate-900 dark:text-white py-4 px-4" title="Final selling price including retailer commission">Price (incl. commission)</TableHead>
                     <TableHead className="font-semibold text-slate-900 dark:text-white py-4 px-4 text-center">Stock</TableHead>
                     <TableHead className="font-semibold text-slate-900 dark:text-white py-4 px-4 text-center">Status</TableHead>
                     <TableHead className="font-semibold text-slate-900 dark:text-white py-4 px-4 text-right">Actions</TableHead>
@@ -555,7 +555,12 @@ export function RetailerProductList() {
                         {product.category || '-'}
                       </TableCell>
                       <TableCell className="py-4 px-4 text-sm font-semibold text-slate-900 dark:text-white">
-                        {formatCurrency(product.sellingPrice)}
+                        {(() => {
+                          const base = Number(product.sellingPrice) || 0;
+                          const rate = typeof product.retailerCommissionRate === 'number' ? product.retailerCommissionRate : 0;
+                          const finalPrice = rate > 0 ? Math.round(base * (1 + rate / 100)) : base;
+                          return formatCurrency(finalPrice);
+                        })()}
                       </TableCell>
                       <TableCell className="py-4 px-4 text-center">
                         <span

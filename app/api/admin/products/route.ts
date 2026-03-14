@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
 import { getUserFromRequest, isVendor } from '@/lib/auth';
+import { ObjectId } from 'mongodb';
 
 const normalizeProductPayload = (payload: any) => {
   if (!payload || typeof payload !== 'object') {
@@ -157,25 +158,66 @@ const validateJewelleryPayload = (payload: any) => {
 export async function GET(request: NextRequest) {
   try {
     const { db } = await connectToDatabase();
-    
+
     // Get current user from token
     const currentUser = getUserFromRequest(request);
-    
+
     // Build query based on user role
     const query: any = {};
     if (currentUser && isVendor(currentUser)) {
-      // Vendors only see their own products
+      // Vendors only see their own products (no retailer products for vendor view)
       query.vendorId = currentUser.id;
     }
-    
+
     const products = await db.collection('products').find(query).sort({ createdAt: -1, _id: -1 }).toArray();
-    
-    const serializedProducts = products.map(p => ({
+
+    const serializedProducts = products.map((p: Record<string, unknown>) => ({
       ...p,
-      _id: p._id?.toString(),
+      _id: (p._id as ObjectId)?.toString(),
+      sellerType: 'vendor',
     }));
 
-    return NextResponse.json(serializedProducts);
+    // For admin (non-vendor), also include retailer portal products so they appear in the admin list
+    let retailerProducts: Record<string, unknown>[] = [];
+    if (!currentUser || !isVendor(currentUser)) {
+      const retailerDocs = await db
+        .collection('retailer_products')
+        .find({})
+        .sort({ updatedAt: -1, _id: -1 })
+        .toArray();
+      retailerProducts = retailerDocs.map((rp: Record<string, unknown>) => {
+        const sellingPrice = Number(rp.sellingPrice) || 0;
+        const commissionRate = typeof rp.retailerCommissionRate === 'number' ? rp.retailerCommissionRate : 0;
+        const finalPrice = commissionRate > 0 ? Math.round(sellingPrice * (1 + commissionRate / 100)) : sellingPrice;
+        return {
+          _id: (rp._id as ObjectId)?.toString(),
+          name: rp.name ?? '',
+          category: rp.category ?? '',
+          vendor: `${(rp.shopName as string) ?? 'Retailer'} (Retailer)`,
+          sellerType: 'retailer',
+          sellingPrice: finalPrice,
+          price: finalPrice,
+          subTotal: finalPrice,
+          totalAmount: finalPrice,
+          stock: Number(rp.quantity) ?? 0,
+          status: (rp.status as string) ?? 'active',
+          image: rp.mainImage ?? '',
+          mainImage: rp.mainImage ?? '',
+          sku: rp.sku ?? '',
+          product_type: rp.product_type ?? '',
+          createdAt: rp.createdAt,
+          updatedAt: rp.updatedAt,
+        };
+      });
+    }
+
+    const combined = [...serializedProducts, ...retailerProducts].sort((a, b) => {
+      const aDate = (a.updatedAt as Date) || (a.createdAt as Date) || new Date(0);
+      const bDate = (b.updatedAt as Date) || (b.createdAt as Date) || new Date(0);
+      return new Date(bDate).getTime() - new Date(aDate).getTime();
+    });
+
+    return NextResponse.json(combined);
   } catch (error) {
     console.error('[v0] Error fetching products:', error);
     return NextResponse.json(

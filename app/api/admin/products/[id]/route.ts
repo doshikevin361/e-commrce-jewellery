@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
-import { getUserFromRequest, isVendor } from '@/lib/auth';
+import { getUserFromRequest, isVendor, isAdmin } from '@/lib/auth';
 
 const normalizeProductPayload = (payload: any) => {
   if (!payload || typeof payload !== 'object') {
@@ -163,12 +163,44 @@ export async function GET(
     // Get current user from token
     const currentUser = getUserFromRequest(request);
     
-    const product = await db.collection('products').findOne({ _id: new ObjectId(id) });
+    let product = await db.collection('products').findOne({ _id: new ObjectId(id) });
+    let isRetailerProduct = false;
 
     if (!product) {
-      return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+      const retailerProduct = await db.collection('retailer_products').findOne({ _id: new ObjectId(id) });
+      if (!retailerProduct) {
+        return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+      }
+      isRetailerProduct = true;
+      const rp = retailerProduct as Record<string, unknown>;
+      const sellingPrice = Number(rp.sellingPrice) || 0;
+      const commissionRate = typeof rp.retailerCommissionRate === 'number' ? rp.retailerCommissionRate : 0;
+      const finalPrice = commissionRate > 0 ? Math.round(sellingPrice * (1 + commissionRate / 100)) : sellingPrice;
+      const mainImg = rp.mainImage ?? '';
+      const gallery = Array.isArray(rp.images) && (rp.images as unknown[]).length > 0 ? (rp.images as string[]) : (mainImg ? [mainImg] : []);
+      product = {
+        _id: rp._id,
+        name: rp.name ?? '',
+        category: rp.category ?? '',
+        vendor: `${(rp.shopName as string) ?? 'Retailer'} (Retailer)`,
+        sellerType: 'retailer',
+        sellingPrice: finalPrice,
+        price: finalPrice,
+        stock: Number(rp.quantity) ?? 0,
+        status: (rp.status as string) ?? 'active',
+        mainImage: mainImg,
+        images: gallery,
+        galleryImages: gallery,
+        sku: rp.sku ?? '',
+        product_type: rp.product_type ?? '',
+        shortDescription: rp.shortDescription ?? '',
+        description: rp.description ?? '',
+        tags: Array.isArray(rp.tags) ? rp.tags : [],
+        variants: [],
+        relatedProducts: [],
+      } as any;
     }
-    
+
     // Check if vendor is trying to access another vendor's product
     if (currentUser && isVendor(currentUser) && product.vendorId !== currentUser.id) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 });
@@ -182,6 +214,7 @@ export async function GET(
     const productData = {
       ...product,
       _id: product._id.toString(),
+      sellerType: isRetailerProduct ? 'retailer' : undefined,
       tags: Array.isArray(product.tags) ? product.tags : [],
       galleryImages: galleryImages,
       variants: Array.isArray(product.variants) ? product.variants.map((v: any) => ({
@@ -190,8 +223,6 @@ export async function GET(
       })) : [],
       relatedProducts: Array.isArray(product.relatedProducts) ? product.relatedProducts : [],
     };
-    
-    console.log('[v0] Returning product data:', productData);
 
     return NextResponse.json(productData);
   } catch (error) {
@@ -244,22 +275,34 @@ export async function PUT(
     }
 
     const existingProduct = await db.collection('products').findOne({ _id: new ObjectId(id) });
-    
-    if (!existingProduct) {
+    const existingRetailerProduct = existingProduct ? null : await db.collection('retailer_products').findOne({ _id: new ObjectId(id) });
+
+    if (!existingProduct && !existingRetailerProduct) {
       console.log('[v0] Product not found with ID:', id);
       return NextResponse.json({ error: 'Product not found' }, { status: 404 });
     }
-    
-    // Get current user and check vendor access
+
     const currentUser = getUserFromRequest(request);
-    if (currentUser && isVendor(currentUser) && existingProduct.vendorId !== currentUser.id) {
+    if (existingProduct && currentUser && isVendor(currentUser) && existingProduct.vendorId !== currentUser.id) {
       console.log('[v0] Vendor trying to update another vendor\'s product');
       return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }
-    
+
+    if (existingRetailerProduct) {
+      if (!isStatusOnlyUpdate) {
+        return NextResponse.json({ error: 'Retailer products can only have status updated from Admin list' }, { status: 400 });
+      }
+      const newStatus = (body.status === 'active' || body.status === 'inactive') ? body.status : 'active';
+      await db.collection('retailer_products').updateOne(
+        { _id: new ObjectId(id) },
+        { $set: { status: newStatus, updatedAt: new Date() } }
+      );
+      const updated = await db.collection('retailer_products').findOne({ _id: new ObjectId(id) });
+      return NextResponse.json({ _id: (updated! as any)._id.toString(), ...updated, status: newStatus });
+    }
+
     console.log('[v0] Product found, updating...');
 
-    // Always persist price fields from body so list and form stay in sync (form sends calculated total)
     const priceFields: Record<string, number> = {};
     if (typeof body.price === 'number' && body.price >= 0) priceFields.price = body.price;
     if (typeof body.sellingPrice === 'number' && body.sellingPrice >= 0) priceFields.sellingPrice = body.sellingPrice;
@@ -273,20 +316,15 @@ export async function PUT(
       { $set: { ...normalizedUpdateData, ...priceFields, updatedAt: new Date() } }
     );
 
-    console.log('[v0] Update result:', result);
-
     if (result.matchedCount === 0) {
-      console.log('[v0] No product matched for update');
       return NextResponse.json({ error: 'Product not found' }, { status: 404 });
     }
 
     const updatedProduct = await db.collection('products').findOne({ _id: new ObjectId(id) });
-    
-    console.log('[v0] Successfully updated product');
 
-    return NextResponse.json({ 
-      _id: updatedProduct!._id.toString(), 
-      ...updatedProduct 
+    return NextResponse.json({
+      _id: updatedProduct!._id.toString(),
+      ...updatedProduct
     });
   } catch (error) {
     console.error('[v0] Error updating product:', error);
@@ -306,22 +344,28 @@ export async function DELETE(
     // Get current user and check vendor access
     const currentUser = getUserFromRequest(request);
     
-    // Check if product exists and vendor owns it
     const existingProduct = await db.collection('products').findOne({ _id: new ObjectId(id) });
     if (!existingProduct) {
-      return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+      const retailerProduct = await db.collection('retailer_products').findOne({ _id: new ObjectId(id) });
+      if (!retailerProduct) {
+        return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+      }
+      if (!currentUser || !isAdmin(currentUser)) {
+        return NextResponse.json({ error: 'Only admin can delete retailer products' }, { status: 403 });
+      }
+      const result = await db.collection('retailer_products').deleteOne({ _id: new ObjectId(id) });
+      if (result.deletedCount === 0) return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+      return NextResponse.json({ message: 'Product deleted' });
     }
-    
+
     if (currentUser && isVendor(currentUser) && existingProduct.vendorId !== currentUser.id) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }
 
     const result = await db.collection('products').deleteOne({ _id: new ObjectId(id) });
-
     if (result.deletedCount === 0) {
       return NextResponse.json({ error: 'Product not found' }, { status: 404 });
     }
-
     return NextResponse.json({ message: 'Product deleted' });
   } catch (error) {
     console.error('[v0] Error deleting product:', error);
