@@ -37,7 +37,7 @@ export async function GET(
 ) {
   try {
     const retailer = getRetailerFromRequest(request);
-    if (!retailer) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!retailer?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const { id } = await params;
     if (!id || !ObjectId.isValid(id)) {
@@ -45,6 +45,7 @@ export async function GET(
     }
 
     const { db } = await connectToDatabase();
+    if (!db) return NextResponse.json({ error: 'Database unavailable' }, { status: 503 });
     const product = await db.collection('retailer_products').findOne({
       _id: new ObjectId(id),
       retailerId: new ObjectId(retailer.id),
@@ -54,13 +55,43 @@ export async function GET(
       return NextResponse.json({ error: 'Product not found or not yours' }, { status: 404 });
     }
 
-    const p = product as Record<string, unknown> & { retailerId?: ObjectId; _id: ObjectId; category?: string };
+    const p = product as Record<string, unknown> & { retailerId?: ObjectId; _id: ObjectId; sourceProductId?: ObjectId; category?: string };
     const retailerIdObj = new ObjectId(retailer.id);
-    const currentCategory = (p.category as string) || '';
+
+    let product_type = trimStr(p.product_type);
+    let categoryRaw: unknown = p.category;
+    let designTypeRaw: unknown = p.designType;
+    let goldPurityRaw: unknown = p.goldPurity;
+    let silverPurityRaw: unknown = p.silverPurity;
+    let metalColourRaw: unknown = p.metalColour;
+
+    let weightOut: number = typeof p.weight === 'number' && p.weight > 0 ? p.weight : 0;
+    if (p.sourceProductId) {
+      const sourceId = p.sourceProductId instanceof ObjectId ? p.sourceProductId : new ObjectId(String(p.sourceProductId));
+      const source = await db.collection('products').findOne(
+        { _id: sourceId },
+        { projection: { product_type: 1, category: 1, designType: 1, goldPurity: 1, silverPurity: 1, metalColour: 1, weight: 1, goldWeight: 1, netGoldWeight: 1 } }
+      );
+      if (source) {
+        const src = source as Record<string, unknown>;
+        if (!product_type) product_type = trimStr(src.product_type);
+        if (categoryRaw == null || trimStr(categoryRaw) === '') categoryRaw = src.category;
+        if (designTypeRaw == null || trimStr(designTypeRaw) === '') designTypeRaw = src.designType;
+        if (goldPurityRaw == null || trimStr(goldPurityRaw) === '') goldPurityRaw = src.goldPurity;
+        if (silverPurityRaw == null || trimStr(silverPurityRaw) === '') silverPurityRaw = src.silverPurity;
+        if (metalColourRaw == null || trimStr(metalColourRaw) === '') metalColourRaw = src.metalColour;
+        if (weightOut <= 0) {
+          const srcWeight = Number(src.weight ?? src.goldWeight ?? src.netGoldWeight ?? 0);
+          if (srcWeight > 0) weightOut = srcWeight;
+        }
+      }
+    }
+
+    const currentCategory = trimStr(categoryRaw);
 
     const looksLikeObjectId = (s: string) => /^[a-fA-F0-9]{24}$/.test(String(s).trim());
 
-    let designTypeOut = (p.designType as string) ?? '';
+    let designTypeOut = trimStr(designTypeRaw);
     if (designTypeOut && looksLikeObjectId(designTypeOut)) {
       try {
         const dt = await db.collection('design_types').findOne(
@@ -71,7 +102,23 @@ export async function GET(
       } catch (_) {}
     }
 
-    let metalColourOut = (p.metalColour as string) ?? '';
+    let goldPurityOut = trimStr(goldPurityRaw);
+    if (goldPurityOut && looksLikeObjectId(goldPurityOut)) {
+      try {
+        const k = await db.collection('karats').findOne({ _id: new ObjectId(goldPurityOut) }, { projection: { name: 1 } });
+        if (k && (k as Record<string, unknown>).name) goldPurityOut = (k as Record<string, string>).name;
+      } catch (_) {}
+    }
+
+    let silverPurityOut = trimStr(silverPurityRaw);
+    if (silverPurityOut && looksLikeObjectId(silverPurityOut)) {
+      try {
+        const pr = await db.collection('purities').findOne({ _id: new ObjectId(silverPurityOut) }, { projection: { name: 1 } });
+        if (pr && (pr as Record<string, unknown>).name) silverPurityOut = (pr as Record<string, string>).name;
+      } catch (_) {}
+    }
+
+    let metalColourOut = trimStr(metalColourRaw);
     if (metalColourOut && looksLikeObjectId(metalColourOut)) {
       try {
         const mc = await db.collection('metal_colors').findOne(
@@ -82,6 +129,14 @@ export async function GET(
       } catch (_) {}
     }
 
+    let categoryOut = currentCategory;
+    if (categoryOut && looksLikeObjectId(categoryOut)) {
+      try {
+        const cat = await db.collection('categories').findOne({ _id: new ObjectId(categoryOut) }, { projection: { name: 1 } });
+        if (cat && (cat as Record<string, unknown>).name) categoryOut = (cat as Record<string, string>).name;
+      } catch (_) {}
+    }
+
     const rawGender = Array.isArray(p.gender) ? p.gender : [];
     const genderMap: Record<string, string> = { Female: 'Women', Male: 'Man', Women: 'Women', Man: 'Man', Unisex: 'Unisex' };
     const allowedGender = new Set(['Man', 'Women', 'Unisex']);
@@ -89,47 +144,58 @@ export async function GET(
       .map((g: unknown) => genderMap[String(g).trim()] || String(g).trim())
       .filter((g: string) => allowedGender.has(g));
 
-    const storedRelatedIds = Array.isArray(p.relatedProducts)
-      ? (p.relatedProducts as string[]).filter((x: unknown) => typeof x === 'string' && ObjectId.isValid(x))
-      : [];
+    const storedRelatedIds: string[] = [];
+    if (Array.isArray(p.relatedProducts)) {
+      for (const x of p.relatedProducts as unknown[]) {
+        const str = typeof x === 'string' ? x : x instanceof ObjectId ? x.toString() : null;
+        if (str && ObjectId.isValid(str)) storedRelatedIds.push(str);
+      }
+    }
     let relatedList: Array<Record<string, unknown>> = [];
-    if (storedRelatedIds.length > 0) {
-      const ids = storedRelatedIds.map((x: string) => new ObjectId(x));
-      const resolved = await db
-        .collection('retailer_products')
-        .find({ _id: { $in: ids }, retailerId: retailerIdObj, status: 'active' })
-        .project({ _id: 1, name: 1, mainImage: 1, sellingPrice: 1, quantity: 1, category: 1 })
-        .toArray();
-      relatedList = resolved.map((r: Record<string, unknown>) => ({
-        _id: (r._id as ObjectId)?.toString(),
-        name: r.name,
-        mainImage: r.mainImage,
-        sellingPrice: r.sellingPrice,
-        quantity: r.quantity,
-        category: r.category,
-      }));
-    } else if (currentCategory) {
-      const sameCategory = await db
-        .collection('retailer_products')
-        .find({
-          retailerId: retailerIdObj,
-          _id: { $ne: new ObjectId(id) },
-          status: 'active',
-          category: currentCategory,
-        })
-        .project({ _id: 1, name: 1, mainImage: 1, sellingPrice: 1, quantity: 1, category: 1 })
-        .limit(8)
-        .toArray();
-      relatedList = sameCategory.map((r: Record<string, unknown>) => ({
-        _id: (r._id as ObjectId)?.toString(),
-        name: r.name,
-        mainImage: r.mainImage,
-        sellingPrice: r.sellingPrice,
-        quantity: r.quantity,
-        category: r.category,
-      }));
+    try {
+      const statusOr = [{ status: 'active' }, { status: { $exists: false } }];
+      if (storedRelatedIds.length > 0) {
+        const ids = storedRelatedIds.map((x) => new ObjectId(x));
+        const resolved = await db
+          .collection('retailer_products')
+          .find({ _id: { $in: ids }, retailerId: retailerIdObj, $or: statusOr })
+          .project({ _id: 1, name: 1, mainImage: 1, sellingPrice: 1, quantity: 1, category: 1 })
+          .toArray();
+        relatedList = (resolved || []).map((r: Record<string, unknown>) => ({
+          _id: r._id instanceof ObjectId ? r._id.toString() : String(r._id ?? ''),
+          name: r.name ?? '',
+          mainImage: r.mainImage ?? '',
+          sellingPrice: r.sellingPrice ?? 0,
+          quantity: r.quantity ?? 0,
+          category: r.category ?? '',
+        }));
+      } else if (currentCategory) {
+        const sameCategory = await db
+          .collection('retailer_products')
+          .find({
+            retailerId: retailerIdObj,
+            _id: { $ne: new ObjectId(id) },
+            $or: statusOr,
+            category: currentCategory,
+          })
+          .project({ _id: 1, name: 1, mainImage: 1, sellingPrice: 1, quantity: 1, category: 1 })
+          .limit(8)
+          .toArray();
+        relatedList = (sameCategory || []).map((r: Record<string, unknown>) => ({
+          _id: r._id instanceof ObjectId ? r._id.toString() : String(r._id ?? ''),
+          name: r.name ?? '',
+          mainImage: r.mainImage ?? '',
+          sellingPrice: r.sellingPrice ?? 0,
+          quantity: r.quantity ?? 0,
+          category: r.category ?? '',
+        }));
+      }
+    } catch (_relatedErr) {
+      relatedList = [];
     }
 
+    const mainImageVal = trimStr(p.mainImage);
+    const metalTypeVal = product_type || trimStr(p.metalType);
     const out: Record<string, unknown> = {
       _id: (p._id as ObjectId).toString(),
       name: trimStr(p.name),
@@ -143,14 +209,14 @@ export async function GET(
       retailerCommissionRate: typeof p.retailerCommissionRate === 'number' ? p.retailerCommissionRate : 0,
       createdAt: p.createdAt,
       updatedAt: p.updatedAt,
-      category: p.category ?? '',
-      product_type: p.product_type ?? '',
+      category: categoryOut,
+      product_type: product_type,
       designType: designTypeOut,
-      metalType: p.metalType ?? '',
-      goldPurity: p.goldPurity ?? '',
-      silverPurity: p.silverPurity ?? '',
+      metalType: metalTypeVal,
+      goldPurity: goldPurityOut,
+      silverPurity: silverPurityOut,
       metalColour: metalColourOut,
-      weight: p.weight ?? 0,
+      weight: weightOut,
       size: p.size ?? '',
       gender: genderOut,
       sku: p.sku ?? '',
@@ -166,8 +232,12 @@ export async function GET(
     };
     return NextResponse.json(out);
   } catch (e) {
-    console.error('[Retailer My Products] GET error:', e);
-    return NextResponse.json({ error: 'Failed to fetch product' }, { status: 500 });
+    const err = e instanceof Error ? e : new Error(String(e));
+    console.error('[Retailer My Products] GET error:', err.message, err.stack);
+    return NextResponse.json(
+      { error: 'Failed to fetch product', details: process.env.NODE_ENV === 'development' ? err.message : undefined },
+      { status: 500 }
+    );
   }
 }
 
