@@ -4,6 +4,7 @@ import { getRetailerFromRequest } from '@/lib/auth';
 import { formatProductPrice } from '@/lib/utils/price-calculator';
 import { ObjectId } from 'mongodb';
 import { findRetailerCommissionFromRows } from '@/lib/retailer-commission';
+import { requireSubscriptionOr403 } from '@/lib/subscription-access';
 
 function normalizeCategoryId(value: unknown): string | null {
   if (!value) return null;
@@ -25,6 +26,8 @@ export async function POST(
   try {
     const retailer = getRetailerFromRequest(request);
     if (!retailer) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const subErr = await requireSubscriptionOr403(request, 'retailer');
+    if (subErr) return subErr;
 
     const { orderId } = await params;
     if (!orderId || typeof orderId !== 'string') {

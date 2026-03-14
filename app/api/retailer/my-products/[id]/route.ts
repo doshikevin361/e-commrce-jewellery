@@ -3,6 +3,7 @@ import { connectToDatabase } from '@/lib/mongodb';
 import { getRetailerFromRequest } from '@/lib/auth';
 import { ObjectId } from 'mongodb';
 import { findRetailerCommissionFromRows } from '@/lib/retailer-commission';
+import { requireSubscriptionOr403 } from '@/lib/subscription-access';
 
 /** Return name for a given id from a collection, or the original value if not an id / not found. */
 async function resolveIdToName(
@@ -275,6 +276,8 @@ export async function PATCH(
   try {
     const retailer = getRetailerFromRequest(request);
     if (!retailer) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const subErr = await requireSubscriptionOr403(request, 'retailer');
+    if (subErr) return subErr;
 
     const { id } = await params;
     if (!id || !ObjectId.isValid(id)) {

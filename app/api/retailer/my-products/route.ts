@@ -3,6 +3,7 @@ import { connectToDatabase } from '@/lib/mongodb';
 import { getRetailerFromRequest } from '@/lib/auth';
 import { ObjectId } from 'mongodb';
 import { findRetailerCommissionFromRows } from '@/lib/retailer-commission';
+import { requireSubscriptionOr403 } from '@/lib/subscription-access';
 
 /**
  * POST - Create new retailer product (same fields as vendor product form).
@@ -11,6 +12,8 @@ export async function POST(request: NextRequest) {
   try {
     const retailer = getRetailerFromRequest(request);
     if (!retailer) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const subErr = await requireSubscriptionOr403(request, 'retailer');
+    if (subErr) return subErr;
 
     const body = await request.json().catch(() => ({}));
     const name = typeof body.name === 'string' ? body.name.trim() : '';

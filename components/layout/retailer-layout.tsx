@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { RetailerSidebar } from './retailer-sidebar';
 import { RetailerTopBar } from './retailer-top-bar';
@@ -10,8 +10,10 @@ import 'react-toastify/dist/ReactToastify.css';
 
 export function RetailerLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isCheckingSubscription, setIsCheckingSubscription] = useState(false);
 
   useEffect(() => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('retailerToken') : null;
@@ -22,6 +24,29 @@ export function RetailerLayout({ children }: { children: React.ReactNode }) {
     }
     setIsLoading(false);
   }, [router]);
+
+  useEffect(() => {
+    if (!isAuthenticated || typeof window === 'undefined') return;
+    let cancelled = false;
+    const checkSubscription = async () => {
+      try {
+        setIsCheckingSubscription(true);
+        const res = await fetch('/api/subscription/status', { cache: 'no-store' });
+        if (!res.ok || cancelled) return;
+        const data = await res.json();
+        const subscriptionPath = '/retailer/subscription';
+        if (data?.subscriptionEnabled && !data?.hasActiveSubscription && pathname !== subscriptionPath) {
+          router.push(subscriptionPath);
+        }
+      } catch {
+        // ignore
+      } finally {
+        if (!cancelled) setIsCheckingSubscription(false);
+      }
+    };
+    checkSubscription();
+    return () => { cancelled = true; };
+  }, [isAuthenticated, pathname, router]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -44,7 +69,7 @@ export function RetailerLayout({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  if (isLoading) {
+  if (isLoading || isCheckingSubscription) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
         <div className="text-center">

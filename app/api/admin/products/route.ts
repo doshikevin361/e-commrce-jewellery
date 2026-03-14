@@ -3,6 +3,7 @@ import { connectToDatabase } from '@/lib/mongodb';
 import { getUserFromRequest, isVendor } from '@/lib/auth';
 import { ObjectId } from 'mongodb';
 import { findRetailerCommissionFromRows } from '@/lib/retailer-commission';
+import { requireSubscriptionOr403 } from '@/lib/subscription-access';
 
 const normalizeProductPayload = (payload: any) => {
   if (!payload || typeof payload !== 'object') {
@@ -262,6 +263,12 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const currentUser = getUserFromRequest(request);
+    if (currentUser && isVendor(currentUser)) {
+      const subErr = await requireSubscriptionOr403(request, 'vendor');
+      if (subErr) return subErr;
+    }
+
     const { db } = await connectToDatabase();
     const rawBody = await request.json();
     const body = normalizeProductPayload(rawBody);
@@ -270,9 +277,6 @@ export async function POST(request: NextRequest) {
     if (jewelleryValidationError) {
       return NextResponse.json({ error: jewelleryValidationError }, { status: 400 });
     }
-    
-    // Get current user from token
-    const currentUser = getUserFromRequest(request);
     
     // If vendor, automatically set vendorId
     if (currentUser && isVendor(currentUser)) {

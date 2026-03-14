@@ -4,12 +4,13 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { useSettings } from '@/components/settings/settings-provider';
-import { LogOut, LayoutDashboard, Package, ShoppingBag, ShoppingCart, Store, Truck, Percent, ChevronLeft, ChevronRight, FileText, BarChart2 } from 'lucide-react';
+import { LogOut, LayoutDashboard, Package, ShoppingBag, ShoppingCart, Store, Truck, Percent, ChevronLeft, ChevronRight, FileText, BarChart2, CreditCard } from 'lucide-react';
 
 const menuItems = [
   { label: 'Dashboard', href: '/retailer', icon: LayoutDashboard },
   { label: 'Products', href: '/retailer/products', icon: ShoppingBag },
   { label: 'My Products', href: '/retailer/my-products', icon: Store },
+  { label: 'Subscription', href: '/retailer/subscription', icon: CreditCard },
   { label: 'Retailer Commission', href: '/retailer/commission', icon: Percent },
   { label: 'Commission Compare', href: '/retailer/price-compare', icon: BarChart2 },
   { label: 'Cart', href: '/retailer/cart', icon: ShoppingCart },

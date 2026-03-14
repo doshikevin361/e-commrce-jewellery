@@ -30,7 +30,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
 
     let isCancelled = false;
 
-    const checkCommissionSetup = async () => {
+    const checkCommissionAndSubscription = async () => {
       const adminData = localStorage.getItem('adminUser');
       if (!adminData) return;
 
@@ -39,25 +39,36 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
         if (admin?.role !== 'vendor') return;
 
         setIsCheckingSetup(true);
-        const response = await fetch('/api/vendor/commission-settings', {
+        const commissionResponse = await fetch('/api/vendor/commission-settings', {
           cache: 'no-store',
         });
 
-        if (!response.ok) {
+        if (!commissionResponse.ok) {
           return;
         }
 
-        const data = await response.json();
-        const setupCompleted = Boolean(data?.setupCompleted);
+        const commissionData = await commissionResponse.json();
+        const setupCompleted = Boolean(commissionData?.setupCompleted);
         const setupPath = '/admin/vendor-commission-setup';
+        const subscriptionPath = '/admin/subscription';
 
         if (!setupCompleted && pathname !== setupPath) {
           router.push(setupPath);
-        } else if (setupCompleted && pathname === setupPath) {
+          return;
+        }
+        if (setupCompleted && pathname === setupPath) {
           router.push('/admin');
+          return;
+        }
+
+        const statusRes = await fetch('/api/subscription/status', { cache: 'no-store' });
+        if (!statusRes.ok) return;
+        const statusData = await statusRes.json();
+        if (statusData?.subscriptionEnabled && !statusData?.hasActiveSubscription && pathname !== subscriptionPath) {
+          router.push(subscriptionPath);
         }
       } catch (error) {
-        console.error('[AdminLayout] Commission setup check failed:', error);
+        console.error('[AdminLayout] Commission/subscription check failed:', error);
       } finally {
         if (!isCancelled) {
           setIsCheckingSetup(false);
@@ -65,7 +76,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
       }
     };
 
-    checkCommissionSetup();
+    checkCommissionAndSubscription();
 
     return () => {
       isCancelled = true;

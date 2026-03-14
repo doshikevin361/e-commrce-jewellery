@@ -35,6 +35,7 @@ import {
   Percent,
   Mail,
   BarChart2,
+  CreditCard,
 } from 'lucide-react';
 
 export function Sidebar() {
@@ -200,6 +201,13 @@ export function Sidebar() {
       allowedRoles: ['superadmin', 'admin'],
     },
     {
+      label: 'Subscription Settings',
+      href: '/admin/subscription-settings',
+      badge: null,
+      icon: CreditCard,
+      allowedRoles: ['superadmin', 'admin'],
+    },
+    {
       label: 'Settings',
       href: '/admin/settings',
       badge: null,
@@ -211,6 +219,13 @@ export function Sidebar() {
       href: '/admin/vendor-commission',
       badge: null,
       icon: Percent,
+      allowedRoles: ['vendor'],
+    },
+    {
+      label: 'Subscription',
+      href: '/admin/subscription',
+      badge: null,
+      icon: CreditCard,
       allowedRoles: ['vendor'],
     },
     {

@@ -31,6 +31,8 @@ const DEFAULT_SETTINGS = {
     purityKarat: string;
     vendorCommission: number;
   }>,
+  vendorSubscriptionEnabled: false,
+  retailerSubscriptionEnabled: false,
 };
 
 function normalizeSettings(doc: any = {}) {
@@ -47,6 +49,8 @@ function normalizeSettings(doc: any = {}) {
     productType: doc.productType ?? DEFAULT_SETTINGS.productType,
     productTypeCommissions: doc.productTypeCommissions ?? DEFAULT_SETTINGS.productTypeCommissions,
     commissionRows: Array.isArray(doc.commissionRows) ? doc.commissionRows : [],
+    vendorSubscriptionEnabled: doc.vendorSubscriptionEnabled ?? DEFAULT_SETTINGS.vendorSubscriptionEnabled,
+    retailerSubscriptionEnabled: doc.retailerSubscriptionEnabled ?? DEFAULT_SETTINGS.retailerSubscriptionEnabled,
     updatedAt: doc.updatedAt ?? null,
     createdAt: doc.createdAt ?? null,
   };

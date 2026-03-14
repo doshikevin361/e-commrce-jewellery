@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
 import { getUserFromRequest, isVendor, isAdmin } from '@/lib/auth';
+import { requireSubscriptionOr403 } from '@/lib/subscription-access';
 
 const normalizeProductPayload = (payload: any) => {
   if (!payload || typeof payload !== 'object') {
@@ -274,6 +275,12 @@ export async function PUT(
       }
     }
 
+    const currentUser = getUserFromRequest(request);
+    if (currentUser && isVendor(currentUser)) {
+      const subErr = await requireSubscriptionOr403(request, 'vendor');
+      if (subErr) return subErr;
+    }
+
     const existingProduct = await db.collection('products').findOne({ _id: new ObjectId(id) });
     const existingRetailerProduct = existingProduct ? null : await db.collection('retailer_products').findOne({ _id: new ObjectId(id) });
 
@@ -282,7 +289,6 @@ export async function PUT(
       return NextResponse.json({ error: 'Product not found' }, { status: 404 });
     }
 
-    const currentUser = getUserFromRequest(request);
     if (existingProduct && currentUser && isVendor(currentUser) && existingProduct.vendorId !== currentUser.id) {
       console.log('[v0] Vendor trying to update another vendor\'s product');
       return NextResponse.json({ error: 'Access denied' }, { status: 403 });
@@ -338,11 +344,14 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const currentUser = getUserFromRequest(request);
+    if (currentUser && isVendor(currentUser)) {
+      const subErr = await requireSubscriptionOr403(request, 'vendor');
+      if (subErr) return subErr;
+    }
+
     const { id } = await params;
     const { db } = await connectToDatabase();
-    
-    // Get current user and check vendor access
-    const currentUser = getUserFromRequest(request);
     
     const existingProduct = await db.collection('products').findOne({ _id: new ObjectId(id) });
     if (!existingProduct) {
