@@ -25,6 +25,8 @@ const PRODUCT_PROJECTION = {
   urlSlug: 1,
   rating: 1,
   reviewCount: 1,
+  goldPurity: 1,
+  silverPurity: 1,
 };
 
 const serializeProduct = (product: any, fallbackIndex = 0, categoryMap?: Map<string, string>) => {
@@ -68,6 +70,7 @@ const serializeProduct = (product: any, fallbackIndex = 0, categoryMap?: Map<str
     ? Math.max(0, Math.round(originalPrice * (1 - discountPercent / 100)))
     : (sellingPrice > 0 ? sellingPrice : originalPrice);
 
+  const karat = product?.goldPurity || product?.silverPurity;
   // Only return fields needed for customer display
   return {
     _id: id,
@@ -81,6 +84,8 @@ const serializeProduct = (product: any, fallbackIndex = 0, categoryMap?: Map<str
     urlSlug: product?.urlSlug || id,
     rating: product?.rating,
     reviewCount: product?.reviewCount,
+    goldPurity: karat || undefined,
+    silverPurity: karat || undefined,
   };
 };
 

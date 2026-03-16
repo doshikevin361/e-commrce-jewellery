@@ -105,6 +105,7 @@ const convertToProductCard = (product: Product): ProductCardData => {
   const displayPrice = typeof product.displayPrice === 'number' ? product.displayPrice : 0;
   const originalPrice = typeof product.originalPrice === 'number' ? product.originalPrice : displayPrice;
   const hasDiscount = product.hasDiscount === true || (originalPrice > displayPrice && displayPrice > 0);
+  const karat = product.goldPurity || product.silverPurity;
   return {
     id: productId,
     _id: productId,
@@ -122,6 +123,7 @@ const convertToProductCard = (product: Product): ProductCardData => {
     color: product.metalPurity || 'Gold',
     size: product.size || 'Medium',
     urlSlug: product.urlSlug,
+    karat: karat ? String(karat).trim() : undefined,
   };
 };
 

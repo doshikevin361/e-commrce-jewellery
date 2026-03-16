@@ -26,6 +26,8 @@ export type ProductCardData = {
   color?: string;
   size?: string;
   urlSlug?: string;
+  /** Karat/purity to show on card (e.g. 22K, 18K, 92.5) */
+  karat?: string;
 };
 
 type ProductCardProps = {
@@ -168,6 +170,13 @@ export const ProductCard = memo(
             className='h-56 w-full cursor-pointer object-cover transition-transform duration-500 group-hover:scale-105'
           />
 
+          {/* Karat - top left, small */}
+          {product.karat && (
+            <span className='absolute left-3 top-3 rounded-md bg-white/90 px-2 py-0.5 text-[10px] font-medium text-neutral-700 shadow-sm backdrop-blur-sm'>
+              {product.karat}
+            </span>
+          )}
+
           {/* Badge */}
           {product.badge && (
             <span className='absolute left-4 top-4 rounded-full bg-black px-3 py-1 text-[11px] font-medium text-white'>
@@ -217,7 +226,7 @@ export const ProductCard = memo(
                 <Star
                   key={i}
                   size={14}
-                  className={i < Math.floor(product.rating) ? 'fill-web text-web' : 'fill-neutral-300 text-neutral-300'}
+                  className={i < Math.floor(product.rating ?? 0) ? 'fill-web text-web' : 'fill-neutral-300 text-neutral-300'}
                 />
               ))}
             </div>
@@ -260,6 +269,7 @@ export const ProductCard = memo(
       prevProps.product.price === nextProps.product.price &&
       prevProps.product.image === nextProps.product.image &&
       prevProps.product.title === nextProps.product.title &&
+      prevProps.product.karat === nextProps.product.karat &&
       prevProps.className === nextProps.className &&
       prevProps.actionLabel === nextProps.actionLabel &&
       prevProps.showDeleteIcon === nextProps.showDeleteIcon &&

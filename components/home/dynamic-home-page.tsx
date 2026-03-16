@@ -287,6 +287,7 @@ const mapProductsFromApi = (incoming?: any[], defaultBadge?: string): ProductCar
 
     const productId = typeof product?._id === 'string' ? product._id : (product?._id?.toString?.() ?? `product-${index}`);
 
+    const karat = [product?.goldPurity, product?.silverPurity].filter(Boolean)[0];
     return {
       id: productId,
       _id: productId, // Ensure _id is set for ProductCard component
@@ -298,6 +299,7 @@ const mapProductsFromApi = (incoming?: any[], defaultBadge?: string): ProductCar
       reviews: typeof product?.reviewCount === 'number' ? product.reviewCount : 0,
       image: product?.mainImage || DEFAULT_PRODUCT_IMAGE,
       badge: product?.badge || defaultBadge,
+      karat: karat ? String(karat).trim() : undefined,
     };
   });
 };

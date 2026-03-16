@@ -71,6 +71,8 @@ export async function GET(request: NextRequest) {
         // Jewelry specific fields for pricing display
         metalType: 1,
         metalPurity: 1,
+        goldPurity: 1,
+        silverPurity: 1,
         livePriceEnabled: 1,
         metalCost: 1,
         makingChargeAmount: 1,
@@ -129,6 +131,7 @@ export async function GET(request: NextRequest) {
     // Retailer products: website shows retailer's selling price (same as retailer panel)
     const retailerList = (retailerProducts as any[]).map((rp) => {
       const sellingPrice = Number(rp.sellingPrice) || 0;
+      const karat = rp.goldPurity ?? rp.silverPurity ?? '';
       return {
         _id: (rp._id as ObjectId).toString(),
         name: rp.name,
@@ -142,6 +145,8 @@ export async function GET(request: NextRequest) {
         urlSlug: (rp._id as ObjectId).toString(),
         sellerType: "retailer",
         retailerId: (rp.retailerId as ObjectId)?.toString(),
+        goldPurity: karat || undefined,
+        silverPurity: karat || undefined,
       };
     });
 

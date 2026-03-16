@@ -59,20 +59,26 @@ interface Product {
 }
 
 // Convert Product to ProductCardData
-const convertToProductCard = (product: Product): ProductCardData => ({
-  id: product._id,
-  title: product.name,
-  category: product.category,
-  price: `₹${product.displayPrice.toLocaleString()}`,
-  originalPrice: product.hasDiscount ? `₹${product.originalPrice.toLocaleString()}` : undefined,
-  rating: product.rating || 4.5,
-  reviews: product.reviewCount || 0,
-  image: product.mainImage || 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=600&q=80',
-  badge: product.featured ? 'Featured' : product.trending ? 'Trending' : undefined,
-  material: product.metalType || 'Gold',
-  brand: product.brand || 'Unknown',
-  inStock: product.stock > 0,
-});
+const convertToProductCard = (product: Product): ProductCardData => {
+  const karat = (product as Product & { goldPurity?: string; silverPurity?: string }).goldPurity
+    || (product as Product & { goldPurity?: string; silverPurity?: string }).silverPurity
+    || product.metalPurity;
+  return {
+    id: product._id,
+    title: product.name,
+    category: product.category,
+    price: `₹${product.displayPrice.toLocaleString()}`,
+    originalPrice: product.hasDiscount ? `₹${product.originalPrice.toLocaleString()}` : undefined,
+    rating: product.rating || 4.5,
+    reviews: product.reviewCount || 0,
+    image: product.mainImage || 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=600&q=80',
+    badge: product.featured ? 'Featured' : product.trending ? 'Trending' : undefined,
+    material: product.metalType || 'Gold',
+    brand: product.brand || 'Unknown',
+    inStock: product.stock > 0,
+    karat: karat ? String(karat).trim() : undefined,
+  };
+};
 
 // Predefined price ranges
 const PRICE_RANGES = [
