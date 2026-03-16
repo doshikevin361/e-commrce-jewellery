@@ -239,6 +239,11 @@ export async function GET(request: NextRequest) {
           mainImage: rp.mainImage ?? '',
           sku: rp.sku ?? '',
           product_type: rp.product_type ?? '',
+          designType: rp.designType ?? '',
+          metalColour: rp.metalColour ?? '',
+          gender: rp.gender,
+          goldPurity: rp.goldPurity ?? '',
+          silverPurity: rp.silverPurity ?? '',
           createdAt: rp.createdAt,
           updatedAt: rp.updatedAt,
         };

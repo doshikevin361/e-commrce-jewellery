@@ -39,6 +39,11 @@ interface CategoryOption {
   slug?: string;
 }
 
+interface FilterOption {
+  _id: string;
+  name: string;
+}
+
 function getAuthHeaders(): HeadersInit {
   if (typeof window === 'undefined') return {};
   const token = localStorage.getItem('retailerToken');
@@ -62,6 +67,16 @@ export default function RetailerProductsPage() {
   const [searchInput, setSearchInput] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
+  const [designTypeFilter, setDesignTypeFilter] = useState('');
+  const [metalColourFilter, setMetalColourFilter] = useState('');
+  const [genderFilter, setGenderFilter] = useState('');
+  const [karatFilter, setKaratFilter] = useState('');
+  const [filterOptions, setFilterOptions] = useState<{
+    designTypes: FilterOption[];
+    metalColors: FilterOption[];
+    genders: string[];
+    karats: FilterOption[];
+  }>({ designTypes: [], metalColors: [], genders: [], karats: [] });
 
   const fetchCategories = useCallback(async () => {
     try {
@@ -81,6 +96,10 @@ export default function RetailerProductsPage() {
       if (search) params.set('search', search);
       if (categoryFilter && categoryFilter !== 'all') params.set('category', categoryFilter);
       if (typeFilter && typeFilter !== 'all') params.set('type', typeFilter);
+      if (designTypeFilter && designTypeFilter !== 'all') params.set('designType', designTypeFilter);
+      if (metalColourFilter && metalColourFilter !== 'all') params.set('metalColour', metalColourFilter);
+      if (genderFilter && genderFilter !== 'all') params.set('gender', genderFilter);
+      if (karatFilter && karatFilter !== 'all') params.set('karat', karatFilter);
       params.set('page', String(pagination.page));
       params.set('limit', String(pagination.limit));
       const res = await fetch(`/api/retailer/products?${params.toString()}`, {
@@ -104,12 +123,20 @@ export default function RetailerProductsPage() {
           : { page: 1, limit: 24, total: 0, pages: 1 }
       );
       if (Array.isArray(data.productTypes)) setProductTypes(data.productTypes);
+      if (data.filterOptions) {
+        setFilterOptions({
+          designTypes: Array.isArray(data.filterOptions.designTypes) ? data.filterOptions.designTypes : [],
+          metalColors: Array.isArray(data.filterOptions.metalColors) ? data.filterOptions.metalColors : [],
+          genders: Array.isArray(data.filterOptions.genders) ? data.filterOptions.genders : [],
+          karats: Array.isArray(data.filterOptions.karats) ? data.filterOptions.karats : [],
+        });
+      }
     } catch {
       setProducts([]);
     } finally {
       setLoading(false);
     }
-  }, [search, categoryFilter, typeFilter, pagination.page, pagination.limit]);
+  }, [search, categoryFilter, typeFilter, designTypeFilter, metalColourFilter, genderFilter, karatFilter, pagination.page, pagination.limit]);
 
   useEffect(() => {
     fetchCategories();
@@ -123,12 +150,23 @@ export default function RetailerProductsPage() {
     setSearch(searchInput.trim());
     setPagination((p) => ({ ...p, page: 1 }));
   };
-  const hasFilters = search || (categoryFilter && categoryFilter !== 'all') || (typeFilter && typeFilter !== 'all');
+  const hasFilters =
+    search ||
+    (categoryFilter && categoryFilter !== 'all') ||
+    (typeFilter && typeFilter !== 'all') ||
+    (designTypeFilter && designTypeFilter !== 'all') ||
+    (metalColourFilter && metalColourFilter !== 'all') ||
+    (genderFilter && genderFilter !== 'all') ||
+    (karatFilter && karatFilter !== 'all');
   const clearFilters = () => {
     setSearch('');
     setSearchInput('');
     setCategoryFilter('');
     setTypeFilter('');
+    setDesignTypeFilter('');
+    setMetalColourFilter('');
+    setGenderFilter('');
+    setKaratFilter('');
     setPagination((p) => ({ ...p, page: 1 }));
   };
 
@@ -228,6 +266,58 @@ export default function RetailerProductsPage() {
                   {productTypes.map((t) => (
                     <SelectItem key={t} value={t}>
                       {t}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={designTypeFilter || 'all'} onValueChange={(v) => { setDesignTypeFilter(v === 'all' ? '' : v); setPagination((p) => ({ ...p, page: 1 })); }}>
+                <SelectTrigger className="w-[180px] h-9 bg-white border-slate-200">
+                  <SelectValue placeholder="Design Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All design types</SelectItem>
+                  {filterOptions.designTypes.map((d) => (
+                    <SelectItem key={d._id} value={d._id}>
+                      {d.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={metalColourFilter || 'all'} onValueChange={(v) => { setMetalColourFilter(v === 'all' ? '' : v); setPagination((p) => ({ ...p, page: 1 })); }}>
+                <SelectTrigger className="w-[180px] h-9 bg-white border-slate-200">
+                  <SelectValue placeholder="Metal Colour" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All metal colours</SelectItem>
+                  {filterOptions.metalColors.map((m) => (
+                    <SelectItem key={m._id} value={m._id}>
+                      {m.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={genderFilter || 'all'} onValueChange={(v) => { setGenderFilter(v === 'all' ? '' : v); setPagination((p) => ({ ...p, page: 1 })); }}>
+                <SelectTrigger className="w-[180px] h-9 bg-white border-slate-200">
+                  <SelectValue placeholder="Gender" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All genders</SelectItem>
+                  {filterOptions.genders.map((g) => (
+                    <SelectItem key={g} value={g}>
+                      {g}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={karatFilter || 'all'} onValueChange={(v) => { setKaratFilter(v === 'all' ? '' : v); setPagination((p) => ({ ...p, page: 1 })); }}>
+                <SelectTrigger className="w-[180px] h-9 bg-white border-slate-200">
+                  <SelectValue placeholder="Karat" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All karats</SelectItem>
+                  {filterOptions.karats.map((k) => (
+                    <SelectItem key={k._id} value={k._id}>
+                      {k.name}
                     </SelectItem>
                   ))}
                 </SelectContent>

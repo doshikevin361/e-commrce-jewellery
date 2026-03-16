@@ -48,6 +48,12 @@ interface Product {
   sku?: string;
   brand?: string;
   sellerType?: 'vendor' | 'retailer';
+  designType?: string;
+  metalColour?: string;
+  gender?: string | string[];
+  goldPurity?: string;
+  silverPurity?: string;
+  size?: string;
 }
 
 interface ProductDetails extends Product {
@@ -92,6 +98,13 @@ export function ProductList() {
   const [vendorFilter, setVendorFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [stockFilter, setStockFilter] = useState('all');
+  const [designTypeFilter, setDesignTypeFilter] = useState('all');
+  const [metalColourFilter, setMetalColourFilter] = useState('all');
+  const [genderFilter, setGenderFilter] = useState('all');
+  const [karatFilter, setKaratFilter] = useState('all');
+  const [designTypes, setDesignTypes] = useState<{ _id: string; name: string }[]>([]);
+  const [metalColors, setMetalColors] = useState<{ _id: string; name: string }[]>([]);
+  const [karats, setKarats] = useState<{ _id: string; name: string }[]>([]);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState<string | null>(null);
   const [viewProductId, setViewProductId] = useState<string | null>(null);
@@ -112,7 +125,34 @@ export function ProductList() {
     fetchProducts();
     fetchCategories();
     fetchVendors();
+    fetchFilterOptions();
   }, []);
+
+  const fetchFilterOptions = async () => {
+    try {
+      const [dtRes, mcRes, kRes] = await Promise.all([
+        fetch('/api/admin/design-types'),
+        fetch('/api/admin/metal-colors'),
+        fetch('/api/admin/karats'),
+      ]);
+      if (dtRes.ok) {
+        const d = await dtRes.json();
+        setDesignTypes(Array.isArray(d.designTypes) ? d.designTypes.map((x: { _id: string; name: string }) => ({ _id: x._id, name: x.name || '' })) : []);
+      }
+      if (mcRes.ok) {
+        const m = await mcRes.json();
+        setMetalColors(Array.isArray(m.metalColors) ? m.metalColors.map((x: { _id: string; name: string }) => ({ _id: x._id, name: x.name || '' })) : []);
+      }
+      if (kRes.ok) {
+        const k = await kRes.json();
+        setKarats(Array.isArray(k.karats) ? k.karats.map((x: { _id: string; name: string }) => ({ _id: x._id, name: x.name || '' })) : []);
+      }
+    } catch {
+      setDesignTypes([]);
+      setMetalColors([]);
+      setKarats([]);
+    }
+  };
 
   const fetchProducts = async () => {
     try {
@@ -167,11 +207,22 @@ export function ProductList() {
     return category ? category.name : categoryId;
   };
 
+  const normVal = (v: unknown) => (v == null ? '' : String(v).trim());
+  const matchesGender = (p: Product) => {
+    if (genderFilter === 'all') return true;
+    const g = p.gender;
+    if (Array.isArray(g)) return g.some(x => normVal(x) === genderFilter);
+    return normVal(g) === genderFilter;
+  };
+
   const filteredProducts = products.filter(p => {
+    const term = searchTerm.toLowerCase();
     const matchesSearch =
-      p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (p.sku && p.sku.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (p.brand && p.brand.toLowerCase().includes(searchTerm.toLowerCase()));
+      p.name.toLowerCase().includes(term) ||
+      (p.sku && p.sku.toLowerCase().includes(term)) ||
+      (p.brand && p.brand.toLowerCase().includes(term)) ||
+      (p.size && String(p.size).toLowerCase().includes(term)) ||
+      (p.metalColour && String(p.metalColour).toLowerCase().includes(term));
     const matchesCategory = categoryFilter === 'all' || p.category === categoryFilter || getCategoryName(p.category) === categoryFilter;
     const matchesVendor = vendorFilter === 'all' || p.vendor === vendorFilter;
     const matchesStatus = statusFilter === 'all' || p.status === statusFilter;
@@ -180,8 +231,24 @@ export function ProductList() {
       (stockFilter === 'in-stock' && p.stock > 0) ||
       (stockFilter === 'out-of-stock' && p.stock === 0) ||
       (stockFilter === 'low-stock' && p.stock > 0 && p.stock <= 10);
+    const pDesignType = normVal(p.designType);
+    const pMetalColour = normVal(p.metalColour);
+    const pPurity = normVal(p.goldPurity) || normVal(p.silverPurity);
+    const matchesDesignType =
+      designTypeFilter === 'all' ||
+      pDesignType === designTypeFilter ||
+      (designTypes.find(d => d._id === designTypeFilter)?.name === pDesignType);
+    const matchesMetalColour =
+      metalColourFilter === 'all' ||
+      pMetalColour === metalColourFilter ||
+      (metalColors.find(m => m._id === metalColourFilter)?.name === pMetalColour);
+    const matchesGenderFilter = matchesGender(p);
+    const matchesKarat =
+      karatFilter === 'all' ||
+      pPurity === karatFilter ||
+      (karats.find(k => k._id === karatFilter)?.name === pPurity);
 
-    return matchesSearch && matchesCategory && matchesVendor && matchesStatus && matchesStock;
+    return matchesSearch && matchesCategory && matchesVendor && matchesStatus && matchesStock && matchesDesignType && matchesMetalColour && matchesGenderFilter && matchesKarat;
   });
 
   // Pagination calculations
@@ -193,7 +260,7 @@ export function ProductList() {
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, categoryFilter, vendorFilter, statusFilter, stockFilter]);
+  }, [searchTerm, categoryFilter, vendorFilter, statusFilter, stockFilter, designTypeFilter, metalColourFilter, genderFilter, karatFilter]);
 
   const handleAddProduct = () => {
     router.push('/admin/products/add');
@@ -318,7 +385,13 @@ export function ProductList() {
     setVendorFilter('all');
     setStatusFilter('all');
     setStockFilter('all');
+    setDesignTypeFilter('all');
+    setMetalColourFilter('all');
+    setGenderFilter('all');
+    setKaratFilter('all');
   };
+
+  const GENDERS = ['Women', 'Man', 'Unisex'];
 
   const formatCurrency = (value?: number) => {
     if (typeof value !== 'number') return '-';
@@ -413,7 +486,7 @@ export function ProductList() {
               <div className='relative'>
                 <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400' />
                 <Input
-                  placeholder='Search by name, SKU, brand...'
+                  placeholder='Search by name, SKU, brand, size, color...'
                   value={searchTerm}
                   onChange={e => setSearchTerm(e.target.value)}
                   className='pl-10 bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 max-w-[300px]'
@@ -468,6 +541,50 @@ export function ProductList() {
                   <SelectItem value='in-stock'>In Stock</SelectItem>
                   <SelectItem value='low-stock'>Low Stock (≤10)</SelectItem>
                   <SelectItem value='out-of-stock'>Out of Stock</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={designTypeFilter} onValueChange={setDesignTypeFilter}>
+                <SelectTrigger className='bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600'>
+                  <SelectValue placeholder='Design Type' />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value='all'>All Design Types</SelectItem>
+                  {designTypes.map(d => (
+                    <SelectItem key={d._id} value={d._id}>{d.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={metalColourFilter} onValueChange={setMetalColourFilter}>
+                <SelectTrigger className='bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600'>
+                  <SelectValue placeholder='Metal Colour' />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value='all'>All Metal Colours</SelectItem>
+                  {metalColors.map(m => (
+                    <SelectItem key={m._id} value={m._id}>{m.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={genderFilter} onValueChange={setGenderFilter}>
+                <SelectTrigger className='bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600'>
+                  <SelectValue placeholder='Gender' />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value='all'>All Genders</SelectItem>
+                  {GENDERS.map(g => (
+                    <SelectItem key={g} value={g}>{g}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={karatFilter} onValueChange={setKaratFilter}>
+                <SelectTrigger className='bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600'>
+                  <SelectValue placeholder='Karat' />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value='all'>All Karats</SelectItem>
+                  {karats.map(k => (
+                    <SelectItem key={k._id} value={k._id}>{k.name}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
               <Button

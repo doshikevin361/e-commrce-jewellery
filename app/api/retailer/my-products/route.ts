@@ -153,6 +153,7 @@ export async function GET(request: NextRequest) {
         goldPurity: p.goldPurity,
         silverPurity: p.silverPurity,
         metalColour: p.metalColour,
+        gender: p.gender,
         weight: p.weight,
         size: p.size,
         hsnCode: p.hsnCode,

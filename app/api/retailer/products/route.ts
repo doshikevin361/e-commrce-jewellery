@@ -61,6 +61,10 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const category = searchParams.get('category')?.trim() || '';
     const type = searchParams.get('type')?.trim() || '';
+    const designType = searchParams.get('designType')?.trim() || '';
+    const metalColour = searchParams.get('metalColour')?.trim() || '';
+    const gender = searchParams.get('gender')?.trim() || '';
+    const karat = searchParams.get('karat')?.trim() || '';
     const search = searchParams.get('search')?.trim() || '';
     const limit = Math.min(100, Math.max(8, parseInt(searchParams.get('limit') || '24', 10)));
     const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
@@ -80,6 +84,40 @@ export async function GET(request: NextRequest) {
       query.product_type = type;
     }
 
+    if (designType && designType !== 'all') {
+      if (ObjectId.isValid(designType)) {
+        query.$and = query.$and || [];
+        (query.$and as unknown[]).push({ $or: [{ designType: new ObjectId(designType) }, { designType }] });
+      } else {
+        query.designType = designType;
+      }
+    }
+
+    if (metalColour && metalColour !== 'all') {
+      if (ObjectId.isValid(metalColour)) {
+        query.$and = query.$and || [];
+        (query.$and as unknown[]).push({ $or: [{ metalColour: new ObjectId(metalColour) }, { metalColour }] });
+      } else {
+        query.metalColour = metalColour;
+      }
+    }
+
+    if (gender && gender !== 'all') {
+      query.$and = query.$and || [];
+      (query.$and as unknown[]).push({
+        $or: [{ gender: gender }, { gender: { $in: [gender] } }],
+      });
+    }
+
+    if (karat && karat !== 'all') {
+      query.$and = query.$and || [];
+      const karatConditions = [{ goldPurity: karat }, { silverPurity: karat }];
+      if (ObjectId.isValid(karat)) {
+        karatConditions.push({ goldPurity: new ObjectId(karat) }, { silverPurity: new ObjectId(karat) });
+      }
+      (query.$and as unknown[]).push({ $or: karatConditions });
+    }
+
     if (search) {
       query.$and = query.$and || [];
       (query.$and as unknown[]).push({
@@ -90,9 +128,12 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    const [products, total] = await Promise.all([
+    const [products, total, designTypes, metalColors, karats] = await Promise.all([
       db.collection('products').find(query).sort({ createdAt: -1 }).skip(skip).limit(limit).toArray(),
       db.collection('products').countDocuments(query),
+      db.collection('design_types').find({}).sort({ displayOrder: 1, name: 1 }).project({ _id: 1, name: 1 }).toArray(),
+      db.collection('metal_colors').find({}).sort({ displayOrder: 1, name: 1 }).project({ _id: 1, name: 1 }).toArray(),
+      db.collection('karats').find({}).sort({ displayOrder: 1, name: 1 }).project({ _id: 1, name: 1 }).toArray(),
     ]);
 
     const categoryIds = [...new Set(products.map((p: { category?: unknown }) => normalizeCategoryId(p.category)).filter(Boolean))] as string[];
@@ -134,10 +175,17 @@ export async function GET(request: NextRequest) {
       };
     });
 
+    const GENDERS = ['Women', 'Man', 'Unisex'];
     return NextResponse.json({
       products: list,
       pagination: { page, limit, total, pages: Math.ceil(total / limit) || 1 },
       productTypes: PRODUCT_TYPES,
+      filterOptions: {
+        designTypes: designTypes.map((d: { _id: ObjectId; name: string }) => ({ _id: d._id.toString(), name: d.name || '' })),
+        metalColors: metalColors.map((m: { _id: ObjectId; name: string }) => ({ _id: m._id.toString(), name: m.name || '' })),
+        genders: GENDERS,
+        karats: karats.map((k: { _id: ObjectId; name: string }) => ({ _id: k._id.toString(), name: k.name || '' })),
+      },
     });
   } catch (error) {
     console.error('[Retailer] Products list error:', error);
