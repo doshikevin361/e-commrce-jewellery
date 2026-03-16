@@ -19,7 +19,8 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
-import { Download, Search, Filter, Plus, Trash2, Pencil, Eye } from 'lucide-react';
+import { Download, Search, Filter, Plus, Trash2, Pencil, Eye, FileDown } from 'lucide-react';
+import { jsPDF } from 'jspdf';
 import { CommonDialog } from '../dialog/dialog';
 import { Switch } from '@/components/ui/switch';
 import { formatIndianDate } from '@/app/utils/helper';
@@ -379,6 +380,112 @@ export function ProductList() {
     }
   };
 
+  const loadImageAsDataUrl = (url: string): Promise<string | null> => {
+    if (!url || !url.startsWith('http')) return Promise.resolve(null);
+    return fetch(url, { mode: 'cors' })
+      .then(r => r.blob())
+      .then(
+        blob =>
+          new Promise<string | null>(resolve => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.onerror = () => resolve(null);
+            reader.readAsDataURL(blob);
+          }),
+      )
+      .catch(() => null);
+  };
+
+  const handleExportPdf = async () => {
+    if (filteredProducts.length === 0) {
+      toast({ title: 'No data', description: 'No products to export', variant: 'destructive' });
+      return;
+    }
+    try {
+      const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+      const margin = 6;
+      const rowH = 12;
+      const cols = { img: 12, name: 38, sku: 18, category: 22, vendor: 28, price: 20, stock: 12, status: 14 };
+      const colKeys = ['name', 'sku', 'category', 'vendor', 'price', 'stock', 'status'] as const;
+      let y = margin + 8;
+
+      doc.setFontSize(14);
+      doc.text('Products', margin, y);
+      y += 6;
+      doc.setFontSize(8);
+      doc.text(`Generated: ${new Date().toLocaleString('en-IN')}  |  Total: ${filteredProducts.length} products`, margin, y);
+      y += 8;
+
+      doc.setDrawColor(200, 200, 200);
+      doc.setLineWidth(0.15);
+      doc.setFontSize(7);
+      doc.setFont('helvetica', 'bold');
+      let x = margin;
+      doc.rect(x, y, cols.img, rowH);
+      doc.text('Image', x + 1, y + 5);
+      x += cols.img;
+      (['Name', 'SKU', 'Category', 'Vendor', 'Price', 'Stock', 'Status'] as const).forEach((label, i) => {
+        const w = cols[colKeys[i]];
+        doc.rect(x, y, w, rowH);
+        doc.text(label, x + 1, y + 5);
+        x += w;
+      });
+      y += rowH;
+      doc.setFont('helvetica', 'normal');
+
+      const formatPrice = (n: number) => (typeof n === 'number' ? `₹${Number(n).toLocaleString('en-IN')}` : '—');
+
+      for (let i = 0; i < filteredProducts.length; i++) {
+        if (y > 198) {
+          doc.addPage('a4', 'landscape');
+          y = margin;
+        }
+        const p = filteredProducts[i];
+        const imgW = cols.img - 2;
+        const imgH = rowH - 2;
+        doc.rect(margin, y, cols.img, rowH);
+        const imgUrl = p.image || p.mainImage;
+        if (imgUrl) {
+          try {
+            const dataUrl = await loadImageAsDataUrl(imgUrl);
+            if (dataUrl) {
+              const fmt = dataUrl.startsWith('data:image/png') ? 'PNG' : 'JPEG';
+              doc.addImage(dataUrl, fmt, margin + 1, y + 1, imgW, imgH, undefined, 'FAST');
+            } else doc.text('—', margin + cols.img / 2 - 1, y + rowH / 2 + 1);
+          } catch {
+            doc.text('—', margin + cols.img / 2 - 1, y + rowH / 2 + 1);
+          }
+        } else doc.text('—', margin + cols.img / 2 - 1, y + rowH / 2 + 1);
+
+        doc.setFontSize(6);
+        x = margin + cols.img;
+        const catName = getCategoryName(p.category);
+        const values: (string | number)[] = [
+          (p.name || '—').slice(0, 28),
+          (p.sku || '—').slice(0, 12),
+          (catName || '—').slice(0, 14),
+          (p.vendor || '—').slice(0, 16),
+          formatPrice(Number(p.displayPrice ?? p.sellingPrice ?? p.price ?? 0)),
+          p.stock ?? '—',
+          (p.status || '—').slice(0, 6),
+        ];
+        colKeys.forEach((k, idx) => {
+          const w = cols[k];
+          doc.rect(x, y, w, rowH);
+          doc.text(String(values[idx] ?? '—'), x + 1, y + 5);
+          x += w;
+        });
+        y += rowH;
+      }
+
+      doc.save(`products_${new Date().toISOString().split('T')[0]}.pdf`);
+      toast({ title: 'Success', description: `PDF downloaded: ${filteredProducts.length} products`, variant: 'success' });
+    } catch (e) {
+      console.error(e);
+      toast({ title: 'Error', description: e instanceof Error ? e.message : 'Failed to generate PDF', variant: 'destructive' });
+    }
+  };
+
   const handleClearFilters = () => {
     setSearchTerm('');
     setCategoryFilter('all');
@@ -447,6 +554,14 @@ export function ProductList() {
             </p>
           </div>
           <div className='flex gap-3'>
+            <Button
+              variant='outline'
+              className='gap-2 border-slate-300 dark:border-slate-600'
+              onClick={handleExportPdf}
+              disabled={filteredProducts.length === 0}>
+              <FileDown className='w-4 h-4' />
+              Download PDF
+            </Button>
             <Button
               variant='outline'
               className='gap-2 border-slate-300 dark:border-slate-600'

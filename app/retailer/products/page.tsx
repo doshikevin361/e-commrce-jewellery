@@ -13,7 +13,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Search, Package, Filter, X, Tag, Loader2, ShoppingCart, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, Package, Filter, X, Tag, Loader2, ShoppingCart, ChevronLeft, ChevronRight, FileDown } from 'lucide-react';
+import { jsPDF } from 'jspdf';
 import Image from 'next/image';
 import { toast } from 'react-toastify';
 
@@ -77,6 +78,7 @@ export default function RetailerProductsPage() {
     genders: string[];
     karats: FilterOption[];
   }>({ designTypes: [], metalColors: [], genders: [], karats: [] });
+  const [exportingPdf, setExportingPdf] = useState(false);
 
   const fetchCategories = useCallback(async () => {
     try {
@@ -204,6 +206,94 @@ export default function RetailerProductsPage() {
     setPagination((p) => ({ ...p, page: Math.max(1, Math.min(p.pages, page)) }));
   };
 
+  const handleExportPdf = async () => {
+    setExportingPdf(true);
+    try {
+      const params = new URLSearchParams();
+      if (search) params.set('search', search);
+      if (categoryFilter && categoryFilter !== 'all') params.set('category', categoryFilter);
+      if (typeFilter && typeFilter !== 'all') params.set('type', typeFilter);
+      if (designTypeFilter && designTypeFilter !== 'all') params.set('designType', designTypeFilter);
+      if (metalColourFilter && metalColourFilter !== 'all') params.set('metalColour', metalColourFilter);
+      if (genderFilter && genderFilter !== 'all') params.set('gender', genderFilter);
+      if (karatFilter && karatFilter !== 'all') params.set('karat', karatFilter);
+      params.set('page', '1');
+      params.set('limit', '5000');
+      const res = await fetch(`/api/retailer/products?${params.toString()}`, {
+        credentials: 'include',
+        headers: getAuthHeaders(),
+      });
+      if (!res.ok) {
+        toast.error('Failed to load products for PDF');
+        return;
+      }
+      const data = await res.json();
+      const list = Array.isArray(data.products) ? data.products : [];
+      if (list.length === 0) {
+        toast.info('No products to export');
+        return;
+      }
+      const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+      const margin = 8;
+      const rowH = 10;
+      const cols = { name: 50, sku: 22, category: 28, type: 22, price: 24, stock: 14, status: 14 };
+      const headers = ['Name', 'SKU', 'Category', 'Type', 'Price', 'Stock', 'Status'];
+      let y = margin + 6;
+      doc.setFontSize(14);
+      doc.text('B2B Catalog - Product List', margin, y);
+      y += 6;
+      doc.setFontSize(8);
+      doc.text(`Generated: ${new Date().toLocaleString('en-IN')}  |  Total: ${list.length} products`, margin, y);
+      y += 8;
+      doc.setDrawColor(200, 200, 200);
+      doc.setLineWidth(0.15);
+      doc.setFontSize(7);
+      doc.setFont('helvetica', 'bold');
+      let x = margin;
+      Object.keys(cols).forEach((k, i) => {
+        const w = cols[k as keyof typeof cols];
+        doc.rect(x, y, w, rowH);
+        doc.text(headers[i], x + 1, y + 5);
+        x += w;
+      });
+      y += rowH;
+      doc.setFont('helvetica', 'normal');
+      const formatPrice = (n: number) => (typeof n === 'number' ? `₹${n.toLocaleString('en-IN')}` : '—');
+      for (let i = 0; i < list.length; i++) {
+        if (y > 198) {
+          doc.addPage('a4', 'landscape');
+          y = margin;
+        }
+        const p = list[i];
+        x = margin;
+        const row = [
+          (p.name || '—').slice(0, 38),
+          (p.sku || '—').slice(0, 14),
+          (p.categoryName || p.categoryId || '—').slice(0, 18),
+          (p.product_type || '—').slice(0, 12),
+          formatPrice(p.retailerPrice ?? 0),
+          String(p.stock ?? '—'),
+          (p.status || '—').slice(0, 6),
+        ];
+        Object.keys(cols).forEach((_, idx) => {
+          const w = cols[Object.keys(cols)[idx] as keyof typeof cols];
+          doc.rect(x, y, w, rowH);
+          doc.setFontSize(6);
+          doc.text(String(row[idx] ?? '—'), x + 1, y + 5);
+          x += w;
+        });
+        y += rowH;
+      }
+      doc.save(`b2b-products_${new Date().toISOString().split('T')[0]}.pdf`);
+      toast.success(`PDF downloaded: ${list.length} products`);
+    } catch (e) {
+      console.error(e);
+      toast.error(e instanceof Error ? e.message : 'Failed to generate PDF');
+    } finally {
+      setExportingPdf(false);
+    }
+  };
+
   return (
     <RetailerLayout>
       <div className="space-y-6 p-0 bg-slate-50 min-h-full min-w-0 max-w-full overflow-x-hidden">
@@ -212,10 +302,25 @@ export default function RetailerProductsPage() {
             <h1 className="text-2xl font-bold tracking-tight text-slate-900">B2B Catalog</h1>
             <p className="text-slate-600 mt-1 text-sm">Browse products and add to cart to place B2B orders. Prices shown are your retailer price (after commission).</p>
           </div>
-          {!loading && pagination.total > 0 && (
-            <div className="flex items-center gap-2 text-sm text-slate-500">
-              <span className="font-medium text-slate-700">{pagination.total}</span>
-              <span>product{pagination.total !== 1 ? 's' : ''}</span>
+          {!loading && (
+            <div className="flex items-center gap-3">
+              {pagination.total > 0 && (
+                <span className="text-sm text-slate-500">
+                  <span className="font-medium text-slate-700">{pagination.total}</span>
+                  <span> product{pagination.total !== 1 ? 's' : ''}</span>
+                </span>
+              )}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="gap-2"
+                disabled={exportingPdf || pagination.total === 0}
+                onClick={handleExportPdf}
+              >
+                {exportingPdf ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileDown className="w-4 h-4" />}
+                Download PDF
+              </Button>
             </div>
           )}
         </div>

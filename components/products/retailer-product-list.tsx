@@ -176,17 +176,23 @@ export function RetailerProductList() {
     const matchesDesignType =
       designTypeFilter === 'all' ||
       pDesignType === designTypeFilter ||
-      (designTypes.find(d => d._id === designTypeFilter)?.name === pDesignType);
+      designTypes.find(d => d._id === designTypeFilter)?.name === pDesignType;
     const matchesMetalColour =
       metalColourFilter === 'all' ||
       pMetalColour === metalColourFilter ||
-      (metalColors.find(m => m._id === metalColourFilter)?.name === pMetalColour);
+      metalColors.find(m => m._id === metalColourFilter)?.name === pMetalColour;
     const matchesGenderFilter = matchesGender(p, genderFilter);
-    const matchesKarat =
-      karatFilter === 'all' ||
-      pPurity === karatFilter ||
-      (karats.find(k => k._id === karatFilter)?.name === pPurity);
-    return matchesSearch && matchesCategory && matchesStatus && matchesStock && matchesDesignType && matchesMetalColour && matchesGenderFilter && matchesKarat;
+    const matchesKarat = karatFilter === 'all' || pPurity === karatFilter || karats.find(k => k._id === karatFilter)?.name === pPurity;
+    return (
+      matchesSearch &&
+      matchesCategory &&
+      matchesStatus &&
+      matchesStock &&
+      matchesDesignType &&
+      matchesMetalColour &&
+      matchesGenderFilter &&
+      matchesKarat
+    );
   });
 
   const totalPages = Math.ceil(filteredProducts.length / itemsPerPage) || 1;
@@ -283,12 +289,15 @@ export function RetailerProductList() {
     if (!url || !url.startsWith('http')) return Promise.resolve(null);
     return fetch(url, { mode: 'cors' })
       .then(r => r.blob())
-      .then(blob => new Promise<string | null>((resolve) => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result as string);
-        reader.onerror = () => resolve(null);
-        reader.readAsDataURL(blob);
-      }))
+      .then(
+        blob =>
+          new Promise<string | null>(resolve => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.onerror = () => resolve(null);
+            reader.readAsDataURL(blob);
+          }),
+      )
       .catch(() => null);
   };
 
@@ -340,7 +349,24 @@ export function RetailerProductList() {
         'Shop',
         'HSN',
       ];
-      const colKeys = ['name', 'sku', 'type', 'category', 'designType', 'metalType', 'purity', 'metalColour', 'weight', 'size', 'price', 'qty', 'status', 'commission', 'shopName', 'hsnCode'] as const;
+      const colKeys = [
+        'name',
+        'sku',
+        'type',
+        'category',
+        'designType',
+        'metalType',
+        'purity',
+        'metalColour',
+        'weight',
+        'size',
+        'price',
+        'qty',
+        'status',
+        'commission',
+        'shopName',
+        'hsnCode',
+      ] as const;
       let y = margin + 8;
 
       doc.setFontSize(14);
@@ -427,7 +453,11 @@ export function RetailerProductList() {
       }
 
       doc.save(`my-products_${new Date().toISOString().split('T')[0]}.pdf`);
-      toast({ title: 'Success', description: `PDF downloaded: ${filteredProducts.length} products`, variant: 'default' });
+      toast({
+        title: 'Success',
+        description: `PDF downloaded: ${filteredProducts.length} products`,
+        variant: 'success',
+      });
     } catch (e) {
       console.error(e);
       toast({ title: 'Error', description: e instanceof Error ? e.message : 'Failed to generate PDF', variant: 'destructive' });
@@ -471,66 +501,74 @@ export function RetailerProductList() {
     typeof value === 'number' ? new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(value) : '-';
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className='space-y-6'>
+      <div className='flex items-center justify-between'>
         <div>
-          <h1 className="text-3xl font-bold text-slate-900 dark:text-white">My Products</h1>
-          <p className="text-slate-600 dark:text-slate-400 mt-1">
+          <h1 className='text-3xl font-bold text-slate-900 dark:text-white'>My Products</h1>
+          <p className='text-slate-600 dark:text-slate-400 mt-1'>
             Showing {filteredProducts.length} of {products.length} products
           </p>
         </div>
-        <div className="flex gap-3">
-          <Button variant="outline" className="gap-2 border-slate-300 dark:border-slate-600" onClick={handleExportPdf} disabled={filteredProducts.length === 0}>
-            <FileDown className="w-4 h-4" />
+        <div className='flex gap-3'>
+          <Button
+            variant='outline'
+            className='gap-2 border-slate-300 dark:border-slate-600'
+            onClick={handleExportPdf}
+            disabled={filteredProducts.length === 0}>
+            <FileDown className='w-4 h-4' />
             Download PDF
           </Button>
-          <Button variant="outline" className="gap-2 border-slate-300 dark:border-slate-600" onClick={handleExport} disabled={filteredProducts.length === 0}>
-            <Download className="w-4 h-4" />
+          <Button
+            variant='outline'
+            className='gap-2 border-slate-300 dark:border-slate-600'
+            onClick={handleExport}
+            disabled={filteredProducts.length === 0}>
+            <Download className='w-4 h-4' />
             Export CSV
           </Button>
-          <Button className="gap-2 bg-[#22c55e] text-white" onClick={handleAddProduct}>
-            <Plus className="w-4 h-4" />
+          <Button className='gap-2 bg-[#22c55e] text-white' onClick={handleAddProduct}>
+            <Plus className='w-4 h-4' />
             Add Product
           </Button>
         </div>
       </div>
 
-      <Card className="p-6 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-              <Filter className="w-5 h-5" />
+      <Card className='p-6 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700'>
+        <div className='space-y-4'>
+          <div className='flex items-center justify-between'>
+            <h3 className='text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2'>
+              <Filter className='w-5 h-5' />
               Filters
             </h3>
             <Select value={itemsPerPage.toString()} onValueChange={v => setItemsPerPage(Number(v))}>
-              <SelectTrigger className="w-[120px] bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600">
+              <SelectTrigger className='w-[120px] bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600'>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="10">10 per page</SelectItem>
-                <SelectItem value="25">25 per page</SelectItem>
-                <SelectItem value="50">50 per page</SelectItem>
-                <SelectItem value="100">100 per page</SelectItem>
+                <SelectItem value='10'>10 per page</SelectItem>
+                <SelectItem value='25'>25 per page</SelectItem>
+                <SelectItem value='50'>50 per page</SelectItem>
+                <SelectItem value='100'>100 per page</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
-          <div className="flex flex-row flex-wrap gap-2">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <div className='flex flex-row flex-wrap gap-2'>
+            <div className='relative'>
+              <Search className='absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400' />
               <Input
-                placeholder="Search by name, SKU, size, color..."
+                placeholder='Search by name, SKU, size, color...'
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
-                className="pl-10 bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 max-w-[300px]"
+                className='pl-10 bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 max-w-[300px]'
               />
             </div>
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger className="bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600">
-                <SelectValue placeholder="All Categories" />
+              <SelectTrigger className='bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600'>
+                <SelectValue placeholder='All Categories' />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Categories</SelectItem>
+                <SelectItem value='all'>All Categories</SelectItem>
                 {categories.map(cat => (
                   <SelectItem key={cat._id} value={cat.name || cat._id}>
                     {cat.name}
@@ -539,85 +577,101 @@ export function RetailerProductList() {
               </SelectContent>
             </Select>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600">
-                <SelectValue placeholder="All Statuses" />
+              <SelectTrigger className='bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600'>
+                <SelectValue placeholder='All Statuses' />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="inactive">Inactive</SelectItem>
+                <SelectItem value='all'>All Statuses</SelectItem>
+                <SelectItem value='active'>Active</SelectItem>
+                <SelectItem value='inactive'>Inactive</SelectItem>
               </SelectContent>
             </Select>
             <Select value={stockFilter} onValueChange={setStockFilter}>
-              <SelectTrigger className="bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600">
-                <SelectValue placeholder="All Stock" />
+              <SelectTrigger className='bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600'>
+                <SelectValue placeholder='All Stock' />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Stock Levels</SelectItem>
-                <SelectItem value="in-stock">In Stock</SelectItem>
-                <SelectItem value="low-stock">Low Stock (≤10)</SelectItem>
-                <SelectItem value="out-of-stock">Out of Stock</SelectItem>
+                <SelectItem value='all'>All Stock Levels</SelectItem>
+                <SelectItem value='in-stock'>In Stock</SelectItem>
+                <SelectItem value='low-stock'>Low Stock (≤10)</SelectItem>
+                <SelectItem value='out-of-stock'>Out of Stock</SelectItem>
               </SelectContent>
             </Select>
             <Select value={designTypeFilter} onValueChange={setDesignTypeFilter}>
-              <SelectTrigger className="bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600">
-                <SelectValue placeholder="Design Type" />
+              <SelectTrigger className='bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600'>
+                <SelectValue placeholder='Design Type' />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Design Types</SelectItem>
+                <SelectItem value='all'>All Design Types</SelectItem>
                 {designTypes.map(d => (
-                  <SelectItem key={d._id} value={d._id}>{d.name}</SelectItem>
+                  <SelectItem key={d._id} value={d._id}>
+                    {d.name}
+                  </SelectItem>
                 ))}
                 {designTypes.length === 0 &&
                   Array.from(new Set(products.map(p => normVal(p.designType)).filter(Boolean))).map(name => (
-                    <SelectItem key={name} value={name}>{name}</SelectItem>
+                    <SelectItem key={name} value={name}>
+                      {name}
+                    </SelectItem>
                   ))}
               </SelectContent>
             </Select>
             <Select value={metalColourFilter} onValueChange={setMetalColourFilter}>
-              <SelectTrigger className="bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600">
-                <SelectValue placeholder="Metal Colour" />
+              <SelectTrigger className='bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600'>
+                <SelectValue placeholder='Metal Colour' />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Metal Colours</SelectItem>
+                <SelectItem value='all'>All Metal Colours</SelectItem>
                 {metalColors.map(m => (
-                  <SelectItem key={m._id} value={m._id}>{m.name}</SelectItem>
+                  <SelectItem key={m._id} value={m._id}>
+                    {m.name}
+                  </SelectItem>
                 ))}
                 {metalColors.length === 0 &&
                   Array.from(new Set(products.map(p => normVal(p.metalColour)).filter(Boolean))).map(name => (
-                    <SelectItem key={name} value={name}>{name}</SelectItem>
+                    <SelectItem key={name} value={name}>
+                      {name}
+                    </SelectItem>
                   ))}
               </SelectContent>
             </Select>
             <Select value={genderFilter} onValueChange={setGenderFilter}>
-              <SelectTrigger className="bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600">
-                <SelectValue placeholder="Gender" />
+              <SelectTrigger className='bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600'>
+                <SelectValue placeholder='Gender' />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Genders</SelectItem>
+                <SelectItem value='all'>All Genders</SelectItem>
                 {GENDERS.map(g => (
-                  <SelectItem key={g} value={g}>{g}</SelectItem>
+                  <SelectItem key={g} value={g}>
+                    {g}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
             <Select value={karatFilter} onValueChange={setKaratFilter}>
-              <SelectTrigger className="bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600">
-                <SelectValue placeholder="Karat" />
+              <SelectTrigger className='bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600'>
+                <SelectValue placeholder='Karat' />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Karats</SelectItem>
+                <SelectItem value='all'>All Karats</SelectItem>
                 {karats.map(k => (
-                  <SelectItem key={k._id} value={k._id}>{k.name}</SelectItem>
+                  <SelectItem key={k._id} value={k._id}>
+                    {k.name}
+                  </SelectItem>
                 ))}
                 {karats.length === 0 &&
-                  Array.from(
-                    new Set(products.flatMap(p => [normVal(p.goldPurity), normVal(p.silverPurity)].filter(Boolean)))
-                  ).map(name => (
-                    <SelectItem key={name} value={name}>{name}</SelectItem>
+                  Array.from(new Set(products.flatMap(p => [normVal(p.goldPurity), normVal(p.silverPurity)].filter(Boolean)))).map(name => (
+                    <SelectItem key={name} value={name}>
+                      {name}
+                    </SelectItem>
                   ))}
               </SelectContent>
             </Select>
-            <Button variant="outline" size="sm" onClick={handleClearFilters} className="text-slate-600 dark:text-slate-400 !h-[36px] dark:hover:text-white">
+            <Button
+              variant='outline'
+              size='sm'
+              onClick={handleClearFilters}
+              className='text-slate-600 dark:text-slate-400 !h-[36px] dark:hover:text-white'>
               Clear All
             </Button>
           </div>
@@ -625,65 +679,76 @@ export function RetailerProductList() {
 
         <div>
           {loading ? (
-            <div className="text-center py-8 text-slate-600 dark:text-slate-400">Loading products...</div>
+            <div className='text-center py-8 text-slate-600 dark:text-slate-400'>Loading products...</div>
           ) : filteredProducts.length === 0 ? (
-            <div className="text-center py-12">
-              <Package className="w-16 h-16 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
-              <p className="text-slate-600 dark:text-slate-400 mb-2">No products found</p>
-              <p className="text-sm text-slate-500 dark:text-slate-500 mb-6">Add a product or use &quot;Sell to Portal&quot; from a B2B order.</p>
-              <div className="flex flex-wrap justify-center gap-3">
-                <Button onClick={handleAddProduct} className="gap-2">
-                  <Plus className="w-4 h-4" />
+            <div className='text-center py-12'>
+              <Package className='w-16 h-16 text-slate-300 dark:text-slate-600 mx-auto mb-4' />
+              <p className='text-slate-600 dark:text-slate-400 mb-2'>No products found</p>
+              <p className='text-sm text-slate-500 dark:text-slate-500 mb-6'>
+                Add a product or use &quot;Sell to Portal&quot; from a B2B order.
+              </p>
+              <div className='flex flex-wrap justify-center gap-3'>
+                <Button onClick={handleAddProduct} className='gap-2'>
+                  <Plus className='w-4 h-4' />
                   Add Product
                 </Button>
-                <Button variant="outline" asChild>
-                  <Link href="/retailer/orders">My Orders</Link>
+                <Button variant='outline' asChild>
+                  <Link href='/retailer/orders'>My Orders</Link>
                 </Button>
               </div>
             </div>
           ) : (
-            <div className="overflow-x-auto">
+            <div className='overflow-x-auto'>
               <Table>
                 <TableHeader>
-                  <TableRow className="border-b-2 border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/40 hover:bg-slate-50 dark:hover:bg-slate-700/40">
-                    <TableHead className="font-semibold text-slate-900 dark:text-white py-4 px-4">Product</TableHead>
-                    <TableHead className="font-semibold text-slate-900 dark:text-white py-4 px-4">Category</TableHead>
-                    <TableHead className="font-semibold text-slate-900 dark:text-white py-4 px-4" title="Final selling price including retailer commission">Price (incl. commission)</TableHead>
-                    <TableHead className="font-semibold text-slate-900 dark:text-white py-4 px-4 text-center">Stock</TableHead>
-                    <TableHead className="font-semibold text-slate-900 dark:text-white py-4 px-4 text-center">Status</TableHead>
-                    <TableHead className="font-semibold text-slate-900 dark:text-white py-4 px-4 text-right">Actions</TableHead>
+                  <TableRow className='border-b-2 border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/40 hover:bg-slate-50 dark:hover:bg-slate-700/40'>
+                    <TableHead className='font-semibold text-slate-900 dark:text-white py-4 px-4'>Product</TableHead>
+                    <TableHead className='font-semibold text-slate-900 dark:text-white py-4 px-4'>Category</TableHead>
+                    <TableHead
+                      className='font-semibold text-slate-900 dark:text-white py-4 px-4'
+                      title='Final selling price including retailer commission'>
+                      Price (incl. commission)
+                    </TableHead>
+                    <TableHead className='font-semibold text-slate-900 dark:text-white py-4 px-4 text-center'>Stock</TableHead>
+                    <TableHead className='font-semibold text-slate-900 dark:text-white py-4 px-4 text-center'>Status</TableHead>
+                    <TableHead className='font-semibold text-slate-900 dark:text-white py-4 px-4 text-right'>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {paginatedProducts.map(product => (
                     <TableRow
                       key={product._id}
-                      className="border-b border-slate-100 dark:border-slate-700 hover:bg-green-50 dark:hover:bg-slate-700/50 transition-colors duration-150"
-                    >
-                      <TableCell className="py-4 px-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-12 h-12 rounded-lg border border-slate-200 dark:border-slate-600 overflow-hidden bg-slate-100 dark:bg-slate-700 shrink-0">
+                      className='border-b border-slate-100 dark:border-slate-700 hover:bg-green-50 dark:hover:bg-slate-700/50 transition-colors duration-150'>
+                      <TableCell className='py-4 px-4'>
+                        <div className='flex items-center gap-3'>
+                          <div className='w-12 h-12 rounded-lg border border-slate-200 dark:border-slate-600 overflow-hidden bg-slate-100 dark:bg-slate-700 shrink-0'>
                             {product.mainImage ? (
-                              <Image src={product.mainImage} alt={product.name} width={48} height={48} className="w-full h-full object-cover" />
+                              <Image
+                                src={product.mainImage}
+                                alt={product.name}
+                                width={48}
+                                height={48}
+                                className='w-full h-full object-cover'
+                              />
                             ) : (
-                              <div className="w-full h-full flex items-center justify-center">
-                                <Package className="w-6 h-6 text-slate-400" />
+                              <div className='w-full h-full flex items-center justify-center'>
+                                <Package className='w-6 h-6 text-slate-400' />
                               </div>
                             )}
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <span className="font-medium text-slate-900 dark:text-white block truncate">{product.name}</span>
-                            {product.sku && <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">SKU: {product.sku}</p>}
+                          <div className='flex-1 min-w-0'>
+                            <span className='font-medium text-slate-900 dark:text-white block truncate'>{product.name}</span>
+                            {product.sku && <p className='text-xs text-slate-500 dark:text-slate-400 mt-1'>SKU: {product.sku}</p>}
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell className="py-4 px-4 text-sm text-slate-700 dark:text-slate-300 font-medium">
+                      <TableCell className='py-4 px-4 text-sm text-slate-700 dark:text-slate-300 font-medium'>
                         {product.category || '-'}
                       </TableCell>
-                      <TableCell className="py-4 px-4 text-sm font-semibold text-slate-900 dark:text-white">
+                      <TableCell className='py-4 px-4 text-sm font-semibold text-slate-900 dark:text-white'>
                         {formatCurrency(Number(product.sellingPrice) || 0)}
                       </TableCell>
-                      <TableCell className="py-4 px-4 text-center">
+                      <TableCell className='py-4 px-4 text-center'>
                         <span
                           className={`inline-flex items-center justify-center min-w-[2rem] px-2 py-1 rounded-full text-sm font-semibold ${
                             (product.quantity ?? 0) === 0
@@ -691,34 +756,31 @@ export function RetailerProductList() {
                               : (product.quantity ?? 0) <= 10
                                 ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300'
                                 : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
-                          }`}
-                        >
+                          }`}>
                           {product.quantity ?? 0}
                         </span>
                       </TableCell>
-                      <TableCell className="py-4 px-4 text-center">
+                      <TableCell className='py-4 px-4 text-center'>
                         <Switch
-                          size="md"
+                          size='md'
                           checked={(product.status || 'active') === 'active'}
                           onCheckedChange={() => handleToggleStatus(product._id, product.status || 'active')}
                           disabled={savingStatusId === product._id}
                         />
                       </TableCell>
-                      <TableCell className="py-4 px-4 text-right">
-                        <div className="flex justify-end gap-4">
+                      <TableCell className='py-4 px-4 text-right'>
+                        <div className='flex justify-end gap-4'>
                           <button
                             onClick={() => handleViewProduct(product._id)}
-                            title="View product"
-                            className="text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-600 rounded p-1"
-                          >
-                            <Eye className="w-5 h-5" />
+                            title='View product'
+                            className='text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-600 rounded p-1'>
+                            <Eye className='w-5 h-5' />
                           </button>
                           <button
                             onClick={() => handleEditProduct(product)}
-                            title="Edit product"
-                            className="text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-600 rounded p-1"
-                          >
-                            <Pencil className="w-5 h-5" />
+                            title='Edit product'
+                            className='text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-600 rounded p-1'>
+                            <Pencil className='w-5 h-5' />
                           </button>
                         </div>
                       </TableCell>
@@ -741,89 +803,89 @@ export function RetailerProductList() {
       </Card>
 
       {viewProductId && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-          onClick={() => setViewProductId(null)}
-        >
+        <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/50' onClick={() => setViewProductId(null)}>
           <div
-            className="bg-white dark:bg-slate-800 rounded-lg shadow-xl max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto border border-slate-200 dark:border-slate-700"
-            onClick={e => e.stopPropagation()}
-          >
-            <div className="p-6">
-              <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-4">Product Details</h2>
+            className='bg-white dark:bg-slate-800 rounded-lg shadow-xl max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto border border-slate-200 dark:border-slate-700'
+            onClick={e => e.stopPropagation()}>
+            <div className='p-6'>
+              <h2 className='text-xl font-semibold text-slate-900 dark:text-white mb-4'>Product Details</h2>
               {loadingProductDetails ? (
-                <div className="py-8 text-center text-slate-500">Loading...</div>
+                <div className='py-8 text-center text-slate-500'>Loading...</div>
               ) : viewProductData ? (
-                <div className="space-y-4 text-sm">
+                <div className='space-y-4 text-sm'>
                   {viewProductData.mainImage && (
-                    <div className="flex justify-center">
-                      <Image src={viewProductData.mainImage} alt={viewProductData.name} width={200} height={200} className="rounded-lg object-cover" />
+                    <div className='flex justify-center'>
+                      <Image
+                        src={viewProductData.mainImage}
+                        alt={viewProductData.name}
+                        width={200}
+                        height={200}
+                        className='rounded-lg object-cover'
+                      />
                     </div>
                   )}
-                  <div className="grid grid-cols-2 gap-2">
-                    <p className="text-slate-500">Name</p>
-                    <p className="font-medium text-slate-900 dark:text-white">{viewProductData.name}</p>
-                    <p className="text-slate-500">SKU</p>
-                    <p className="font-medium">{viewProductData.sku || '-'}</p>
-                    <p className="text-slate-500">Category</p>
-                    <p className="font-medium">{viewProductData.category || '-'}</p>
-                    <p className="text-slate-500">Product Type</p>
-                    <p className="font-medium">{viewProductData.product_type || '-'}</p>
-                    <p className="text-slate-500">Base price</p>
-                    <p className="font-medium">{formatCurrency(viewProductData.sellingPrice ?? 0)}</p>
-                    <p className="text-slate-500">Commission</p>
-                    <p className="font-medium">
-                      {(viewProductData.retailerCommissionRate !== undefined && viewProductData.retailerCommissionRate !== null
+                  <div className='grid grid-cols-2 gap-2'>
+                    <p className='text-slate-500'>Name</p>
+                    <p className='font-medium text-slate-900 dark:text-white'>{viewProductData.name}</p>
+                    <p className='text-slate-500'>SKU</p>
+                    <p className='font-medium'>{viewProductData.sku || '-'}</p>
+                    <p className='text-slate-500'>Category</p>
+                    <p className='font-medium'>{viewProductData.category || '-'}</p>
+                    <p className='text-slate-500'>Product Type</p>
+                    <p className='font-medium'>{viewProductData.product_type || '-'}</p>
+                    <p className='text-slate-500'>Base price</p>
+                    <p className='font-medium'>{formatCurrency(viewProductData.sellingPrice ?? 0)}</p>
+                    <p className='text-slate-500'>Commission</p>
+                    <p className='font-medium'>
+                      {viewProductData.retailerCommissionRate !== undefined && viewProductData.retailerCommissionRate !== null
                         ? Number(viewProductData.retailerCommissionRate)
-                        : 0
-                      )}%
+                        : 0}
+                      %
                     </p>
-                    <p className="text-slate-500">Price (incl. commission)</p>
-                    <p className="font-medium">
+                    <p className='text-slate-500'>Price (incl. commission)</p>
+                    <p className='font-medium'>
                       {(() => {
                         const base = viewProductData.sellingPrice ?? 0;
                         const rate =
-                          viewProductData.retailerCommissionRate !== undefined &&
-                          viewProductData.retailerCommissionRate !== null
+                          viewProductData.retailerCommissionRate !== undefined && viewProductData.retailerCommissionRate !== null
                             ? Number(viewProductData.retailerCommissionRate)
                             : 0;
                         const finalPrice = rate > 0 ? Math.round(base * (1 + rate / 100)) : base;
                         return formatCurrency(finalPrice);
                       })()}
                     </p>
-                    <p className="text-slate-500">Stock</p>
-                    <p className="font-medium">{viewProductData.quantity ?? 0}</p>
-                    <p className="text-slate-500">Status</p>
-                    <p className="font-medium">{viewProductData.status || 'active'}</p>
-                    <p className="text-slate-500">Updated</p>
-                    <p className="font-medium">{viewProductData.updatedAt ? formatIndianDate(viewProductData.updatedAt) : '-'}</p>
+                    <p className='text-slate-500'>Stock</p>
+                    <p className='font-medium'>{viewProductData.quantity ?? 0}</p>
+                    <p className='text-slate-500'>Status</p>
+                    <p className='font-medium'>{viewProductData.status || 'active'}</p>
+                    <p className='text-slate-500'>Updated</p>
+                    <p className='font-medium'>{viewProductData.updatedAt ? formatIndianDate(viewProductData.updatedAt) : '-'}</p>
                   </div>
                   {viewProductData.shortDescription && (
                     <div>
-                      <p className="text-slate-500 mb-1">Short Description</p>
-                      <p className="text-slate-700 dark:text-slate-300 whitespace-pre-line">{viewProductData.shortDescription}</p>
+                      <p className='text-slate-500 mb-1'>Short Description</p>
+                      <p className='text-slate-700 dark:text-slate-300 whitespace-pre-line'>{viewProductData.shortDescription}</p>
                     </div>
                   )}
                   {Array.isArray(viewProductData.relatedProducts) && viewProductData.relatedProducts.length > 0 && (
-                    <div className="pt-4 border-t border-slate-200 dark:border-slate-600">
-                      <p className="text-slate-600 dark:text-slate-400 font-medium mb-2">Your related products (same category)</p>
-                      <div className="flex flex-wrap gap-2">
+                    <div className='pt-4 border-t border-slate-200 dark:border-slate-600'>
+                      <p className='text-slate-600 dark:text-slate-400 font-medium mb-2'>Your related products (same category)</p>
+                      <div className='flex flex-wrap gap-2'>
                         {viewProductData.relatedProducts.slice(0, 6).map(rel => (
                           <button
                             key={rel._id}
-                            type="button"
+                            type='button'
                             onClick={() => handleViewProduct(rel._id)}
-                            className="flex items-center gap-2 p-2 rounded-lg border border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700/50 text-left min-w-0 max-w-full"
-                          >
+                            className='flex items-center gap-2 p-2 rounded-lg border border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700/50 text-left min-w-0 max-w-full'>
                             {rel.mainImage ? (
-                              <Image src={rel.mainImage} alt={rel.name} width={40} height={40} className="rounded object-cover shrink-0" />
+                              <Image src={rel.mainImage} alt={rel.name} width={40} height={40} className='rounded object-cover shrink-0' />
                             ) : (
-                              <div className="w-10 h-10 rounded bg-slate-200 dark:bg-slate-600 shrink-0 flex items-center justify-center">
-                                <Package className="w-5 h-5 text-slate-500" />
+                              <div className='w-10 h-10 rounded bg-slate-200 dark:bg-slate-600 shrink-0 flex items-center justify-center'>
+                                <Package className='w-5 h-5 text-slate-500' />
                               </div>
                             )}
-                            <span className="truncate text-sm font-medium text-slate-900 dark:text-white">{rel.name}</span>
-                            <span className="text-xs text-slate-500 shrink-0">{formatCurrency(rel.sellingPrice)}</span>
+                            <span className='truncate text-sm font-medium text-slate-900 dark:text-white'>{rel.name}</span>
+                            <span className='text-xs text-slate-500 shrink-0'>{formatCurrency(rel.sellingPrice)}</span>
                           </button>
                         ))}
                       </div>
@@ -831,11 +893,11 @@ export function RetailerProductList() {
                   )}
                 </div>
               ) : null}
-              <div className="mt-6 flex justify-end">
-                <Button variant="outline" onClick={() => setViewProductId(null)}>
+              <div className='mt-6 flex justify-end'>
+                <Button variant='outline' onClick={() => setViewProductId(null)}>
                   Close
                 </Button>
-                <Button className="ml-2" onClick={() => viewProductId && handleEditProduct({ _id: viewProductId } as RetailerProduct)}>
+                <Button className='ml-2' onClick={() => viewProductId && handleEditProduct({ _id: viewProductId } as RetailerProduct)}>
                   Edit
                 </Button>
               </div>
