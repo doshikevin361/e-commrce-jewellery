@@ -108,25 +108,25 @@ export async function POST(
       .map((item: { product?: unknown }) => item.product)
       .filter(Boolean)
       .map((id: unknown) => (id instanceof ObjectId ? id : new ObjectId(String(id))));
-    const sourceProducts = await db
+    const sourceProductsFull = await db
       .collection('products')
       .find({ _id: { $in: sourceIds } })
       .toArray();
-    const sourceProductMap = new Map(sourceProducts.map((p: { _id: ObjectId }) => [p._id.toString(), p]));
+    const sourceProductMap = new Map(sourceProductsFull.map((p: { _id: ObjectId }) => [p._id.toString(), p]));
 
-    const categoryIds = [
+    const categoryIdsForNames = [
       ...new Set(
-        sourceProducts
+        sourceProductsFull
           .map((p: { category?: ObjectId }) => p.category)
           .filter(Boolean)
           .map((c: unknown) => (c instanceof ObjectId ? c.toString() : String(c)))
       ),
     ].filter((id): id is string => !!id && ObjectId.isValid(id));
     const categoryDocs =
-      categoryIds.length > 0
+      categoryIdsForNames.length > 0
         ? await db
             .collection('categories')
-            .find({ _id: { $in: categoryIds.map((id: string) => new ObjectId(id)) } })
+            .find({ _id: { $in: categoryIdsForNames.map((id: string) => new ObjectId(id)) } })
             .project({ _id: 1, name: 1 })
             .toArray()
         : [];
@@ -184,8 +184,8 @@ export async function POST(
 
       const source = sourceMap.get(sourceProductId.toString());
       const productType = (source?.product_type ?? '').trim();
-      const categoryId = source?.category ? normalizeCategoryId(source.category) : null;
-      const categoryName = categoryId ? (catNameMap.get(categoryId) || '') : '';
+      const commissionCategoryId = source?.category ? normalizeCategoryId(source.category) : null;
+      const commissionCategoryName = commissionCategoryId ? (catNameMap.get(commissionCategoryId) || '') : '';
       const designType = (source?.designType ?? '').trim();
       const metal = productType === 'Gold' || productType === 'Silver' || productType === 'Platinum' ? productType : '';
       const purity = (source?.goldPurity ?? source?.silverPurity ?? '').trim();
@@ -193,7 +193,7 @@ export async function POST(
       const retailerCommissionRate = findRetailerCommissionFromRows(
         commissionRows,
         productType,
-        categoryName,
+        commissionCategoryName,
         designType,
         metal,
         purity
