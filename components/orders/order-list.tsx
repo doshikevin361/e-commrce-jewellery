@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { formatIndianDate } from '@/app/utils/helper';
-import { Eye, Search, Filter, Download, Plus, Trash2, Edit } from 'lucide-react';
+import { Eye, Search, Filter, Download, Plus, Trash2, Edit, FileText } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { AdminPagination } from '@/components/ui/admin-pagination';
@@ -77,6 +77,7 @@ export function OrderList({ orderType }: { orderType?: 'b2b' } = {}) {
   const [loadingOrderDetails, setLoadingOrderDetails] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [orderToDelete, setOrderToDelete] = useState<string | null>(null);
+  const [downloadingInvoiceId, setDownloadingInvoiceId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchOrders();
@@ -153,6 +154,34 @@ export function OrderList({ orderType }: { orderType?: 'b2b' } = {}) {
 
   const handleEditOrder = (orderId: string) => {
     router.push(`/admin/orders/${orderId}`);
+  };
+
+  const handleDownloadInvoice = async (orderId: string) => {
+    setDownloadingInvoiceId(orderId);
+    try {
+      const res = await fetch(`/api/admin/orders/${orderId}/invoice`, { credentials: 'include' });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Failed to download invoice');
+      }
+      const blob = await res.blob();
+      const disposition = res.headers.get('Content-Disposition');
+      const match = disposition?.match(/filename="?([^";]+)"?/);
+      const filename = match ? match[1] : `invoice-${orderId}.pdf`;
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast({ title: 'Success', description: 'Invoice downloaded' });
+    } catch (e) {
+      toast({ title: 'Error', description: e instanceof Error ? e.message : 'Failed to download invoice', variant: 'destructive' });
+    } finally {
+      setDownloadingInvoiceId(null);
+    }
   };
 
   const fetchOrderDetails = async (orderId: string) => {
@@ -460,6 +489,17 @@ export function OrderList({ orderType }: { orderType?: 'b2b' } = {}) {
                               title='Edit order'
                               className='text-blue-500 hover:text-blue-700 hover:bg-blue-50 cursor-pointer'>
                               <Edit className='h-5 w-5' />
+                            </button>
+                            <button
+                              onClick={() => handleDownloadInvoice(order._id)}
+                              title='Download invoice'
+                              disabled={downloadingInvoiceId === order._id}
+                              className='text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 cursor-pointer disabled:opacity-50'>
+                              {downloadingInvoiceId === order._id ? (
+                                <span className='inline-block w-5 h-5 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin' />
+                              ) : (
+                                <FileText className='h-5 w-5' />
+                              )}
                             </button>
                             <button
                               onClick={() => handleDeleteClick(order._id)}

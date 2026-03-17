@@ -90,7 +90,7 @@ export default function CancellationPolicyPage() {
                 <div className='absolute inset-0 bg-gradient-to-br from-[#F5EEE5] to-white z-0' />
                 <div className='relative z-10 p-6 sm:p-8 md:p-10'>
                   <p className='text-sm sm:text-base md:text-lg lg:text-xl text-[#3F5C45] leading-relaxed'>
-                    At LuxeLoom, we understand that circumstances may change, and you may need to cancel your order. This policy outlines our procedures for order cancellations and the associated terms and conditions.
+                    At JewelManas, we understand that circumstances may change, and you may need to cancel your order. This policy outlines our procedures for order cancellations and the associated terms and conditions.
                   </p>
                 </div>
               </div>

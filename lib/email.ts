@@ -32,7 +32,7 @@ export interface EmailOptions {
 export async function sendEmail(options: EmailOptions): Promise<boolean> {
   try {
     const mailOptions = {
-      from: `"LuxeLoom Jewelry" <${mailConfig.auth.user}>`,
+      from: `"JewelManas" <${mailConfig.auth.user}>`,
       to: options.to,
       subject: options.subject,
       html: options.html,
@@ -51,7 +51,7 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
 // Email templates
 export const emailTemplates = {
   verification: (name: string, verificationLink: string) => ({
-    subject: 'Verify Your Email Address - LuxeLoom Jewelry',
+    subject: 'Verify Your Email Address - JewelManas',
     html: `
       <!DOCTYPE html>
       <html>
@@ -69,7 +69,7 @@ export const emailTemplates = {
       <body>
         <div class="container">
           <div class="header">
-            <h1>Welcome to LuxeLoom Jewelry</h1>
+            <h1>Welcome to JewelManas</h1>
           </div>
           <div class="content">
             <h2>Hello ${name}!</h2>
@@ -84,7 +84,7 @@ export const emailTemplates = {
             <p>If you didn't create an account with us, please ignore this email.</p>
           </div>
           <div class="footer">
-            <p>&copy; ${new Date().getFullYear()} LuxeLoom Jewelry. All rights reserved.</p>
+            <p>&copy; ${new Date().getFullYear()} JewelManas. All rights reserved.</p>
           </div>
         </div>
       </body>
@@ -93,7 +93,7 @@ export const emailTemplates = {
   }),
 
   passwordReset: (name: string, resetLink: string) => ({
-    subject: 'Reset Your Password - LuxeLoom Jewelry',
+    subject: 'Reset Your Password - JewelManas',
     html: `
       <!DOCTYPE html>
       <html>
@@ -130,7 +130,7 @@ export const emailTemplates = {
             </p>
           </div>
           <div class="footer">
-            <p>&copy; ${new Date().getFullYear()} LuxeLoom Jewelry. All rights reserved.</p>
+            <p>&copy; ${new Date().getFullYear()} JewelManas. All rights reserved.</p>
           </div>
         </div>
       </body>
@@ -139,7 +139,7 @@ export const emailTemplates = {
   }),
 
   passwordChanged: (name: string) => ({
-    subject: 'Password Changed Successfully - LuxeLoom Jewelry',
+    subject: 'Password Changed Successfully - JewelManas',
     html: `
       <!DOCTYPE html>
       <html>
@@ -167,7 +167,7 @@ export const emailTemplates = {
             <p>If you didn't make this change, please contact our support team immediately.</p>
           </div>
           <div class="footer">
-            <p>&copy; ${new Date().getFullYear()} LuxeLoom Jewelry. All rights reserved.</p>
+            <p>&copy; ${new Date().getFullYear()} JewelManas. All rights reserved.</p>
           </div>
         </div>
       </body>
@@ -176,7 +176,7 @@ export const emailTemplates = {
   }),
 
   welcome: (name: string) => ({
-    subject: 'Welcome to LuxeLoom Jewelry!',
+    subject: 'Welcome to JewelManas!',
     html: `
       <!DOCTYPE html>
       <html>
@@ -193,16 +193,16 @@ export const emailTemplates = {
       <body>
         <div class="container">
           <div class="header">
-            <h1>Welcome to LuxeLoom!</h1>
+            <h1>Welcome to JewelManas!</h1>
           </div>
           <div class="content">
             <h2>Hello ${name}!</h2>
-            <p>Thank you for joining LuxeLoom Jewelry! We're excited to have you as part of our community.</p>
+            <p>Thank you for joining JewelManas! We're excited to have you as part of our community.</p>
             <p>Start exploring our exquisite collection of jewelry and find the perfect piece for you.</p>
             <p>Happy shopping!</p>
           </div>
           <div class="footer">
-            <p>&copy; ${new Date().getFullYear()} LuxeLoom Jewelry. All rights reserved.</p>
+            <p>&copy; ${new Date().getFullYear()} JewelManas. All rights reserved.</p>
           </div>
         </div>
       </body>
@@ -231,7 +231,7 @@ export const emailTemplates = {
     orderStatus: string;
     createdAt: string;
   }) => ({
-    subject: `Order Confirmation - ${orderData.orderId} | LuxeLoom Jewelry`,
+    subject: `Order Confirmation - ${orderData.orderId} | JewelManas`,
     html: `
       <!DOCTYPE html>
       <html>
@@ -312,7 +312,7 @@ export const emailTemplates = {
             <p>If you have any questions, please don't hesitate to contact our customer support team.</p>
           </div>
           <div class="footer">
-            <p>&copy; ${new Date().getFullYear()} LuxeLoom Jewelry. All rights reserved.</p>
+            <p>&copy; ${new Date().getFullYear()} JewelManas. All rights reserved.</p>
           </div>
         </div>
       </body>
@@ -363,7 +363,7 @@ export const emailTemplates = {
     };
 
     return {
-      subject: `${statusInfo.title} - Order ${orderData.orderId} | LuxeLoom Jewelry`,
+      subject: `${statusInfo.title} - Order ${orderData.orderId} | JewelManas`,
       html: `
         <!DOCTYPE html>
         <html>
@@ -412,7 +412,7 @@ export const emailTemplates = {
               <p>If you have any questions, please don't hesitate to contact our customer support team.</p>
             </div>
             <div class="footer">
-              <p>&copy; ${new Date().getFullYear()} LuxeLoom Jewelry. All rights reserved.</p>
+              <p>&copy; ${new Date().getFullYear()} JewelManas. All rights reserved.</p>
             </div>
           </div>
         </body>

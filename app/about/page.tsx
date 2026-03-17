@@ -33,7 +33,7 @@ export default function AboutPage() {
               ABOUT US
             </h1>
             <p className='text-base sm:text-lg md:text-xl lg:text-2xl max-w-3xl mx-auto leading-relaxed drop-shadow-lg'>
-              Discover the story behind LuxeLoom and our commitment to exquisite jewelry.
+              Discover the story behind JewelManas and our commitment to exquisite jewelry.
             </p>
           </div>
         </section>
@@ -55,7 +55,7 @@ export default function AboutPage() {
                   Every piece in our collection is carefully curated, designed, and crafted to perfection. We believe that jewelry is more than an accessory—it's a statement of personal style and a reflection of cherished moments.
                 </p>
                 <p className='text-sm sm:text-base md:text-lg text-[#3F5C45] leading-relaxed'>
-                  With years of expertise in jewelry design and a commitment to quality, LuxeLoom has become a trusted name for those who appreciate fine craftsmanship and exceptional beauty.
+                  With years of expertise in jewelry design and a commitment to quality, JewelManas has become a trusted name for those who appreciate fine craftsmanship and exceptional beauty.
                 </p>
               </div>
               <div className='order-1 lg:order-2 relative h-[300px] sm:h-[400px] md:h-[500px] rounded-xl sm:rounded-2xl overflow-hidden shadow-xl'>

@@ -10,7 +10,7 @@ export default function TermsAndConditionsPage() {
       title: 'Acceptance of Terms',
       icon: FileText,
       content: [
-        'By accessing and using the LuxeLoom website, you accept and agree to be bound by the terms and provisions of this agreement.',
+        'By accessing and using the JewelManas website, you accept and agree to be bound by the terms and provisions of this agreement.',
         'If you do not agree to these Terms and Conditions, please do not use our website or services.',
         'We reserve the right to modify these terms at any time, and such modifications shall be effective immediately upon posting on the website.',
       ],
@@ -19,9 +19,9 @@ export default function TermsAndConditionsPage() {
       title: 'Use License',
       icon: FileText,
       content: [
-        'Permission is granted to temporarily view the materials on LuxeLoom\'s website for personal, non-commercial transitory viewing only.',
+        'Permission is granted to temporarily view the materials on JewelManas\'s website for personal, non-commercial transitory viewing only.',
         'This is the grant of a license, not a transfer of title, and under this license you may not: modify or copy the materials; use the materials for any commercial purpose or for any public display; attempt to decompile or reverse engineer any software contained on the website.',
-        'This license shall automatically terminate if you violate any of these restrictions and may be terminated by LuxeLoom at any time.',
+        'This license shall automatically terminate if you violate any of these restrictions and may be terminated by JewelManas at any time.',
       ],
     },
     {
@@ -46,16 +46,16 @@ export default function TermsAndConditionsPage() {
       title: 'Intellectual Property',
       icon: Copyright,
       content: [
-        'All content on this website, including but not limited to text, graphics, logos, images, and software, is the property of LuxeLoom and is protected by copyright and trademark laws.',
+        'All content on this website, including but not limited to text, graphics, logos, images, and software, is the property of JewelManas and is protected by copyright and trademark laws.',
         'You may not reproduce, distribute, modify, create derivative works of, publicly display, or otherwise use any content from this website without our express written permission.',
-        'The LuxeLoom name and logo are trademarks and may not be used without our prior written consent.',
+        'The JewelManas name and logo are trademarks and may not be used without our prior written consent.',
       ],
     },
     {
       title: 'Limitation of Liability',
       icon: Scale,
       content: [
-        'LuxeLoom shall not be liable for any indirect, incidental, special, consequential, or punitive damages resulting from your use of or inability to use the website.',
+        'JewelManas shall not be liable for any indirect, incidental, special, consequential, or punitive damages resulting from your use of or inability to use the website.',
         'In no event shall our total liability to you for all damages exceed the amount paid by you to us for any products or services.',
         'Some jurisdictions do not allow the exclusion or limitation of incidental or consequential damages, so the above limitation may not apply to you.',
       ],
@@ -64,7 +64,7 @@ export default function TermsAndConditionsPage() {
       title: 'Governing Law',
       icon: Scale,
       content: [
-        'These Terms and Conditions shall be governed by and construed in accordance with the laws of the jurisdiction in which LuxeLoom operates.',
+        'These Terms and Conditions shall be governed by and construed in accordance with the laws of the jurisdiction in which JewelManas operates.',
         'Any disputes arising under or in connection with these terms shall be subject to the exclusive jurisdiction of the courts in that jurisdiction.',
       ],
     },
@@ -112,7 +112,7 @@ export default function TermsAndConditionsPage() {
                 <div className='absolute inset-0 bg-gradient-to-br from-[#F5EEE5] to-white z-0' />
                 <div className='relative z-10 p-6 sm:p-8 md:p-10'>
                   <p className='text-sm sm:text-base md:text-lg lg:text-xl text-[#3F5C45] leading-relaxed'>
-                    Please read these Terms and Conditions carefully before using the LuxeLoom website. These terms govern your access to and use of our website and services. By accessing or using our website, you agree to be bound by these Terms and Conditions.
+                    Please read these Terms and Conditions carefully before using the JewelManas website. These terms govern your access to and use of our website and services. By accessing or using our website, you agree to be bound by these Terms and Conditions.
                   </p>
                 </div>
               </div>

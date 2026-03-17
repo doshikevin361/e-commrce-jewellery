@@ -55,7 +55,7 @@ export default function RefundAndReturnPage() {
       content: [
         'If you receive a damaged or defective item, please contact us immediately with photos of the damage.',
         'We will provide a prepaid return label and expedite the replacement or refund process.',
-        'All shipping costs will be covered by LuxeLoom for damaged or defective items.',
+        'All shipping costs will be covered by JewelManas for damaged or defective items.',
         'We reserve the right to inspect returned items before processing refunds or replacements.',
       ],
     },
@@ -112,7 +112,7 @@ export default function RefundAndReturnPage() {
                 <div className='absolute inset-0 bg-gradient-to-br from-[#F5EEE5] to-white z-0' />
                 <div className='relative z-10 p-6 sm:p-8 md:p-10'>
                   <p className='text-sm sm:text-base md:text-lg lg:text-xl text-[#3F5C45] leading-relaxed'>
-                    At LuxeLoom, your satisfaction is our priority. We stand behind the quality of our jewelry and want you to love every piece you purchase. This policy outlines our procedures for returns, exchanges, and refunds.
+                    At JewelManas, your satisfaction is our priority. We stand behind the quality of our jewelry and want you to love every piece you purchase. This policy outlines our procedures for returns, exchanges, and refunds.
                   </p>
                 </div>
               </div>

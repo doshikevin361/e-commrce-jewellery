@@ -4,7 +4,7 @@ import Order from '@/lib/models/Order';
 import { getCustomerFromRequest } from '@/lib/auth';
 import mongoose from 'mongoose';
 
-// GET - Generate and download invoice for delivered order
+// GET - Generate and download invoice as A4 PDF (customer view: MRP + GST). Available for confirmed+ orders.
 export async function GET(
   req: NextRequest,
   context: { params: Promise<{ id: string }> }
@@ -20,7 +20,7 @@ export async function GET(
     const params = await context.params;
 
     let customerObjectId: mongoose.Types.ObjectId;
-    
+
     try {
       if (mongoose.Types.ObjectId.isValid(customer.id)) {
         customerObjectId = new mongoose.Types.ObjectId(customer.id);
@@ -37,10 +37,9 @@ export async function GET(
       );
     }
 
-    // Fetch the order and verify it belongs to the customer
     const order = await Order.findOne({
       _id: params.id,
-      customer: customerObjectId
+      customer: customerObjectId,
     }).lean();
 
     if (!order) {
@@ -50,23 +49,22 @@ export async function GET(
       );
     }
 
-    // Check if order is delivered
-    if (order.orderStatus !== 'delivered') {
+    const allowedStatuses = ['confirmed', 'processing', 'shipped', 'delivered'];
+    if (!allowedStatuses.includes(order.orderStatus)) {
       return NextResponse.json(
-        { error: 'Invoice is only available for delivered orders' },
+        { error: 'Invoice is available once the order is confirmed' },
         { status: 400 }
       );
     }
 
-    // Use shared invoice generation function
-    const { generateInvoiceImage } = await import('@/lib/invoice');
-    const { imageBuffer, vendor } = await generateInvoiceImage(order);
+    const { generateInvoicePDFForOrder } = await import('@/lib/invoice');
+    const { pdfBuffer, company } = await generateInvoicePDFForOrder(order, 'customer');
+    const safeName = company.name.replace(/\s+/g, '-');
 
-    // Return image as response
-    return new NextResponse(imageBuffer, {
+    return new NextResponse(pdfBuffer, {
       headers: {
-        'Content-Type': 'image/png',
-        'Content-Disposition': `attachment; filename="invoice-${order.orderId}-${vendor.storeName.replace(/\s+/g, '-')}.png"`,
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': `attachment; filename="invoice-${order.orderId}-${safeName}.pdf"`,
       },
     });
   } catch (error: any) {

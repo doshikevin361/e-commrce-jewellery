@@ -110,12 +110,14 @@ export default function MyOrdersPage() {
         throw new Error(error.error || 'Failed to generate invoice');
       }
 
-      // Get the image blob
       const blob = await response.blob();
+      const disposition = response.headers.get('Content-Disposition');
+      const match = disposition?.match(/filename="?([^";]+)"?/);
+      const filename = match ? match[1] : `invoice-${orderId}.pdf`;
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `invoice-${orderId}.png`;
+      a.download = filename;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
@@ -525,7 +527,7 @@ export default function MyOrdersPage() {
                                 >
                                   Reorder
                                 </button>
-                                {order.orderStatus.toLowerCase() === 'delivered' && (
+                                {(['confirmed', 'processing', 'shipped', 'delivered'].includes(order.orderStatus.toLowerCase())) && (
                                   <button
                                     onClick={() => handleInvoice(order._id)}
                                     className="flex items-center gap-2 px-5 py-2 border-2 border-[#C8A15B] text-[#C8A15B] rounded-lg hover:bg-[#C8A15B] hover:text-white transition-colors font-medium text-sm"

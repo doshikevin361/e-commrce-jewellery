@@ -284,6 +284,15 @@ export async function POST(req: NextRequest) {
       // Don't fail the order creation if email fails
     }
 
+    // Send invoice PDF by email after order placement
+    try {
+      const { generateAndSendInvoice } = await import('@/lib/invoice');
+      await generateAndSendInvoice(order.orderId, order.toObject ? order.toObject() : order, { email: order.customerEmail });
+      console.log('[Payment Verify] Invoice email sent to:', order.customerEmail);
+    } catch (invoiceError) {
+      console.error('[Payment Verify] Failed to send invoice email:', invoiceError);
+    }
+
     // Create admin notification for new order
     try {
       const { db } = await connectToDatabase();

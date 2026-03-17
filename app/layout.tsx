@@ -27,7 +27,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'LuxeLoom - Exquisite Jewelry Collection',
+  title: 'JewelManas - Exquisite Jewelry Collection',
   description: 'Discover our complete collection of exquisite jewelry. Handcrafted pieces for every occasion.',
   icons: {
     icon: [

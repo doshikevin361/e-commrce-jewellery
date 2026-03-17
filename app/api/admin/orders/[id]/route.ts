@@ -250,7 +250,8 @@ export async function PUT(
           try {
             // Import invoice generation function
             const { generateAndSendInvoice } = await import('@/lib/invoice');
-            await generateAndSendInvoice(order._id.toString(), order, customerData);
+            const orderPlain = order.toObject ? order.toObject() : order;
+            await generateAndSendInvoice(order.orderId, orderPlain, customerData);
             console.log('[Order API] Invoice email sent to:', customerData.email);
           } catch (invoiceError) {
             console.error('[Order API] Failed to send invoice email:', invoiceError);

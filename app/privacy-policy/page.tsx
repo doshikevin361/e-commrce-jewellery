@@ -106,7 +106,7 @@ export default function PrivacyPolicyPage() {
                 <div className='absolute inset-0 bg-gradient-to-br from-[#F5EEE5] to-white z-0' />
                 <div className='relative z-10 p-6 sm:p-8 md:p-10'>
                   <p className='text-sm sm:text-base md:text-lg lg:text-xl text-[#3F5C45] leading-relaxed'>
-                    At LuxeLoom, we are committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website and make purchases from us. Please read this policy carefully to understand our practices regarding your personal data.
+                    At JewelManas, we are committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website and make purchases from us. Please read this policy carefully to understand our practices regarding your personal data.
                   </p>
                 </div>
               </div>

@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { RetailerLayout } from '@/components/layout/retailer-layout';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Package, ChevronLeft, ChevronRight, Loader2, Store } from 'lucide-react';
+import { Package, ChevronLeft, ChevronRight, Loader2, Store, FileDown } from 'lucide-react';
 import { toast } from 'react-toastify';
 
 type Order = {
@@ -46,6 +46,38 @@ function RetailerOrdersContent() {
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState({ page: 1, limit: 20, total: 0, pages: 1 });
   const [sellingOrderId, setSellingOrderId] = useState<string | null>(null);
+  const [downloadingInvoiceId, setDownloadingInvoiceId] = useState<string | null>(null);
+
+  const handleDownloadInvoice = async (orderId: string) => {
+    setDownloadingInvoiceId(orderId);
+    try {
+      const res = await fetch(`/api/retailer/orders/${encodeURIComponent(orderId)}/invoice`, {
+        credentials: 'include',
+        headers: getAuthHeaders(),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Failed to download invoice');
+      }
+      const blob = await res.blob();
+      const disposition = res.headers.get('Content-Disposition');
+      const match = disposition?.match(/filename="?([^";]+)"?/);
+      const filename = match ? match[1] : `invoice-${orderId}.pdf`;
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast.success('Invoice downloaded');
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Failed to download invoice');
+    } finally {
+      setDownloadingInvoiceId(null);
+    }
+  };
 
   const handleSellToPortal = async (orderId: string) => {
     setSellingOrderId(orderId);
@@ -152,8 +184,21 @@ function RetailerOrdersContent() {
                       {order.items.length > 3 && <li className="text-gray-500">+{order.items.length - 3} more</li>}
                     </ul>
                   )}
-                  {(order.orderStatus === 'delivered' && !order.soldToPortalAt) && (
-                    <div className="mt-4 pt-4 border-t flex justify-end">
+                  <div className="mt-4 pt-4 border-t flex flex-wrap justify-end gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDownloadInvoice(order.orderId)}
+                      disabled={downloadingInvoiceId === order.orderId}
+                    >
+                      {downloadingInvoiceId === order.orderId ? (
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      ) : (
+                        <FileDown className="w-4 h-4 mr-2" />
+                      )}
+                      Download Invoice
+                    </Button>
+                    {(order.orderStatus === 'delivered' && !order.soldToPortalAt) && (
                       <Button
                         variant="outline"
                         size="sm"
@@ -167,8 +212,8 @@ function RetailerOrdersContent() {
                         )}
                         Sell to Portal
                       </Button>
-                    </div>
-                  )}
+                    )}
+                  </div>
                   {order.orderStatus === 'delivered' && order.soldToPortalAt && (
                     <div className="mt-4 pt-4 border-t flex justify-end">
                       <span className="text-sm text-green-600 font-medium">Added to portal</span>

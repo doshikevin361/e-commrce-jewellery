@@ -162,6 +162,15 @@ export async function POST(request: NextRequest) {
       { $set: { cart: [], updatedAt: new Date() } }
     );
 
+    // Send invoice PDF by email after B2B order placement
+    try {
+      const fullOrder = { ...orderDoc, _id: result.insertedId };
+      const { generateAndSendInvoice } = await import('@/lib/invoice');
+      await generateAndSendInvoice(orderId, fullOrder, { email: retailerDoc.email || retailer.email });
+    } catch (invoiceErr) {
+      console.error('[Retailer Orders] Failed to send invoice email:', invoiceErr);
+    }
+
     return NextResponse.json({
       success: true,
       orderId,

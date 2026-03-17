@@ -6,7 +6,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
-import { ArrowLeft, Package, User, CreditCard, MapPin } from 'lucide-react';
+import { ArrowLeft, Package, User, CreditCard, MapPin, FileDown } from 'lucide-react';
 import { formatIndianDate } from '@/app/utils/helper';
 import { Spinner } from '@/components/ui/spinner';
 import { CommonDialog } from '../dialog/dialog';
@@ -81,6 +81,7 @@ export function OrderDetailPage({ params }: OrderDetailPageProps) {
   const [orderStatus, setOrderStatus] = useState<Order['orderStatus']>('pending');
   const [trackingNumber, setTrackingNumber] = useState('');
   const [paymentStatus, setPaymentStatus] = useState<Order['paymentStatus']>('pending');
+  const [downloadingInvoice, setDownloadingInvoice] = useState(false);
 
   useEffect(() => {
     async function loadParams() {
@@ -180,6 +181,35 @@ export function OrderDetailPage({ params }: OrderDetailPageProps) {
     }
   };
 
+  const handleDownloadInvoice = async () => {
+    if (!orderId) return;
+    setDownloadingInvoice(true);
+    try {
+      const res = await fetch(`/api/admin/orders/${orderId}/invoice`, { credentials: 'include' });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Failed to download invoice');
+      }
+      const blob = await res.blob();
+      const disposition = res.headers.get('Content-Disposition');
+      const match = disposition?.match(/filename="?([^";]+)"?/);
+      const filename = match ? match[1] : `invoice-${order?.orderId || orderId}.pdf`;
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast({ title: 'Success', description: 'Invoice downloaded' });
+    } catch (e) {
+      toast({ title: 'Error', description: e instanceof Error ? e.message : 'Failed to download invoice', variant: 'destructive' });
+    } finally {
+      setDownloadingInvoice(false);
+    }
+  };
+
   const handleUpdateStatus = () => {
     if (order) {
       setOrderStatus(order.orderStatus);
@@ -272,6 +302,19 @@ export function OrderDetailPage({ params }: OrderDetailPageProps) {
           </div>
         </div>
         <div className='flex items-center gap-3'>
+          <Button 
+            variant='outline' 
+            onClick={handleDownloadInvoice}
+            disabled={downloadingInvoice}
+            className='flex items-center gap-2 border-gray-300'
+          >
+            {downloadingInvoice ? (
+              <span className='w-4 h-4 border-2 border-gray-600 border-t-transparent rounded-full animate-spin' />
+            ) : (
+              <FileDown className='w-4 h-4' />
+            )}
+            Download Invoice
+          </Button>
           <Button 
             variant='outline' 
             onClick={handleUpdateStatus}

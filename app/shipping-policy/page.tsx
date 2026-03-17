@@ -120,7 +120,7 @@ export default function ShippingPolicyPage() {
                 <div className='absolute inset-0 bg-gradient-to-br from-[#F5EEE5] to-white z-0' />
                 <div className='relative z-10 p-6 sm:p-8 md:p-10'>
                   <p className='text-sm sm:text-base md:text-lg lg:text-xl text-[#3F5C45] leading-relaxed'>
-                    At LuxeLoom, we strive to deliver your jewelry safely and promptly. This policy outlines our shipping procedures, timelines, and what you can expect when placing an order with us.
+                    At JewelManas, we strive to deliver your jewelry safely and promptly. This policy outlines our shipping procedures, timelines, and what you can expect when placing an order with us.
                   </p>
                 </div>
               </div>

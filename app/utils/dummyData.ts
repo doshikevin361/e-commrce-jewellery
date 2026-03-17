@@ -86,14 +86,14 @@ export const blogCards = [
     category: 'Stories',
     date: 'Nov 06, 2025',
     title: 'Behind the model stories',
-    desc: 'Step behind the scenes with our artisans and muses crafting each LuxeLoom collection.',
+    desc: 'Step behind the scenes with our artisans and muses crafting each JewelManas collection.',
   },
   {
     id: 3,
     img: 'https://images.unsplash.com/photo-1601121141461-9d6647bca1ed?w=1600&q=80',
     category: 'Craft',
     date: 'Oct 29, 2025',
-    title: 'How metals are treated at LuxeLoom',
+    title: 'How metals are treated at JewelManas',
     desc: 'An inside look at the finishing touches and time-honored techniques used in our studio.',
   },
   {

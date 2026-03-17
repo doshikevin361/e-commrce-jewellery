@@ -36,7 +36,7 @@ export default function BlogPage() {
               BLOG
             </h1>
             <p className='text-base sm:text-lg md:text-xl lg:text-2xl max-w-3xl mx-auto leading-relaxed drop-shadow-lg'>
-              Discover jewelry trends, styling tips, and stories from LuxeLoom.
+              Discover jewelry trends, styling tips, and stories from JewelManas.
             </p>
           </div>
         </section>

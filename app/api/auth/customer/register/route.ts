@@ -101,8 +101,11 @@ export async function POST(request: NextRequest) {
       emailVerificationExpires: verificationExpires,
     });
 
-    // Send verification email
-    const verificationLink = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://jewellery-commrce-824e.vercel.app'}/verify-email?token=${verificationToken}`;
+    // Use request origin so verification link points to the same deployment the user signed up from (avoids 404 on preview/wrong domain)
+    const baseUrl = request.nextUrl?.origin || process.env.NEXT_PUBLIC_BASE_URL || '';
+    const verificationLink = baseUrl
+      ? `${baseUrl.replace(/\/$/, '')}/verify-email?token=${verificationToken}`
+      : `${process.env.NEXT_PUBLIC_BASE_URL || 'https://jewellery-commrce-824e.vercel.app'}/verify-email?token=${verificationToken}`;
     const emailTemplate = emailTemplates.verification(name, verificationLink);
     
     await sendEmail({

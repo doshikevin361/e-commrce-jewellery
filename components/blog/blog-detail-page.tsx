@@ -55,7 +55,7 @@ export function BlogDetailPage({ blogId }: { blogId: string }) {
           
           <div className='space-y-4 text-[#4F3A2E]'>
             <p>
-              At LuxeLoom, we believe that jewelry is more than just an accessory—it's a reflection of your personal style 
+              At JewelManas, we believe that jewelry is more than just an accessory—it's a reflection of your personal style 
               and a celebration of life's most precious moments. Our commitment to excellence drives everything we do, 
               from the initial design concept to the final polished piece.
             </p>

@@ -1055,7 +1055,7 @@ const PromoShowcase = memo(() => {
 
         <div>
           <h2 className='text-xl font-semibold leading-snug text-[#1F3B29] sm:text-2xl md:text-3xl'>
-            Collection inspired <br className='hidden sm:block' /> by LuxeLoom
+            Collection inspired <br className='hidden sm:block' /> by JewelManas
           </h2>
 
           <p className='mt-4 text-sm leading-relaxed text-[#4F3A2E] sm:text-base'>
