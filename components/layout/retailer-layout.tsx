@@ -97,13 +97,14 @@ export function RetailerLayout({ children }: { children: React.ReactNode }) {
         position="top-center"
         autoClose={3000}
         hideProgressBar
-        newestOnTop={false}
+        newestOnTop
         closeOnClick
         rtl={false}
         pauseOnFocusLoss={false}
         draggable={false}
-        pauseOnHover={false}
+        pauseOnHover
         theme="colored"
+        style={{ zIndex: 9999 }}
       />
     </ThemeProvider>
   );

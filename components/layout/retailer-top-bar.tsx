@@ -132,6 +132,12 @@ export function RetailerTopBar() {
                   <span className="text-sm font-medium">{userData?.companyName || userData?.fullName || 'Retailer'}</span>
                   <span className="text-xs">{userData?.email || ''}</span>
                 </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="cursor-pointer"
+                  onClick={() => router.push('/retailer/profile')}
+                >
+                  Profile
+                </DropdownMenuItem>
                 <DropdownMenuItem className="text-red-600 cursor-pointer hover:bg-transparent" onClick={handleLogout}>
                   Logout
                 </DropdownMenuItem>
