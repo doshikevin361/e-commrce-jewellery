@@ -3,6 +3,8 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  // Puppeteer + serverless Chromium: keep out of webpack bundle for Vercel
+  serverExternalPackages: ['puppeteer', 'puppeteer-core', '@sparticuz/chromium'],
   images: {
     unoptimized: true,
     remotePatterns: [

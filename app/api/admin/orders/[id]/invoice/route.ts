@@ -6,6 +6,7 @@ import { ObjectId } from 'mongodb';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+export const maxDuration = 60;
 
 // GET - Download invoice PDF for admin/vendor. View type based on order (B2B = retailer view, else customer).
 export async function GET(

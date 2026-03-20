@@ -1,5 +1,6 @@
 import { connectToDatabase } from '@/lib/mongodb';
 import mongoose from 'mongoose';
+import { launchInvoiceBrowser } from '@/lib/puppeteer-launch';
 import type { InvoiceViewType, InvoiceEnrichedItem, InvoiceCompanyInfo, InvoiceOrderPayload } from './invoice-types';
 
 const INVOICE_NUMBER_PREFIX = 'INV';
@@ -307,14 +308,10 @@ export async function generateInvoicePDF(
   viewType: InvoiceViewType
 ): Promise<Buffer> {
   const html = generateInvoiceHTML(order, company, viewType);
-  const puppeteer = await import('puppeteer');
-  const browser = await puppeteer.default.launch({
-    headless: true,
-    args: ['--no-sandbox', '--disable-setuid-sandbox'],
-  });
+  const browser = await launchInvoiceBrowser();
   try {
     const page = await browser.newPage();
-    await page.setContent(html, { waitUntil: 'networkidle0' });
+    await page.setContent(html, { waitUntil: 'load' });
     const pdfBuffer = (await page.pdf({
       format: 'A4',
       printBackground: true,
@@ -332,14 +329,10 @@ export async function generateInvoiceImage(order: any): Promise<{ imageBuffer: B
   const enriched = await getEnrichedOrderForInvoice(order);
   const viewType = order.orderType === 'b2b' ? 'retailer' : 'customer';
   const html = generateInvoiceHTML(enriched, company, viewType);
-  const puppeteer = await import('puppeteer');
-  const browser = await puppeteer.default.launch({
-    headless: true,
-    args: ['--no-sandbox', '--disable-setuid-sandbox'],
-  });
+  const browser = await launchInvoiceBrowser();
   try {
     const page = await browser.newPage();
-    await page.setContent(html, { waitUntil: 'networkidle0' });
+    await page.setContent(html, { waitUntil: 'load' });
     await page.setViewport({ width: 800, height: 1200 });
     const imageBuffer = (await page.screenshot({ type: 'png', fullPage: true })) as Buffer;
     return { imageBuffer, vendor: company };

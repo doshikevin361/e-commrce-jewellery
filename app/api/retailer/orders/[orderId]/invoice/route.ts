@@ -5,6 +5,7 @@ import { ObjectId } from 'mongodb';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+export const maxDuration = 60;
 
 // GET - Download invoice PDF for retailer (B2B view: wholesale, bulk discount, no MRP).
 export async function GET(

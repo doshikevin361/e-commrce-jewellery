@@ -4,6 +4,10 @@ import Order from '@/lib/models/Order';
 import { getCustomerFromRequest } from '@/lib/auth';
 import mongoose from 'mongoose';
 
+export const runtime = 'nodejs';
+/** PDF generation needs extra time on Vercel (Chromium cold start). */
+export const maxDuration = 60;
+
 // GET - Generate and download invoice as A4 PDF (customer view: MRP + GST). Available for confirmed+ orders.
 export async function GET(
   req: NextRequest,
