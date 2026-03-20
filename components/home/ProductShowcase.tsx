@@ -23,15 +23,15 @@ const products = [
 
 const ProductShowcase = () => {
   return (
-    <div className='w-full py-12 bg-white'>
-      <h2 className='text-center text-3xl font-serif text-[#001e38] mb-12'>Design Led Jewellery</h2>
-      <div className='max-w-[1400px] mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6'>
+    <div className='w-full bg-white py-10 sm:py-12'>
+      <h2 className='mb-8 text-center text-2xl font-serif text-[#001e38] sm:mb-12 sm:text-3xl'>Design Led Jewellery</h2>
+      <div className='mx-auto grid max-w-[1400px] grid-cols-1 gap-5 px-4 sm:grid-cols-2 sm:gap-6 sm:px-6 lg:grid-cols-3 lg:px-8'>
         {products.map(product => (
           <div key={product.id} className='flex flex-col items-center'>
             <div className='w-full overflow-hidden rounded-lg'>
-              <img src={product.modelImage} alt={product.alt} className='w-full h-[350px] object-cover rounded-lg' />
+              <img src={product.modelImage} alt={product.alt} className='h-[280px] w-full rounded-lg object-cover sm:h-[320px] lg:h-[350px]' />
             </div>
-            <div className='mt-4 w-44 h-32 bg-white rounded-xl shadow-lg flex items-center justify-center -translate-y-12'>
+            <div className='mt-4 flex h-28 w-36 -translate-y-10 items-center justify-center rounded-xl bg-white shadow-lg sm:h-32 sm:w-44 sm:-translate-y-12'>
               <img src={product.productImage} alt={product.alt} className='w-full h-full rounded-lg object-cover' />
             </div>
           </div>

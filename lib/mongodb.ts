@@ -5,7 +5,7 @@ let cachedClient: MongoClient | null = null;
 let cachedDb: Db | null = null;
 
 const clientPromise = (async () => {
-  const uri = process.env.MONGODB_URI || 'mongodb+srv://kevin:kevin@cluster0.3eo8tjf.mongodb.net';
+  const uri = 'mongodb://localhost:27017/admin_panel';
 
   if (!uri) {
     throw new Error('MONGODB_URI environment variable is not defined. Please add it to .env.local');

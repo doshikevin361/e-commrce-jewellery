@@ -1523,7 +1523,7 @@ const TestimonialsSection = () => {
       age: 27,
       image: '/uploads/1765269917848-mttqdya63ws.jpg',
       text: "Delighted with my engagement ring from BlueStone! It's my dream ring, fits perfectly and is stunning to look at. Thanks, BlueStone, for helping us find the perfect symbol of love!",
-      rotate: 'rotate-10',
+      rotate: 'md:rotate-10',
     },
     {
       id: 2,
@@ -1531,7 +1531,7 @@ const TestimonialsSection = () => {
       age: 33,
       image: '/uploads/1765272258145-ta6uom4xec.jpg',
       text: "I got a Nazariya for my baby boy from BlueStone. It's so cute seeing it on my little one's wrist, and it gives me a sense of security knowing it's there.",
-      rotate: 'rotate-6',
+      rotate: 'md:rotate-6',
     },
     {
       id: 3,
@@ -1539,7 +1539,7 @@ const TestimonialsSection = () => {
       age: 26,
       image: '/uploads/1765272281023-dyw5c7pvej.jpg',
       text: "On Valentine's Day, my husband gifted me a necklace from BlueStone, and I haven't taken it off even once. Everyone asks me where it's from!",
-      rotate: '-rotate-6',
+      rotate: 'md:-rotate-6',
     },
     {
       id: 4,
@@ -1547,21 +1547,21 @@ const TestimonialsSection = () => {
       age: 24,
       image: '/uploads/1765273359701-w2ybph2t48.webp',
       text: 'BlueStone is my go-to place for jewellery. I love that I can wear their jewellery to work, dates, parties and brunches.',
-      rotate: '-rotate-10',
+      rotate: 'md:-rotate-10',
     },
   ];
 
   return (
-    <section className='relative pb-20 bg-white overflow-hidden'>
-      <h2 className='text-center text-3xl font-serif text-[#001e38] my-12'>Customer Testimonials</h2>
+    <section className='relative overflow-hidden bg-white pb-14 sm:pb-16 lg:pb-20'>
+      <h2 className='my-8 text-center font-serif text-2xl text-[#001e38] sm:my-10 sm:text-3xl lg:my-12'>Customer Testimonials</h2>
 
       {/* Rope */}
-      <svg className='absolute top-[80px] left-0 w-full z-0' height='120' viewBox='0 0 1200 120' preserveAspectRatio='none'>
+      <svg className='absolute left-0 top-[66px] z-0 w-full sm:top-[80px]' height='120' viewBox='0 0 1200 120' preserveAspectRatio='none'>
         <path d='M0 60 C 200 10, 50 90, 600 60 S 1000 30, 1200 60' stroke='#d1d5db' strokeWidth='3' fill='none' />
       </svg>
 
       {/* Cards */}
-      <div className='relative z-10 flex justify-center gap-20'>
+      <div className='relative z-10 flex flex-wrap justify-center gap-6 px-4 sm:gap-10 sm:px-6 lg:flex-nowrap lg:gap-20'>
         {testimonials.map(item => (
           <TestimonialCard key={item.id} item={item} />
         ))}

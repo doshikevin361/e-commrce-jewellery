@@ -75,9 +75,60 @@ const VideoSlider = ({ videos = [] }: any) => {
 
         .nav-left { left: 20px; }
         .nav-right { right: 20px; }
+
+        @media (max-width: 1023px) {
+          .carousel-card {
+            width: 280px;
+            height: 400px;
+          }
+
+          .left-far { transform: translateX(-165%) scale(0.68); }
+          .left-near { transform: translateX(-105%) scale(0.82); }
+          .right-near { transform: translateX(5%) scale(0.82); }
+          .right-far { transform: translateX(70%) scale(0.68); }
+        }
+
+        @media (max-width: 767px) {
+          .carousel-card {
+            width: 220px;
+            height: 320px;
+          }
+
+          .left-far,
+          .right-far {
+            opacity: 0;
+          }
+
+          .left-near { transform: translateX(-85%) scale(0.8); opacity: .45; }
+          .right-near { transform: translateX(-15%) scale(0.8); opacity: .45; }
+        }
+
+        @media (max-width: 479px) {
+          .carousel-card {
+            width: 180px;
+            height: 270px;
+          }
+
+          .left-near,
+          .right-near {
+            opacity: 0;
+          }
+
+          .center {
+            transform: translateX(-50%) scale(1);
+          }
+
+          .nav-btn {
+            padding: 8px 12px;
+            font-size: 18px;
+          }
+
+          .nav-left { left: 8px; }
+          .nav-right { right: 8px; }
+        }
       `}</style>
 
-      <div className="relative w-full h-[520px] flex items-center justify-center overflow-hidden">
+      <div className="relative flex h-[320px] w-full items-center justify-center overflow-hidden sm:h-[420px] lg:h-[520px]">
         <div className="nav-btn nav-left" onClick={() => slide('prev')}>
           ‹
         </div>
@@ -85,7 +136,7 @@ const VideoSlider = ({ videos = [] }: any) => {
           ›
         </div>
 
-        <div className="relative w-[420px] h-[500px]">
+        <div className="relative h-[300px] w-[220px] sm:h-[380px] sm:w-[300px] lg:h-[500px] lg:w-[420px]">
           {POSITIONS.map((pos, i) => (
             <div key={`${startIndex}-${pos}`} className={`carousel-card ${pos}`}>
               <video

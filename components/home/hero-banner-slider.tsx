@@ -9,7 +9,7 @@ import 'swiper/css/navigation';
 // Hero Banner Component
 export const HeroBanner = () => {
   return (
-    <div className='relative w-full h-[80vh] overflow-hidden bg-black'>
+    <div className='relative h-[52vh] w-full overflow-hidden bg-black sm:h-[62vh] lg:h-[80vh]'>
       {/* VIDEO */}
       <video src='/uploads/banner_vi.mov' autoPlay loop muted playsInline className='w-full h-full object-cover' />
 
@@ -49,11 +49,11 @@ const categories = [
 
 export default function Categories() {
   return (
-    <div className='relative w-full bg-gradient-to-b from-white to-pink-50/30 py-12'>
-      <div className='max-w-[1440px] mx-auto px-6 relative z-20'>
-        <div className='flex flex-row justify-center flex-wrap gap-6 place-items-center'>
+    <div className='relative w-full bg-gradient-to-b from-white to-pink-50/30 py-8 sm:py-10 lg:py-12'>
+      <div className='relative z-20 mx-auto max-w-[1440px] px-4 sm:px-6'>
+        <div className='flex flex-row flex-wrap place-items-center justify-center gap-4 sm:gap-5 lg:gap-6'>
           {categories.map((category, index) => (
-            <div key={index} className='flex flex-col items-center gap-3 cursor-pointer group w-full max-w-[140px]'>
+            <div key={index} className='group flex w-[46%] max-w-[140px] cursor-pointer flex-col items-center gap-2.5 sm:w-auto sm:gap-3'>
               <div
                 className='
               w-full aspect-square
@@ -75,7 +75,7 @@ export default function Categories() {
                 />
               </div>
 
-              <span className='text-sm text-gray-500 group-hover:text-[#001e38] font-medium text-center transition-colors duration-300'>
+              <span className='text-center text-xs font-medium text-gray-500 transition-colors duration-300 group-hover:text-[#001e38] sm:text-sm'>
                 {category.name}
               </span>
             </div>
@@ -101,7 +101,7 @@ const banners = [
 
 export const Slider = () => {
   return (
-    <div className='w-full h-[75vh]'>
+    <div className='h-[42vh] w-full sm:h-[55vh] lg:h-[75vh]'>
       <Swiper
         modules={[Autoplay, Navigation]}
         autoplay={{ delay: 4000, disableOnInteraction: false }}
@@ -113,7 +113,7 @@ export const Slider = () => {
             <div className='w-full h-full relative flex'>
               {/* LEFT IMAGE */}
               <div className='w-full h-full relative'>
-                <img src={banner.image} alt={banner.title} className='w-full h-[70vh] object-cover' />
+                <img src={banner.image} alt={banner.title} className='h-[42vh] w-full object-cover sm:h-[55vh] lg:h-[70vh]' />
                 {/* subtle overlay */}{' '}
               </div>
             </div>

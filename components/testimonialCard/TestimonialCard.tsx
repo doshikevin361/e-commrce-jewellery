@@ -1,6 +1,6 @@
 const TestimonialCard = ({ item }: any) => {
   return (
-    <div className={`relative mt-16 bg-[#fdebed] rounded-2xl p-4 w-[260px] shadow-lg ${item.rotate}`}>
+    <div className={`relative mt-14 w-[220px] rounded-2xl bg-[#fdebed] p-4 shadow-lg sm:mt-16 sm:w-[240px] md:w-[260px] ${item.rotate}`}>
       {/* Clip */}
       <div className='absolute -top-10 left-1/2 -translate-x-1/2 flex flex-col items-center'>
         <span className='text-gray-400 text-xl'>📎</span>
