@@ -640,6 +640,12 @@ const HomeHeader = () => {
                   router.push(`/jewellery?search=${encodeURIComponent(trimmedQuery)}`);
                   setSearchOpen(false);
                 }}>
+                {/* Leading icon — always visible on light field (Lucide uses stroke = currentColor) */}
+                <span
+                  className='pointer-events-none absolute left-3 top-1/2 z-1 -translate-y-1/2 text-[#001e38]/50 lg:left-3.5'
+                  aria-hidden>
+                  <Search className='h-5 w-5 shrink-0' strokeWidth={2.25} />
+                </span>
                 <input
                   ref={searchInputRef}
                   type='search'
@@ -660,18 +666,19 @@ const HomeHeader = () => {
                   aria-expanded={searchOpen}
                   aria-controls='header-search-suggestions'
                   aria-haspopup='listbox'
-                  className='h-11 w-full rounded-xl border border-gray-200 bg-gray-50/80 px-4 py-2 pr-14 text-sm text-[#001e38] placeholder:text-gray-400 focus:border-[#001e38]/25 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#001e38]/15 lg:h-auto lg:rounded-none lg:border-3 lg:border-[#e4e4e4] lg:bg-white lg:py-[6px] lg:focus:ring-0'
+                  className='h-11 w-full rounded-xl border border-gray-200 bg-gray-50/80 py-2 pl-11 pr-15 text-sm text-[#001e38] scheme-light placeholder:text-gray-400 focus:border-[#001e38]/25 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#001e38]/15 lg:h-auto lg:rounded-none lg:border-3 lg:border-[#e4e4e4] lg:bg-white lg:py-[6px] lg:pl-11 lg:pr-18 lg:focus:ring-0 [&::-webkit-search-cancel-button]:hidden [&::-webkit-search-decoration]:hidden'
                 />
                 <button
                   type='submit'
-                  className='absolute right-1 top-1/2 flex h-9 w-10 -translate-y-1/2 items-center justify-center rounded-lg bg-theme-secondary text-white transition-colors hover:opacity-95 lg:right-0 lg:top-0 lg:h-full lg:w-auto lg:translate-y-0 lg:rounded-none lg:border-3 lg:border-[#e4e4e4] lg:border-l-0 lg:px-6'>
-                  <Search className='h-4 w-4 lg:h-5 lg:w-5' />
+                  aria-label='Search'
+                  className='absolute right-1 top-1/2 z-2 flex h-9 w-10 -translate-y-1/2 items-center justify-center rounded-lg bg-theme-secondary text-white shadow-sm transition-colors hover:opacity-95 lg:right-0 lg:top-0 lg:h-full lg:w-auto lg:translate-y-0 lg:rounded-none lg:border-3 lg:border-[#e4e4e4] lg:border-l-0 lg:px-6'>
+                  <Search className='h-4 w-4 shrink-0 stroke-[2.25] text-white lg:h-5 lg:w-5' strokeWidth={2.25} />
                 </button>
                 <SearchDialog
                   open={searchOpen}
                   onOpenChange={setSearchOpen}
                   query={searchQuery}
-                  inputRef={searchInputRef}
+                  inputRef={searchInputRef as React.RefObject<HTMLInputElement>}
                   listboxId='header-search-suggestions'
                 />
               </form>

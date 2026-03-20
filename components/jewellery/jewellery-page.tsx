@@ -470,22 +470,24 @@ export function JewelleryPage() {
     (priceRange[0] > priceBounds[0] || priceRange[1] < priceBounds[1] ? 1 : 0);
 
   return (
-    <div className='min-h-screen'>
-      <div className='container mx-auto px-2 py-6 sm:py-8 md:py-10 max-w-[1440px]'>
+    <div className='min-h-screen w-full'>
+      <div className='container mx-auto max-w-[1440px] px-3 py-5 sm:px-4 sm:py-6 md:px-6 md:py-8 lg:px-8'>
         {/* Header */}
-        <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mb-8'>
-          <div>
-            <h2 className='text-xl sm:text-2xl md:text-3xl font-bold text-black'>All Jewellery</h2>
-            <p className='text-sm sm:text-base text-black mt-1'>{filteredAndSortedProducts.length} products found</p>
+        <div className='mb-5 flex flex-col gap-4 sm:mb-6 md:mb-8 md:flex-row md:items-end md:justify-between'>
+          <div className='min-w-0'>
+            <h1 className='text-xl font-bold tracking-tight text-black sm:text-2xl md:text-3xl'>All Jewellery</h1>
+            <p className='mt-1 text-sm text-neutral-700 sm:text-base'>
+              {filteredAndSortedProducts.length} product{filteredAndSortedProducts.length !== 1 ? 's' : ''} found
+            </p>
           </div>
 
-          <div className='flex items-center gap-2 sm:gap-3 flex-wrap'>
-            {/* Sort */}
+          <div className='flex w-full flex-col gap-2 min-[400px]:flex-row min-[400px]:items-center min-[400px]:gap-3 md:w-auto md:flex-row md:items-center'>
+            {/* Sort — full width on narrow phones, fixed width from tablet */}
             <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className='w-[140px] sm:w-48 border-website-primary text-xs sm:text-sm'>
+              <SelectTrigger className='h-11 w-full min-w-0 border-website-primary text-left text-xs sm:h-10 sm:min-w-44 sm:text-sm md:min-w-48 md:w-56'>
                 <SelectValue placeholder='Sort by' />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent align='end' className='max-h-[min(70vh,24rem)]'>
                 <SelectItem value='default'>Default</SelectItem>
                 <SelectItem value='price-low'>Price: Low to High</SelectItem>
                 <SelectItem value='price-high'>Price: High to Low</SelectItem>
@@ -495,15 +497,16 @@ export function JewelleryPage() {
               </SelectContent>
             </Select>
 
-            {/* Filter Toggle - Mobile */}
+            {/* Filter Toggle — mobile / tablet */}
             <Button
               variant='outline'
+              type='button'
               onClick={() => setShowFilters(!showFilters)}
-              className='lg:hidden flex items-center gap-2 border-[#E6D3C2] text-black hover:bg-[#F5EEE5]'>
-              <Filter className='w-4 h-4' />
+              className='h-11 shrink-0 border-[#E6D3C2] text-black hover:bg-[#F5EEE5] min-[400px]:h-10 lg:hidden'>
+              <Filter className='mr-2 h-4 w-4' />
               Filters
               {activeFiltersCount > 0 && (
-                <span className='bg-[#C8A15B] text-white text-xs rounded-full px-2 py-0.5'>{activeFiltersCount}</span>
+                <span className='ml-2 rounded-full bg-[#C8A15B] px-2 py-0.5 text-xs text-white'>{activeFiltersCount}</span>
               )}
             </Button>
           </div>
@@ -517,8 +520,9 @@ export function JewelleryPage() {
           showInStockOnly ||
           priceRange[0] > priceBounds[0] ||
           priceRange[1] < priceBounds[1]) && (
-          <div className='mb-6 flex flex-wrap items-center gap-2'>
-            <span className='text-sm font-medium text-black'>Active filters:</span>
+          <div className='mb-5 flex flex-col gap-2 sm:mb-6'>
+            <span className='text-xs font-medium text-neutral-600 sm:text-sm'>Active filters</span>
+            <div className='scrollbar-hide -mx-1 flex max-w-full flex-wrap items-center gap-2 overflow-x-auto pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible'>
             {searchQuery.trim() && (
               <Badge variant='outline' className='bg-gray-100 border-gray-100 text-black'>
                 Search: {searchQuery}
@@ -564,38 +568,58 @@ export function JewelleryPage() {
               </Badge>
             )}
             {(priceRange[0] > priceBounds[0] || priceRange[1] < priceBounds[1]) && (
-              <Badge variant='outline' className='bg-gray-100 border-gray-100 text-black'>
-                Price: ₹{priceRange[0].toLocaleString()} - ₹{priceRange[1].toLocaleString()}
-                <button onClick={() => setPriceRange(priceBounds)} className='ml-2 hover:text-red-600'>
-                  <X className='w-3 h-3' />
+              <Badge variant='outline' className='max-w-[min(100%,20rem)] shrink-0 bg-gray-100 text-black border-gray-100'>
+                <span className='truncate'>
+                  Price: ₹{priceRange[0].toLocaleString()} – ₹{priceRange[1].toLocaleString()}
+                </span>
+                <button onClick={() => setPriceRange(priceBounds)} className='ml-2 shrink-0 hover:text-red-600'>
+                  <X className='h-3 w-3' />
                 </button>
               </Badge>
             )}
+            </div>
           </div>
         )}
 
-        <div className='flex flex-col lg:flex-row gap-4 sm:gap-6 lg:gap-8'>
-          {/* Filters Sidebar - Mobile: Overlay, Desktop: Sidebar */}
-          {showFilters && <div className='lg:hidden fixed inset-0 z-50 bg-black/50' onClick={() => setShowFilters(false)} />}
+        <div className='flex flex-col gap-4 sm:gap-6 lg:flex-row lg:gap-8'>
+          {/* Filters Sidebar — mobile: slide-over drawer; lg+: sticky column */}
+          {showFilters && (
+            <button
+              type='button'
+              aria-label='Close filters'
+              className='fixed inset-0 z-40 bg-black/50 backdrop-blur-[1px] lg:hidden'
+              onClick={() => setShowFilters(false)}
+            />
+          )}
           <aside
             className={cn(
-              'w-full lg:w-80 flex-shrink-0 transition-all duration-300',
-              'lg:block',
+              'shrink-0 transition-transform duration-300 ease-out',
+              'w-full max-w-none lg:w-80 lg:max-w-[20rem]',
               showFilters
-                ? 'fixed lg:relative inset-y-0 left-0 z-50 lg:z-auto bg-white lg:bg-transparent shadow-xl lg:shadow-none'
-                : 'hidden lg:block',
+                ? 'fixed inset-y-0 left-0 z-50 flex w-[min(100%,22rem)] max-w-[min(100vw,22rem)] flex-col bg-white shadow-2xl lg:relative lg:z-auto lg:flex lg:w-80 lg:max-w-[20rem] lg:bg-transparent lg:shadow-none'
+                : 'hidden lg:flex',
             )}>
-            <div className='bg-white border border-border-website-primary rounded-xl lg:rounded-xl p-4 sm:p-5 md:p-6 h-full lg:h-auto lg:sticky top-24 sm:top-28 md:top-32 lg:top-20 max-h-[100vh] lg:max-h-[calc(100vh-7rem)] overflow-y-auto'>
-              <div className='flex items-center justify-between mb-4 sm:mb-5 md:mb-6'>
-                <h3 className='text-base sm:text-lg font-semibold text-black'>Filters</h3>
-                <div className='flex items-center gap-2'>
+            <div className='filter-scroll flex h-full min-h-0 flex-1 flex-col overflow-y-auto rounded-r-2xl border border-[#E6D3C2] bg-white p-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:p-5 md:p-6 lg:h-auto lg:max-h-[calc(100vh-6rem)] lg:rounded-xl lg:pb-6 lg:sticky lg:top-20'>
+              <div className='mb-4 flex shrink-0 items-center justify-between gap-2 border-b border-neutral-100 pb-4 sm:mb-5 md:mb-6'>
+                <h2 className='text-base font-semibold text-black sm:text-lg'>Filters</h2>
+                <div className='flex items-center gap-1 sm:gap-2'>
                   {activeFiltersCount > 0 && (
-                    <Button variant='ghost' size='sm' onClick={clearAllFilters} className='text-xs sm:text-sm text-black hover:text-black'>
-                      Clear All
+                    <Button
+                      variant='ghost'
+                      size='sm'
+                      onClick={clearAllFilters}
+                      className='h-9 px-2 text-xs text-black hover:text-black sm:text-sm'>
+                      Clear all
                     </Button>
                   )}
-                  <Button variant='ghost' size='sm' onClick={() => setShowFilters(false)} className='lg:hidden text-black hover:text-black'>
-                    <X className='w-4 h-4 sm:w-5 sm:h-5' />
+                  <Button
+                    variant='ghost'
+                    size='icon'
+                    type='button'
+                    onClick={() => setShowFilters(false)}
+                    className='h-9 w-9 shrink-0 text-black hover:text-black lg:hidden'
+                    aria-label='Close filters'>
+                    <X className='h-5 w-5' />
                   </Button>
                 </div>
               </div>
@@ -776,72 +800,87 @@ export function JewelleryPage() {
           {/* Products Grid */}
           <div className='flex-1 min-w-0'>
             {paginatedProducts.length === 0 ? (
-              <div className='text-center py-12 bg-white rounded-xl border border'>
-                <div className='w-24 h-24 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center'>
-                  <Gem className='w-12 h-12 text-web' />
+              <div className='rounded-xl border border-neutral-200 bg-white px-4 py-10 text-center sm:py-12'>
+                <div className='mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-neutral-100 sm:h-24 sm:w-24'>
+                  <Gem className='h-10 w-10 text-web sm:h-12 sm:w-12' />
                 </div>
-                <h3 className='text-lg font-medium text-black mb-2'>No products found</h3>
-                <p className='text-black mb-4'>Try adjusting your filters or search terms</p>
-                <Button onClick={clearAllFilters} className='bg-gray-100 hover:bg-[#3F5C45] text-balck'>
-                  Clear Filters
+                <h3 className='mb-2 text-base font-medium text-black sm:text-lg'>No products found</h3>
+                <p className='mb-4 text-sm text-neutral-600 sm:text-base'>Try adjusting your filters or search terms</p>
+                <Button onClick={clearAllFilters} className='bg-neutral-100 text-black hover:bg-[#3F5C45] hover:text-white'>
+                  Clear filters
                 </Button>
               </div>
             ) : (
               <>
-                <div className='grid gap-3 sm:gap-4 md:gap-5 lg:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3'>
+                <div className='grid grid-cols-1 gap-3 min-[480px]:grid-cols-2 sm:gap-4 md:gap-5 lg:grid-cols-3 lg:gap-6 *:min-w-0'>
                   {paginatedProducts.map(product => (
-                    <ProductCard key={product._id} product={convertToProductCard(product)} onClick={() => handleProductClick(product)} />
+                    <ProductCard
+                      key={product._id}
+                      className='h-full w-full'
+                      product={convertToProductCard(product)}
+                      onClick={() => handleProductClick(product)}
+                    />
                   ))}
                 </div>
 
                 {/* Pagination */}
                 {totalPages > 1 && (
-                  <div className='flex justify-center items-center gap-2 mt-8 sm:mt-12'>
-                    <Button
-                      variant='outline'
-                      onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                      disabled={currentPage === 1}
-                      className='border-[#E6D3C2] text-black hover:bg-[#F5EEE5]'>
-                      Previous
-                    </Button>
+                  <div className='mt-8 flex flex-col items-stretch gap-3 sm:mt-10 md:mt-12 md:flex-row md:items-center md:justify-center'>
+                    <p className='text-center text-xs text-neutral-600 md:hidden'>
+                      Page {currentPage} of {totalPages}
+                    </p>
+                    <div className='flex flex-wrap items-center justify-center gap-2'>
+                      <Button
+                        variant='outline'
+                        size='sm'
+                        type='button'
+                        onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                        disabled={currentPage === 1}
+                        className='min-h-10 min-w-22 border-[#E6D3C2] text-black hover:bg-[#F5EEE5] sm:min-h-9'>
+                        Previous
+                      </Button>
 
-                    <div className='flex gap-1'>
-                      {[...Array(totalPages)].map((_, i) => {
-                        const page = i + 1;
-                        if (page === 1 || page === totalPages || (page >= currentPage - 2 && page <= currentPage + 2)) {
-                          return (
-                            <Button
-                              key={page}
-                              variant={currentPage === page ? 'default' : 'outline'}
-                              size='sm'
-                              onClick={() => setCurrentPage(page)}
-                              className={cn(
-                                'w-10',
-                                currentPage === page
-                                  ? 'bg-black hover:bg-[#3F5C45] text-white'
-                                  : 'border-[#E6D3C2] text-black hover:bg-[#F5EEE5]',
-                              )}>
-                              {page}
-                            </Button>
-                          );
-                        } else if (page === currentPage - 3 || page === currentPage + 3) {
-                          return (
-                            <span key={page} className='px-2 text-black'>
-                              ...
-                            </span>
-                          );
-                        }
-                        return null;
-                      })}
+                      <div className='scrollbar-hide flex max-w-[min(100vw-8rem,28rem)] items-center gap-1 overflow-x-auto px-1 py-1 sm:max-w-none sm:overflow-visible'>
+                        {[...Array(totalPages)].map((_, i) => {
+                          const page = i + 1;
+                          if (page === 1 || page === totalPages || (page >= currentPage - 2 && page <= currentPage + 2)) {
+                            return (
+                              <Button
+                                key={page}
+                                variant={currentPage === page ? 'default' : 'outline'}
+                                size='sm'
+                                type='button'
+                                onClick={() => setCurrentPage(page)}
+                                className={cn(
+                                  'h-9 min-w-9 shrink-0 px-0 sm:h-9 sm:w-10',
+                                  currentPage === page
+                                    ? 'bg-black text-white hover:bg-[#3F5C45]'
+                                    : 'border-[#E6D3C2] text-black hover:bg-[#F5EEE5]',
+                                )}>
+                                {page}
+                              </Button>
+                            );
+                          } else if (page === currentPage - 3 || page === currentPage + 3) {
+                            return (
+                              <span key={page} className='shrink-0 px-1 text-sm text-neutral-500'>
+                                …
+                              </span>
+                            );
+                          }
+                          return null;
+                        })}
+                      </div>
+
+                      <Button
+                        variant='outline'
+                        size='sm'
+                        type='button'
+                        onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                        disabled={currentPage === totalPages}
+                        className='min-h-10 min-w-22 border-[#E6D3C2] text-black hover:bg-[#F5EEE5] sm:min-h-9'>
+                        Next
+                      </Button>
                     </div>
-
-                    <Button
-                      variant='outline'
-                      onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                      disabled={currentPage === totalPages}
-                      className='border-[#E6D3C2] text-black hover:bg-[#F5EEE5]'>
-                      Next
-                    </Button>
                   </div>
                 )}
               </>
