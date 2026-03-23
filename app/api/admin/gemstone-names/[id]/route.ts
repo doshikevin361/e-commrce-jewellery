@@ -2,6 +2,7 @@ import { connectToDatabase } from "@/lib/mongodb";
 import { NextResponse } from "next/server";
 import { ObjectId } from "mongodb";
 import { getUserFromRequest, isAdmin } from '@/lib/auth';
+import { rejectIfNoAdminAccess } from '@/lib/admin-api-authorize';
 
 export async function GET(
   request: Request,
@@ -41,9 +42,8 @@ export async function PUT(
 ) {
   try {
     const user = getUserFromRequest(request as any);
-    if (!user || !isAdmin(user)) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const deniedAd = rejectIfNoAdminAccess(request, user, 'admin-only');
+    if (deniedAd) return deniedAd;
 
     const { id } = await params;
     const { db } = await connectToDatabase();
@@ -107,9 +107,8 @@ export async function DELETE(
 ) {
   try {
     const user = getUserFromRequest(request as any);
-    if (!user || !isAdmin(user)) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const deniedAd = rejectIfNoAdminAccess(request, user, 'admin-only');
+    if (deniedAd) return deniedAd;
 
     const { id } = await params;
     const { db } = await connectToDatabase();

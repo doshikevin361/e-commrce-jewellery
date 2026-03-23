@@ -6,8 +6,18 @@ import { useToast } from '@/hooks/use-toast';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 import FormField from '@/components/formField/formField';
 import { ArrowLeft } from 'lucide-react';
+import { STAFF_MODULE_DEFINITIONS } from '@/lib/admin-modules';
 
 interface AdminFormData {
   _id?: string;
@@ -18,6 +28,7 @@ interface AdminFormData {
   password?: string;
   confirmPassword?: string;
   role?: string;
+  permissions?: string[];
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -38,12 +49,30 @@ export function UserFormPage({ adminId }: UserFormPageProps) {
     password: '',
     confirmPassword: '',
     role: 'admin',
+    permissions: [],
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(!!adminId);
   const [initialData, setInitialData] = useState<AdminFormData | null>(null);
+  const [viewerIsSuperadmin, setViewerIsSuperadmin] = useState(false);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('adminUser');
+      if (raw) {
+        const u = JSON.parse(raw);
+        if (u.role === 'staff') {
+          router.replace('/admin/users');
+          return;
+        }
+        setViewerIsSuperadmin(u.role === 'superadmin');
+      }
+    } catch {
+      /* ignore */
+    }
+  }, [router]);
 
   useEffect(() => {
     // Hide scroll
@@ -63,11 +92,17 @@ export function UserFormPage({ adminId }: UserFormPageProps) {
 
     const fetchAdmin = async () => {
       try {
-        const response = await fetch(`/api/admin/users/${adminId}`);
+        const response = await fetch(`/api/admin/users/${adminId}`, { credentials: 'include' });
         if (response.ok) {
           const data = await response.json();
-          setFormData(data.user);
-          setInitialData(data.user);
+          const u = data.user;
+          setFormData({
+            ...u,
+            permissions: Array.isArray(u.permissions) ? u.permissions : [],
+            password: '',
+            confirmPassword: '',
+          });
+          setInitialData(u);
         } else {
           toast({
             title: 'Error',
@@ -105,6 +140,9 @@ export function UserFormPage({ adminId }: UserFormPageProps) {
     if (!formData.email) newErrors.email = 'Email is required';
     if (!formData.phone) newErrors.phone = 'Phone number is required';
     if (!formData.role) newErrors.role = 'Role is required';
+    if (formData.role === 'staff' && !(formData.permissions && formData.permissions.length > 0)) {
+      newErrors.permissions = 'Select at least one module for staff';
+    }
 
     if (!adminId) {
       if (!formData.password) newErrors.password = 'Password is required for new users';
@@ -135,11 +173,21 @@ export function UserFormPage({ adminId }: UserFormPageProps) {
       const method = adminId ? 'PUT' : 'POST';
       const url = adminId ? `/api/admin/users/${adminId}` : '/api/admin/users';
 
-      const { _id, createdAt, updatedAt, confirmPassword, ...dataToSend } = formData as any;
+      const { _id, createdAt, updatedAt, confirmPassword, ...rest } = formData as any;
+      const dataToSend: Record<string, unknown> = { ...rest };
+      if (formData.role === 'staff') {
+        dataToSend.permissions = formData.permissions || [];
+      } else {
+        delete dataToSend.permissions;
+      }
+      if (adminId && !formData.password?.trim()) {
+        delete dataToSend.password;
+      }
 
       const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify(dataToSend),
       });
 
@@ -302,6 +350,78 @@ export function UserFormPage({ adminId }: UserFormPageProps) {
                       onCheckedChange={checked => setFormData(prev => ({ ...prev, status: checked ? 'active' : 'inactive' }))}
                     />
                   </div>
+
+                  <div className='space-y-2'>
+                    <Label>Role</Label>
+                    <Select
+                      value={formData.role || 'admin'}
+                      onValueChange={value =>
+                        setFormData(prev => ({
+                          ...prev,
+                          role: value,
+                          permissions: value === 'staff' ? prev.permissions || [] : [],
+                        }))
+                      }
+                      disabled={saving || (!!adminId && initialData?.role === 'superadmin' && !viewerIsSuperadmin)}>
+                      <SelectTrigger className='w-full max-w-md bg-white'>
+                        <SelectValue placeholder='Select role' />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value='admin'>Admin</SelectItem>
+                        <SelectItem value='staff'>Staff (module permissions)</SelectItem>
+                        {viewerIsSuperadmin ? <SelectItem value='superadmin'>Super Admin</SelectItem> : null}
+                      </SelectContent>
+                    </Select>
+                    {errors.role ? <p className='text-sm text-red-600'>{errors.role}</p> : null}
+                  </div>
+
+                  {formData.role === 'staff' ? (
+                    <div className='space-y-3 p-4 border rounded-lg bg-slate-50'>
+                      <div>
+                        <p className='text-sm font-medium text-slate-900'>Module access</p>
+                        <p className='text-xs text-muted-foreground'>Staff login par sirf yahi menu dikhenge.</p>
+                      </div>
+                      <div className='grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-64 overflow-y-auto'>
+                        {STAFF_MODULE_DEFINITIONS.map(mod => (
+                          <label key={mod.key} className='flex items-start gap-2 text-sm cursor-pointer'>
+                            <Checkbox
+                              checked={(formData.permissions || []).includes(mod.key)}
+                              onCheckedChange={checked => {
+                                setFormData(prev => {
+                                  const cur = new Set(prev.permissions || []);
+                                  if (checked) cur.add(mod.key);
+                                  else cur.delete(mod.key);
+                                  return { ...prev, permissions: [...cur] };
+                                });
+                                if (errors.permissions) setErrors(prev => ({ ...prev, permissions: '' }));
+                              }}
+                              disabled={saving}
+                            />
+                            <span>{mod.label}</span>
+                          </label>
+                        ))}
+                      </div>
+                      {errors.permissions ? <p className='text-sm text-red-600'>{errors.permissions}</p> : null}
+                    </div>
+                  ) : null}
+
+                  {adminId ? (
+                    <div className='space-y-4'>
+                      <h3 className='text-xl font-semibold text-slate-900'>Change password</h3>
+                      <p className='text-sm text-slate-500'>Optional — leave blank to keep current password.</p>
+                      <FormField
+                        label='New password'
+                        id='password'
+                        name='password'
+                        type='password'
+                        value={formData.password || ''}
+                        onChange={handleInputChange}
+                        placeholder='••••••••'
+                        disabled={saving}
+                        error={errors.password}
+                      />
+                    </div>
+                  ) : null}
                 </div>
               </div>
             </Card>

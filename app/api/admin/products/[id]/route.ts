@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
-import { getUserFromRequest, isVendor, isAdmin } from '@/lib/auth';
+import { getUserFromRequest, isVendor } from '@/lib/auth';
+import { rejectIfNoAdminAccess } from '@/lib/admin-api-authorize';
 import { requireSubscriptionOr403 } from '@/lib/subscription-access';
 
 const normalizeProductPayload = (payload: any) => {
@@ -359,9 +360,8 @@ export async function DELETE(
       if (!retailerProduct) {
         return NextResponse.json({ error: 'Product not found' }, { status: 404 });
       }
-      if (!currentUser || !isAdmin(currentUser)) {
-        return NextResponse.json({ error: 'Only admin can delete retailer products' }, { status: 403 });
-      }
+      const deniedRet = rejectIfNoAdminAccess(request, currentUser, 'admin-only');
+      if (deniedRet) return deniedRet;
       const result = await db.collection('retailer_products').deleteOne({ _id: new ObjectId(id) });
       if (result.deletedCount === 0) return NextResponse.json({ error: 'Product not found' }, { status: 404 });
       return NextResponse.json({ message: 'Product deleted' });

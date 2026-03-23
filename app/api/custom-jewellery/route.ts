@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createCustomJewelleryRequest, getCustomJewelleryRequests } from '@/lib/models/custom-jewellery';
-import { getUserFromRequest, isAdmin } from '@/lib/auth';
+import { getUserFromRequest } from '@/lib/auth';
+import { rejectIfNoAdminAccess } from '@/lib/admin-api-authorize';
 
 export async function POST(request: NextRequest) {
   try {
@@ -66,15 +67,9 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
-    // Check if user is admin
     const currentUser = getUserFromRequest(request);
-    
-    if (!currentUser || !isAdmin(currentUser)) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
+    const denied = rejectIfNoAdminAccess(request, currentUser, 'admin-only');
+    if (denied) return denied;
     
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');

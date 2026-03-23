@@ -9,14 +9,27 @@ export interface DecodedToken {
   id: string;
   email: string;
   role: string;
+  /** Module keys for role === 'staff' (see lib/admin-modules.ts) */
+  permissions?: string[];
 }
 
-export function generateToken(admin: Partial<AdminUser> | { _id?: string; email: string; role: string }) {
-  return jwt.sign(
-    { id: admin._id, email: admin.email, role: admin.role },
-    JWT_SECRET,
-    { expiresIn: '7d' }
-  );
+type TokenPayload = {
+  _id?: string;
+  email: string;
+  role: string;
+  permissions?: string[];
+};
+
+export function generateToken(admin: Partial<AdminUser> | TokenPayload) {
+  const payload: Record<string, unknown> = {
+    id: admin._id,
+    email: admin.email,
+    role: admin.role,
+  };
+  if (admin.role === 'staff' && Array.isArray(admin.permissions) && admin.permissions.length > 0) {
+    payload.permissions = admin.permissions;
+  }
+  return jwt.sign(payload, JWT_SECRET, { expiresIn: '7d' });
 }
 
 export function verifyToken(token: string): DecodedToken | null {
@@ -96,6 +109,10 @@ export function isVendor(user: DecodedToken | null): boolean {
 
 export function isAdmin(user: DecodedToken | null): boolean {
   return user?.role === 'admin' || user?.role === 'superadmin';
+}
+
+export function isStaff(user: DecodedToken | null): boolean {
+  return user?.role === 'staff';
 }
 
 export function isAdminOrVendor(user: DecodedToken | null): boolean {

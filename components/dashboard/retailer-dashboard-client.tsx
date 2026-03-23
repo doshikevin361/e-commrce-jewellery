@@ -124,7 +124,7 @@ export function RetailerDashboardClient() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Retailer Dashboard</h1>
           <p className="text-gray-600 text-sm mt-1">
             Welcome back, <span className="font-medium text-gray-900">{displayName}</span>
             {user?.email && <span className="text-gray-500"> · {user.email}</span>}

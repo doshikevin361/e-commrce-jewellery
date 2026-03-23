@@ -11,16 +11,28 @@ interface DashboardData {
   stats: any;
   revenueData: any[];
   categoryDistribution: any[];
-  topProducts: any[];
-  recentOrders: any[];
+  featuredProducts: Array<{ name: string; type: string; price: number }>;
+  topSuppliers: Array<{ supplier: string; products: number; contact: string; status: string }>;
+  recentCustomerOrders: Array<{ orderId: string; customerName: string; total: number; orderStatus: string; createdAt?: string }>;
+  recentRetailerOrders: Array<{ orderId: string; customerName: string; total: number; orderStatus: string; createdAt?: string }>;
 }
 
 export function DashboardClient() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [userRole, setUserRole] = useState<'admin' | 'vendor'>('admin');
 
   useEffect(() => {
+    try {
+      const userStr = localStorage.getItem('adminUser');
+      if (userStr) {
+        const parsed = JSON.parse(userStr) as { role?: string };
+        if (parsed.role === 'vendor') setUserRole('vendor');
+      }
+    } catch {
+      setUserRole('admin');
+    }
+
     const fetchDashboard = async () => {
       try {
         const response = await fetch('/api/admin/stats');
@@ -28,10 +40,10 @@ export function DashboardClient() {
         
         const dashboardData: DashboardData = {
           stats: {
-            totalOrders: 120450,
-            pendingOrders: 4870,
-            cancelledOrders: 1980,
-            returnedItems: 3210,
+            totalOrders: Number(statsData?.totalOrders || 0),
+            totalProducts: Number(statsData?.totalProducts || 0),
+            revenue: Number(statsData?.revenue || 0),
+            customers: Number(statsData?.customers || 0),
           },
           revenueData: [
             { month: 'Jan', income: 25000, expense: 18000 },
@@ -42,23 +54,25 @@ export function DashboardClient() {
             { month: 'Jun', income: 41000, expense: 30000 },
             { month: 'Jul', income: 35000, expense: 25000 },
           ],
-          categoryDistribution: [
-            { name: 'Grocery', value: 40, color: '#a5f3fc' },
-            { name: 'Bakery', value: 25, color: '#86efac' },
-            { name: 'Dairy', value: 20, color: '#16a34a' },
-            { name: 'Products', value: 15, color: '#fbbf24' },
-          ],
-          topProducts: [
-            { supplier: 'Fresh Farms', products: 'Fruits', nextShipment: 'Oct 1, 2024', contact: '(555) 123-4567', rating: 5 },
-            { supplier: 'Green Valley', products: 'Vegetables', nextShipment: 'Sep 20, 2024', contact: '(555) 987-8532', rating: 5 },
-          ],
-          recentOrders: [
-            { id: 'ORD001', customer: 'Rajesh Kumar', product: 'Fresh Apples', status: 'Completed', price: 450 },
-            { id: 'ORD002', customer: 'Priya Sharma', product: 'Organic Carrots', status: 'Completed', price: 320 },
-            { id: 'ORD003', customer: 'Amit Patel', product: 'Milk Bottles', status: 'Pending', price: 280 },
-            { id: 'ORD004', customer: 'Neha Gupta', product: 'Bread Pack', status: 'Completed', price: 150 },
-            { id: 'ORD005', customer: 'Vikram Singh', product: 'Orange Juice', status: 'Completed', price: 220 },
-          ],
+          categoryDistribution:
+            Array.isArray(statsData?.productTypeDistribution) && statsData.productTypeDistribution.length > 0
+              ? statsData.productTypeDistribution
+              : [
+                  { name: 'Gold', value: 40 },
+                  { name: 'Silver', value: 25 },
+                  { name: 'Platinum', value: 20 },
+                  { name: 'Diamonds', value: 15 },
+                ],
+          featuredProducts:
+            Array.isArray(statsData?.featuredProducts) && statsData.featuredProducts.length > 0
+              ? statsData.featuredProducts
+              : [],
+          topSuppliers:
+            Array.isArray(statsData?.topSuppliers) && statsData.topSuppliers.length > 0
+              ? statsData.topSuppliers
+              : [],
+          recentCustomerOrders: Array.isArray(statsData?.recentCustomerOrders) ? statsData.recentCustomerOrders : [],
+          recentRetailerOrders: Array.isArray(statsData?.recentRetailerOrders) ? statsData.recentRetailerOrders : [],
         };
         
         setData(dashboardData);
@@ -90,6 +104,27 @@ export function DashboardClient() {
   const formatNumber = (amount: number) => {
     return amount.toLocaleString('en-IN');
   };
+  const dashboardTitle = userRole === 'vendor' ? 'Vendor Dashboard' : 'Admin Dashboard';
+  const PIE_COLORS = ['#a5f3fc', '#86efac', '#16a34a', '#fbbf24', '#60a5fa', '#f97316'];
+  const totalCategoryCount = (data.categoryDistribution || []).reduce((sum: number, item: any) => sum + Number(item?.value || 0), 0);
+  const categoryChartData = (data.categoryDistribution || []).map((item: any, index: number) => ({
+    ...item,
+    color: PIE_COLORS[index % PIE_COLORS.length],
+    percent: totalCategoryCount > 0 ? Math.round((Number(item?.value || 0) / totalCategoryCount) * 100) : 0,
+  }));
+  const kpiStats = userRole === 'vendor'
+    ? [
+        { label: 'Total Products', value: formatNumber(data.stats.totalProducts || 0), change: 'Live', trend: 'up' },
+        { label: 'Total Orders', value: formatNumber(data.stats.totalOrders || 0), change: 'Live', trend: 'up' },
+        { label: 'Revenue (INR)', value: formatNumber(data.stats.revenue || 0), change: 'Live', trend: 'up' },
+        { label: 'Customers', value: '—', change: 'Admin only', trend: 'down' },
+      ]
+    : [
+        { label: 'Total Products', value: formatNumber(data.stats.totalProducts || 0), change: 'Live', trend: 'up' },
+        { label: 'Total Orders', value: formatNumber(data.stats.totalOrders || 0), change: 'Live', trend: 'up' },
+        { label: 'Revenue (INR)', value: formatNumber(data.stats.revenue || 0), change: 'Live', trend: 'up' },
+        { label: 'Total Customers', value: formatNumber(data.stats.customers || 0), change: 'Live', trend: 'up' },
+      ];
 
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
@@ -108,7 +143,7 @@ export function DashboardClient() {
     <div className="space-y-6 p-6 bg-gray-50 min-h-screen">
       {/* Title and Controls */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Grocery Inventory Dashboard</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{dashboardTitle}</h1>
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-lg border border-gray-200">
             <span className="text-sm text-gray-600">This Month</span>
@@ -123,12 +158,7 @@ export function DashboardClient() {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-4 gap-4">
-        {[
-          { label: 'Total Orders', value: '120,450', change: '+2% from last quarter', trend: 'up' },
-          { label: 'Pending Orders', value: '4,870', change: '-712% vs last month', trend: 'down' },
-          { label: 'Cancelled Orders', value: '1,980', change: '+2% from last quarter', trend: 'up' },
-          { label: 'Returned Items', value: '3,210', change: '-4.20% vs last month', trend: 'down' },
-        ].map((stat, index) => (
+        {kpiStats.map((stat, index) => (
           <Card key={index} className="bg-white p-4 hover:shadow-md transition-all duration-200 border-0">
             <div className="flex items-start justify-between mb-3">
               <p className="text-sm font-medium text-gray-600">{stat.label}</p>
@@ -195,38 +225,28 @@ export function DashboardClient() {
           </div>
         </Card>
 
-        {/* Grocery Deals Pie Chart */}
+        {/* jewellery Deals Pie Chart */}
         <Card className="bg-white border-0">
           <div className="p-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold text-gray-900">Grocery Deals</h3>
+              <h3 className="text-lg font-bold text-gray-900">jewellery Deals</h3>
               <MoreVertical className="w-4 h-4 text-gray-400 cursor-pointer" />
             </div>
             <div className="mb-6">
               <ResponsiveContainer width="100%" height={240}>
                 <PieChart>
                   <Pie
-                    data={[
-                      { name: 'Grocery', value: 40, color: '#a5f3fc' },
-                      { name: 'Bakery', value: 25, color: '#86efac' },
-                      { name: 'Dairy', value: 20, color: '#16a34a' },
-                      { name: 'Products', value: 15, color: '#fbbf24' },
-                    ]}
+                    data={categoryChartData}
                     cx="45%"
                     cy="50%"
                     innerRadius={55}
                     outerRadius={90}
                     fill="#8884d8"
                     dataKey="value"
-                    label={({ value }) => `${value}%`}
+                    label={({ percent }) => `${Math.round((percent || 0) * 100)}%`}
                     labelLine={false}
                   >
-                    {[
-                      { name: 'Grocery', value: 40, color: '#a5f3fc' },
-                      { name: 'Bakery', value: 25, color: '#86efac' },
-                      { name: 'Dairy', value: 20, color: '#16a34a' },
-                      { name: 'Products', value: 15, color: '#fbbf24' },
-                    ].map((entry, index) => (
+                    {categoryChartData.map((entry: any, index: number) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
@@ -234,26 +254,13 @@ export function DashboardClient() {
               </ResponsiveContainer>
             </div>
             <div className="grid grid-cols-2 gap-2 text-xs">
-              <div className="flex items-center gap-2 p-2">
-                <div className="w-2.5 h-2.5 rounded-full bg-a5f3fc" style={{ backgroundColor: '#a5f3fc' }}></div>
-                <span className="text-gray-700 font-medium">Grocery</span>
-                <span className="text-gray-900 font-bold ml-auto">40%</span>
-              </div>
-              <div className="flex items-center gap-2 p-2">
-                <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: '#86efac' }}></div>
-                <span className="text-gray-700 font-medium">Bakery</span>
-                <span className="text-gray-900 font-bold ml-auto">25%</span>
-              </div>
-              <div className="flex items-center gap-2 p-2">
-                <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: '#16a34a' }}></div>
-                <span className="text-gray-700 font-medium">Dairy</span>
-                <span className="text-gray-900 font-bold ml-auto">20%</span>
-              </div>
-              <div className="flex items-center gap-2 p-2">
-                <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: '#fbbf24' }}></div>
-                <span className="text-gray-700 font-medium">Products</span>
-                <span className="text-gray-900 font-bold ml-auto">15%</span>
-              </div>
+              {categoryChartData.map((entry: any, index: number) => (
+                <div key={`legend-${index}`} className="flex items-center gap-2 p-2">
+                  <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: entry.color }}></div>
+                  <span className="text-gray-700 font-medium">{entry.name}</span>
+                  <span className="text-gray-900 font-bold ml-auto">{entry.percent}%</span>
+                </div>
+              ))}
             </div>
           </div>
         </Card>
@@ -273,34 +280,31 @@ export function DashboardClient() {
               </div>
             </div>
             <div className="space-y-3">
-              <div className="grid grid-cols-5 gap-4 pb-3 border-b border-gray-200">
+              <div className="grid grid-cols-4 gap-4 pb-3 border-b border-gray-200">
                 <p className="text-xs font-semibold text-gray-500">Supplier Name</p>
                 <p className="text-xs font-semibold text-gray-500">Products</p>
-                <p className="text-xs font-semibold text-gray-500">Next Shipment</p>
                 <p className="text-xs font-semibold text-gray-500">Contact</p>
-                <p className="text-xs font-semibold text-gray-500">Rating</p>
+                <p className="text-xs font-semibold text-gray-500">Status</p>
               </div>
-              {data.topProducts.map((supplier, index) => (
-                <div key={index} className="grid grid-cols-5 gap-4 py-2 hover:bg-gray-50 px-2 rounded transition-colors">
+              {data.topSuppliers.map((supplier, index) => (
+                <div key={index} className="grid grid-cols-4 gap-4 py-2 hover:bg-gray-50 px-2 rounded transition-colors">
                   <div>
                     <p className="text-sm font-medium text-gray-900">{supplier.supplier}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600">{supplier.products}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">{supplier.nextShipment}</p>
+                    <p className="text-sm text-gray-600">{supplier.products} items</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">{supplier.contact}</p>
                   </div>
-                  <div className="flex gap-0.5">
-                    {[...Array(supplier.rating)].map((_, i) => (
-                      <span key={i} className="text-yellow-400 text-sm">★</span>
-                    ))}
+                  <div>
+                    <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-700 capitalize">{supplier.status}</span>
                   </div>
                 </div>
               ))}
+              {data.topSuppliers.length === 0 && (
+                <div className="py-6 text-sm text-gray-500 text-center">No supplier data found.</div>
+              )}
             </div>
             <div className="mt-4 flex items-center justify-between">
               <button className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900">
@@ -321,11 +325,11 @@ export function DashboardClient() {
           </div>
         </Card>
 
-        {/* Grocery Deals Products */}
+        {/* jewellery Deals Products */}
         <Card className="bg-white border-0">
           <div className="p-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-base font-bold text-gray-900">Grocery Deals</h3>
+              <h3 className="text-base font-bold text-gray-900">jewellery Deals</h3>
               <Button variant="link" className="text-amber-600 hover:text-amber-700 p-0 h-auto text-sm font-medium">
                 See all →
               </Button>
@@ -337,23 +341,23 @@ export function DashboardClient() {
                   <p className="text-xs font-semibold text-gray-500">Price</p>
                 </div>
               </div>
-              {[
-                { name: 'Apple', category: 'Fruit', price: '$1.25 / lb', icon: '🍎' },
-                { name: 'Carrot', category: 'Vegetable', price: '$0.80 / lb', icon: '🥕' },
-              ].map((item, index) => (
+              {(data.featuredProducts || []).slice(0, 6).map((item, index) => (
                 <div key={index} className="grid grid-cols-2 gap-4 py-2 hover:bg-gray-50 px-2 rounded transition-colors">
                   <div className="flex items-center gap-3">
-                    <span className="text-2xl">{item.icon}</span>
+                    <span className="text-2xl">💍</span>
                     <div>
                       <p className="text-sm font-medium text-gray-900">{item.name}</p>
-                      <p className="text-xs text-gray-500">{item.category}</p>
+                      <p className="text-xs text-gray-500">{item.type}</p>
                     </div>
                   </div>
                   <div className="flex items-center">
-                    <p className="text-sm font-semibold text-gray-900">{item.price}</p>
+                    <p className="text-sm font-semibold text-gray-900">₹{formatNumber(Number(item.price || 0))}</p>
                   </div>
                 </div>
               ))}
+              {(data.featuredProducts || []).length === 0 && (
+                <p className="text-sm text-gray-500 py-2">No products found.</p>
+              )}
             </div>
           </div>
         </Card>
@@ -365,38 +369,76 @@ export function DashboardClient() {
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-base font-bold text-gray-900">Recent Orders</h3>
           </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div>
+              <h4 className="text-sm font-semibold text-gray-700 mb-3">Recent Customer Orders</h4>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-gray-200">
+                      <th className="text-left py-2 px-3 font-semibold text-gray-600 text-xs">Order ID</th>
+                      <th className="text-left py-2 px-3 font-semibold text-gray-600 text-xs">Customer</th>
+                      <th className="text-left py-2 px-3 font-semibold text-gray-600 text-xs">Total</th>
+                      <th className="text-left py-2 px-3 font-semibold text-gray-600 text-xs">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(data.recentCustomerOrders || []).map((order, index) => (
+                      <tr key={`cust-${index}`} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                        <td className="py-2 px-3 text-gray-900 font-medium text-sm">{order.orderId}</td>
+                        <td className="py-2 px-3 text-gray-600 text-sm">{order.customerName}</td>
+                        <td className="py-2 px-3 text-gray-900 font-medium text-sm">₹{formatNumber(Number(order.total || 0))}</td>
+                        <td className="py-2 px-3">
+                          <span className="text-xs px-2 py-1 rounded-full font-semibold bg-green-100 text-green-700 capitalize">
+                            {order.orderStatus}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                    {(data.recentCustomerOrders || []).length === 0 && (
+                      <tr>
+                        <td colSpan={4} className="py-4 px-3 text-sm text-gray-500">No recent customer orders.</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-gray-200">
-                  <th className="text-left py-3 px-4 font-semibold text-gray-600 text-xs">Order ID</th>
-                  <th className="text-left py-3 px-4 font-semibold text-gray-600 text-xs">Customer</th>
-                  <th className="text-left py-3 px-4 font-semibold text-gray-600 text-xs">Product</th>
-                  <th className="text-left py-3 px-4 font-semibold text-gray-600 text-xs">Price</th>
-                  <th className="text-left py-3 px-4 font-semibold text-gray-600 text-xs">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.recentOrders.map((order, index) => (
-                  <tr key={index} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                    <td className="py-4 px-4 text-gray-900 font-medium text-sm">{order.id}</td>
-                    <td className="py-4 px-4 text-gray-600 text-sm">{order.customer}</td>
-                    <td className="py-4 px-4 text-gray-600 text-sm">{order.product}</td>
-                    <td className="py-4 px-4 text-gray-900 font-medium text-sm">₹{order.price}</td>
-                    <td className="py-4 px-4">
-                      <span className={`text-xs px-3 py-1 rounded-full font-semibold ${
-                        order.status === 'Completed' 
-                          ? 'bg-green-100 text-green-700' 
-                          : 'bg-yellow-100 text-yellow-700'
-                      }`}>
-                        {order.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <div>
+              <h4 className="text-sm font-semibold text-gray-700 mb-3">Recent Retailer Orders</h4>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-gray-200">
+                      <th className="text-left py-2 px-3 font-semibold text-gray-600 text-xs">Order ID</th>
+                      <th className="text-left py-2 px-3 font-semibold text-gray-600 text-xs">Retailer</th>
+                      <th className="text-left py-2 px-3 font-semibold text-gray-600 text-xs">Total</th>
+                      <th className="text-left py-2 px-3 font-semibold text-gray-600 text-xs">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(data.recentRetailerOrders || []).map((order, index) => (
+                      <tr key={`ret-${index}`} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                        <td className="py-2 px-3 text-gray-900 font-medium text-sm">{order.orderId}</td>
+                        <td className="py-2 px-3 text-gray-600 text-sm">{order.customerName}</td>
+                        <td className="py-2 px-3 text-gray-900 font-medium text-sm">₹{formatNumber(Number(order.total || 0))}</td>
+                        <td className="py-2 px-3">
+                          <span className="text-xs px-2 py-1 rounded-full font-semibold bg-blue-100 text-blue-700 capitalize">
+                            {order.orderStatus}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                    {(data.recentRetailerOrders || []).length === 0 && (
+                      <tr>
+                        <td colSpan={4} className="py-4 px-3 text-sm text-gray-500">No recent retailer orders.</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         </div>
       </Card>

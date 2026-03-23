@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
 import { getUserFromRequest, isAdmin } from '@/lib/auth';
+import { rejectIfNoAdminAccess } from '@/lib/admin-api-authorize';
 
 export async function PATCH(
   request: NextRequest,
@@ -9,9 +10,8 @@ export async function PATCH(
 ) {
   try {
     const user = getUserFromRequest(request);
-    if (!user || !isAdmin(user)) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const deniedAd = rejectIfNoAdminAccess(request, user, 'admin-only');
+    if (deniedAd) return deniedAd;
     const { id } = await params;
     if (!id) return NextResponse.json({ error: 'Invalid retailer id' }, { status: 400 });
     const body = await request.json().catch(() => ({}));

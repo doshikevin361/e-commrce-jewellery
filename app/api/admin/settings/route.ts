@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
 import { getUserFromRequest, isAdmin, isAdminOrVendor } from '@/lib/auth';
+import { rejectIfNoAdminAccess } from '@/lib/admin-api-authorize';
 import { revalidatePath, revalidateTag } from 'next/cache';
 import { calculateAdminProductPrice } from '@/lib/utils/admin-price-calculator';
 
@@ -59,9 +60,8 @@ function normalizeSettings(doc: any = {}) {
 export async function GET(request: NextRequest) {
   try {
     const user = getUserFromRequest(request);
-    if (!user || !isAdminOrVendor(user)) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const deniedOr = rejectIfNoAdminAccess(request, user, 'admin-or-vendor');
+    if (deniedOr) return deniedOr;
 
     const { db } = await connectToDatabase();
     const settings = await db.collection('settings').findOne({});
@@ -76,9 +76,8 @@ export async function GET(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const user = getUserFromRequest(request);
-    if (!user || !isAdmin(user)) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const deniedAd = rejectIfNoAdminAccess(request, user, 'admin-only');
+    if (deniedAd) return deniedAd;
 
     const { db } = await connectToDatabase();
     const existingSettings = await db.collection('settings').findOne({});

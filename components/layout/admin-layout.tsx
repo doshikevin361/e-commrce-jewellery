@@ -7,6 +7,7 @@ import { TopBar } from './top-bar';
 import { ThemeProvider } from '@/components/theme-provider';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { staffCanAccessPagePath, getStaffDefaultPath } from '@/lib/admin-modules';
 
 export function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -36,6 +37,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
 
       try {
         const admin = JSON.parse(adminData);
+        if (admin?.role === 'staff') return;
         if (admin?.role !== 'vendor') return;
 
         setIsCheckingSetup(true);
@@ -83,6 +85,32 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
     };
   }, [isAuthenticated, pathname, router]);
 
+  /** Staff: only pages allowed by permissions; no permissions → logout */
+  useEffect(() => {
+    if (!isAuthenticated || typeof window === 'undefined') return;
+    const raw = localStorage.getItem('adminUser');
+    if (!raw) return;
+    try {
+      const u = JSON.parse(raw);
+      if (u.role !== 'staff') return;
+      const perms: string[] = Array.isArray(u.permissions) ? u.permissions : [];
+      if (perms.length === 0) {
+        localStorage.removeItem('adminToken');
+        localStorage.removeItem('adminUser');
+        window.location.href = '/login?error=staff-no-modules';
+        return;
+      }
+      if (!staffCanAccessPagePath(perms, pathname)) {
+        const next = getStaffDefaultPath(perms);
+        if (pathname !== next) {
+          router.replace(next);
+        }
+      }
+    } catch {
+      /* ignore */
+    }
+  }, [isAuthenticated, pathname, router]);
+
   // Global fetch interceptor to handle unauthorized errors
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -94,8 +122,8 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
     window.fetch = async function (...args) {
       const response = await currentFetch.apply(this, args);
       
-      // Check for unauthorized errors (401 or 403) on admin API calls
-      if (response.status === 401 || response.status === 403) {
+      // Session expired → logout on 401. 403 = permission denied (e.g. staff) — do not logout.
+      if (response.status === 401) {
         const url = args[0];
         const urlString = typeof url === 'string' ? url : url instanceof Request ? url.url : String(url);
         

@@ -47,6 +47,8 @@ export function Sidebar() {
   const [isOpen, setIsOpen] = useState(true);
   const [vendorsOpen, setVendorsOpen] = useState(pathname.startsWith('/admin/vendors'));
   const [pendingVendorCount, setPendingVendorCount] = useState(0);
+  const [retailersOpen, setRetailersOpen] = useState(pathname.startsWith('/admin/retailers'));
+  const [pendingRetailerCount, setPendingRetailerCount] = useState(0);
   const [usersOpen, setUsersOpen] = useState(pathname.startsWith('/admin/users') || pathname.startsWith('/admin/roles'));
   const [productsOpen, setProductsOpen] = useState(
     pathname.startsWith('/admin/products') ||
@@ -75,6 +77,7 @@ export function Sidebar() {
     name: string;
     email: string;
     role?: string;
+    permissions?: string[];
   } | null>(null);
 
   useEffect(() => {
@@ -100,6 +103,9 @@ export function Sidebar() {
         if (parsedUser && parsedUser.role === 'vendor') {
           return; // Vendors don't need to see pending vendor count
         }
+        if (parsedUser?.role === 'staff' && !(parsedUser.permissions || []).includes('vendors')) {
+          return;
+        }
         
         const response = await fetch('/api/admin/vendors?status=pending');
         const data = await response.json();
@@ -108,8 +114,28 @@ export function Sidebar() {
         console.error('[v0] Failed to fetch pending vendors:', error);
       }
     };
+    const fetchPendingRetailerCount = async () => {
+      try {
+        // Only fetch pending counts for admins, not vendors
+        if (parsedUser && parsedUser.role === 'vendor') {
+          return;
+        }
+        if (parsedUser?.role === 'staff' && !(parsedUser.permissions || []).includes('retailers')) {
+          return;
+        }
+        const token = localStorage.getItem('adminToken');
+        const response = await fetch('/api/admin/retailers?status=pending', {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        const data = await response.json();
+        setPendingRetailerCount(data.retailers?.filter((r: any) => r.status === 'pending').length || 0);
+      } catch (error) {
+        console.error('[v0] Failed to fetch pending retailers:', error);
+      }
+    };
 
     fetchPendingVendorCount();
+    fetchPendingRetailerCount();
   }, []);
 
   const handleLogout = () => {
@@ -134,14 +160,34 @@ export function Sidebar() {
     [primaryColor, accentColor]
   );
 
-  const menuItems = [
-    { label: 'Dashboard', href: '/admin', badge: null, icon: LayoutDashboard, allowedRoles: ['superadmin', 'admin', 'vendor'] },
+  type MenuItemConfig = {
+    label: string;
+    href: string;
+    badge: null;
+    icon: typeof LayoutDashboard;
+    allowedRoles: string[];
+    /** Staff access: must be in JWT/localStorage permissions */
+    moduleKey?: string;
+    submenu?: boolean;
+    type?: string;
+  };
+
+  const menuItems: MenuItemConfig[] = [
+    {
+      label: 'Dashboard',
+      href: '/admin',
+      badge: null,
+      icon: LayoutDashboard,
+      allowedRoles: ['superadmin', 'admin', 'vendor'],
+      moduleKey: 'dashboard',
+    },
     {
       label: 'Pricing & Commission',
       href: '/admin/pricing-settings',
       badge: null,
       icon: Coins,
       allowedRoles: ['superadmin', 'admin'],
+      moduleKey: 'pricing_commission',
     },
     {
       label: 'Vendor Commission Details',
@@ -149,6 +195,7 @@ export function Sidebar() {
       badge: null,
       icon: Percent,
       allowedRoles: ['superadmin', 'admin'],
+      moduleKey: 'vendor_commissions',
     },
     {
       label: 'Products',
@@ -158,10 +205,32 @@ export function Sidebar() {
       submenu: true,
       type: 'products',
       allowedRoles: ['superadmin', 'admin', 'vendor'],
+      moduleKey: 'products',
     },
-    { label: 'Orders', href: '/admin/orders', badge: null, icon: Package, allowedRoles: ['superadmin', 'admin', 'vendor'] },
-    { label: 'B2B Orders', href: '/admin/orders/b2b', badge: null, icon: Store, allowedRoles: ['superadmin', 'admin', 'vendor'] },
-    { label: 'Coupons', href: '/admin/coupons', badge: null, icon: Ticket, allowedRoles: ['superadmin', 'admin', 'vendor'] },
+    {
+      label: 'Orders',
+      href: '/admin/orders',
+      badge: null,
+      icon: Package,
+      allowedRoles: ['superadmin', 'admin', 'vendor'],
+      moduleKey: 'orders',
+    },
+    {
+      label: 'B2B Orders',
+      href: '/admin/orders/b2b',
+      badge: null,
+      icon: Store,
+      allowedRoles: ['superadmin', 'admin', 'vendor'],
+      moduleKey: 'b2b_orders',
+    },
+    {
+      label: 'Coupons',
+      href: '/admin/coupons',
+      badge: null,
+      icon: Ticket,
+      allowedRoles: ['superadmin', 'admin', 'vendor'],
+      moduleKey: 'coupons',
+    },
     {
       label: 'Users',
       href: '/admin/users',
@@ -170,11 +239,42 @@ export function Sidebar() {
       submenu: true,
       type: 'users',
       allowedRoles: ['superadmin', 'admin'],
+      moduleKey: 'users',
     },
-    { label: 'Customers', href: '/admin/customers', badge: null, icon: Users, allowedRoles: ['superadmin', 'admin'] },
-    { label: 'Retailers (B2B)', href: '/admin/retailers', badge: null, icon: Store, allowedRoles: ['superadmin', 'admin'] },
-    { label: 'Newsletter Subscribers', href: '/admin/newsletter-subscribers', badge: null, icon: Mail, allowedRoles: ['superadmin', 'admin'] },
-    { label: 'Custom Jewellery', href: '/admin/custom-jewellery', badge: null, icon: Sparkles, allowedRoles: ['superadmin', 'admin'] },
+    {
+      label: 'Customers',
+      href: '/admin/customers',
+      badge: null,
+      icon: Users,
+      allowedRoles: ['superadmin', 'admin'],
+      moduleKey: 'customers',
+    },
+    {
+      label: 'Retailers (B2B)',
+      href: '/admin/retailers',
+      badge: null,
+      icon: Store,
+      submenu: true,
+      type: 'retailers',
+      allowedRoles: ['superadmin', 'admin'],
+      moduleKey: 'retailers',
+    },
+    {
+      label: 'Newsletter Subscribers',
+      href: '/admin/newsletter-subscribers',
+      badge: null,
+      icon: Mail,
+      allowedRoles: ['superadmin', 'admin'],
+      moduleKey: 'newsletter',
+    },
+    {
+      label: 'Custom Jewellery',
+      href: '/admin/custom-jewellery',
+      badge: null,
+      icon: Sparkles,
+      allowedRoles: ['superadmin', 'admin'],
+      moduleKey: 'custom_jewellery',
+    },
     {
       label: 'Vendors',
       href: '/admin/vendors',
@@ -183,6 +283,7 @@ export function Sidebar() {
       submenu: true,
       type: 'vendors',
       allowedRoles: ['superadmin', 'admin'],
+      moduleKey: 'vendors',
     },
     {
       label: 'Reports & Analytics',
@@ -190,6 +291,7 @@ export function Sidebar() {
       badge: null,
       icon: Search,
       allowedRoles: ['superadmin', 'admin', 'vendor'],
+      moduleKey: 'reports',
     },
     {
       label: 'CMS',
@@ -199,6 +301,7 @@ export function Sidebar() {
       submenu: true,
       type: 'cms',
       allowedRoles: ['superadmin', 'admin'],
+      moduleKey: 'cms',
     },
     {
       label: 'Subscription Settings',
@@ -206,6 +309,7 @@ export function Sidebar() {
       badge: null,
       icon: CreditCard,
       allowedRoles: ['superadmin', 'admin'],
+      moduleKey: 'subscription_settings',
     },
     {
       label: 'Settings',
@@ -213,6 +317,7 @@ export function Sidebar() {
       badge: null,
       icon: Settings,
       allowedRoles: ['superadmin', 'admin'],
+      moduleKey: 'settings',
     },
     {
       label: 'Commission Settings',
@@ -234,12 +339,17 @@ export function Sidebar() {
       badge: null,
       icon: BarChart2,
       allowedRoles: ['superadmin', 'admin', 'vendor'],
+      moduleKey: 'commission_compare',
     },
   ];
 
-  // Filter menu items based on user role
+  // Filter menu: staff sees only modules in permissions[]; others by role
   const filteredMenuItems = menuItems.filter(item => {
     const userRole = userData?.role || 'admin';
+    if (userRole === 'staff') {
+      const perms = userData?.permissions || [];
+      return !!(item.moduleKey && perms.includes(item.moduleKey));
+    }
     return item.allowedRoles?.includes(userRole);
   });
 
@@ -269,6 +379,28 @@ export function Sidebar() {
       href: '/admin/vendors?status=suspended',
     },
   ];
+  const retailerSubmenu = [
+    {
+      label: 'Add Retailer',
+      href: '/retailer/register',
+    },
+    {
+      label: 'All Retailers',
+      href: '/admin/retailers',
+    },
+    {
+      label: 'Approved',
+      href: '/admin/retailers?status=approved',
+    },
+    {
+      label: 'Pending',
+      href: '/admin/retailers?status=pending',
+    },
+    {
+      label: 'Blocked',
+      href: '/admin/retailers?status=blocked',
+    },
+  ];
 
   const usersSubmenu = [
     {
@@ -284,6 +416,16 @@ export function Sidebar() {
       href: '/admin/roles',
     },
   ];
+
+  const usersSubmenuFiltered =
+    userData?.role === 'staff'
+      ? usersSubmenu.filter(s => s.href === '/admin/users')
+      : usersSubmenu;
+
+  const retailerSubmenuFiltered =
+    userData?.role === 'staff'
+      ? retailerSubmenu.filter(s => !s.href.includes('/retailer/register'))
+      : retailerSubmenu;
 
   // Products submenu - different for vendors vs admins
   const userRole = userData?.role || 'admin';
@@ -631,7 +773,7 @@ export function Sidebar() {
                 {isOpen && usersOpen && (
                   <div className='mt-2 space-y-0 relative pl-4'>
                     <div className='absolute left-0 top-0 bottom-0 w-0.5 border-l-2 border-dashed' style={{ borderColor: primaryColor }}></div>
-                    {usersSubmenu.map((subItem, index) => {
+                    {usersSubmenuFiltered.map((subItem, index) => {
                       const isSubActive = pathname === subItem.href;
 
                       return (
@@ -642,6 +784,79 @@ export function Sidebar() {
                             isSubActive 
                               ? 'text-gray-900 font-semibold' 
                               : 'text-gray-600 hover:text-gray-900'
+                          }`}
+                          style={isSubActive ? { color: primaryColor } : undefined}>
+                          <div className='absolute left-0 top-1/2 -translate-y-1/2 w-3 h-0.5' style={{ backgroundColor: primaryColor }}></div>
+                          <span className='flex-1 truncate text-left'>{subItem.label}</span>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          }
+
+          if (item.submenu && item.type === 'retailers') {
+            return (
+              <div key={item.href} className='relative'>
+                <button
+                  onClick={() => {
+                    if (isOpen) {
+                      setRetailersOpen(!retailersOpen);
+                    }
+                  }}
+                  className={`w-full relative flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-200 group ${
+                    isOpen ? '' : 'justify-center'
+                  } ${pathname.startsWith('/admin/retailers') ? 'text-white font-medium' : 'text-gray-700 hover:bg-gray-50'}`}
+                  style={
+                    pathname.startsWith('/admin/retailers')
+                      ? {
+                          backgroundColor: primaryColor,
+                        }
+                      : undefined
+                  }
+                  title={!isOpen ? item.label : undefined}>
+                  <IconComponent className='w-5 h-5 flex-shrink-0' />
+
+                  {isOpen && (
+                    <>
+                      <span className=' truncate text-sm'>{item.label}</span>
+
+                      {pendingRetailerCount > 0 && (
+                        <Badge className='bg-red-500 hover:bg-red-600 text-white px-2 py-0.5 text-xs font-bold rounded-full flex-shrink-0'>
+                          {pendingRetailerCount}
+                        </Badge>
+                      )}
+
+                      <ChevronDown className={`w-4 h-4 flex-shrink-0 transition-transform ${retailersOpen ? 'rotate-180' : ''}`} />
+                    </>
+                  )}
+                </button>
+
+                {isOpen && retailersOpen && (
+                  <div className='mt-2 space-y-0 relative pl-4'>
+                    <div className='absolute left-0 top-0 bottom-0 w-0.5 border-l-2 border-dashed' style={{ borderColor: primaryColor }}></div>
+                    {retailerSubmenuFiltered.map((subItem) => {
+                      const subHref = subItem.href.split('?')[0];
+                      const currentStatus = searchParams.get('status') || '';
+
+                      let isSubActive = false;
+                      if (subItem.href.includes('/retailer/register')) {
+                        isSubActive = pathname === '/retailer/register';
+                      } else if (subItem.href.includes('?status=')) {
+                        const statusParam = subItem.href.split('status=')[1];
+                        isSubActive = pathname === subHref && currentStatus === statusParam;
+                      } else {
+                        isSubActive = pathname === subHref && !currentStatus;
+                      }
+
+                      return (
+                        <Link
+                          key={subItem.href}
+                          href={subItem.href}
+                          className={`relative flex items-center gap-3 py-2.5 pl-6 transition-all duration-200 text-sm font-medium ${
+                            isSubActive ? 'text-gray-900 font-semibold' : 'text-gray-600 hover:text-gray-900'
                           }`}
                           style={isSubActive ? { color: primaryColor } : undefined}>
                           <div className='absolute left-0 top-1/2 -translate-y-1/2 w-3 h-0.5' style={{ backgroundColor: primaryColor }}></div>

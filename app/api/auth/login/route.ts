@@ -54,16 +54,27 @@ export async function POST(request: NextRequest) {
       }
 
       console.log('[v0] Admin authentication successful for:', email);
+      const staffPerms =
+        admin.role === 'staff' && Array.isArray((admin as { permissions?: string[] }).permissions)
+          ? ((admin as { permissions?: string[] }).permissions as string[])
+          : undefined;
+
       const token = generateToken({
         _id: admin._id?.toString(),
         email: admin.email,
         role: admin.role,
+        permissions: staffPerms,
       });
 
       const response = NextResponse.json({
         success: true,
         token,
-        admin: { email: admin.email, name: admin.name, role: admin.role },
+        admin: {
+          email: admin.email,
+          name: admin.name,
+          role: admin.role,
+          ...(admin.role === 'staff' && staffPerms?.length ? { permissions: staffPerms } : {}),
+        },
       });
 
       response.cookies.set('adminToken', token, {

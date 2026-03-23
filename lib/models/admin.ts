@@ -6,7 +6,9 @@ export interface AdminUser {
   email: string;
   password: string;
   name: string;
-  role: 'superadmin' | 'admin';
+  role: 'superadmin' | 'admin' | 'staff';
+  /** When role is staff: which admin modules they can access */
+  permissions?: string[];
   phone?: string;
   status?: 'active' | 'inactive';
   createdAt?: Date;

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectDB, connectToDatabase } from '@/lib/mongodb';
 import Order from '@/lib/models/Order';
 import { getUserFromRequest, isAdminOrVendor, isVendor } from '@/lib/auth';
+import { rejectIfNoAdminAccess } from '@/lib/admin-api-authorize';
 import { ObjectId } from 'mongodb';
 
 export const runtime = 'nodejs';
@@ -15,9 +16,8 @@ export async function GET(
 ) {
   try {
     const user = getUserFromRequest(request);
-    if (!user || !isAdminOrVendor(user)) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const deniedOr = rejectIfNoAdminAccess(request, user, 'admin-or-vendor');
+    if (deniedOr) return deniedOr;
 
     await connectDB();
     const { id } = await context.params;

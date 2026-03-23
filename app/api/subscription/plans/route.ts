@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getUserFromRequest, isAdmin, isVendor } from '@/lib/auth';
-import { getRetailerFromRequest } from '@/lib/auth';
+import { getUserFromRequest, getRetailerFromRequest } from '@/lib/auth';
+import { rejectIfNoAdminAccess } from '@/lib/admin-api-authorize';
 import { getPlansByRole } from '@/lib/models/subscription';
 import type { SubscriptionRole } from '@/lib/models/subscription';
 
@@ -14,10 +14,9 @@ export async function GET(request: NextRequest) {
     }
 
     if (role === 'vendor') {
-      const user = getUserFromRequest(request);
-      if (!user || (!isAdmin(user) && !isVendor(user))) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-      }
+      const u = getUserFromRequest(request);
+      const denied = rejectIfNoAdminAccess(request, u, 'admin-or-vendor');
+      if (denied) return denied;
     } else {
       const retailer = getRetailerFromRequest(request);
       if (!retailer) {
