@@ -67,8 +67,12 @@ export function PublicThemeLoader() {
       try {
         const res = await fetch('/api/public/theme', { cache: 'no-store' });
         const data = await res.json();
-        const primary = (data.primaryColor || DEFAULT_PRIMARY).toString().trim() || DEFAULT_PRIMARY;
-        const secondary = (data.secondaryColor || DEFAULT_SECONDARY).toString().trim() || DEFAULT_SECONDARY;
+        
+        // Use API provided colors, otherwise fallback to stored colors, then finally defaults
+        const currentStored = getStoredTheme();
+        const primary = (data.primaryColor || currentStored?.primary || DEFAULT_PRIMARY).toString().trim();
+        const secondary = (data.secondaryColor || currentStored?.secondary || DEFAULT_SECONDARY).toString().trim();
+        
         apply(primary, secondary);
         setStoredTheme(primary, secondary);
       } catch {
