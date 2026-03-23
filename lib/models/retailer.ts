@@ -12,7 +12,30 @@ export interface Retailer {
   companyName: string;
   gstNumber: string;
   contactNumber: string;
+  /** Legacy / full-line address from registration */
   businessAddress: string;
+  /** Structured address (same idea as vendor profile) */
+  address1?: string;
+  address2?: string;
+  city?: string;
+  state?: string;
+  pinCode?: string;
+  country?: string;
+  alternatePhone?: string;
+  whatsappNumber?: string;
+  businessType?: 'individual' | 'company' | 'partnership';
+  panNumber?: string;
+  businessRegistrationNumber?: string;
+  description?: string;
+  bankName?: string;
+  accountHolderName?: string;
+  accountNumber?: string;
+  ifscCode?: string;
+  upiId?: string;
+  facebook?: string;
+  instagram?: string;
+  twitter?: string;
+  website?: string;
   trustedVendorIds: string[];
   status: RetailerStatus;
   approvalNotes?: string;
