@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCustomJewelleryRequestById, updateCustomJewelleryRequest, deleteCustomJewelleryRequest } from '@/lib/models/custom-jewellery';
-import { getUserFromRequest, isAdmin } from '@/lib/auth';
+import { getUserFromRequest } from '@/lib/auth';
+import { rejectIfNoAdminAccess } from '@/lib/admin-api-authorize';
 
 export async function GET(
   request: NextRequest,
@@ -8,14 +9,9 @@ export async function GET(
 ) {
   try {
     const currentUser = getUserFromRequest(request);
-    
-    if (!currentUser || !isAdmin(currentUser)) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-    
+    const denied = rejectIfNoAdminAccess(request, currentUser, 'admin-only');
+    if (denied) return denied;
+
     const { id } = await params;
     const customRequest = await getCustomJewelleryRequestById(id);
     
@@ -42,14 +38,9 @@ export async function PUT(
 ) {
   try {
     const currentUser = getUserFromRequest(request);
-    
-    if (!currentUser || !isAdmin(currentUser)) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-    
+    const deniedPut = rejectIfNoAdminAccess(request, currentUser, 'admin-only');
+    if (deniedPut) return deniedPut;
+
     const { id } = await params;
     const body = await request.json();
     
@@ -81,14 +72,9 @@ export async function DELETE(
 ) {
   try {
     const currentUser = getUserFromRequest(request);
-    
-    if (!currentUser || !isAdmin(currentUser)) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-    
+    const deniedDel = rejectIfNoAdminAccess(request, currentUser, 'admin-only');
+    if (deniedDel) return deniedDel;
+
     const { id } = await params;
     const deleted = await deleteCustomJewelleryRequest(id);
     

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
 import { getUserFromRequest, isAdmin } from '@/lib/auth';
+import { rejectIfNoAdminAccess } from '@/lib/admin-api-authorize';
 import {
   upsertSubscriptionPlan,
   getPlansByRole,
@@ -13,9 +14,8 @@ const PLAN_TYPES: SubscriptionPlanType[] = ['monthly', 'quarterly', 'yearly'];
 export async function GET(request: NextRequest) {
   try {
     const user = getUserFromRequest(request);
-    if (!user || !isAdmin(user)) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const deniedAd = rejectIfNoAdminAccess(request, user, 'admin-only');
+    if (deniedAd) return deniedAd;
 
     const { db } = await connectToDatabase();
     const settings = await db.collection('settings').findOne({});
@@ -52,9 +52,8 @@ export async function GET(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const user = getUserFromRequest(request);
-    if (!user || !isAdmin(user)) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const deniedAd = rejectIfNoAdminAccess(request, user, 'admin-only');
+    if (deniedAd) return deniedAd;
 
     const body = await request.json();
     const vendorSubscriptionEnabled = body.vendorSubscriptionEnabled === true;

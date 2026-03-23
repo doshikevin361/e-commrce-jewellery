@@ -18,7 +18,7 @@ export function TopBar() {
   const router = useRouter();
   const { settings } = useSettings();
 
-  const [userData, setUserData] = useState<{ name: string; email: string } | null>(null);
+  const [userData, setUserData] = useState<{ name: string; email: string; role?: string } | null>(null);
   const [mounted, setMounted] = useState(false);
   const [notifications, setNotifications] = useState<
     Array<{
@@ -337,6 +337,11 @@ export function TopBar() {
                 <div className='hidden lg:block text-left'>
                   <p className='text-sm font-medium text-gray-900'>{userData?.name || 'Admin'}</p>
                   <p className='text-xs text-gray-500'>{userData?.email || 'admin@email.com'}</p>
+                  {userData?.role === 'staff' ? (
+                    <Badge variant='secondary' className='mt-1 text-[10px] px-1.5 py-0'>
+                      Staff
+                    </Badge>
+                  ) : null}
                 </div>
               </button>
             </DropdownMenuTrigger>

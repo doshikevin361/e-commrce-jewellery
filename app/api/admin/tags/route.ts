@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
 import { getUserFromRequest, isAdmin, isAdminOrVendor } from '@/lib/auth';
+import { rejectIfNoAdminAccess } from '@/lib/admin-api-authorize';
 
 export async function GET(request: NextRequest) {
   try {
     const user = getUserFromRequest(request);
-    if (!user || !isAdminOrVendor(user)) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const deniedOr = rejectIfNoAdminAccess(request, user, 'admin-or-vendor');
+    if (deniedOr) return deniedOr;
 
     const { db } = await connectToDatabase();
     const { searchParams } = new URL(request.url);
@@ -43,9 +43,8 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const user = getUserFromRequest(request);
-    if (!user || !isAdmin(user)) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const deniedAd = rejectIfNoAdminAccess(request, user, 'admin-only');
+    if (deniedAd) return deniedAd;
 
     const { db } = await connectToDatabase();
     const body = await request.json();

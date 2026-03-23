@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { PasswordInput } from '@/components/ui/password-input';
 import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { AlertCircle } from 'lucide-react';
@@ -20,6 +21,14 @@ export default function LoginPage() {
   const primaryColor = settings.primaryColor || '#22c55e';
   const siteName = settings.siteName || 'E-commerce';
   const tagline = settings.tagline;
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const p = new URLSearchParams(window.location.search);
+    if (p.get('error') === 'staff-no-modules') {
+      setError('Staff account has no modules assigned. Please contact your administrator.');
+    }
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,6 +63,7 @@ export default function LoginPage() {
               name: data.admin.name,
               email: data.admin.email,
               role: data.admin.role,
+              ...(Array.isArray(data.admin.permissions) ? { permissions: data.admin.permissions } : {}),
             })
           );
           console.log('[v0] User data stored:', data.admin.name);
@@ -121,8 +131,7 @@ export default function LoginPage() {
 
               <div>
                 <label className='block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2'>Password</label>
-                <Input
-                  type='password'
+                <PasswordInput
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                   placeholder='••••••••'

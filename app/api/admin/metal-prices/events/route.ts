@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
 import { getUserFromRequest, isAdmin } from '@/lib/auth';
+import { rejectIfNoAdminAccess } from '@/lib/admin-api-authorize';
 
 // Store active SSE connections
 const connections = new Set<ReadableStreamDefaultController>();

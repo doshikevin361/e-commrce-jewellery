@@ -316,6 +316,10 @@ const HomeHeader = () => {
     return (
       <>
         <div className='flex items-center justify-between border-b border-[#D7C4B3] pb-2'>
+          <span className='font-semibold text-[#1F3B29]'>24 KT (999)</span>
+          <span className='text-[#1F3B29]'>₹ {livePrices.gold.toLocaleString('en-IN')}/g</span>
+        </div>
+        <div className='flex items-center justify-between border-b border-[#D7C4B3] pb-2'>
           <span className='font-semibold text-[#1F3B29]'>22 KT (916)</span>
           <span className='text-[#1F3B29]'>₹ {gold22.toLocaleString('en-IN')}/g</span>
         </div>

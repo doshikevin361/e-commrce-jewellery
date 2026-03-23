@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
-import { getUserFromRequest, isAdmin } from '@/lib/auth';
+import { getUserFromRequest } from '@/lib/auth';
+import { rejectIfNoAdminAccess } from '@/lib/admin-api-authorize';
 import { ObjectId } from 'mongodb';
 
 function trimStr(v: unknown): string {
@@ -17,9 +18,8 @@ export async function GET(
 ) {
   try {
     const currentUser = getUserFromRequest(request);
-    if (!currentUser || !isAdmin(currentUser)) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const deniedGet = rejectIfNoAdminAccess(request, currentUser, 'admin-only');
+    if (deniedGet) return deniedGet;
 
     const { id } = await params;
     if (!id || !ObjectId.isValid(id)) {
@@ -229,9 +229,8 @@ export async function PATCH(
 ) {
   try {
     const currentUser = getUserFromRequest(request);
-    if (!currentUser || !isAdmin(currentUser)) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const deniedGet = rejectIfNoAdminAccess(request, currentUser, 'admin-only');
+    if (deniedGet) return deniedGet;
 
     const { id } = await params;
     if (!id || !ObjectId.isValid(id)) {
@@ -322,9 +321,8 @@ export async function DELETE(
 ) {
   try {
     const currentUser = getUserFromRequest(request);
-    if (!currentUser || !isAdmin(currentUser)) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const deniedGet = rejectIfNoAdminAccess(request, currentUser, 'admin-only');
+    if (deniedGet) return deniedGet;
 
     const { id } = await params;
     if (!id || !ObjectId.isValid(id)) {

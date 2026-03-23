@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
 import { getUserFromRequest, getRetailerFromRequest, isAdminOrVendor } from '@/lib/auth';
+import { staffCanAccessApiPath } from '@/lib/admin-modules';
 import { formatProductPrice } from '@/lib/utils/price-calculator';
 import { ObjectId } from 'mongodb';
 
@@ -15,7 +16,11 @@ export async function GET(request: NextRequest) {
     const retailer = getRetailerFromRequest(request);
     const adminUser = getUserFromRequest(request);
     const isRetailer = !!retailer;
-    const isAdminOrVendorUser = !!(adminUser && isAdminOrVendor(adminUser));
+    const path = request.nextUrl.pathname;
+    const isAdminOrVendorUser =
+      !!adminUser &&
+      (isAdminOrVendor(adminUser) ||
+        (adminUser.role === 'staff' && staffCanAccessApiPath(adminUser.permissions || [], path)));
     if (!isRetailer && !isAdminOrVendorUser) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }

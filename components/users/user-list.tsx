@@ -59,6 +59,18 @@ export function UserList() {
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const router = useRouter();
   const { toast } = useToast();
+  const [viewerRole, setViewerRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    try {
+      const u = JSON.parse(typeof window !== 'undefined' ? localStorage.getItem('adminUser') || '{}' : '{}');
+      setViewerRole(u.role ?? null);
+    } catch {
+      setViewerRole(null);
+    }
+  }, []);
+
+  const isStaffViewer = viewerRole === 'staff';
 
   useEffect(() => {
     fetchAdmins();
@@ -80,7 +92,7 @@ export function UserList() {
       const params = new URLSearchParams();
       if (searchTerm) params.append('search', searchTerm);
 
-      const response = await fetch(`/api/admin/users?${params}`);
+      const response = await fetch(`/api/admin/users?${params}`, { credentials: 'include' });
       const data = await response.json();
       const adminList = Array.isArray(data.users) ? data.users : [];
       setAdmins(adminList);
@@ -98,6 +110,7 @@ export function UserList() {
   };
 
   const handleStatusToggle = async (adminId: string, currentStatus: string) => {
+    if (isStaffViewer) return;
     try {
       setTogglingStatusId(adminId);
       const admin = admins.find(a => a._id === adminId);
@@ -108,6 +121,7 @@ export function UserList() {
       const response = await fetch(`/api/admin/users/${adminId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
           status: newStatus,
         }),
@@ -140,9 +154,10 @@ export function UserList() {
   };
 
   const handleDelete = async (adminId: string, adminName: string) => {
+    if (isStaffViewer) return;
     try {
       setDeletingId(adminId);
-      const response = await fetch(`/api/admin/users/${adminId}`, { method: 'DELETE' });
+      const response = await fetch(`/api/admin/users/${adminId}`, { method: 'DELETE', credentials: 'include' });
       if (response.ok) {
         setAdmins(admins.filter(a => a._id !== adminId));
         toast({
@@ -185,7 +200,7 @@ export function UserList() {
   const fetchAdminDetails = async (id: string) => {
     try {
       setLoadingAdminDetails(true);
-      const response = await fetch(`/api/admin/users/${id}`);
+      const response = await fetch(`/api/admin/users/${id}`, { credentials: 'include' });
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error?.error || 'Failed to fetch user details');
@@ -226,10 +241,12 @@ export function UserList() {
             <Download className='h-4 w-4' />
             Export
           </Button>
-          <Button onClick={() => router.push('/admin/users/add')} className='gap-2 bg-[#22c55e]'>
-            <Plus className='h-5 w-5' />
-            Add User
-          </Button>
+          {!isStaffViewer ? (
+            <Button onClick={() => router.push('/admin/users/add')} className='gap-2 bg-[#22c55e]'>
+              <Plus className='h-5 w-5' />
+              Add User
+            </Button>
+          ) : null}
         </div>
       </div>
 
@@ -285,7 +302,7 @@ export function UserList() {
                           size='md'
                           checked={admin.status === 'active'}
                           onCheckedChange={() => handleStatusToggle(admin._id, admin.status || 'active')}
-                          disabled={togglingStatusId === admin._id}
+                          disabled={isStaffViewer || togglingStatusId === admin._id}
                         />
                       )}
                     </TableCell>
@@ -294,14 +311,18 @@ export function UserList() {
                         {/* View button omitted as per simpler UI */}
                         <button
                           onClick={() => router.push(`/admin/users/${admin._id}`)}
-                          disabled={togglingStatusId === admin._id || deletingId === admin._id}
+                          disabled={
+                            isStaffViewer || togglingStatusId === admin._id || deletingId === admin._id
+                          }
                           className='text-gray-600 hover:text-gray-900 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed'>
                           <Pencil className='h-5 w-5' />
                         </button>
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
                             <button 
-                              disabled={togglingStatusId === admin._id || deletingId === admin._id}
+                              disabled={
+                                isStaffViewer || togglingStatusId === admin._id || deletingId === admin._id
+                              }
                               className='text-red-500 hover:text-red-700 hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed'>
                               {deletingId === admin._id ? (
                                 <Spinner className='h-5 w-5' />

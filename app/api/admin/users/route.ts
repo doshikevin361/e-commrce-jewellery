@@ -2,14 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
 import { verifyPassword } from '@/lib/models/admin';
 import bcrypt from 'bcryptjs';
-import { getUserFromRequest, isAdmin } from '@/lib/auth';
+import { getUserFromRequest } from '@/lib/auth';
+import { rejectIfNoAdminAccess, isSuperAdminOrAdmin } from '@/lib/admin-api-authorize';
+import { normalizeStaffPermissions } from '@/lib/admin-modules';
 
 export async function GET(request: NextRequest) {
   try {
     const user = getUserFromRequest(request);
-    if (!user || !isAdmin(user)) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const deniedAd = rejectIfNoAdminAccess(request, user, 'admin-only');
+    if (deniedAd) return deniedAd;
 
     const { db } = await connectToDatabase();
     const { searchParams } = new URL(request.url);
@@ -50,7 +51,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const user = getUserFromRequest(request);
-    if (!user || !isAdmin(user)) {
+    if (!user || !isSuperAdminOrAdmin(user)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -65,6 +66,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const role = body.role || 'admin';
+    if (!['admin', 'staff', 'superadmin'].includes(role)) {
+      return NextResponse.json({ error: 'Invalid role' }, { status: 400 });
+    }
+    if (role === 'superadmin' && user.role !== 'superadmin') {
+      return NextResponse.json({ error: 'Only superadmin can create superadmin' }, { status: 403 });
+    }
+
+    const perms = normalizeStaffPermissions(role, body.permissions);
+    if (role === 'staff' && perms.length === 0) {
+      return NextResponse.json(
+        { error: 'Staff users need at least one module permission' },
+        { status: 400 },
+      );
+    }
+
     const hashedPassword = await bcrypt.hash(body.password, 10);
 
     const result = await db.collection('admins').insertOne({
@@ -73,7 +90,8 @@ export async function POST(request: NextRequest) {
       password: hashedPassword,
       phone: body.phone || '',
       status: body.status || 'active',
-      role: body.role || 'admin',
+      role,
+      ...(role === 'staff' ? { permissions: perms } : {}),
       createdAt: new Date(),
     });
 

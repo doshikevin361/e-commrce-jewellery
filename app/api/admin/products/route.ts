@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
 import { getUserFromRequest, isVendor } from '@/lib/auth';
+import { rejectIfNoAdminAccess } from '@/lib/admin-api-authorize';
 import { ObjectId } from 'mongodb';
 import { findRetailerCommissionFromRows } from '@/lib/retailer-commission';
 import { requireSubscriptionOr403 } from '@/lib/subscription-access';
@@ -159,10 +160,11 @@ const validateJewelleryPayload = (payload: any) => {
 
 export async function GET(request: NextRequest) {
   try {
-    const { db } = await connectToDatabase();
-
-    // Get current user from token
     const currentUser = getUserFromRequest(request);
+    const deniedGet = rejectIfNoAdminAccess(request, currentUser, 'admin-or-vendor');
+    if (deniedGet) return deniedGet;
+
+    const { db } = await connectToDatabase();
 
     // Build query based on user role
     const query: any = {};
@@ -269,6 +271,9 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const currentUser = getUserFromRequest(request);
+    const deniedPost = rejectIfNoAdminAccess(request, currentUser, 'admin-or-vendor');
+    if (deniedPost) return deniedPost;
+
     if (currentUser && isVendor(currentUser)) {
       const subErr = await requireSubscriptionOr403(request, 'vendor');
       if (subErr) return subErr;
