@@ -382,7 +382,7 @@ export function Sidebar() {
   const retailerSubmenu = [
     {
       label: 'Add Retailer',
-      href: '/retailer/register',
+      href: '/admin/retailers/add',
     },
     {
       label: 'All Retailers',
@@ -422,10 +422,7 @@ export function Sidebar() {
       ? usersSubmenu.filter(s => s.href === '/admin/users')
       : usersSubmenu;
 
-  const retailerSubmenuFiltered =
-    userData?.role === 'staff'
-      ? retailerSubmenu.filter(s => !s.href.includes('/retailer/register'))
-      : retailerSubmenu;
+  const retailerSubmenuFiltered = retailerSubmenu;
 
   // Products submenu - different for vendors vs admins
   const userRole = userData?.role || 'admin';

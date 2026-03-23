@@ -15,7 +15,8 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle2, XCircle, Loader2, Search, Users, RefreshCw } from 'lucide-react';
+import Link from 'next/link';
+import { CheckCircle2, Loader2, Search, Users, RefreshCw, Plus, Pencil } from 'lucide-react';
 
 interface RetailerRow {
   _id: string;
@@ -114,13 +115,19 @@ export default function AdminRetailersPage() {
   return (
     <AdminLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">B2B Retailers</h1>
             <p className="text-gray-600 dark:text-gray-400 text-sm mt-1">
               Approve or block retailer accounts. Only approved retailers can sign in to the B2B panel.
             </p>
           </div>
+          <Button asChild className="gap-2">
+            <Link href="/admin/retailers/add">
+              <Plus className="h-4 w-4" />
+              Add Retailer
+            </Link>
+          </Button>
         </div>
 
         <Card className="p-6 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm">
@@ -198,7 +205,13 @@ export default function AdminRetailersPage() {
                           </Badge>
                         </TableCell>
                         <TableCell className="py-4 text-right">
-                          <div className="flex justify-end gap-2">
+                          <div className="flex justify-end flex-wrap gap-2">
+                            <Button size="sm" variant="outline" asChild className="gap-1">
+                              <Link href={`/admin/retailers/${r._id}/edit`}>
+                                <Pencil className="h-3.5 w-3.5" />
+                                Edit
+                              </Link>
+                            </Button>
                             {r.status === 'pending' && (
                               <>
                                 <Button
