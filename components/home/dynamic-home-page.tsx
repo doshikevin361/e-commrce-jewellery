@@ -46,7 +46,9 @@ import {
 } from './common/skeleton-loaders';
 import Categories, { HeroBanner, Slider } from './hero-banner-slider';
 import ProductShowcase from './ProductShowcase';
-import TestimonialCard from '../testimonialCard/TestimonialCard';
+import { TrustBadgesStrip } from './trust-badges-strip';
+import { WhatPeopleAreSaying } from './what-people-saying';
+import { HomeFaqSection } from './home-faq-section';
 import ScrollVideoPanels, { VideoItem } from '../scrollvideopanel/ScrollVideoPanels';
 import VideoSlider from '../videoSlider/videoSlider';
 
@@ -547,6 +549,9 @@ export const HomePage = () => {
         <div>
           <Slider />
         </div>
+        <div className='w-full'>
+          <TrustBadgesStrip />
+        </div>
         <div>
           <JewelryProductsDemo products={sectionsData.newProducts} isLoading={isLoading} />
         </div>
@@ -571,7 +576,10 @@ export const HomePage = () => {
 
         </div>
         <div>
-          <TestimonialsSection />
+          <WhatPeopleAreSaying />
+        </div>
+        <div>
+          <HomeFaqSection />
         </div>
 
       </div>
@@ -1513,62 +1521,6 @@ const NewArrivalsSection = memo(
   },
 );
 NewArrivalsSection.displayName = 'NewArrivalsSection';
-
-const TestimonialsSection = () => {
-  // data/testimonials.js
-  const testimonials = [
-    {
-      id: 1,
-      name: 'Akanksha Khanna',
-      age: 27,
-      image: '/uploads/1765269917848-mttqdya63ws.jpg',
-      text: "Delighted with my engagement ring from BlueStone! It's my dream ring, fits perfectly and is stunning to look at. Thanks, BlueStone, for helping us find the perfect symbol of love!",
-      rotate: 'md:rotate-10',
-    },
-    {
-      id: 2,
-      name: 'Nutan Mishra',
-      age: 33,
-      image: '/uploads/1765272258145-ta6uom4xec.jpg',
-      text: "I got a Nazariya for my baby boy from BlueStone. It's so cute seeing it on my little one's wrist, and it gives me a sense of security knowing it's there.",
-      rotate: 'md:rotate-6',
-    },
-    {
-      id: 3,
-      name: 'Divya Mishra',
-      age: 26,
-      image: '/uploads/1765272281023-dyw5c7pvej.jpg',
-      text: "On Valentine's Day, my husband gifted me a necklace from BlueStone, and I haven't taken it off even once. Everyone asks me where it's from!",
-      rotate: 'md:-rotate-6',
-    },
-    {
-      id: 4,
-      name: 'Anuska Ananya',
-      age: 24,
-      image: '/uploads/1765273359701-w2ybph2t48.webp',
-      text: 'BlueStone is my go-to place for jewellery. I love that I can wear their jewellery to work, dates, parties and brunches.',
-      rotate: 'md:-rotate-10',
-    },
-  ];
-
-  return (
-    <section className='relative overflow-hidden bg-white pb-14 sm:pb-16 lg:pb-20'>
-      <h2 className='my-8 text-center font-serif text-2xl text-[#001e38] sm:my-10 sm:text-3xl lg:my-12'>Customer Testimonials</h2>
-
-      {/* Rope */}
-      <svg className='absolute left-0 top-[66px] z-0 w-full sm:top-[80px]' height='120' viewBox='0 0 1200 120' preserveAspectRatio='none'>
-        <path d='M0 60 C 200 10, 50 90, 600 60 S 1000 30, 1200 60' stroke='#d1d5db' strokeWidth='3' fill='none' />
-      </svg>
-
-      {/* Cards */}
-      <div className='relative z-10 flex flex-wrap justify-center gap-6 px-4 sm:gap-10 sm:px-6 lg:flex-nowrap lg:gap-20'>
-        {testimonials.map(item => (
-          <TestimonialCard key={item.id} item={item} />
-        ))}
-      </div>
-    </section>
-  );
-};
 
 const JewelryProductsDemo = ({ products, isLoading = false }: { products?: ProductCardData[]; isLoading?: boolean }) => {
   const resolvedProducts = useMemo(() => (products && products.length > 0 ? products.slice(0, 8) : []), [products]);
