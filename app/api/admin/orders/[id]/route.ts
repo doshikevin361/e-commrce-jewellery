@@ -4,6 +4,13 @@ import Order from '@/lib/models/Order';
 import { getUserFromRequest, isAdminOrVendor, isVendor } from '@/lib/auth';
 import { rejectIfNoAdminAccess } from '@/lib/admin-api-authorize';
 import { ObjectId } from 'mongodb';
+import {
+  cancelShiprocketOrder,
+  createShiprocketOrder,
+  generateShiprocketAWB,
+  requestShiprocketPickup,
+  isShiprocketEnabled,
+} from '@/lib/shiprocket';
 
 // Force nodejs runtime for this route
 export const runtime = 'nodejs';
@@ -171,6 +178,100 @@ export async function PUT(
         updateData.deliveredAt = new Date();
       } else if (orderStatus === 'cancelled') {
         updateData.cancelledAt = new Date();
+      }
+    }
+
+    // Shiprocket sync on lifecycle changes
+    if (orderStatus && isShiprocketEnabled()) {
+      try {
+        const existingShipmentId = existingOrder.shiprocketShipmentId as number | undefined;
+        const existingShiprocketOrderId = existingOrder.shiprocketOrderId as number | undefined;
+
+        // Cancel shipment on cancellation
+        if (orderStatus === 'cancelled' && existingShipmentId) {
+          await cancelShiprocketOrder(
+            existingShipmentId,
+            existingShiprocketOrderId ? undefined : existingOrder.orderId,
+            existingShiprocketOrderId
+          );
+        }
+
+        // Generate shipment workflow when order moves to shipped
+        if (orderStatus === 'shipped') {
+          let shipmentId = existingShipmentId;
+          let shiprocketOrderId = existingShiprocketOrderId;
+          let awbCode = existingOrder.trackingNumber as string | undefined;
+          let courierName = existingOrder.courierName as string | undefined;
+
+          if (!shipmentId) {
+            const created = await createShiprocketOrder({
+              orderId: existingOrder.orderId,
+              orderDate: existingOrder.createdAt,
+              items: (existingOrder.items || []).map((i: any) => ({
+                productName: i.productName,
+                sku: i.sku,
+                quantity: i.quantity,
+                price: i.price,
+                hsn: i.hsn,
+              })),
+              shippingAddress: {
+                fullName: existingOrder.shippingAddress?.fullName,
+                phone: existingOrder.shippingAddress?.phone,
+                addressLine1: existingOrder.shippingAddress?.addressLine1,
+                addressLine2: existingOrder.shippingAddress?.addressLine2,
+                city: existingOrder.shippingAddress?.city,
+                state: existingOrder.shippingAddress?.state,
+                postalCode: existingOrder.shippingAddress?.postalCode,
+                country: existingOrder.shippingAddress?.country || 'India',
+              },
+              billingAddress: existingOrder.billingAddress
+                ? {
+                    fullName: existingOrder.billingAddress.fullName,
+                    phone: existingOrder.billingAddress.phone,
+                    addressLine1: existingOrder.billingAddress.addressLine1,
+                    addressLine2: existingOrder.billingAddress.addressLine2,
+                    city: existingOrder.billingAddress.city,
+                    state: existingOrder.billingAddress.state,
+                    postalCode: existingOrder.billingAddress.postalCode,
+                    country: existingOrder.billingAddress.country || 'India',
+                  }
+                : undefined,
+              subtotal: existingOrder.subtotal,
+              total: existingOrder.total,
+              paymentMethod: existingOrder.paymentMethod,
+            });
+
+            if (created.success) {
+              shipmentId = created.shipmentId;
+              shiprocketOrderId = created.shiprocketOrderId;
+              awbCode = awbCode || created.awbCode;
+            }
+          }
+
+          if (shipmentId && !awbCode) {
+            const awb = await generateShiprocketAWB(shipmentId);
+            if (awb.success) {
+              awbCode = awb.awbCode;
+              courierName = awb.courierName || courierName;
+              shiprocketOrderId = awb.orderId || shiprocketOrderId;
+            }
+          }
+
+          if (shipmentId) {
+            const pickup = await requestShiprocketPickup(shipmentId);
+            if (pickup.success) {
+              updateData.pickupScheduledDate = pickup.pickupScheduledDate;
+              updateData.pickupScheduledTime = pickup.pickupScheduledTime;
+            }
+          }
+
+          if (shipmentId) updateData.shiprocketShipmentId = shipmentId;
+          if (shiprocketOrderId) updateData.shiprocketOrderId = shiprocketOrderId;
+          if (awbCode) updateData.trackingNumber = awbCode;
+          if (courierName) updateData.courierName = courierName;
+        }
+      } catch (shiprocketError) {
+        console.error('[Order API] Shiprocket sync error:', shiprocketError);
       }
     }
 

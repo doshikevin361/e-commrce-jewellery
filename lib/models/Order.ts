@@ -47,6 +47,18 @@ export interface IOrder extends Document {
   orderStatus: 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
   orderNotes?: string;
   trackingNumber?: string;
+  courierName?: string;
+  shiprocketOrderId?: number;
+  shiprocketShipmentId?: number;
+  shiprocketCurrentStatus?: string;
+  trackingEvents?: Array<{
+    status: string;
+    location?: string;
+    timestamp: Date;
+    description?: string;
+  }>;
+  pickupScheduledDate?: Date;
+  pickupScheduledTime?: string;
   estimatedDelivery?: Date;
   deliveredAt?: Date;
   cancelledAt?: Date;
@@ -109,6 +121,20 @@ const OrderSchema = new Schema<IOrder>(
     },
     orderNotes: { type: String },
     trackingNumber: { type: String },
+    courierName: { type: String },
+    shiprocketOrderId: { type: Number },
+    shiprocketShipmentId: { type: Number },
+    shiprocketCurrentStatus: { type: String },
+    trackingEvents: [
+      {
+        status: { type: String, required: true },
+        location: { type: String },
+        timestamp: { type: Date, required: true },
+        description: { type: String },
+      },
+    ],
+    pickupScheduledDate: { type: Date },
+    pickupScheduledTime: { type: String },
     estimatedDelivery: { type: Date },
     deliveredAt: { type: Date },
     cancelledAt: { type: Date },
