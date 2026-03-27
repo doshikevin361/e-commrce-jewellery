@@ -457,15 +457,9 @@ export function ProductDetailPage({ productSlug }: { productSlug: string }) {
 
     setCartButtonLoading(true);
     try {
-      const cartOptions: { suppressToast?: boolean; retailerProductId?: string; retailerId?: string } = { suppressToast: true };
-      if (product.sellerType === 'retailer' && product.retailerId) {
-        cartOptions.retailerProductId = product._id.toString();
-        cartOptions.retailerId = product.retailerId;
-      }
-      await addToCart(product._id.toString(), quantity, cartOptions);
-      router.push('/checkout');
+      router.push(`/checkout?buyNow=${product._id.toString()}&quantity=${quantity}`);
     } catch (error) {
-      console.error('Error adding to cart:', error);
+      console.error('Error in buy now flow:', error);
     } finally {
       setCartButtonLoading(false);
     }

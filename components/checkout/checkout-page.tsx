@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { Loader2, MapPin, CreditCard, Check, AlertCircle, Plus, Edit2, Trash2, Home, Briefcase, MapPinned, X } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
@@ -39,9 +39,23 @@ interface ShippingAddress {
   country: string;
 }
 
+interface CheckoutItem {
+  _id: string;
+  title: string;
+  image: string;
+  quantity: number;
+  displayPrice: number;
+  sellerType?: 'vendor' | 'retailer';
+  retailerId?: string;
+}
+
 export function CheckoutPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { cartItems, fetchCart, clearCart } = useCart();
+  const buyNowProductId = searchParams.get('buyNow');
+  const buyNowQuantity = Math.max(1, Number(searchParams.get('quantity') || '1'));
+  const isBuyNowFlow = Boolean(buyNowProductId);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState('');
   const [razorpayLoaded, setRazorpayLoaded] = useState(false);
@@ -66,6 +80,8 @@ export function CheckoutPage() {
   } | null>(null);
   const [couponError, setCouponError] = useState('');
   const [couponLoading, setCouponLoading] = useState(false);
+  const [buyNowItem, setBuyNowItem] = useState<CheckoutItem | null>(null);
+  const [buyNowLoading, setBuyNowLoading] = useState(false);
 
   const [shippingAddress, setShippingAddress] = useState<ShippingAddress>({
     fullName: '',
@@ -101,6 +117,10 @@ export function CheckoutPage() {
     addressType: 'home',
     isDefault: false,
   });
+  const selectedShippingAddress = useMemo(
+    () => addresses.find(addr => addr._id === selectedShippingAddressId) || null,
+    [addresses, selectedShippingAddressId]
+  );
 
   // Check authentication and fetch addresses
   useEffect(() => {
@@ -108,7 +128,8 @@ export function CheckoutPage() {
       const token = localStorage.getItem('customerToken');
       const email = localStorage.getItem('customerEmail');
       if (!token) {
-        router.push('/login?redirect=/checkout');
+        const redirectPath = `/checkout${isBuyNowFlow ? `?buyNow=${buyNowProductId}&quantity=${buyNowQuantity}` : ''}`;
+        router.push(`/login?redirect=${encodeURIComponent(redirectPath)}`);
       } else {
         setIsAuthenticated(true);
         setCustomerEmail(email || '');
@@ -117,7 +138,41 @@ export function CheckoutPage() {
       setLoading(false);
     };
     checkAuth();
-  }, [router]);
+  }, [router, isBuyNowFlow, buyNowProductId, buyNowQuantity]);
+
+  useEffect(() => {
+    if (!isAuthenticated || !isBuyNowFlow || !buyNowProductId) {
+      return;
+    }
+
+    const fetchBuyNowItem = async () => {
+      setBuyNowLoading(true);
+      try {
+        const response = await fetch(`/api/public/products/${buyNowProductId}`, { cache: 'no-store' });
+        if (!response.ok) {
+          throw new Error('Failed to load selected product');
+        }
+        const product = await response.json();
+        setBuyNowItem({
+          _id: product._id,
+          title: product.name,
+          image: product.mainImage || '/placeholder.jpg',
+          quantity: buyNowQuantity,
+          displayPrice: Number(product.displayPrice || 0),
+          sellerType: product.sellerType,
+          retailerId: product.retailerId,
+        });
+      } catch (err) {
+        console.error('[Checkout] Buy now product load failed:', err);
+        toast.error('Unable to start buy now checkout');
+        router.push('/cart');
+      } finally {
+        setBuyNowLoading(false);
+      }
+    };
+
+    fetchBuyNowItem();
+  }, [isAuthenticated, isBuyNowFlow, buyNowProductId, buyNowQuantity, router]);
 
   // Fetch saved addresses
   const fetchAddresses = async () => {
@@ -131,22 +186,29 @@ export function CheckoutPage() {
 
       if (response.ok) {
         const data = await response.json();
-        setAddresses(data.addresses || []);
+        const fetchedAddresses = data.addresses || [];
+        setAddresses(fetchedAddresses);
 
         // Set default address as selected
-        const defaultAddress = data.addresses?.find((addr: Address) => addr.isDefault);
-        if (defaultAddress) {
-          setSelectedShippingAddressId(defaultAddress._id);
+        const defaultAddress = fetchedAddresses.find((addr: Address) => addr.isDefault);
+        const initialSelected = defaultAddress || fetchedAddresses[0];
+        if (initialSelected?._id) {
+          setSelectedShippingAddressId(initialSelected._id);
           setShippingAddress({
-            fullName: defaultAddress.fullName,
-            phone: defaultAddress.phone,
-            addressLine1: defaultAddress.addressLine1,
-            addressLine2: defaultAddress.addressLine2 || '',
-            city: defaultAddress.city,
-            state: defaultAddress.state,
-            postalCode: defaultAddress.postalCode,
-            country: defaultAddress.country,
+            fullName: initialSelected.fullName,
+            phone: initialSelected.phone,
+            addressLine1: initialSelected.addressLine1,
+            addressLine2: initialSelected.addressLine2 || '',
+            city: initialSelected.city,
+            state: initialSelected.state,
+            postalCode: initialSelected.postalCode,
+            country: initialSelected.country,
           });
+          setSelectedBillingAddressId(initialSelected._id);
+        } else {
+          setSelectedShippingAddressId(null);
+          setSelectedBillingAddressId(null);
+          setShowAddressForm(true);
         }
       }
     } catch (error) {
@@ -157,13 +219,16 @@ export function CheckoutPage() {
   // Redirect if cart is empty
   useEffect(() => {
     if (isAuthenticated) {
+      if (isBuyNowFlow) {
+        return;
+      }
       fetchCart();
       if (cartItems.length === 0) {
         router.push('/cart');
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthenticated]);
+  }, [isAuthenticated, isBuyNowFlow]);
 
   // Load Razorpay script
   useEffect(() => {
@@ -241,6 +306,9 @@ export function CheckoutPage() {
       const token = localStorage.getItem('customerToken');
       const url = editingAddress ? '/api/customer/addresses' : '/api/customer/addresses';
       const method = editingAddress ? 'PUT' : 'POST';
+      const payload = editingAddress
+        ? { ...newAddress, addressId: editingAddress._id }
+        : { ...newAddress, isDefault: addresses.length === 0 ? true : !!newAddress.isDefault };
 
       const response = await fetch(url, {
         method,
@@ -248,10 +316,11 @@ export function CheckoutPage() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(editingAddress ? { ...newAddress, addressId: editingAddress._id } : newAddress),
+        body: JSON.stringify(payload),
       });
 
       if (response.ok) {
+        const result = await response.json();
         toast.success(editingAddress ? 'Address updated' : 'Address saved');
         setShowAddressForm(false);
         setEditingAddress(null);
@@ -268,6 +337,9 @@ export function CheckoutPage() {
           isDefault: false,
         });
         await fetchAddresses();
+        if (result?.address?._id) {
+          handleShippingAddressSelect(result.address._id);
+        }
       } else {
         const data = await response.json();
         toast.error(data.error || 'Failed to save address');
@@ -333,7 +405,52 @@ export function CheckoutPage() {
     setShowAddressForm(true);
   };
 
-  const subtotal = cartItems.reduce((sum, item) => sum + item.displayPrice * item.quantity, 0);
+  const handleSetDefaultAddress = async (address: Address) => {
+    if (!address._id) return;
+    try {
+      const token = localStorage.getItem('customerToken');
+      const response = await fetch('/api/customer/addresses', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          addressId: address._id,
+          fullName: address.fullName,
+          phone: address.phone,
+          addressLine1: address.addressLine1,
+          addressLine2: address.addressLine2 || '',
+          city: address.city,
+          state: address.state,
+          postalCode: address.postalCode,
+          country: address.country,
+          addressType: address.addressType || 'home',
+          isDefault: true,
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        toast.error(data.error || 'Failed to set default address');
+        return;
+      }
+
+      toast.success('Default address updated');
+      await fetchAddresses();
+      handleShippingAddressSelect(address._id);
+    } catch (error) {
+      toast.error('Failed to set default address');
+    }
+  };
+
+  const checkoutItems: CheckoutItem[] = isBuyNowFlow
+    ? buyNowItem
+      ? [buyNowItem]
+      : []
+    : (cartItems as CheckoutItem[]);
+
+  const subtotal = checkoutItems.reduce((sum, item) => sum + item.displayPrice * item.quantity, 0);
   const shippingCharges = subtotal > 5000 ? 0 : 100;
   const tax = Math.round(subtotal * 0.03); // 3% GST
   const discountAmount = appliedCoupon?.discountAmount || 0;
@@ -342,12 +459,12 @@ export function CheckoutPage() {
 
   const cartPayload = useMemo(
     () =>
-      cartItems.map(item => ({
+      checkoutItems.map(item => ({
         productId: item._id,
         quantity: item.quantity,
         price: item.displayPrice,
       })),
-    [cartItems]
+    [checkoutItems]
   );
 
   const saveAppliedCoupon = (data: typeof appliedCoupon) => {
@@ -433,7 +550,7 @@ export function CheckoutPage() {
       applyCoupon(appliedCoupon.code, true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [subtotal, cartItems.length]);
+  }, [subtotal, checkoutItems.length]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -449,65 +566,9 @@ export function CheckoutPage() {
     setBillingAddress(prev => ({ ...prev, [name]: value }));
   };
 
-  const validateForm = (): boolean => {
-    if (!shippingAddress.fullName.trim()) {
-      setError('Please enter your full name');
-      return false;
-    }
-    if (!shippingAddress.phone.trim() || !/^\d{10}$/.test(shippingAddress.phone)) {
-      setError('Please enter a valid 10-digit phone number');
-      return false;
-    }
-    if (!shippingAddress.addressLine1.trim()) {
-      setError('Please enter your address');
-      return false;
-    }
-    if (!shippingAddress.city.trim()) {
-      setError('Please enter your city');
-      return false;
-    }
-    if (!shippingAddress.state.trim()) {
-      setError('Please enter your state');
-      return false;
-    }
-    if (!shippingAddress.postalCode.trim() || !/^\d{6}$/.test(shippingAddress.postalCode)) {
-      setError('Please enter a valid 6-digit postal code');
-      return false;
-    }
-
-    if (!useSameAsShipping) {
-      if (!billingAddress.fullName.trim()) {
-        setError('Please enter billing full name');
-        return false;
-      }
-      if (!billingAddress.phone.trim() || !/^\d{10}$/.test(billingAddress.phone)) {
-        setError('Please enter a valid billing phone number');
-        return false;
-      }
-      if (!billingAddress.addressLine1.trim()) {
-        setError('Please enter billing address');
-        return false;
-      }
-      if (!billingAddress.city.trim()) {
-        setError('Please enter billing city');
-        return false;
-      }
-      if (!billingAddress.state.trim()) {
-        setError('Please enter billing state');
-        return false;
-      }
-      if (!billingAddress.postalCode.trim() || !/^\d{6}$/.test(billingAddress.postalCode)) {
-        setError('Please enter a valid billing postal code');
-        return false;
-      }
-    }
-
-    return true;
-  };
-
   const handlePayment = async () => {
-    if (!validateForm()) {
-      toast.error('Please fill in all required fields');
+    if (!selectedShippingAddressId || !selectedShippingAddress) {
+      toast.error('Please select a delivery address');
       return;
     }
 
@@ -533,7 +594,7 @@ export function CheckoutPage() {
           receipt: `receipt_${Date.now()}`,
           notes: {
             customer_email: customerEmail,
-            customer_name: shippingAddress.fullName,
+            customer_name: selectedShippingAddress.fullName,
           },
         }),
       });
@@ -549,11 +610,11 @@ export function CheckoutPage() {
       toast.success('Payment gateway ready', { id: 'payment-order' });
 
       // Prepare order data for after payment
-      const isRetailerOrder = cartItems.length > 0 && cartItems.every((i: { sellerType?: string }) => i.sellerType === 'retailer');
+      const isRetailerOrder = checkoutItems.length > 0 && checkoutItems.every(i => i.sellerType === 'retailer');
       const fullOrderData = {
         customerEmail: customerEmail,
-        customerName: shippingAddress.fullName,
-        items: cartItems.map((item: { _id: string; title: string; image: string; quantity: number; displayPrice: number }) => ({
+        customerName: selectedShippingAddress.fullName,
+        items: checkoutItems.map((item: { _id: string; title: string; image: string; quantity: number; displayPrice: number }) => ({
           product: item._id,
           productName: item.title,
           productImage: item.image,
@@ -568,9 +629,8 @@ export function CheckoutPage() {
         couponCode: appliedCoupon?.code,
         couponId: appliedCoupon?.couponId,
         total,
-        shippingAddress,
-        billingAddress: useSameAsShipping ? shippingAddress : billingAddress,
-        ...(isRetailerOrder && cartItems[0] ? { orderType: 'retailer' as const, retailerId: (cartItems[0] as { retailerId?: string }).retailerId } : {}),
+        shippingAddressId: selectedShippingAddressId,
+        ...(isRetailerOrder && checkoutItems[0] ? { orderType: 'retailer' as const, retailerId: checkoutItems[0].retailerId } : {}),
       };
 
       // Initialize Razorpay
@@ -602,12 +662,14 @@ export function CheckoutPage() {
             if (verifyResponse.ok && verifyData.success) {
               toast.success('Payment successful! Order placed.', { id: 'payment-verify' });
 
-              // Clear cart from database and local state
-              try {
-                await clearCart();
-                console.log('[Checkout] Cart cleared after successful payment');
-              } catch (cartError) {
-                console.error('[Checkout] Error clearing cart:', cartError);
+              // Keep cart intact for buy-now checkout; clear only cart checkout orders.
+              if (!isBuyNowFlow) {
+                try {
+                  await clearCart();
+                  console.log('[Checkout] Cart cleared after successful payment');
+                } catch (cartError) {
+                  console.error('[Checkout] Error clearing cart:', cartError);
+                }
               }
 
               setTimeout(() => {
@@ -628,12 +690,12 @@ export function CheckoutPage() {
           }
         },
         prefill: {
-          name: shippingAddress.fullName,
+          name: selectedShippingAddress.fullName,
           email: customerEmail,
-          contact: shippingAddress.phone,
+          contact: selectedShippingAddress.phone,
         },
         notes: {
-          address: `${shippingAddress.addressLine1}, ${shippingAddress.city}`,
+          address: `${selectedShippingAddress.addressLine1}, ${selectedShippingAddress.city}`,
         },
         theme: {
           color: '#1F3B29',
@@ -681,7 +743,11 @@ export function CheckoutPage() {
     return <PageLoader message='Loading checkout...' />;
   }
 
-  if (cartItems.length === 0) {
+  if (buyNowLoading) {
+    return <PageLoader message='Preparing buy now checkout...' />;
+  }
+
+  if (checkoutItems.length === 0) {
     return <PageLoader message='Redirecting...' />;
   }
 
@@ -727,6 +793,13 @@ export function CheckoutPage() {
                     <div className='flex items-start justify-between'>
                       <div className='flex-1'>
                         <div className='flex items-center gap-2 mb-2'>
+                          <input
+                            type='radio'
+                            checked={selectedShippingAddressId === address._id}
+                            onChange={() => handleShippingAddressSelect(address._id!)}
+                            onClick={e => e.stopPropagation()}
+                            className='h-4 w-4 accent-[#1F3B29]'
+                          />
                           {getAddressIcon(address.addressType)}
                           <span className='font-semibold text-web'>{address.fullName}</span>
                           {address.isDefault && <span className='text-xs bg-web text-white px-2 py-0.5 rounded'>Default</span>}
@@ -741,6 +814,13 @@ export function CheckoutPage() {
                         </p>
                       </div>
                       <div className='flex gap-2 ml-4' onClick={e => e.stopPropagation()}>
+                        {!address.isDefault && (
+                          <button
+                            onClick={() => handleSetDefaultAddress(address)}
+                            className='p-2 text-xs font-semibold text-web hover:bg-gray-100 rounded transition-colors'>
+                            Make Default
+                          </button>
+                        )}
                         <button
                           onClick={() => handleEditAddress(address)}
                           className='p-2 text-web hover:bg-gray-100 rounded transition-colors'>
@@ -917,121 +997,9 @@ export function CheckoutPage() {
                 </div>
               </div>
             ) : (
-              /* Manual Address Entry (if no saved addresses) */
               addresses.length === 0 && (
-                <div className='space-y-4'>
-                  <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
-                    <div>
-                      <label className='block text-sm font-medium text-web mb-2'>
-                        Full Name <span className='text-red-500'>*</span>
-                      </label>
-                      <input
-                        type='text'
-                        name='fullName'
-                        value={shippingAddress.fullName}
-                        onChange={handleInputChange}
-                        className='w-full px-4 py-2 border border-[#E6D3C2] rounded-lg focus:outline-none focus:ring-2 focus:ring-web'
-                        placeholder='John Doe'
-                      />
-                    </div>
-                    <div>
-                      <label className='block text-sm font-medium text-web mb-2'>
-                        Phone Number <span className='text-red-500'>*</span>
-                      </label>
-                      <input
-                        type='tel'
-                        name='phone'
-                        value={shippingAddress.phone}
-                        onChange={handleInputChange}
-                        className='w-full px-4 py-2 border border-[#E6D3C2] rounded-lg focus:outline-none focus:ring-2 focus:ring-web'
-                        placeholder='9876543210'
-                        maxLength={10}
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className='block text-sm font-medium text-web mb-2'>
-                      Address Line 1 <span className='text-red-500'>*</span>
-                    </label>
-                    <input
-                      type='text'
-                      name='addressLine1'
-                      value={shippingAddress.addressLine1}
-                      onChange={handleInputChange}
-                      className='w-full px-4 py-2 border border-[#E6D3C2] rounded-lg focus:outline-none focus:ring-2 focus:ring-web'
-                      placeholder='House No., Building Name'
-                    />
-                  </div>
-
-                  <div>
-                    <label className='block text-sm font-medium text-web mb-2'>Address Line 2</label>
-                    <input
-                      type='text'
-                      name='addressLine2'
-                      value={shippingAddress.addressLine2}
-                      onChange={handleInputChange}
-                      className='w-full px-4 py-2 border border-[#E6D3C2] rounded-lg focus:outline-none focus:ring-2 focus:ring-web'
-                      placeholder='Road Name, Area, Colony'
-                    />
-                  </div>
-
-                  <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
-                    <div>
-                      <label className='block text-sm font-medium text-web mb-2'>
-                        City <span className='text-red-500'>*</span>
-                      </label>
-                      <input
-                        type='text'
-                        name='city'
-                        value={shippingAddress.city}
-                        onChange={handleInputChange}
-                        className='w-full px-4 py-2 border border-[#E6D3C2] rounded-lg focus:outline-none focus:ring-2 focus:ring-web'
-                        placeholder='Mumbai'
-                      />
-                    </div>
-                    <div>
-                      <label className='block text-sm font-medium text-web mb-2'>
-                        State <span className='text-red-500'>*</span>
-                      </label>
-                      <input
-                        type='text'
-                        name='state'
-                        value={shippingAddress.state}
-                        onChange={handleInputChange}
-                        className='w-full px-4 py-2 border border-[#E6D3C2] rounded-lg focus:outline-none focus:ring-2 focus:ring-web'
-                        placeholder='Maharashtra'
-                      />
-                    </div>
-                  </div>
-
-                  <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
-                    <div>
-                      <label className='block text-sm font-medium text-web mb-2'>
-                        Postal Code <span className='text-red-500'>*</span>
-                      </label>
-                      <input
-                        type='text'
-                        name='postalCode'
-                        value={shippingAddress.postalCode}
-                        onChange={handleInputChange}
-                        className='w-full px-4 py-2 border border-[#E6D3C2] rounded-lg focus:outline-none focus:ring-2 focus:ring-web'
-                        placeholder='400001'
-                        maxLength={6}
-                      />
-                    </div>
-                    <div>
-                      <label className='block text-sm font-medium text-web mb-2'>Country</label>
-                      <input
-                        type='text'
-                        name='country'
-                        value={shippingAddress.country}
-                        onChange={handleInputChange}
-                        className='w-full px-4 py-2 border border-[#E6D3C2] rounded-lg bg-gray-50'
-                        readOnly
-                      />
-                    </div>
-                  </div>
+                <div className='rounded-lg border border-dashed border-[#E6D3C2] bg-gray-50 px-4 py-5 text-sm text-black'>
+                  No saved address found. Click <span className='font-semibold'>Add New</span> to create your default address.
                 </div>
               )
             )}
@@ -1256,13 +1224,13 @@ export function CheckoutPage() {
 
         {/* Order Summary */}
         <div className='lg:col-span-1'>
-          <div className='bg-white border-2 border rounded-xl p-4 sm:p-6 sticky top-24'>
+          <div className='sticky top-24 rounded-xl border-2 bg-white p-4 sm:p-6'>
             <h2 className='text-xl font-bold text-web mb-4'>Order Summary</h2>
 
             <div className='space-y-3 mb-4 max-h-60 overflow-y-auto'>
-              {cartItems.map(item => (
+              {checkoutItems.map(item => (
                 <div key={item._id} className='flex gap-3'>
-                  <div className='relative w-16 h-16 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0'>
+                  <div className='relative h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-gray-100'>
                     <Image src={item.image} alt={item.title} fill sizes='64px' className='object-cover' />
                   </div>
                   <div className='flex-1 min-w-0'>

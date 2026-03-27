@@ -6,6 +6,19 @@ import Order from '@/lib/models/Order';
 import { getCustomerFromRequest } from '@/lib/auth';
 import { sendEmail, emailTemplates } from '@/lib/email';
 
+type CustomerAddress = {
+  _id?: string;
+  fullName: string;
+  phone: string;
+  addressLine1: string;
+  addressLine2?: string;
+  city: string;
+  state: string;
+  postalCode: string;
+  country: string;
+  isDefault?: boolean;
+};
+
 export async function POST(req: NextRequest) {
   try {
     console.log('[Payment Verify] Payment verification request received');
@@ -122,10 +135,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (!orderData.shippingAddress) {
-      console.error('[Payment Verify] Missing shipping address');
+    if (!orderData.shippingAddressId) {
+      console.error('[Payment Verify] Missing shipping address id');
       return NextResponse.json(
-        { error: 'Missing shipping address' },
+        { error: 'Missing shipping address ID' },
         { status: 400 }
       );
     }
@@ -153,6 +166,29 @@ export async function POST(req: NextRequest) {
 
     console.log('[Payment Verify] Creating order with customer ID:', customerObjectId.toString());
 
+    const { db } = await connectToDatabase();
+    const customerRecord = await db.collection('customers').findOne(
+      { _id: new (await import('mongodb')).ObjectId(customer.id) },
+      { projection: { addresses: 1 } }
+    );
+    const customerAddresses: CustomerAddress[] = Array.isArray(customerRecord?.addresses) ? customerRecord.addresses : [];
+    const selectedAddress = customerAddresses.find(addr => addr._id === orderData.shippingAddressId);
+
+    if (!selectedAddress) {
+      return NextResponse.json({ error: 'Selected shipping address not found' }, { status: 400 });
+    }
+
+    const shippingAddress = {
+      fullName: selectedAddress.fullName,
+      phone: selectedAddress.phone,
+      addressLine1: selectedAddress.addressLine1,
+      addressLine2: selectedAddress.addressLine2 || '',
+      city: selectedAddress.city,
+      state: selectedAddress.state,
+      postalCode: selectedAddress.postalCode,
+      country: selectedAddress.country || 'India',
+    };
+
     // Create order in database
     const couponId = orderData.couponId ? new mongoose.Types.ObjectId(orderData.couponId) : undefined;
     const orderType = orderData.orderType === 'retailer' ? 'retailer' : undefined;
@@ -173,8 +209,8 @@ export async function POST(req: NextRequest) {
       couponCode: orderData.couponCode || undefined,
       couponId,
       total: orderData.total,
-      shippingAddress: orderData.shippingAddress,
-      billingAddress: orderData.billingAddress || orderData.shippingAddress,
+      shippingAddress,
+      billingAddress: shippingAddress,
       paymentMethod: 'razorpay',
       paymentStatus: 'paid',
       razorpayOrderId: razorpay_order_id,

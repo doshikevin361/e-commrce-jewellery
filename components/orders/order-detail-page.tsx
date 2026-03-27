@@ -84,13 +84,13 @@ export function OrderDetailPage({ params }: OrderDetailPageProps) {
   const [orderId, setOrderId] = useState<string | null>(null);
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
-  
+
   // Modal states
   const [updateStatusModalOpen, setUpdateStatusModalOpen] = useState(false);
   const [updateTrackingModalOpen, setUpdateTrackingModalOpen] = useState(false);
   const [updatePaymentModalOpen, setUpdatePaymentModalOpen] = useState(false);
   const [saving, setSaving] = useState(false);
-  
+
   // Form states
   const [orderStatus, setOrderStatus] = useState<Order['orderStatus']>('pending');
   const [trackingNumber, setTrackingNumber] = useState('');
@@ -116,8 +116,8 @@ export function OrderDetailPage({ params }: OrderDetailPageProps) {
   useEffect(() => {
     if (!updateStatusModalOpen) return;
     fetch('/api/admin/pickup-locations', { credentials: 'include' })
-      .then((r) => r.json())
-      .then((d) => {
+      .then(r => r.json())
+      .then(d => {
         if (d.locations?.length) {
           setPickupOptions(d.locations.map((l: { pickupLocation: string }) => ({ pickupLocation: l.pickupLocation })));
         } else {
@@ -164,11 +164,7 @@ export function OrderDetailPage({ params }: OrderDetailPageProps) {
   const handleSave = async () => {
     if (!orderId) return;
 
-    if (
-      orderStatus === 'shipped' &&
-      !order?.shiprocketShipmentId &&
-      !pickupLocation.trim()
-    ) {
+    if (orderStatus === 'shipped' && !order?.shiprocketShipmentId && !pickupLocation.trim()) {
       toast({
         title: 'Pickup required',
         description: 'Select a Shiprocket pickup nickname or add one under Pickup locations.',
@@ -188,25 +184,18 @@ export function OrderDetailPage({ params }: OrderDetailPageProps) {
           orderStatus,
           trackingNumber,
           paymentStatus,
-          ...(orderStatus === 'shipped' && !order?.shiprocketShipmentId
-            ? { pickupLocation: pickupLocation.trim() }
-            : {}),
+          ...(orderStatus === 'shipped' && !order?.shiprocketShipmentId ? { pickupLocation: pickupLocation.trim() } : {}),
         }),
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        const warnings = Array.isArray(data.shiprocketWarnings)
-          ? (data.shiprocketWarnings as string[])
-          : [];
+        const warnings = Array.isArray(data.shiprocketWarnings) ? (data.shiprocketWarnings as string[]) : [];
         toast({
           title: 'Success',
-          description:
-            warnings.length > 0
-              ? `Order updated. Shiprocket: ${warnings.join(' · ')}`
-              : 'Order updated successfully',
-          variant: 'default',
+          description: warnings.length > 0 ? `Order updated. Shiprocket: ${warnings.join(' · ')}` : 'Order updated successfully',
+          variant: 'success',
         });
         // Refresh order data
         await fetchOrder();
@@ -290,12 +279,8 @@ export function OrderDetailPage({ params }: OrderDetailPageProps) {
       failed: { className: 'bg-red-100 text-red-800', label: 'FAILED' },
       refunded: { className: 'bg-gray-100 text-gray-800', label: 'REFUNDED' },
     }[status] || { className: 'bg-gray-100 text-gray-800', label: status.toUpperCase() };
-    
-    return (
-      <span className={`px-3 py-1 rounded-md text-sm font-semibold ${config.className}`}>
-        {config.label}
-      </span>
-    );
+
+    return <span className={`px-3 py-1 rounded-md text-sm font-semibold ${config.className}`}>{config.label}</span>;
   };
 
   const getOrderStatusBadge = (status: string) => {
@@ -307,12 +292,8 @@ export function OrderDetailPage({ params }: OrderDetailPageProps) {
       pending: { className: 'bg-yellow-100 text-yellow-800', label: 'Pending' },
       cancelled: { className: 'bg-red-100 text-red-800', label: 'Cancelled' },
     }[status] || { className: 'bg-gray-100 text-gray-800', label: status };
-    
-    return (
-      <span className={`px-3 py-1 rounded-md text-sm font-semibold ${config.className}`}>
-        {config.label}
-      </span>
-    );
+
+    return <span className={`px-3 py-1 rounded-md text-sm font-semibold ${config.className}`}>{config.label}</span>;
   };
 
   if (loading) {
@@ -340,12 +321,7 @@ export function OrderDetailPage({ params }: OrderDetailPageProps) {
       {/* Header */}
       <div className='flex items-center justify-between'>
         <div className='flex items-center gap-4'>
-          <Button 
-            variant='ghost' 
-            size='icon' 
-            onClick={() => router.push('/admin/orders')} 
-            className='hover:bg-gray-100 rounded-full'
-          >
+          <Button variant='ghost' size='icon' onClick={() => router.push('/admin/orders')} className='hover:bg-gray-100 rounded-full'>
             <ArrowLeft className='w-5 h-5' />
           </Button>
           <div>
@@ -354,12 +330,11 @@ export function OrderDetailPage({ params }: OrderDetailPageProps) {
           </div>
         </div>
         <div className='flex items-center gap-3'>
-          <Button 
-            variant='outline' 
+          <Button
+            variant='outline'
             onClick={handleDownloadInvoice}
             disabled={downloadingInvoice}
-            className='flex items-center gap-2 border-gray-300'
-          >
+            className='flex items-center gap-2 border-gray-300'>
             {downloadingInvoice ? (
               <span className='w-4 h-4 border-2 border-gray-600 border-t-transparent rounded-full animate-spin' />
             ) : (
@@ -367,29 +342,22 @@ export function OrderDetailPage({ params }: OrderDetailPageProps) {
             )}
             Download Invoice
           </Button>
-          <Button 
-            variant='outline' 
-            onClick={handleUpdateStatus}
-            className='flex items-center gap-2 border-gray-300'
-          >
+          <Button variant='outline' onClick={handleUpdateStatus} className='flex items-center gap-2 border-gray-300'>
             <Package className='w-4 h-4' />
             Update Status
           </Button>
-          <Button 
-            variant='outline' 
-            onClick={handleUpdateTracking}
-            className='flex items-center gap-2 border-gray-300'
-          >
+          <Button variant='outline' onClick={handleUpdateTracking} className='flex items-center gap-2 border-gray-300'>
             <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-              <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2' />
+              <path
+                strokeLinecap='round'
+                strokeLinejoin='round'
+                strokeWidth={2}
+                d='M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2'
+              />
             </svg>
             Update Tracking
           </Button>
-          <Button 
-            variant='outline' 
-            onClick={handleUpdatePayment}
-            className='flex items-center gap-2 border-gray-300'
-          >
+          <Button variant='outline' onClick={handleUpdatePayment} className='flex items-center gap-2 border-gray-300'>
             <CreditCard className='w-4 h-4' />
             Update Payment
           </Button>
@@ -406,23 +374,15 @@ export function OrderDetailPage({ params }: OrderDetailPageProps) {
               {order.items.map((item, index) => (
                 <div key={index} className='flex items-start gap-4 pb-4 border-b last:border-b-0'>
                   <div className='w-24 h-24 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0'>
-                    <img
-                      src={item.productImage || '/placeholder.jpg'}
-                      alt={item.productName}
-                      className='w-full h-full object-cover'
-                    />
+                    <img src={item.productImage || '/placeholder.jpg'} alt={item.productName} className='w-full h-full object-cover' />
                   </div>
                   <div className='flex-1 min-w-0'>
                     <h3 className='font-semibold text-gray-900 mb-1'>{item.productName}</h3>
                     <p className='text-sm text-gray-600'>Quantity: {item.quantity}</p>
                     <p className='text-sm text-gray-600'>Price: ₹{item.price.toLocaleString()}</p>
-                    <span className='inline-block mt-2 px-3 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded'>
-                      ORDERED
-                    </span>
+                    <span className='inline-block mt-2 px-3 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded'>ORDERED</span>
                   </div>
-                  <div className='text-right font-bold text-gray-900'>
-                    ₹{item.subtotal.toLocaleString()}
-                  </div>
+                  <div className='text-right font-bold text-gray-900'>₹{item.subtotal.toLocaleString()}</div>
                 </div>
               ))}
             </div>
@@ -440,7 +400,10 @@ export function OrderDetailPage({ params }: OrderDetailPageProps) {
                 <p className='font-semibold'>{order.shippingAddress.fullName}</p>
                 <p>{order.shippingAddress.addressLine1}</p>
                 {order.shippingAddress.addressLine2 && <p>{order.shippingAddress.addressLine2}</p>}
-                <p>{order.shippingAddress.city}, {order.shippingAddress.state} {order.shippingAddress.postalCode || order.shippingAddress.pincode}</p>
+                <p>
+                  {order.shippingAddress.city}, {order.shippingAddress.state}{' '}
+                  {order.shippingAddress.postalCode || order.shippingAddress.pincode}
+                </p>
                 <p>{order.shippingAddress.country}</p>
                 <p className='mt-2'>Phone: {order.shippingAddress.phone}</p>
                 {order.shippingAddress.email && <p>Email: {order.shippingAddress.email}</p>}
@@ -459,7 +422,10 @@ export function OrderDetailPage({ params }: OrderDetailPageProps) {
                     <p className='font-semibold'>{order.billingAddress.fullName}</p>
                     <p>{order.billingAddress.addressLine1}</p>
                     {order.billingAddress.addressLine2 && <p>{order.billingAddress.addressLine2}</p>}
-                    <p>{order.billingAddress.city}, {order.billingAddress.state} {order.billingAddress.postalCode || order.billingAddress.pincode}</p>
+                    <p>
+                      {order.billingAddress.city}, {order.billingAddress.state}{' '}
+                      {order.billingAddress.postalCode || order.billingAddress.pincode}
+                    </p>
                     <p>{order.billingAddress.country}</p>
                     <p className='mt-2'>Phone: {order.billingAddress.phone}</p>
                     {order.billingAddress.email && <p>Email: {order.billingAddress.email}</p>}
@@ -469,7 +435,10 @@ export function OrderDetailPage({ params }: OrderDetailPageProps) {
                     <p className='font-semibold'>{order.shippingAddress.fullName}</p>
                     <p>{order.shippingAddress.addressLine1}</p>
                     {order.shippingAddress.addressLine2 && <p>{order.shippingAddress.addressLine2}</p>}
-                    <p>{order.shippingAddress.city}, {order.shippingAddress.state} {order.shippingAddress.postalCode || order.shippingAddress.pincode}</p>
+                    <p>
+                      {order.shippingAddress.city}, {order.shippingAddress.state}{' '}
+                      {order.shippingAddress.postalCode || order.shippingAddress.pincode}
+                    </p>
                     <p>{order.shippingAddress.country}</p>
                     <p className='mt-2'>Phone: {order.shippingAddress.phone}</p>
                     {order.shippingAddress.email && <p>Email: {order.shippingAddress.email}</p>}
@@ -551,9 +520,7 @@ export function OrderDetailPage({ params }: OrderDetailPageProps) {
             <div className='space-y-2'>
               <p className='font-semibold text-gray-900'>{order.customerName}</p>
               <p className='text-sm text-gray-600'>{order.customerEmail}</p>
-              {order.shippingAddress.phone && (
-                <p className='text-sm text-gray-600'>{order.shippingAddress.phone}</p>
-              )}
+              {order.shippingAddress.phone && <p className='text-sm text-gray-600'>{order.shippingAddress.phone}</p>}
             </div>
           </Card>
         </div>
@@ -563,39 +530,37 @@ export function OrderDetailPage({ params }: OrderDetailPageProps) {
       <CommonDialog
         open={updateStatusModalOpen}
         onOpenChange={setUpdateStatusModalOpen}
-        title="Update Order Status"
+        title='Update Order Status'
         description={`Order #${order.orderId}`}
         onConfirm={handleSave}
-        confirmText="Save Changes"
-        cancelText="Cancel"
-        loading={saving}
-      >
-        <div className="space-y-4 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="orderStatus">Order Status</Label>
+        confirmText='Save Changes'
+        cancelText='Cancel'
+        loading={saving}>
+        <div className='space-y-4 py-4'>
+          <div className='space-y-2'>
+            <Label htmlFor='orderStatus'>Order Status</Label>
             <Select
               value={orderStatus}
-              onValueChange={(value) => {
+              onValueChange={value => {
                 setOrderStatus(value as Order['orderStatus']);
                 if (value !== 'shipped') setPickupLocation('');
-              }}
-            >
-              <SelectTrigger className="bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600">
-                <SelectValue placeholder="Select order status" />
+              }}>
+              <SelectTrigger className='bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600'>
+                <SelectValue placeholder='Select order status' />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="confirmed">Confirmed</SelectItem>
-                <SelectItem value="processing">Processing</SelectItem>
-                <SelectItem value="shipped">Shipped</SelectItem>
-                <SelectItem value="delivered">Delivered</SelectItem>
-                <SelectItem value="cancelled">Cancelled</SelectItem>
+                <SelectItem value='pending'>Pending</SelectItem>
+                <SelectItem value='confirmed'>Confirmed</SelectItem>
+                <SelectItem value='processing'>Processing</SelectItem>
+                <SelectItem value='shipped'>Shipped</SelectItem>
+                <SelectItem value='delivered'>Delivered</SelectItem>
+                <SelectItem value='cancelled'>Cancelled</SelectItem>
               </SelectContent>
             </Select>
           </div>
           {(order?.shiprocketShipmentId || order?.shiprocketOrderId) && (
-            <div className="rounded-md bg-slate-100 dark:bg-slate-800/80 p-3 text-xs text-slate-700 dark:text-slate-300 space-y-1">
-              <p className="font-semibold text-slate-900 dark:text-slate-100">Linked Shiprocket</p>
+            <div className='rounded-md bg-slate-100 dark:bg-slate-800/80 p-3 text-xs text-slate-700 dark:text-slate-300 space-y-1'>
+              <p className='font-semibold text-slate-900 dark:text-slate-100'>Linked Shiprocket</p>
               {order.shiprocketOrderId != null && <p>Order ID: {order.shiprocketOrderId}</p>}
               {order.shiprocketShipmentId != null && <p>Shipment ID: {order.shiprocketShipmentId}</p>}
               {order.shiprocketCurrentStatus && <p>Status: {order.shiprocketCurrentStatus}</p>}
@@ -603,14 +568,14 @@ export function OrderDetailPage({ params }: OrderDetailPageProps) {
             </div>
           )}
           {orderStatus === 'shipped' && !order?.shiprocketShipmentId && (
-            <div className="space-y-2">
+            <div className='space-y-2'>
               <Label>Shiprocket pickup (nickname)</Label>
               <Select value={pickupLocation || undefined} onValueChange={setPickupLocation}>
-                <SelectTrigger className="bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600">
-                  <SelectValue placeholder="Select warehouse nickname" />
+                <SelectTrigger className='bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600'>
+                  <SelectValue placeholder='Select warehouse nickname' />
                 </SelectTrigger>
                 <SelectContent>
-                  {pickupOptions.map((o) => (
+                  {pickupOptions.map(o => (
                     <SelectItem key={o.pickupLocation} value={o.pickupLocation}>
                       {o.pickupLocation}
                     </SelectItem>
@@ -618,9 +583,7 @@ export function OrderDetailPage({ params }: OrderDetailPageProps) {
                 </SelectContent>
               </Select>
               {pickupOptions.length === 0 && (
-                <p className="text-sm text-amber-700">
-                  No pickup saved yet. Add one under Admin → Pickup locations.
-                </p>
+                <p className='text-sm text-amber-700'>No pickup saved yet. Add one under Admin → Pickup locations.</p>
               )}
             </div>
           )}
@@ -631,23 +594,22 @@ export function OrderDetailPage({ params }: OrderDetailPageProps) {
       <CommonDialog
         open={updateTrackingModalOpen}
         onOpenChange={setUpdateTrackingModalOpen}
-        title="Update Tracking Information"
+        title='Update Tracking Information'
         description={`Order #${order.orderId}`}
         onConfirm={handleSave}
-        confirmText="Save Changes"
-        cancelText="Cancel"
-        loading={saving}
-      >
-        <div className="space-y-4 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="trackingNumber">Tracking Number</Label>
+        confirmText='Save Changes'
+        cancelText='Cancel'
+        loading={saving}>
+        <div className='space-y-4 py-4'>
+          <div className='space-y-2'>
+            <Label htmlFor='trackingNumber'>Tracking Number</Label>
             <Input
-              id="trackingNumber"
-              type="text"
-              placeholder="Enter tracking number"
+              id='trackingNumber'
+              type='text'
+              placeholder='Enter tracking number'
               value={trackingNumber}
-              onChange={(e) => setTrackingNumber(e.target.value)}
-              className="bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600"
+              onChange={e => setTrackingNumber(e.target.value)}
+              className='bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600'
             />
           </div>
         </div>
@@ -657,28 +619,24 @@ export function OrderDetailPage({ params }: OrderDetailPageProps) {
       <CommonDialog
         open={updatePaymentModalOpen}
         onOpenChange={setUpdatePaymentModalOpen}
-        title="Update Payment Status"
+        title='Update Payment Status'
         description={`Order #${order.orderId}`}
         onConfirm={handleSave}
-        confirmText="Save Changes"
-        cancelText="Cancel"
-        loading={saving}
-      >
-        <div className="space-y-4 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="paymentStatus">Payment Status</Label>
-            <Select
-              value={paymentStatus}
-              onValueChange={(value) => setPaymentStatus(value as Order['paymentStatus'])}
-            >
-              <SelectTrigger className="bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600">
-                <SelectValue placeholder="Select payment status" />
+        confirmText='Save Changes'
+        cancelText='Cancel'
+        loading={saving}>
+        <div className='space-y-4 py-4'>
+          <div className='space-y-2'>
+            <Label htmlFor='paymentStatus'>Payment Status</Label>
+            <Select value={paymentStatus} onValueChange={value => setPaymentStatus(value as Order['paymentStatus'])}>
+              <SelectTrigger className='bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600'>
+                <SelectValue placeholder='Select payment status' />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="paid">Paid</SelectItem>
-                <SelectItem value="failed">Failed</SelectItem>
-                <SelectItem value="refunded">Refunded</SelectItem>
+                <SelectItem value='pending'>Pending</SelectItem>
+                <SelectItem value='paid'>Paid</SelectItem>
+                <SelectItem value='failed'>Failed</SelectItem>
+                <SelectItem value='refunded'>Refunded</SelectItem>
               </SelectContent>
             </Select>
           </div>
