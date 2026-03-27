@@ -17,6 +17,7 @@ const menuItems = [
   { label: 'Cart', href: '/retailer/cart', icon: ShoppingCart },
   { label: 'Orders', href: '/retailer/orders', icon: Package },
   { label: 'My Sales', href: '/retailer/my-sales', icon: Truck },
+  { label: 'Pickup locations', href: '/retailer/pickup-locations', icon: Truck },
 ];
 
 export function RetailerSidebar() {

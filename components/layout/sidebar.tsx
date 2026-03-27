@@ -216,6 +216,14 @@ export function Sidebar() {
       moduleKey: 'orders',
     },
     {
+      label: 'Pickup locations',
+      href: '/admin/pickup-locations',
+      badge: null,
+      icon: Truck,
+      allowedRoles: ['superadmin', 'admin', 'vendor'],
+      moduleKey: 'orders',
+    },
+    {
       label: 'B2B Orders',
       href: '/admin/orders/b2b',
       badge: null,

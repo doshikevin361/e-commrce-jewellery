@@ -13,6 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { AdminPagination } from '@/components/ui/admin-pagination';
 import { CommonDialog } from '../dialog/dialog';
+import { ShiprocketOrderPanel } from '@/components/orders/shiprocket-order-panel';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -575,6 +576,19 @@ export function OrderList({ orderType }: { orderType?: 'b2b' } = {}) {
                 )}
               </div>
             )}
+
+            <ShiprocketOrderPanel
+              compact
+              shiprocketOrderId={viewOrderData.shiprocketOrderId}
+              shiprocketShipmentId={viewOrderData.shiprocketShipmentId}
+              shiprocketCurrentStatus={viewOrderData.shiprocketCurrentStatus}
+              courierName={viewOrderData.courierName}
+              trackingNumber={viewOrderData.trackingNumber}
+              pickupScheduledDate={viewOrderData.pickupScheduledDate}
+              pickupScheduledTime={viewOrderData.pickupScheduledTime}
+              estimatedDelivery={viewOrderData.estimatedDelivery}
+              trackingEvents={viewOrderData.trackingEvents}
+            />
 
             {viewOrderData.shippingAddress && (
               <div>

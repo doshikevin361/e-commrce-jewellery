@@ -27,11 +27,11 @@ export async function GET() {
           },
         },
         {
+          // Inclusion-only: MongoDB forbids mixing `field: 1` with `products: 0` in one $project.
           $project: {
             name: 1,
             slug: 1,
             productCount: 1,
-            products: 0,
           },
         },
         { $sort: { productCount: -1, name: 1 } },

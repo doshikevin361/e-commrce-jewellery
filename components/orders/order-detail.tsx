@@ -11,6 +11,7 @@ import { toast } from '@/hooks/use-toast';
 import { Save, X, Package, User, CreditCard, Truck, FileText } from 'lucide-react';
 import Image from 'next/image';
 import { formatIndianDate } from '@/app/utils/helper';
+import { ShiprocketOrderPanel } from '@/components/orders/shiprocket-order-panel';
 
 interface OrderItem {
   product: string;
@@ -53,6 +54,19 @@ interface Order {
   orderStatus: 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
   orderNotes?: string;
   trackingNumber?: string;
+  courierName?: string;
+  shiprocketOrderId?: number;
+  shiprocketShipmentId?: number;
+  shiprocketCurrentStatus?: string;
+  pickupScheduledDate?: string;
+  pickupScheduledTime?: string;
+  estimatedDelivery?: string;
+  trackingEvents?: Array<{
+    status: string;
+    location?: string;
+    timestamp?: string;
+    description?: string;
+  }>;
   createdAt: string;
   updatedAt: string;
 }
@@ -69,6 +83,8 @@ export function OrderDetail({ order, open, onOpenChange, onUpdate }: OrderDetail
   const [orderNotes, setOrderNotes] = useState(order.orderNotes || '');
   const [trackingNumber, setTrackingNumber] = useState(order.trackingNumber || '');
   const [saving, setSaving] = useState(false);
+  const [pickupOptions, setPickupOptions] = useState<{ pickupLocation: string }[]>([]);
+  const [pickupLocation, setPickupLocation] = useState('');
 
   useEffect(() => {
     if (order) {
@@ -77,6 +93,20 @@ export function OrderDetail({ order, open, onOpenChange, onUpdate }: OrderDetail
       setTrackingNumber(order.trackingNumber || '');
     }
   }, [order]);
+
+  useEffect(() => {
+    if (!open) return;
+    fetch('/api/admin/pickup-locations', { credentials: 'include' })
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.locations?.length) {
+          setPickupOptions(d.locations.map((l: { pickupLocation: string }) => ({ pickupLocation: l.pickupLocation })));
+        } else {
+          setPickupOptions([]);
+        }
+      })
+      .catch(() => setPickupOptions([]));
+  }, [open]);
 
   const getPaymentStatusBadge = (status: string) => {
     const variants: Record<string, { variant: 'default' | 'secondary' | 'destructive' | 'outline'; label: string }> = {
@@ -103,6 +133,18 @@ export function OrderDetail({ order, open, onOpenChange, onUpdate }: OrderDetail
   };
 
   const handleSave = async () => {
+    if (
+      orderStatus === 'shipped' &&
+      !order.shiprocketShipmentId &&
+      !pickupLocation.trim()
+    ) {
+      toast({
+        title: 'Pickup required',
+        description: 'Select a Shiprocket pickup nickname (Pickup locations).',
+        variant: 'destructive',
+      });
+      return;
+    }
     try {
       setSaving(true);
       const response = await fetch(`/api/admin/orders/${order._id}`, {
@@ -114,6 +156,9 @@ export function OrderDetail({ order, open, onOpenChange, onUpdate }: OrderDetail
           orderStatus,
           orderNotes,
           trackingNumber,
+          ...(orderStatus === 'shipped' && !order.shiprocketShipmentId
+            ? { pickupLocation: pickupLocation.trim() }
+            : {}),
         }),
       });
 
@@ -291,6 +336,19 @@ export function OrderDetail({ order, open, onOpenChange, onUpdate }: OrderDetail
             </div>
           </div>
 
+          <ShiprocketOrderPanel
+            compact
+            shiprocketOrderId={order.shiprocketOrderId}
+            shiprocketShipmentId={order.shiprocketShipmentId}
+            shiprocketCurrentStatus={order.shiprocketCurrentStatus}
+            courierName={order.courierName}
+            trackingNumber={order.trackingNumber}
+            pickupScheduledDate={order.pickupScheduledDate}
+            pickupScheduledTime={order.pickupScheduledTime}
+            estimatedDelivery={order.estimatedDelivery}
+            trackingEvents={order.trackingEvents}
+          />
+
           {/* Admin Controls */}
           <div className='border-t pt-4 space-y-4'>
             <div className='flex items-center gap-2 mb-4'>
@@ -303,7 +361,13 @@ export function OrderDetail({ order, open, onOpenChange, onUpdate }: OrderDetail
                 <Label htmlFor='orderStatus' className='text-sm font-semibold'>
                   Order Status
                 </Label>
-                <Select value={orderStatus} onValueChange={setOrderStatus}>
+                <Select
+                  value={orderStatus}
+                  onValueChange={(v) => {
+                    setOrderStatus(v as Order['orderStatus']);
+                    if (v !== 'shipped') setPickupLocation('');
+                  }}
+                >
                   <SelectTrigger id='orderStatus' className='mt-1'>
                     <SelectValue />
                   </SelectTrigger>
@@ -332,6 +396,37 @@ export function OrderDetail({ order, open, onOpenChange, onUpdate }: OrderDetail
                 />
               </div>
             </div>
+
+            {(order.shiprocketShipmentId || order.shiprocketOrderId) && (
+              <div className="rounded-md bg-slate-100 p-3 text-xs text-slate-700 space-y-1">
+                <p className="font-semibold text-slate-900">Linked Shiprocket</p>
+                {order.shiprocketOrderId != null && <p>Order ID: {order.shiprocketOrderId}</p>}
+                {order.shiprocketShipmentId != null && <p>Shipment ID: {order.shiprocketShipmentId}</p>}
+                {order.shiprocketCurrentStatus && <p>Status: {order.shiprocketCurrentStatus}</p>}
+                {order.courierName && <p>Courier: {order.courierName}</p>}
+              </div>
+            )}
+
+            {orderStatus === 'shipped' && !order.shiprocketShipmentId && (
+              <div>
+                <Label className='text-sm font-semibold'>Shiprocket pickup (nickname)</Label>
+                <Select value={pickupLocation || undefined} onValueChange={setPickupLocation}>
+                  <SelectTrigger className='mt-1'>
+                    <SelectValue placeholder='Select warehouse nickname' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {pickupOptions.map((o) => (
+                      <SelectItem key={o.pickupLocation} value={o.pickupLocation}>
+                        {o.pickupLocation}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {pickupOptions.length === 0 && (
+                  <p className='text-sm text-amber-700 mt-1'>Add a location under Admin → Pickup locations.</p>
+                )}
+              </div>
+            )}
 
             <div>
               <Label htmlFor='orderNotes' className='text-sm font-semibold'>

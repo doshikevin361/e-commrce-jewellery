@@ -1,21 +1,15 @@
 import type { Browser } from 'puppeteer-core';
-import { createRequire } from 'node:module';
 
-const nodeRequire = createRequire(import.meta.url);
-
-/** Avoid a literal `@sparticuz/chromium` string so Turbopack/Webpack do not resolve it at build time. */
-function loadSparticuzChromiumSync(): {
-  default: {
-    executablePath: () => Promise<string>;
-    args: string[];
-    defaultViewport: { width: number; height: number };
-    headless: boolean | 'shell';
-  };
-} | null {
+/** Dynamic import with a static specifier so the bundler can externalize `@sparticuz/chromium` (see next.config serverExternalPackages). */
+async function loadSparticuzChromium(): Promise<{
+  executablePath: () => Promise<string>;
+  args: string[];
+  defaultViewport: { width: number; height: number };
+  headless: boolean | 'shell';
+} | null> {
   try {
-    const at = String.fromCharCode(64);
-    const pkg = `${at}sparticuz/chromium`;
-    return nodeRequire(pkg);
+    const mod = await import('@sparticuz/chromium');
+    return mod.default ?? null;
   } catch {
     return null;
   }
@@ -23,7 +17,7 @@ function loadSparticuzChromiumSync(): {
 
 /**
  * Launch Chromium for PDF/screenshot generation.
- * - **Vercel / serverless:** `puppeteer-core` + `@sparticuz/chromium` (loaded via require, not import).
+ * - **Vercel / serverless:** `puppeteer-core` + `@sparticuz/chromium` (dynamic import).
  * - **Local:** full `puppeteer` with downloaded Chrome.
  */
 export async function launchInvoiceBrowser(): Promise<Browser> {
@@ -34,9 +28,8 @@ export async function launchInvoiceBrowser(): Promise<Browser> {
 
   if (isServerless) {
     const puppeteerCore = await import('puppeteer-core');
-    const chromiumMod = loadSparticuzChromiumSync();
-    if (chromiumMod?.default) {
-      const chromium = chromiumMod.default;
+    const chromium = await loadSparticuzChromium();
+    if (chromium) {
       const executablePath = await chromium.executablePath();
       return puppeteerCore.default.launch({
         args: chromium.args,

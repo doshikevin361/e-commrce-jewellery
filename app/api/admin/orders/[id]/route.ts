@@ -11,6 +11,7 @@ import {
   requestShiprocketPickup,
   isShiprocketEnabled,
 } from '@/lib/shiprocket';
+import { findPickupLocationForOrderShip } from '@/lib/pickup-locations';
 
 // Force nodejs runtime for this route
 export const runtime = 'nodejs';
@@ -147,7 +148,32 @@ export async function PUT(
       }
     }
 
-    const { orderStatus, orderNotes, trackingNumber, paymentStatus } = body;
+    const { orderStatus, orderNotes, trackingNumber, paymentStatus, pickupLocation } = body;
+
+    /** Shiprocket adhoc order needs a saved pickup nickname (Pickup locations CRUD). */
+    let shiprocketPickupNickname: string | undefined;
+    if (
+      orderStatus === 'shipped' &&
+      !(existingOrder.shiprocketShipmentId as number | undefined) &&
+      isShiprocketEnabled()
+    ) {
+      const raw = typeof pickupLocation === 'string' ? pickupLocation.trim() : '';
+      if (!raw) {
+        return NextResponse.json(
+          { error: 'pickupLocation is required. Add one under Pickup locations, then select its nickname here.' },
+          { status: 400 }
+        );
+      }
+      const { db } = await connectToDatabase();
+      const doc = await findPickupLocationForOrderShip(db, user!, raw);
+      if (!doc) {
+        return NextResponse.json(
+          { error: 'Invalid pickup location. Use a nickname from Pickup locations (Admin → Pickup locations).' },
+          { status: 400 }
+        );
+      }
+      shiprocketPickupNickname = String(doc.pickupLocation);
+    }
 
     // Validate order status
     const validStatuses = ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'];
@@ -169,6 +195,7 @@ export async function PUT(
 
     // Prepare update data
     const updateData: any = {};
+    const shiprocketWarnings: string[] = [];
 
     if (orderStatus) {
       updateData.orderStatus = orderStatus;
@@ -182,13 +209,34 @@ export async function PUT(
     }
 
     // Shiprocket sync on lifecycle changes
+    if (orderStatus && !isShiprocketEnabled() && (orderStatus === 'shipped' || orderStatus === 'cancelled')) {
+      console.log('[Shiprocket][OrderAPI] status change skipped — SHIPROCKET_ENABLED=false/0/off', {
+        orderId: existingOrder.orderId,
+        newStatus: orderStatus,
+      });
+    }
+
     if (orderStatus && isShiprocketEnabled()) {
       try {
+        const mongoOrderId = String(existingOrder._id);
+        const bizOrderId = existingOrder.orderId;
+        console.log('[Shiprocket][OrderAPI] sync start', {
+          mongoOrderId,
+          orderId: bizOrderId,
+          newStatus: orderStatus,
+        });
+
         const existingShipmentId = existingOrder.shiprocketShipmentId as number | undefined;
         const existingShiprocketOrderId = existingOrder.shiprocketOrderId as number | undefined;
 
         // Cancel shipment on cancellation
         if (orderStatus === 'cancelled' && existingShipmentId) {
+          console.log('[Shiprocket][OrderAPI] cancelling shipment', {
+            mongoOrderId,
+            orderId: bizOrderId,
+            shipmentId: existingShipmentId,
+            shiprocketOrderId: existingShiprocketOrderId,
+          });
           await cancelShiprocketOrder(
             existingShipmentId,
             existingShiprocketOrderId ? undefined : existingOrder.orderId,
@@ -203,10 +251,19 @@ export async function PUT(
           let awbCode = existingOrder.trackingNumber as string | undefined;
           let courierName = existingOrder.courierName as string | undefined;
 
+          console.log('[Shiprocket][OrderAPI] shipped flow', {
+            mongoOrderId,
+            orderId: bizOrderId,
+            hadShipmentId: !!existingShipmentId,
+            hadAwb: !!existingOrder.trackingNumber,
+          });
+
           if (!shipmentId) {
             const created = await createShiprocketOrder({
               orderId: existingOrder.orderId,
               orderDate: existingOrder.createdAt,
+              customerEmail: existingOrder.customerEmail as string | undefined,
+              pickupLocation: shiprocketPickupNickname,
               items: (existingOrder.items || []).map((i: any) => ({
                 productName: i.productName,
                 sku: i.sku,
@@ -245,15 +302,30 @@ export async function PUT(
               shipmentId = created.shipmentId;
               shiprocketOrderId = created.shiprocketOrderId;
               awbCode = awbCode || created.awbCode;
+            } else {
+              console.warn('[Shiprocket][OrderAPI] createOrder failed', {
+                mongoOrderId,
+                orderId: bizOrderId,
+                error: created.error,
+              });
+              if (created.error) shiprocketWarnings.push(`Shiprocket create order: ${created.error}`);
             }
           }
 
           if (shipmentId && !awbCode) {
+            console.log('[Shiprocket][OrderAPI] generating AWB', { mongoOrderId, shipmentId });
             const awb = await generateShiprocketAWB(shipmentId);
             if (awb.success) {
               awbCode = awb.awbCode;
               courierName = awb.courierName || courierName;
               shiprocketOrderId = awb.orderId || shiprocketOrderId;
+            } else {
+              console.warn('[Shiprocket][OrderAPI] AWB failed', {
+                mongoOrderId,
+                shipmentId,
+                error: awb.error,
+              });
+              if (awb.error) shiprocketWarnings.push(`AWB: ${awb.error}`);
             }
           }
 
@@ -262,6 +334,13 @@ export async function PUT(
             if (pickup.success) {
               updateData.pickupScheduledDate = pickup.pickupScheduledDate;
               updateData.pickupScheduledTime = pickup.pickupScheduledTime;
+            } else {
+              console.warn('[Shiprocket][OrderAPI] pickup request failed', {
+                mongoOrderId,
+                shipmentId,
+                error: pickup.error,
+              });
+              if (pickup.error) shiprocketWarnings.push(`Pickup: ${pickup.error}`);
             }
           }
 
@@ -269,9 +348,17 @@ export async function PUT(
           if (shiprocketOrderId) updateData.shiprocketOrderId = shiprocketOrderId;
           if (awbCode) updateData.trackingNumber = awbCode;
           if (courierName) updateData.courierName = courierName;
+
+          console.log('[Shiprocket][OrderAPI] shipped flow done', {
+            mongoOrderId,
+            orderId: bizOrderId,
+            shipmentId,
+            shiprocketOrderId,
+            hasTracking: !!awbCode,
+          });
         }
       } catch (shiprocketError) {
-        console.error('[Order API] Shiprocket sync error:', shiprocketError);
+        console.error('[Shiprocket][OrderAPI] sync error:', shiprocketError);
       }
     }
 
@@ -283,8 +370,12 @@ export async function PUT(
       updateData.orderNotes = orderNotes;
     }
 
+    // Do not overwrite AWB from Shiprocket with an empty tracking field from the form.
     if (trackingNumber !== undefined) {
-      updateData.trackingNumber = trackingNumber;
+      const t = typeof trackingNumber === 'string' ? trackingNumber.trim() : String(trackingNumber ?? '').trim();
+      if (t !== '') {
+        updateData.trackingNumber = t;
+      }
     }
 
     // Update order
@@ -397,6 +488,7 @@ export async function PUT(
       success: true,
       message: 'Order updated successfully',
       order: serializedOrder,
+      ...(shiprocketWarnings.length > 0 ? { shiprocketWarnings } : {}),
     });
   } catch (error: any) {
     console.error('[v0] Error updating order:', error);

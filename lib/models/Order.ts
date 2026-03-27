@@ -143,9 +143,8 @@ const OrderSchema = new Schema<IOrder>(
   { timestamps: true }
 );
 
-// Create index for faster queries
+// Create index for faster queries (orderId index comes from unique: true on the field)
 OrderSchema.index({ customer: 1, createdAt: -1 });
-OrderSchema.index({ orderId: 1 });
 OrderSchema.index({ orderStatus: 1 });
 OrderSchema.index({ paymentStatus: 1 });
 OrderSchema.index({ orderType: 1 });

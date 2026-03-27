@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
 import { ArrowLeft, Package, User, CreditCard, MapPin, FileDown } from 'lucide-react';
+import { ShiprocketOrderPanel } from '@/components/orders/shiprocket-order-panel';
 import { formatIndianDate } from '@/app/utils/helper';
 import { Spinner } from '@/components/ui/spinner';
 import { CommonDialog } from '../dialog/dialog';
@@ -57,6 +58,19 @@ interface Order {
   orderStatus: 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
   orderNotes?: string;
   trackingNumber?: string;
+  courierName?: string;
+  shiprocketOrderId?: number;
+  shiprocketShipmentId?: number;
+  shiprocketCurrentStatus?: string;
+  pickupScheduledDate?: string;
+  pickupScheduledTime?: string;
+  estimatedDelivery?: string;
+  trackingEvents?: Array<{
+    status: string;
+    location?: string;
+    timestamp?: string;
+    description?: string;
+  }>;
   createdAt: string;
   updatedAt: string;
 }
@@ -82,6 +96,8 @@ export function OrderDetailPage({ params }: OrderDetailPageProps) {
   const [trackingNumber, setTrackingNumber] = useState('');
   const [paymentStatus, setPaymentStatus] = useState<Order['paymentStatus']>('pending');
   const [downloadingInvoice, setDownloadingInvoice] = useState(false);
+  const [pickupOptions, setPickupOptions] = useState<{ pickupLocation: string }[]>([]);
+  const [pickupLocation, setPickupLocation] = useState('');
 
   useEffect(() => {
     async function loadParams() {
@@ -96,6 +112,20 @@ export function OrderDetailPage({ params }: OrderDetailPageProps) {
       fetchOrder();
     }
   }, [orderId]);
+
+  useEffect(() => {
+    if (!updateStatusModalOpen) return;
+    fetch('/api/admin/pickup-locations', { credentials: 'include' })
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.locations?.length) {
+          setPickupOptions(d.locations.map((l: { pickupLocation: string }) => ({ pickupLocation: l.pickupLocation })));
+        } else {
+          setPickupOptions([]);
+        }
+      })
+      .catch(() => setPickupOptions([]));
+  }, [updateStatusModalOpen]);
 
   const fetchOrder = async () => {
     if (!orderId) return;
@@ -134,6 +164,19 @@ export function OrderDetailPage({ params }: OrderDetailPageProps) {
   const handleSave = async () => {
     if (!orderId) return;
 
+    if (
+      orderStatus === 'shipped' &&
+      !order?.shiprocketShipmentId &&
+      !pickupLocation.trim()
+    ) {
+      toast({
+        title: 'Pickup required',
+        description: 'Select a Shiprocket pickup nickname or add one under Pickup locations.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     try {
       setSaving(true);
       const response = await fetch(`/api/admin/orders/${orderId}`, {
@@ -145,15 +188,24 @@ export function OrderDetailPage({ params }: OrderDetailPageProps) {
           orderStatus,
           trackingNumber,
           paymentStatus,
+          ...(orderStatus === 'shipped' && !order?.shiprocketShipmentId
+            ? { pickupLocation: pickupLocation.trim() }
+            : {}),
         }),
       });
 
       const data = await response.json();
 
       if (response.ok) {
+        const warnings = Array.isArray(data.shiprocketWarnings)
+          ? (data.shiprocketWarnings as string[])
+          : [];
         toast({
           title: 'Success',
-          description: 'Order updated successfully',
+          description:
+            warnings.length > 0
+              ? `Order updated. Shiprocket: ${warnings.join(' · ')}`
+              : 'Order updated successfully',
           variant: 'default',
         });
         // Refresh order data
@@ -478,6 +530,18 @@ export function OrderDetailPage({ params }: OrderDetailPageProps) {
             </div>
           </Card>
 
+          <ShiprocketOrderPanel
+            shiprocketOrderId={order.shiprocketOrderId}
+            shiprocketShipmentId={order.shiprocketShipmentId}
+            shiprocketCurrentStatus={order.shiprocketCurrentStatus}
+            courierName={order.courierName}
+            trackingNumber={order.trackingNumber}
+            pickupScheduledDate={order.pickupScheduledDate}
+            pickupScheduledTime={order.pickupScheduledTime}
+            estimatedDelivery={order.estimatedDelivery}
+            trackingEvents={order.trackingEvents}
+          />
+
           {/* Customer */}
           <Card className='p-6'>
             <div className='flex items-center gap-2 mb-4'>
@@ -511,7 +575,10 @@ export function OrderDetailPage({ params }: OrderDetailPageProps) {
             <Label htmlFor="orderStatus">Order Status</Label>
             <Select
               value={orderStatus}
-              onValueChange={(value) => setOrderStatus(value as Order['orderStatus'])}
+              onValueChange={(value) => {
+                setOrderStatus(value as Order['orderStatus']);
+                if (value !== 'shipped') setPickupLocation('');
+              }}
             >
               <SelectTrigger className="bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600">
                 <SelectValue placeholder="Select order status" />
@@ -526,6 +593,37 @@ export function OrderDetailPage({ params }: OrderDetailPageProps) {
               </SelectContent>
             </Select>
           </div>
+          {(order?.shiprocketShipmentId || order?.shiprocketOrderId) && (
+            <div className="rounded-md bg-slate-100 dark:bg-slate-800/80 p-3 text-xs text-slate-700 dark:text-slate-300 space-y-1">
+              <p className="font-semibold text-slate-900 dark:text-slate-100">Linked Shiprocket</p>
+              {order.shiprocketOrderId != null && <p>Order ID: {order.shiprocketOrderId}</p>}
+              {order.shiprocketShipmentId != null && <p>Shipment ID: {order.shiprocketShipmentId}</p>}
+              {order.shiprocketCurrentStatus && <p>Status: {order.shiprocketCurrentStatus}</p>}
+              {order.courierName && <p>Courier: {order.courierName}</p>}
+            </div>
+          )}
+          {orderStatus === 'shipped' && !order?.shiprocketShipmentId && (
+            <div className="space-y-2">
+              <Label>Shiprocket pickup (nickname)</Label>
+              <Select value={pickupLocation || undefined} onValueChange={setPickupLocation}>
+                <SelectTrigger className="bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600">
+                  <SelectValue placeholder="Select warehouse nickname" />
+                </SelectTrigger>
+                <SelectContent>
+                  {pickupOptions.map((o) => (
+                    <SelectItem key={o.pickupLocation} value={o.pickupLocation}>
+                      {o.pickupLocation}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {pickupOptions.length === 0 && (
+                <p className="text-sm text-amber-700">
+                  No pickup saved yet. Add one under Admin → Pickup locations.
+                </p>
+              )}
+            </div>
+          )}
         </div>
       </CommonDialog>
 

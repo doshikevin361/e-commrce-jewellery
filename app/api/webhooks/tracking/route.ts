@@ -17,11 +17,13 @@ export async function POST(request: NextRequest) {
     if (webhookToken) {
       const provided = request.headers.get('x-api-key') || request.headers.get('x-shiprocket-secret');
       if (provided !== webhookToken) {
+        console.warn('[Shiprocket][Webhook] unauthorized — token mismatch');
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
       }
     }
 
     if (!body || Object.keys(body).length === 0) {
+      console.log('[Shiprocket][Webhook] ping / empty body');
       return NextResponse.json({ success: true, message: 'Webhook active' }, { status: 200 });
     }
 
@@ -33,16 +35,30 @@ export async function POST(request: NextRequest) {
     const history = shipment.tracking_data?.track_history || shipment.track_history || [];
 
     if (!shipmentId) {
+      console.log('[Shiprocket][Webhook] no shipment_id in payload');
       return NextResponse.json({ success: true, message: 'No shipment id' }, { status: 200 });
     }
+
+    console.log('[Shiprocket][Webhook] received', {
+      shipmentId,
+      status,
+      awbCode: awbCode ? String(awbCode).slice(0, 8) + '…' : undefined,
+    });
 
     const { db } = await connectToDatabase();
     const order = await db.collection('orders').findOne({ shiprocketShipmentId: Number(shipmentId) });
     if (!order) {
+      console.warn('[Shiprocket][Webhook] no local order for shipmentId', { shipmentId });
       return NextResponse.json({ success: true, message: 'Order not found' }, { status: 200 });
     }
 
     const mappedStatus = status ? mapShiprocketStatusToOrderStatus(status) : undefined;
+    console.log('[Shiprocket][Webhook] updating order', {
+      orderId: order.orderId,
+      mongoId: String(order._id),
+      rawStatus: status,
+      mappedStatus,
+    });
     const trackingEvents = Array.isArray(history)
       ? history
           .map((e: any) => ({
@@ -66,8 +82,10 @@ export async function POST(request: NextRequest) {
 
     await db.collection('orders').updateOne({ _id: order._id }, { $set: update });
 
+    console.log('[Shiprocket][Webhook] order updated', { orderId: order.orderId, mongoId: String(order._id) });
     return NextResponse.json({ success: true, message: 'Webhook processed' }, { status: 200 });
   } catch (error: any) {
+    console.error('[Shiprocket][Webhook] error', error?.message || error);
     // Return 200 to avoid retries for transient local errors
     return NextResponse.json({ success: false, error: error?.message || 'Webhook processing failed' }, { status: 200 });
   }
