@@ -38,7 +38,8 @@ const PURITY_MAP: Record<string, number> = {
   '100%': 1,
 };
 
-function parsePurityPercent(purity: string): number {
+/** Fine purity 0–1 (e.g. 22KT → 0.92). Used for commission badges and pricing. */
+export function parsePurityPercent(purity: string): number {
   if (!purity) return 1;
   const key = normalizePurityKey(purity);
   if (PURITY_MAP[key] !== undefined) return PURITY_MAP[key];

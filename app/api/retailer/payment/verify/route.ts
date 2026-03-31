@@ -110,6 +110,17 @@ export async function POST(req: NextRequest) {
       { $set: { cart: [], updatedAt: new Date() } }
     );
 
+    // Invoice PDF by email (same as COD B2B in POST /api/retailer/orders)
+    try {
+      const fullOrder = { ...orderDoc, _id: result.insertedId };
+      const { generateAndSendInvoice } = await import('@/lib/invoice');
+      await generateAndSendInvoice(orderId, fullOrder, {
+        email: retailerDoc.email || retailer.email || '',
+      });
+    } catch (invoiceErr) {
+      console.error('[Retailer Payment Verify] Failed to send invoice email:', invoiceErr);
+    }
+
     return NextResponse.json({
       success: true,
       message: 'Payment verified and order created successfully',

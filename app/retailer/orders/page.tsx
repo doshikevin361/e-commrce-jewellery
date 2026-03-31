@@ -20,6 +20,10 @@ type Order = {
   shippingAddress?: { fullName: string; city: string; state: string };
   createdAt: string;
   soldToPortalAt?: string | null;
+  trackingNumber?: string | null;
+  courierName?: string | null;
+  shiprocketShipmentId?: number | null;
+  shiprocketOrderId?: number | null;
 };
 
 function getAuthHeaders(): HeadersInit {
@@ -168,6 +172,15 @@ function RetailerOrdersContent() {
                       {order.shippingAddress && (
                         <p className="text-sm text-gray-600 mt-1">
                           {order.shippingAddress.fullName}, {order.shippingAddress.city}, {order.shippingAddress.state}
+                        </p>
+                      )}
+                      {(order.trackingNumber || order.courierName) && (
+                        <p className="text-sm text-violet-800 mt-2">
+                          {order.courierName && <span className="font-medium">{order.courierName}</span>}
+                          {order.courierName && order.trackingNumber && ' · '}
+                          {order.trackingNumber && (
+                            <span>AWB / Tracking: <span className="font-mono">{order.trackingNumber}</span></span>
+                          )}
                         </p>
                       )}
                     </div>
