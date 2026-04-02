@@ -7,8 +7,8 @@ let razorpay: Razorpay | null = null;
 function getRazorpayInstance(): Razorpay {
   if (!razorpay) {
     // Use environment variables if available, otherwise use test keys
-    const keyId = process.env.RAZORPAY_KEY_ID || 'rzp_test_RpOGb8GwTO1dmp';
-    const keySecret = process.env.RAZORPAY_KEY_SECRET || '3iw3508rzN2moTDNhyJD9fUh';
+    const keyId = process.env.RAZORPAY_KEY_ID || 'rzp_live_SYWo8g47ECdPVm';
+    const keySecret = process.env.RAZORPAY_KEY_SECRET || 'tqjaLcY1rIhrnZgHAur0Vdu3';
 
     if (!keyId || !keySecret) {
       throw new Error('Razorpay credentials are not configured. Please set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET in environment variables.');
