@@ -585,6 +585,10 @@ export function Sidebar() {
       label: 'Footer Content',
       href: '/admin/cms/footer-content',
     },
+    {
+      label: 'Footer social links',
+      href: '/admin/cms/footer-social',
+    },
   ];
 
   const getInitials = (name: string) => {

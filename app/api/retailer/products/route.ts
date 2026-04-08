@@ -3,6 +3,12 @@ import { connectToDatabase } from '@/lib/mongodb';
 import { getRetailerFromRequest } from '@/lib/auth';
 import { ObjectId } from 'mongodb';
 import { formatProductPrice } from '@/lib/utils/price-calculator';
+import {
+  buildCommissionDisplay,
+  productNetWeightGrams,
+  type CommissionComboRow,
+  type VendorCommissionRow,
+} from '@/lib/commission-display';
 
 const PRODUCT_TYPES = ['Gold', 'Silver', 'Platinum', 'Diamonds', 'Gemstone', 'Imitation'];
 
@@ -41,6 +47,17 @@ function getRetailerCommissionAndPrice(
   }
   const retailerPrice = percent > 0 && basePrice > 0 ? Math.round(basePrice * (1 - percent / 100)) : basePrice;
   return { percent, retailerPrice };
+}
+
+function resolveLookupName(
+  raw: unknown,
+  mapById: Map<string, string>
+): string {
+  if (raw == null || raw === '') return '';
+  const id = raw instanceof ObjectId ? raw.toString() : String(raw);
+  const fromMap = mapById.get(id);
+  if (fromMap) return fromMap;
+  return id;
 }
 
 function normalizeCategoryId(value: unknown): string | null {
@@ -139,17 +156,32 @@ export async function GET(request: NextRequest) {
     const categoryIds = [...new Set(products.map((p: { category?: unknown }) => normalizeCategoryId(p.category)).filter(Boolean))] as string[];
     const vendorIds = [...new Set(products.map((p: { vendorId?: unknown }) => (p.vendorId instanceof ObjectId ? p.vendorId.toString() : p.vendorId)).filter(Boolean))] as string[];
 
-    const [categories, vendorsList] = await Promise.all([
+    const [categories, vendorsList, settingsDoc] = await Promise.all([
       categoryIds.length > 0
         ? db.collection('categories').find({ _id: { $in: categoryIds.map((id) => new ObjectId(id)) } }).project({ name: 1 }).toArray()
         : [],
       vendorIds.length > 0
-        ? db.collection('vendors').find({ _id: { $in: vendorIds.map((id) => new ObjectId(id)) } }).project({ _id: 1, b2bProductTypeCommissions: 1, b2bCommissionRows: 1 }).toArray()
+        ? db
+            .collection('vendors')
+            .find({ _id: { $in: vendorIds.map((id) => new ObjectId(id)) } })
+            .project({
+              _id: 1,
+              b2bProductTypeCommissions: 1,
+              b2bCommissionRows: 1,
+              commissionRows: 1,
+              productTypeCommissions: 1,
+            })
+            .toArray()
         : [],
+      db.collection('settings').findOne({}, { projection: { commissionRows: 1 } }),
     ]);
 
     const categoryMap = new Map(categories.map((c: { _id: ObjectId; name: string }) => [c._id.toString(), c.name]));
     const vendorMap = new Map(vendorsList.map((v: { _id: ObjectId }) => [v._id.toString(), v]));
+    const adminCommissionRows = Array.isArray(settingsDoc?.commissionRows) ? settingsDoc.commissionRows : [];
+
+    const designTypeMap = new Map(designTypes.map((d: { _id: ObjectId; name: string }) => [d._id.toString(), d.name || '']));
+    const metalColourMap = new Map(metalColors.map((m: { _id: ObjectId; name: string }) => [m._id.toString(), m.name || '']));
 
     const list = products.map((product: Record<string, unknown> & { vendorId?: ObjectId; product_type?: string; designType?: string; goldPurity?: string; silverPurity?: string }) => {
       const priceData = formatProductPrice(product);
@@ -158,6 +190,44 @@ export async function GET(request: NextRequest) {
       const vendor = product.vendorId ? vendorMap.get((product.vendorId instanceof ObjectId ? product.vendorId : product.vendorId).toString()) : null;
       const { percent, retailerPrice } = getRetailerCommissionAndPrice(vendor ?? null, product, categoryName ?? null);
       const basePrice = Number(priceData.displayPrice) || Number(priceData.sellingPrice) || Number(priceData.regularPrice) || 0;
+
+      const productType = String(product.product_type || '');
+      const designTypeResolved = resolveLookupName(product.designType, designTypeMap);
+      const metalColourResolved = resolveLookupName(
+        (product as { metalColour?: unknown }).metalColour,
+        metalColourMap
+      );
+      const purityForCommission = String(product.goldPurity || product.silverPurity || '').trim();
+      const metal =
+        productType === 'Gold' || productType === 'Silver' || productType === 'Platinum' ? productType : '';
+      const vendorRows = vendor && Array.isArray((vendor as { commissionRows?: VendorCommissionRow[] }).commissionRows)
+        ? (vendor as { commissionRows: VendorCommissionRow[] }).commissionRows
+        : undefined;
+      const vendorPtComm = (vendor as { productTypeCommissions?: Record<string, number> } | null)?.productTypeCommissions;
+
+      const commission = buildCommissionDisplay(
+        purityForCommission || undefined,
+        adminCommissionRows as CommissionComboRow[],
+        vendorRows,
+        vendorPtComm,
+        productType,
+        categoryName ?? '',
+        designTypeResolved,
+        metal,
+        purityForCommission
+      );
+
+      const weightG = productNetWeightGrams(
+        product as {
+          jewelleryWeight?: number;
+          metalWeight?: number;
+          goldWeight?: number;
+          silverWeight?: number;
+          hasGold?: boolean;
+          hasSilver?: boolean;
+        }
+      );
+
       return {
         _id: (product._id as ObjectId).toString(),
         name: product.name,
@@ -165,6 +235,11 @@ export async function GET(request: NextRequest) {
         categoryId: categoryId || product.category,
         categoryName: categoryName ?? categoryId ?? product.category,
         product_type: product.product_type,
+        designType: designTypeResolved || product.designType || '',
+        metalColour: metalColourResolved || String((product as { metalColour?: string }).metalColour || ''),
+        purityLabel: purityForCommission,
+        weightGrams: weightG,
+        size: (product.size as string) || '',
         retailerPrice,
         originalPrice: basePrice,
         retailerDiscountPercent: percent,
@@ -172,6 +247,11 @@ export async function GET(request: NextRequest) {
         status: product.status,
         mainImage: product.mainImage || product.image || '',
         urlSlug: product.urlSlug,
+        commissionLabelFull: commission.commissionLabelFull,
+        commissionLabelCompact: commission.commissionLabelCompact,
+        adminCommissionPercent: commission.adminCommissionPercent,
+        vendorCommissionPercent: commission.vendorCommissionPercent,
+        purityDisplay: commission.purityDisplay,
       };
     });
 

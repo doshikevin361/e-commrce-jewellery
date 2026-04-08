@@ -34,6 +34,10 @@ export async function GET(request: NextRequest) {
       shippingAddress: o.shippingAddress,
       createdAt: o.createdAt,
       soldToPortalAt: o.soldToPortalAt ?? null,
+      trackingNumber: o.trackingNumber ?? null,
+      courierName: o.courierName ?? null,
+      shiprocketShipmentId: o.shiprocketShipmentId ?? null,
+      shiprocketOrderId: o.shiprocketOrderId ?? null,
     }));
 
     return NextResponse.json({

@@ -25,6 +25,11 @@ interface RetailerProduct {
   categoryId?: string;
   categoryName?: string;
   product_type?: string;
+  designType?: string;
+  metalColour?: string;
+  purityLabel?: string;
+  weightGrams?: number | null;
+  size?: string;
   retailerPrice: number;
   originalPrice: number;
   retailerDiscountPercent: number;
@@ -32,6 +37,13 @@ interface RetailerProduct {
   status: string;
   mainImage?: string;
   urlSlug?: string;
+  /** e.g. (92+2+3) */
+  commissionLabelFull?: string | null;
+  /** e.g. (92+5) */
+  commissionLabelCompact?: string | null;
+  adminCommissionPercent?: number;
+  vendorCommissionPercent?: number;
+  purityDisplay?: number | null;
 }
 
 interface CategoryOption {
@@ -484,8 +496,21 @@ export default function RetailerProductsPage() {
                             <Package className="w-16 h-16 text-slate-300" />
                           </div>
                         )}
+                        {p.purityLabel && String(p.purityLabel).trim() !== '' && (
+                          <span className="absolute top-2 left-2 rounded-md bg-amber-100 text-amber-950 text-xs font-bold px-2 py-1 border border-amber-300/80 shadow-sm">
+                            {p.purityLabel}
+                          </span>
+                        )}
+                        {(p.commissionLabelCompact || p.commissionLabelFull) && p.stock > 0 && (
+                          <span
+                            className="absolute top-2 right-2 rounded-md bg-slate-900/85 text-amber-300 text-xs font-bold px-2 py-1 max-w-[min(100%,8rem)] text-center leading-tight"
+                            title={p.commissionLabelFull || p.commissionLabelCompact || ''}
+                          >
+                            {p.commissionLabelCompact || p.commissionLabelFull}
+                          </span>
+                        )}
                         {p.retailerDiscountPercent > 0 && (
-                          <span className="absolute top-2 left-2 rounded-md bg-emerald-600 text-white text-xs font-semibold px-2 py-1">
+                          <span className="absolute bottom-2 left-2 rounded-md bg-emerald-600 text-white text-xs font-semibold px-2 py-1">
                             {p.retailerDiscountPercent}% B2B off
                           </span>
                         )}
@@ -499,7 +524,48 @@ export default function RetailerProductsPage() {
                         <p className="font-semibold text-slate-900 line-clamp-2 min-h-[2.5rem]" title={p.name}>
                           {p.name}
                         </p>
-                        <div className="flex flex-wrap gap-1.5 mt-1">
+                        <div className="mt-2 space-y-1 text-xs border-t border-slate-100 pt-2">
+                          <div className="flex justify-between gap-2">
+                            <span className="text-slate-500 shrink-0">Design type</span>
+                            <span className="font-medium text-slate-800 text-right">{p.designType?.trim() ? p.designType : '—'}</span>
+                          </div>
+                          <div className="flex justify-between gap-2">
+                            <span className="text-slate-500 shrink-0">Product code</span>
+                            <span className="font-mono text-slate-800 text-right">{p.sku?.trim() ? p.sku : '—'}</span>
+                          </div>
+                          <div className="flex justify-between gap-2">
+                            <span className="text-slate-500 shrink-0">Commission</span>
+                            <span
+                              className="font-semibold text-violet-800 text-right"
+                              title={
+                                p.commissionLabelFull ||
+                                p.commissionLabelCompact ||
+                                'From Commission settings (purity + admin + vendor)'
+                              }
+                            >
+                              {p.commissionLabelFull || p.commissionLabelCompact || '—'}
+                            </span>
+                          </div>
+                          <div className="flex justify-between gap-2">
+                            <span className="text-slate-500 shrink-0">Weight</span>
+                            <span className="font-medium text-slate-800 text-right">
+                              {p.weightGrams != null && p.weightGrams > 0 ? `${p.weightGrams} g` : '—'}
+                            </span>
+                          </div>
+                          <div className="flex justify-between gap-2">
+                            <span className="text-slate-500 shrink-0">Size</span>
+                            <span className="font-medium text-slate-800 text-right">{p.size?.trim() ? p.size : '—'}</span>
+                          </div>
+                          <div className="flex justify-between gap-2">
+                            <span className="text-slate-500 shrink-0">Colour</span>
+                            <span className="font-medium text-slate-800 text-right">{p.metalColour?.trim() ? p.metalColour : '—'}</span>
+                          </div>
+                          <div className="flex justify-between gap-2">
+                            <span className="text-slate-500 shrink-0">Stock</span>
+                            <span className="font-medium text-slate-800 text-right">{p.stock}</span>
+                          </div>
+                        </div>
+                        <div className="flex flex-wrap gap-1.5 mt-2">
                           {p.product_type && (
                             <span className="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
                               {p.product_type}
@@ -511,9 +577,6 @@ export default function RetailerProductsPage() {
                             </span>
                           )}
                         </div>
-                        {p.sku && (
-                          <code className="text-xs text-slate-400 mt-1 block font-mono">{p.sku}</code>
-                        )}
                         <div className="mt-3 flex flex-wrap items-baseline gap-2">
                           <span className="font-bold text-slate-900">{formatPrice(p.retailerPrice)}</span>
                           {p.retailerDiscountPercent > 0 && p.originalPrice > p.retailerPrice && (
@@ -522,7 +585,6 @@ export default function RetailerProductsPage() {
                             </span>
                           )}
                         </div>
-                        <p className="text-xs text-slate-500 mt-1">Stock: {p.stock}</p>
                         <Button
                           type="button"
                           size="sm"
