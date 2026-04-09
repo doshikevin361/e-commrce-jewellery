@@ -6,7 +6,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ArrowLeft, Facebook, Instagram, Loader2, Twitter, Youtube } from 'lucide-react';
+import { ArrowLeft, Facebook, Instagram, Linkedin, Loader2, Twitter, Youtube } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 type Links = {
@@ -14,9 +14,10 @@ type Links = {
   twitter: string;
   youtube: string;
   instagram: string;
+  linkedin: string;
 };
 
-const empty: Links = { facebook: '', twitter: '', youtube: '', instagram: '' };
+const empty: Links = { facebook: '', twitter: '', youtube: '', instagram: '', linkedin: '' };
 
 export function FooterSocialAdminPage() {
   const { toast } = useToast();
@@ -35,6 +36,7 @@ export function FooterSocialAdminPage() {
             twitter: data.twitter || '',
             youtube: data.youtube || '',
             instagram: data.instagram || '',
+            linkedin: data.linkedin || '',
           });
         }
       } catch {
@@ -62,9 +64,10 @@ export function FooterSocialAdminPage() {
           twitter: data.footerSocialLinks.twitter || '',
           youtube: data.footerSocialLinks.youtube || '',
           instagram: data.footerSocialLinks.instagram || '',
+          linkedin: data.footerSocialLinks.linkedin || '',
         });
       }
-      toast({ title: 'Saved', description: 'Website footer will show these links when set.' });
+      toast({ title: 'Saved', variant: 'success', description: 'Website footer will show these links when set.' });
     } catch (e: unknown) {
       toast({
         title: 'Error',
@@ -126,6 +129,7 @@ export function FooterSocialAdminPage() {
             {row('twitter', 'X (Twitter)', 'https://x.com/yourhandle', Twitter)}
             {row('youtube', 'YouTube', 'https://youtube.com/@yourchannel', Youtube)}
             {row('instagram', 'Instagram', 'https://instagram.com/yourprofile', Instagram)}
+            {row('linkedin', 'LinkedIn', 'https://linkedin.com/company/yourcompany', Linkedin)}
             <Button onClick={save} disabled={saving} className="bg-[#22c55e] hover:bg-[#16a34a]">
               {saving ? (
                 <>

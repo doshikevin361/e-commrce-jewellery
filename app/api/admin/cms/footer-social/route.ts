@@ -8,6 +8,7 @@ export type FooterSocialLinks = {
   twitter: string;
   youtube: string;
   instagram: string;
+  linkedin: string;
 };
 
 const EMPTY: FooterSocialLinks = {
@@ -15,6 +16,7 @@ const EMPTY: FooterSocialLinks = {
   twitter: '',
   youtube: '',
   instagram: '',
+  linkedin: '',
 };
 
 function sanitizeUrl(raw: unknown): string {
@@ -33,6 +35,7 @@ function normalizeLinks(body: unknown): FooterSocialLinks {
     twitter: sanitizeUrl(b.twitter),
     youtube: sanitizeUrl(b.youtube),
     instagram: sanitizeUrl(b.instagram),
+    linkedin: sanitizeUrl(b.linkedin),
   };
 }
 

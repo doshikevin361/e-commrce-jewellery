@@ -320,7 +320,10 @@ export default function VendorRegistrationPage() {
       const response = await fetch('/api/verify/details', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ gstNumber: formData.gstin.trim() }),
+        body: JSON.stringify({
+          gstNumber: formData.gstin.trim(),
+          gstBusinessName: formData.businessName.trim() || undefined,
+        }),
       });
       const data = await response.json();
 
@@ -746,7 +749,7 @@ export default function VendorRegistrationPage() {
                         id='gstin'
                         value={formData.gstin}
                         onChange={(e) => handleInputChange('gstin', e.target.value.toUpperCase())}
-                        placeholder='27AACPP9212H1ZO'
+                        placeholder='Sandbox test e.g. 29AAICP2912R1ZR'
                         className={`flex-1 ${errors.gstin ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
                         maxLength={15}
                       />

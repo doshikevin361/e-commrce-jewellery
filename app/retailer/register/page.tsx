@@ -25,6 +25,54 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
+/** GST state code → name (Cashfree / GST address fields may return codes) */
+const STATE_CODE_MAP: Record<string, string> = {
+  '01': 'Jammu and Kashmir',
+  '02': 'Himachal Pradesh',
+  '03': 'Punjab',
+  '04': 'Chandigarh',
+  '05': 'Uttarakhand',
+  '06': 'Haryana',
+  '07': 'Delhi',
+  '08': 'Rajasthan',
+  '09': 'Uttar Pradesh',
+  '10': 'Bihar',
+  '11': 'Sikkim',
+  '12': 'Arunachal Pradesh',
+  '13': 'Nagaland',
+  '14': 'Manipur',
+  '15': 'Mizoram',
+  '16': 'Tripura',
+  '17': 'Meghalaya',
+  '18': 'Assam',
+  '19': 'West Bengal',
+  '20': 'Jharkhand',
+  '21': 'Odisha',
+  '22': 'Chhattisgarh',
+  '23': 'Madhya Pradesh',
+  '24': 'Gujarat',
+  '25': 'Daman and Diu',
+  '26': 'Dadra and Nagar Haveli',
+  '27': 'Maharashtra',
+  '28': 'Andhra Pradesh',
+  '29': 'Karnataka',
+  '30': 'Goa',
+  '31': 'Lakshadweep',
+  '32': 'Kerala',
+  '33': 'Tamil Nadu',
+  '34': 'Puducherry',
+  '35': 'Andaman and Nicobar Islands',
+  '36': 'Telangana',
+  '37': 'Andhra Pradesh',
+  '38': 'Ladakh',
+};
+
+function getStateName(stateCode: string): string | null {
+  if (!stateCode) return null;
+  if (stateCode.length > 2) return stateCode;
+  return STATE_CODE_MAP[stateCode] || null;
+}
+
 interface FormData {
   hasGST: boolean;
   gstin: string;
@@ -52,6 +100,7 @@ export default function RetailerRegistrationPage() {
   const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(1);
   const [isVerifying, setIsVerifying] = useState(false);
+  const [gstVerified, setGstVerified] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
@@ -168,6 +217,9 @@ export default function RetailerRegistrationPage() {
 
   const handleInputChange = (field: keyof FormData, value: unknown) => {
     const normalized = typeof value === 'string' ? normalizeValue(field, value) : value;
+    if (field === 'gstin' || field === 'hasGST') {
+      setGstVerified(false);
+    }
     setFormData((prev) => {
       const next = { ...prev, [field]: normalized };
       setErrors((prevErrors) => {
@@ -240,21 +292,163 @@ export default function RetailerRegistrationPage() {
     'confirmPassword',
   ];
 
-  const isCurrentStepValid = Object.keys(validateFields(getStepFields(currentStep), formData)).length === 0;
+  const stepFieldsValid =
+    Object.keys(validateFields(getStepFields(currentStep), formData)).length === 0;
+  const isCurrentStepValid =
+    currentStep === 1 && formData.hasGST ? stepFieldsValid && gstVerified : stepFieldsValid;
   const isFormValid = Object.keys(validateFields(allFields, formData)).length === 0;
 
   const handleVerifyGSTIN = async () => {
-    const gstError = validateField('gstin', formData.gstin, formData);
-    if (gstError) {
-      setErrors((prev) => ({ ...prev, gstin: gstError }));
+    const gstErr = validateField('gstin', formData.gstin, formData);
+    if (gstErr) {
+      setErrors((prev) => ({ ...prev, gstin: gstErr }));
       return;
     }
+
     setIsVerifying(true);
     try {
-      await new Promise((r) => setTimeout(r, 1500));
-      toast({ title: 'Success', description: 'GSTIN verified successfully', variant: 'default' });
-    } catch {
-      toast({ title: 'Error', description: 'Failed to verify GSTIN', variant: 'destructive' });
+      const response = await fetch('/api/verify/details', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          gstNumber: formData.gstin.trim(),
+          gstBusinessName: formData.businessName.trim() || undefined,
+        }),
+      });
+      const data = await response.json();
+
+      if (
+        !data.success ||
+        (data.verification?.errors && data.verification.errors.length > 0)
+      ) {
+        const err = data.verification?.errors?.find((e: { type: string }) => e.type === 'gst');
+        toast({
+          title: 'GST Verification Error',
+          description:
+            err?.error ||
+            data.message ||
+            'GST verification failed. Check your GSTIN or Cashfree configuration.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      const gstData = data.verification?.gst;
+      if (!gstData) {
+        toast({
+          title: 'GST Verification Error',
+          description: data.message || 'No verification data returned.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      const isValid =
+        gstData.valid === true ||
+        gstData.status === 'VALID' ||
+        gstData.status === 'SUCCESS' ||
+        (typeof gstData.message === 'string' &&
+          gstData.message.toLowerCase().includes('exists'));
+
+      if (!isValid) {
+        toast({
+          title: 'GST Verification Failed',
+          description:
+            (typeof gstData.message === 'string' && gstData.message) ||
+            'GSTIN could not be verified.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      const gstDetails = (gstData as { data?: Record<string, unknown> }).data || gstData;
+
+      const tradeName =
+        (gstDetails.trade_name_of_business as string) ||
+        (gstDetails.tradeNam as string) ||
+        (gstDetails.lgnm as string) ||
+        (gstDetails.trade_name as string);
+      const legalName = gstDetails.legal_name_of_business as string | undefined;
+
+      setFormData((prev) => ({
+        ...prev,
+        businessName: prev.businessName || tradeName || legalName || prev.businessName,
+      }));
+
+      const split = gstDetails.principal_place_split_address as
+        | {
+            flat_number?: string;
+            building_number?: string;
+            building_name?: string;
+            street?: string;
+            location?: string;
+            city?: string;
+            state?: string;
+            pincode?: string;
+          }
+        | undefined;
+
+      if (split) {
+        const buildingParts = [
+          split.flat_number,
+          split.building_number,
+          split.building_name,
+        ].filter(Boolean);
+        setFormData((prev) => ({
+          ...prev,
+          addressLine1:
+            prev.addressLine1 ||
+            (buildingParts.length ? buildingParts.join(', ') : prev.addressLine1),
+          addressLine2:
+            prev.addressLine2 ||
+            [split.street, split.location].filter(Boolean).join(', ') ||
+            prev.addressLine2,
+          city: prev.city || split.city || prev.city,
+          state:
+            prev.state ||
+            getStateName(split.state || '') ||
+            split.state ||
+            prev.state,
+          pincode: prev.pincode || split.pincode || prev.pincode,
+        }));
+      } else if (gstDetails.principal_place_address) {
+        const address = String(gstDetails.principal_place_address);
+        const parts = address.split(',');
+        setFormData((prev) => ({
+          ...prev,
+          addressLine1: prev.addressLine1 || parts[0]?.trim() || prev.addressLine1,
+          addressLine2:
+            prev.addressLine2 ||
+            (parts.length > 1 ? parts.slice(1, -2).join(', ').trim() : '') ||
+            prev.addressLine2,
+        }));
+      }
+
+      const pradr = gstDetails.pradr as
+        | { dst?: string; stcd?: string; pncd?: string }
+        | undefined;
+      if (pradr) {
+        setFormData((prev) => ({
+          ...prev,
+          city: prev.city || (pradr.dst as string) || prev.city,
+          state:
+            prev.state || getStateName(String(pradr.stcd || '')) || prev.state,
+          pincode: prev.pincode || (pradr.pncd as string) || prev.pincode,
+        }));
+      }
+
+      setGstVerified(true);
+      toast({
+        title: 'GST Verified',
+        description: 'GSTIN verified. Review auto-filled fields.',
+      });
+    } catch (error) {
+      console.error('GST verification error:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to verify GSTIN. Try again.',
+        variant: 'destructive',
+      });
     } finally {
       setIsVerifying(false);
     }
@@ -274,8 +468,132 @@ export default function RetailerRegistrationPage() {
     return Object.keys(validateFields(fields, formData)).length === 0;
   };
 
-  const handleNext = () => {
-    if (validateStep()) setCurrentStep((prev) => Math.min(prev + 1, TOTAL_STEPS));
+  const handleNext = async () => {
+    if (!validateStep()) {
+      return;
+    }
+
+    if (currentStep === 1 && formData.hasGST && !gstVerified) {
+      toast({
+        title: 'Verify GSTIN',
+        description: 'Click Verify to confirm your GSTIN before continuing.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (currentStep === 3) {
+      setIsVerifying(true);
+      try {
+        const response = await fetch('/api/verify/details', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            accountNumber: formData.accountNumber.trim(),
+            ifscCode: formData.ifscCode.trim(),
+            accountHolderName: formData.accountHolderName.trim(),
+          }),
+        });
+        const data = await response.json();
+
+        if (
+          !data.success ||
+          (data.verification?.errors && data.verification.errors.length > 0)
+        ) {
+          const bankError = data.verification?.errors?.find(
+            (e: { type: string }) => e.type === 'bank'
+          );
+          toast({
+            title: 'Bank Verification Error',
+            description:
+              bankError?.error ||
+              data.message ||
+              'Bank verification failed. Check details or Cashfree configuration.',
+            variant: 'destructive',
+          });
+          return;
+        }
+
+        const bankData = data.verification?.bank;
+        if (!bankData) {
+          toast({
+            title: 'Bank Verification Error',
+            description: data.message || 'No bank verification data returned.',
+            variant: 'destructive',
+          });
+          return;
+        }
+
+        const bankPayload = bankData as Record<string, unknown>;
+        const isError =
+          bankPayload.status === 'ERROR' ||
+          bankPayload.accountStatus === 'UNABLE_TO_VALIDATE' ||
+          bankPayload.accountStatusCode === 'INVALID_IFSC' ||
+          bankPayload.accountStatusCode === 'INVALID_ACCOUNT' ||
+          bankPayload.accountStatusCode === 'FAILED_AT_BANK' ||
+          (typeof bankPayload.message === 'string' &&
+            /invalid|failed|error/i.test(bankPayload.message));
+
+        const isValid =
+          !isError &&
+          (bankPayload.status === 'VALID' ||
+            bankPayload.status === 'SUCCESS' ||
+            bankPayload.accountStatus === 'VALID' ||
+            bankPayload.accountStatusCode === 'ACCOUNT_IS_VALID' ||
+            bankPayload.valid === true);
+
+        if (isError) {
+          let msg =
+            (typeof bankPayload.message === 'string' && bankPayload.message) ||
+            'Bank account verification failed.';
+          if (bankPayload.accountStatusCode === 'FAILED_AT_BANK') {
+            msg =
+              'Bank verification failed. Check account number, IFSC, and name match bank records.';
+          } else if (bankPayload.accountStatusCode === 'INVALID_IFSC') {
+            msg = 'Invalid IFSC code.';
+          } else if (bankPayload.accountStatusCode === 'INVALID_ACCOUNT') {
+            msg = 'Invalid account number.';
+          }
+          toast({ title: 'Bank Verification Failed', description: msg, variant: 'destructive' });
+          return;
+        }
+
+        if (!isValid) {
+          toast({
+            title: 'Bank Verification Failed',
+            description: 'Could not validate bank account.',
+            variant: 'destructive',
+          });
+          return;
+        }
+
+        const bankNameFromApi = bankPayload.bankName as string | undefined;
+        if (bankNameFromApi) {
+          setFormData((prev) => ({
+            ...prev,
+            bankName: prev.bankName || bankNameFromApi,
+          }));
+        }
+
+        toast({
+          title: 'Bank verified',
+          description: 'Bank details validated successfully.',
+        });
+        setCurrentStep(4);
+      } catch (e) {
+        console.error('Bank verification error:', e);
+        toast({
+          title: 'Error',
+          description: 'Bank verification failed. Try again.',
+          variant: 'destructive',
+        });
+      } finally {
+        setIsVerifying(false);
+      }
+      return;
+    }
+
+    setCurrentStep((prev) => Math.min(prev + 1, TOTAL_STEPS));
   };
 
   const handleBack = () => setCurrentStep((prev) => Math.max(prev - 1, 1));
@@ -428,7 +746,7 @@ export default function RetailerRegistrationPage() {
                         id="gstin"
                         value={formData.gstin}
                         onChange={(e) => handleInputChange('gstin', e.target.value.toUpperCase())}
-                        placeholder="27AACPP9212H1ZO"
+                        placeholder="Sandbox test e.g. 29AAICP2912R1ZR"
                         className={`flex-1 ${errors.gstin ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
                         maxLength={15}
                       />
@@ -677,11 +995,11 @@ export default function RetailerRegistrationPage() {
               )}
               {currentStep < TOTAL_STEPS ? (
                 <Button
-                  onClick={handleNext}
-                  disabled={!isCurrentStepValid}
+                  onClick={() => void handleNext()}
+                  disabled={!isCurrentStepValid || isVerifying}
                   className="flex-1 bg-[#1F3B29] hover:bg-[#2d5a3f]"
                 >
-                  Next
+                  {currentStep === 3 && isVerifying ? 'Verifying…' : 'Next'}
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
               ) : (

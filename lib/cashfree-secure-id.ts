@@ -253,6 +253,8 @@ export async function verifyVendorDetails(vendorData: {
   accountHolderName?: string;
   panNumber?: string;
   gstNumber?: string;
+  /** Optional; reserved for GST name-match flows when supported by Cashfree. */
+  gstBusinessName?: string;
 }): Promise<{
   bank?: CashfreeApiResponse;
   pan?: CashfreeApiResponse;

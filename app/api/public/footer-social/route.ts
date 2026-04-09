@@ -6,6 +6,7 @@ const EMPTY = {
   twitter: '',
   youtube: '',
   instagram: '',
+  linkedin: '',
 };
 
 /** Public: footer “Follow us” URLs from CMS (settings.footerSocialLinks). */
@@ -23,6 +24,7 @@ export async function GET() {
         twitter: typeof links.twitter === 'string' ? links.twitter.trim() : '',
         youtube: typeof links.youtube === 'string' ? links.youtube.trim() : '',
         instagram: typeof links.instagram === 'string' ? links.instagram.trim() : '',
+        linkedin: typeof links.linkedin === 'string' ? links.linkedin.trim() : '',
       },
       { headers: { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120' } }
     );

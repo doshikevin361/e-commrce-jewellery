@@ -696,7 +696,7 @@ const HomeHeader = () => {
         className={`bg-web
  text-white transition-all duration-300 ${isSticky ? 'fixed top-0 left-0 right-0 z-50 shadow-lg' : ''}`}
         onMouseLeave={() => setOpenDropdown(null)}>
-        <div className='relative mx-auto max-w-[1440px] px-1 sm:px-2 md:px-3 lg:px-0'>
+        <div className='hidden lg:block relative mx-auto max-w-[1440px] px-1 sm:px-2 md:px-3 lg:px-0'>
           <div className='flex min-h-[52px] items-center justify-between gap-1 sm:gap-2 md:min-h-14'>
             {/* Logo in Navbar - Only shows when sticky */}
             <div

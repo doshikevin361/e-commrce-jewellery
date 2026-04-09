@@ -11,6 +11,7 @@ export async function POST(request: NextRequest) {
   let accountHolderName: string | undefined;
   let panNumber: string | undefined;
   let gstNumber: string | undefined;
+  let gstBusinessName: string | undefined;
 
   try {
     const body = await request.json();
@@ -20,7 +21,11 @@ export async function POST(request: NextRequest) {
       accountHolderName,
       panNumber,
       gstNumber,
+      gstBusinessName,
     } = body);
+    if (!gstBusinessName && typeof body.businessName === 'string') {
+      gstBusinessName = body.businessName;
+    }
 
     if (!accountNumber && !panNumber && !gstNumber) {
       return NextResponse.json({
@@ -36,11 +41,26 @@ export async function POST(request: NextRequest) {
       accountHolderName,
       panNumber,
       gstNumber,
+      gstBusinessName: gstBusinessName?.trim() || undefined,
     });
 
+    const errs = verificationResults.errors ?? [];
+    const wantedGst = Boolean(gstNumber?.trim());
+    const wantedBank = Boolean(
+      accountNumber?.trim() && ifscCode?.trim() && accountHolderName?.trim()
+    );
+    const wantedPan = Boolean(panNumber?.trim());
+
+    const gstFailed = wantedGst && errs.some(e => e.type === 'gst');
+    const bankFailed = wantedBank && errs.some(e => e.type === 'bank');
+    const panFailed = wantedPan && errs.some(e => e.type === 'pan');
+    const failed = gstFailed || bankFailed || panFailed;
+
     return NextResponse.json({
-      success: true,
-      message: 'Verification completed',
+      success: !failed,
+      message: failed
+        ? errs.map(e => e.error).filter(Boolean).join(' ') || 'Verification failed'
+        : 'Verification completed',
       verification: verificationResults,
     });
   } catch (error: unknown) {

@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Facebook, Twitter, Youtube, Instagram } from 'lucide-react';
+import { Facebook, Twitter, Youtube, Instagram, Linkedin } from 'lucide-react';
 
 type FooterPageType = 'about' | 'policies' | 'jewellery-guide' | 'customer-delight';
 
@@ -40,6 +40,7 @@ interface FooterSocialLinks {
   twitter: string;
   youtube: string;
   instagram: string;
+  linkedin: string;
 }
 
 const emptySocial: FooterSocialLinks = {
@@ -47,6 +48,7 @@ const emptySocial: FooterSocialLinks = {
   twitter: '',
   youtube: '',
   instagram: '',
+  linkedin: '',
 };
 
 export default function Footer() {
@@ -119,6 +121,7 @@ export default function Footer() {
           twitter: typeof data.twitter === 'string' ? data.twitter : '',
           youtube: typeof data.youtube === 'string' ? data.youtube : '',
           instagram: typeof data.instagram === 'string' ? data.instagram : '',
+          linkedin: typeof data.linkedin === 'string' ? data.linkedin : '',
         });
       } catch {
         setSocialLinks(emptySocial);
@@ -188,7 +191,7 @@ export default function Footer() {
   };
 
   const hasAnySocial =
-    [socialLinks.facebook, socialLinks.twitter, socialLinks.youtube, socialLinks.instagram].some(
+    [socialLinks.facebook, socialLinks.twitter, socialLinks.youtube, socialLinks.instagram, socialLinks.linkedin].some(
       (u) => typeof u === 'string' && u.trim().length > 0
     );
 
@@ -370,6 +373,17 @@ export default function Footer() {
                         aria-label='Instagram'
                       >
                         <Instagram size={20} />
+                      </a>
+                    )}
+                    {socialLinks.linkedin.trim() && (
+                      <a
+                        href={socialLinks.linkedin.trim()}
+                        target='_blank'
+                        rel='noopener noreferrer'
+                        className='text-gray-300 hover:text-white transition-colors'
+                        aria-label='LinkedIn'
+                      >
+                        <Linkedin size={20} />
                       </a>
                     )}
                   </div>
