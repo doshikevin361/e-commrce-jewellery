@@ -1,5 +1,58 @@
 import { connectToDatabase } from "@/lib/mongodb";
 import { NextResponse } from "next/server";
+import { ObjectId } from "mongodb";
+
+/** Products may store `category` as an ObjectId or as a name string — footer labels must always be human-readable. */
+function categoryIdString(raw: unknown): string | null {
+  if (raw == null || raw === "") return null;
+  if (raw instanceof ObjectId) return raw.toString();
+  if (typeof raw === "string" && ObjectId.isValid(raw) && new ObjectId(raw).toString() === raw) {
+    return raw;
+  }
+  if (typeof raw === "object" && raw !== null && "_id" in raw) {
+    const id = (raw as { _id: unknown })._id;
+    if (id instanceof ObjectId) return id.toString();
+    if (typeof id === "string" && ObjectId.isValid(id)) return new ObjectId(id).toString();
+  }
+  return null;
+}
+
+async function resolveProductCategoryNames(
+  db: Awaited<ReturnType<typeof connectToDatabase>>["db"],
+  products: { category?: unknown }[]
+): Promise<string[]> {
+  const rawValues = products.map((p) => p.category).filter((c) => c != null && c !== "");
+  const uniqueRaw = Array.from(new Set(rawValues));
+
+  const idStrings = uniqueRaw.map(categoryIdString).filter((x): x is string => x !== null);
+  const idToName = new Map<string, string>();
+  if (idStrings.length > 0) {
+    const docs = await db
+      .collection("categories")
+      .find({ _id: { $in: idStrings.map((id) => new ObjectId(id)) } })
+      .project({ name: 1 })
+      .toArray();
+    for (const doc of docs) {
+      idToName.set((doc._id as ObjectId).toString(), String(doc.name || "").trim());
+    }
+  }
+
+  const labels = new Set<string>();
+  for (const raw of uniqueRaw) {
+    const idStr = categoryIdString(raw);
+    if (idStr) {
+      const name = idToName.get(idStr);
+      if (name) labels.add(name);
+      continue;
+    }
+    if (typeof raw === "string") {
+      const t = raw.trim();
+      if (t) labels.add(t);
+    }
+  }
+
+  return Array.from(labels).sort((a, b) => a.localeCompare(b));
+}
 
 export async function GET() {
   try {
@@ -59,14 +112,8 @@ export async function GET() {
       )
     );
 
-    // Get unique categories
-    const uniqueCategories = Array.from(
-      new Set(
-        products
-          .map(p => p.category)
-          .filter((cat): cat is string => !!cat)
-      )
-    );
+    // Unique category *names* (products often store category as ObjectId — never show raw ids in the footer)
+    const uniqueCategories = await resolveProductCategoryNames(db, products);
 
     // Get unique genders
     const genders = Array.from(
