@@ -17,7 +17,8 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
+import Link from 'next/link';
+import { Plus, Pencil, Share2, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { DataTableBody } from '@/components/ui/data-table-body';
 import { Spinner } from '@/components/ui/spinner';
@@ -116,12 +117,20 @@ export function FooterContentList() {
 
   return (
     <div className='space-y-6'>
-      <div className='flex items-center justify-between'>
+      <div className='flex flex-wrap items-center justify-between gap-3'>
         <h1 className='text-3xl font-bold'>Footer Content</h1>
-        <Button onClick={() => router.push('/admin/cms/footer-content/add')} className='gap-2 bg-[#22c55e]'>
-          <Plus className='h-4 w-4' />
-          Add Footer Page
-        </Button>
+        <div className='flex flex-wrap gap-2'>
+          <Button variant='outline' asChild className='gap-2'>
+            <Link href='/admin/cms/footer-social'>
+              <Share2 className='h-4 w-4' />
+              Footer social links
+            </Link>
+          </Button>
+          <Button onClick={() => router.push('/admin/cms/footer-content/add')} className='gap-2 bg-[#22c55e]'>
+            <Plus className='h-4 w-4' />
+            Add Footer Page
+          </Button>
+        </div>
       </div>
 
       <Card className='shadow-md border border-gray-200 overflow-hidden'>
