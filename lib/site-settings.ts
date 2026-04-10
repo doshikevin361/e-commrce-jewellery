@@ -31,6 +31,10 @@ export type SiteSettings = {
   commissionRows?: CommissionRow[];
 };
 
+/** Bundled brand files in /public */
+export const BRAND_LOGO_PATH = '/jewel-manas-logo.png';
+export const BRAND_FAVICON_PATH = '/favicon.png';
+
 export const defaultSiteSettings: SiteSettings = {
   siteName: 'Jewels Manas Admin',
   siteTitle: 'Jewels Manas – Admin Panel',
@@ -39,8 +43,8 @@ export const defaultSiteSettings: SiteSettings = {
   primaryColor: '#001e38',
   secondaryColor: '#C8A15B',
   accentColor: '#0f172a',
-  logo: '',
-  favicon: '',
+  logo: BRAND_LOGO_PATH,
+  favicon: BRAND_FAVICON_PATH,
   productTypeCommissions: {
     Gold: 5,
     Silver: 4,

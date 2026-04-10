@@ -30,21 +30,8 @@ export const metadata: Metadata = {
   title: 'JewelManas - Exquisite Jewelry Collection',
   description: 'Discover our complete collection of exquisite jewelry. Handcrafted pieces for every occasion.',
   icons: {
-    icon: [
-      {
-        url: '/icon-light-32x32.png',
-        media: '(prefers-color-scheme: light)',
-      },
-      {
-        url: '/icon-dark-32x32.png',
-        media: '(prefers-color-scheme: dark)',
-      },
-      {
-        url: '/icon.svg',
-        type: 'image/svg+xml',
-      },
-    ],
-    apple: '/apple-icon.png',
+    icon: [{ url: '/favicon.png', type: 'image/png' }],
+    apple: '/apple-touch-icon.png',
   },
   generator: 'v0.app',
 };
