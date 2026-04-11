@@ -79,7 +79,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          message: 'Cashfree is not configured. Add CASHFREE_CLIENT_ID and CASHFREE_CLIENT_SECRET to your environment.',
+          message:
+            'Cashfree is not configured. Set CASHFREE_CLIENT_ID and CASHFREE_CLIENT_SECRET. For live Secure ID (GST/bank), use CASHFREE_ENVIRONMENT=PROD and set CASHFREE_VERIFICATION_PUBLIC_KEY_PEM or CASHFREE_VERIFICATION_PUBLIC_KEY_B64 (dashboard → Secure ID → 2FA → Public Key).',
           verification: {
             errors: [
               {
