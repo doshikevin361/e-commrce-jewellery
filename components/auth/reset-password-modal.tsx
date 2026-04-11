@@ -10,7 +10,8 @@ interface ResetPasswordModalProps {
   onOpenChange: (open: boolean) => void;
   token?: string;
   onSwitchToLogin?: () => void;
-  onSwitchToForgotPassword?: () => void;
+  /** Called when user should request a new link (invalid/expired token). Pass tokenExpired when the API said the link expired. */
+  onSwitchToForgotPassword?: (options?: { tokenExpired?: boolean }) => void;
 }
 
 export function ResetPasswordModal({ 
@@ -70,7 +71,7 @@ export function ResetPasswordModal({
         if (data.expired && onSwitchToForgotPassword) {
           setTimeout(() => {
             onOpenChange(false);
-            onSwitchToForgotPassword();
+            onSwitchToForgotPassword({ tokenExpired: true });
           }, 3000);
         }
         return;
@@ -125,7 +126,7 @@ export function ResetPasswordModal({
               <button
                 onClick={() => {
                   onOpenChange(false);
-                  onSwitchToForgotPassword();
+                  onSwitchToForgotPassword({ tokenExpired: false });
                 }}
                 className="inline-block bg-[#1F3B29] text-white px-6 py-2 rounded-lg font-semibold hover:bg-[#2a4d3a] transition-colors"
               >

@@ -26,6 +26,20 @@ function ResetPasswordPageContent() {
     router.push('/');
   };
 
+  const openForgotPasswordOnHome = (options?: { tokenExpired?: boolean }) => {
+    try {
+      sessionStorage.setItem('openForgotPassword', '1');
+      if (options?.tokenExpired) {
+        sessionStorage.setItem('forgotPasswordExpired', '1');
+      } else {
+        sessionStorage.removeItem('forgotPasswordExpired');
+      }
+    } catch {
+      /* ignore */
+    }
+    handleClose();
+  };
+
   if (!token) {
     return null;
   }
@@ -37,8 +51,11 @@ function ResetPasswordPageContent() {
       token={token}
       onSwitchToLogin={() => {
         handleClose();
-        // Login modal will be opened from header
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new Event('openLoginModal'));
+        }
       }}
+      onSwitchToForgotPassword={openForgotPasswordOnHome}
     />
   );
 }
