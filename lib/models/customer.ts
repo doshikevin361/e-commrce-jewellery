@@ -77,6 +77,37 @@ export async function getCustomerByEmail(email: string): Promise<Customer | null
   }
 }
 
+/** Email or 10-digit Indian phone */
+export async function getCustomerByEmailOrPhone(emailOrPhone: string): Promise<Customer | null> {
+  const raw = emailOrPhone.trim();
+  const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(raw);
+  if (isEmail) {
+    return getCustomerByEmail(raw);
+  }
+  try {
+    const { db } = await connectToDatabase();
+    const digits = raw.replace(/\D/g, '');
+    const customer = await db.collection('customers').findOne({ phone: digits });
+    return customer as Customer | null;
+  } catch (error) {
+    console.error('[Customer] Error fetching customer by phone:', error);
+    throw error;
+  }
+}
+
+export async function updateCustomerLastLogin(customerId: string): Promise<void> {
+  try {
+    const { db } = await connectToDatabase();
+    if (!ObjectId.isValid(customerId)) return;
+    await db.collection('customers').updateOne(
+      { _id: new ObjectId(customerId) },
+      { $set: { lastLogin: new Date().toISOString(), updatedAt: new Date() } }
+    );
+  } catch (error) {
+    console.error('[Customer] Error updating last login:', error);
+  }
+}
+
 // Get customer by ID
 export async function getCustomerById(id: string): Promise<Customer | null> {
   try {
@@ -175,9 +206,9 @@ export async function createCustomer(customerData: Omit<Customer, '_id' | 'creat
       email: customerData.email.toLowerCase(),
       orders: 0,
       spent: 0,
-      status: 'active',
+      status: 'active' as const,
       registrationDate: new Date().toISOString().split('T')[0],
-      emailVerified: false,
+      emailVerified: customerData.emailVerified ?? false,
       createdAt: new Date(),
       updatedAt: new Date(),
     };

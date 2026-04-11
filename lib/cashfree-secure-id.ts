@@ -332,6 +332,22 @@ export async function verifyGSTIN(request: GSTVerificationRequest): Promise<Cash
       throw new Error(data.message || 'API returned an error');
     }
 
+    // Cashfree often returns HTTP 200 with failure spelled out in `message` (e.g. "GSTIN Doesn't Exist").
+    if (data.valid === true || data.status === 'VALID' || data.status === 'SUCCESS') {
+      return data;
+    }
+
+    const gstMsg = typeof data.message === 'string' ? data.message.trim() : '';
+    if (
+      data.valid === false ||
+      (gstMsg &&
+        /\b(doesn'?t\s+exist|does\s+not\s+exist|gstin\s+doesn'?t|invalid\s+gstin|no\s+such\s+gst|gstin\s+not\s+found|not\s+found)\b/i.test(
+          gstMsg
+        ))
+    ) {
+      throw new Error(gstMsg || 'GSTIN could not be verified');
+    }
+
     return data;
   } catch (error: any) {
     console.error('[Cashfree] GST verification error:', {

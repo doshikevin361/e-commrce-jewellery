@@ -81,7 +81,9 @@ export async function POST(request: NextRequest) {
       phone: body.businessPhone,
       alternatePhone: body.supplierPhone || '',
       whatsappNumber: '',
-      businessType: 'individual' as const,
+      businessType: (body.businessType === 'company' || body.businessType === 'partnership'
+        ? body.businessType
+        : 'individual') as 'individual' | 'company' | 'partnership',
       gstNumber: body.hasGST ? body.gstin : '',
       panNumber: '',
       businessRegistrationNumber: '',
@@ -113,7 +115,7 @@ export async function POST(request: NextRequest) {
       cancelledCheque: '',
       status: 'pending' as const,
       approvalNotes: '',
-      emailVerified: false,
+      emailVerified: Boolean(body.otpVerified),
       phoneVerified: false,
       documentsVerified: false,
       username: username,
