@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { PasswordInput } from '@/components/ui/password-input';
@@ -9,6 +8,7 @@ import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { AlertCircle } from 'lucide-react';
 import { useSettings } from '@/components/settings/settings-provider';
+import { ForgotPasswordModal } from '@/components/auth/forgot-password-modal';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('admin@grocify.com');
@@ -16,7 +16,8 @@ export default function LoginPage() {
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
+  const [forgotModalOpen, setForgotModalOpen] = useState(false);
+  const [forgotTokenExpired, setForgotTokenExpired] = useState(false);
   const { settings } = useSettings();
   const primaryColor = settings.primaryColor || '#22c55e';
   const siteName = settings.siteName || 'E-commerce';
@@ -27,6 +28,21 @@ export default function LoginPage() {
     const p = new URLSearchParams(window.location.search);
     if (p.get('error') === 'staff-no-modules') {
       setError('Staff account has no modules assigned. Please contact your administrator.');
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      if (sessionStorage.getItem('openPortalForgotPassword') === '1') {
+        sessionStorage.removeItem('openPortalForgotPassword');
+        const exp = sessionStorage.getItem('portalForgotExpired') === '1';
+        sessionStorage.removeItem('portalForgotExpired');
+        setForgotTokenExpired(exp);
+        setForgotModalOpen(true);
+      }
+    } catch {
+      /* ignore */
     }
   }, []);
 
@@ -147,9 +163,15 @@ export default function LoginPage() {
                     Remember me
                   </label>
                 </div>
-                <a href='#' className='text-sm font-medium text-orange-500 hover:text-orange-600'>
+                <button
+                  type='button'
+                  onClick={() => {
+                    setForgotTokenExpired(false);
+                    setForgotModalOpen(true);
+                  }}
+                  className='text-sm font-medium text-orange-500 hover:text-orange-600'>
                   Forgot Password?
-                </a>
+                </button>
               </div>
 
               <Button
@@ -194,6 +216,20 @@ export default function LoginPage() {
             </div>
           </div>
         </Card>
+
+        <ForgotPasswordModal
+          open={forgotModalOpen}
+          onOpenChange={open => {
+            setForgotModalOpen(open);
+            if (!open) setForgotTokenExpired(false);
+          }}
+          forgotPasswordApiPath='/api/auth/admin-vendor/forgot-password'
+          onSwitchToLogin={() => {
+            setForgotModalOpen(false);
+            setForgotTokenExpired(false);
+          }}
+          tokenExpired={forgotTokenExpired}
+        />
       </div>
     </div>
   );

@@ -1,6 +1,5 @@
 import { connectToDatabase } from '@/lib/mongodb';
 import bcrypt from 'bcryptjs';
-
 export interface AdminUser {
   _id?: string;
   email: string;
@@ -12,6 +11,9 @@ export interface AdminUser {
   phone?: string;
   status?: 'active' | 'inactive';
   createdAt?: Date;
+  passwordResetToken?: string;
+  passwordResetExpires?: Date;
+  updatedAt?: Date;
 }
 
 export async function getAdminByEmail(email: string) {
@@ -61,6 +63,24 @@ export async function verifyPassword(password: string, hashedPassword: string) {
     return match;
   } catch (error) {
     console.error('[v0] Error verifying password:', error);
+    throw error;
+  }
+}
+
+export async function hashAdminPassword(password: string): Promise<string> {
+  return bcrypt.hash(password, 10);
+}
+
+export async function getAdminByResetToken(token: string): Promise<AdminUser | null> {
+  try {
+    const { db } = await connectToDatabase();
+    const admin = await db.collection('admins').findOne({
+      passwordResetToken: token,
+      passwordResetExpires: { $gt: new Date() },
+    });
+    return admin as AdminUser | null;
+  } catch (error) {
+    console.error('[Admin] Error fetching by reset token:', error);
     throw error;
   }
 }

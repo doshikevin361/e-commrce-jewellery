@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Eye, EyeOff, Lock, CheckCircle, AlertCircle } from 'lucide-react';
 
@@ -12,6 +11,8 @@ interface ResetPasswordModalProps {
   onSwitchToLogin?: () => void;
   /** Called when user should request a new link (invalid/expired token). Pass tokenExpired when the API said the link expired. */
   onSwitchToForgotPassword?: (options?: { tokenExpired?: boolean }) => void;
+  /** Defaults to customer store API */
+  resetPasswordApiPath?: string;
 }
 
 export function ResetPasswordModal({ 
@@ -19,9 +20,9 @@ export function ResetPasswordModal({
   onOpenChange, 
   token,
   onSwitchToLogin,
-  onSwitchToForgotPassword 
+  onSwitchToForgotPassword,
+  resetPasswordApiPath = '/api/auth/customer/reset-password',
 }: ResetPasswordModalProps) {
-  const router = useRouter();
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -58,7 +59,7 @@ export function ResetPasswordModal({
     setLoading(true);
 
     try {
-      const response = await fetch('/api/auth/customer/reset-password', {
+      const response = await fetch(resetPasswordApiPath, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token, password }),

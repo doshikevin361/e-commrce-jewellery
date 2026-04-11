@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,6 +9,7 @@ import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { AlertCircle, Globe } from 'lucide-react';
 import { useSettings } from '@/components/settings/settings-provider';
+import { ForgotPasswordModal } from '@/components/auth/forgot-password-modal';
 
 export default function RetailerLoginPage() {
   const [email, setEmail] = useState('');
@@ -16,10 +17,27 @@ export default function RetailerLoginPage() {
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [forgotModalOpen, setForgotModalOpen] = useState(false);
+  const [forgotTokenExpired, setForgotTokenExpired] = useState(false);
   const { settings } = useSettings();
   const primaryColor = settings.primaryColor || '#22c55e';
   const siteName = settings.siteName || 'E-commerce';
   const tagline = settings.tagline;
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      if (sessionStorage.getItem('openRetailerForgotPassword') === '1') {
+        sessionStorage.removeItem('openRetailerForgotPassword');
+        const exp = sessionStorage.getItem('retailerForgotExpired') === '1';
+        sessionStorage.removeItem('retailerForgotExpired');
+        setForgotTokenExpired(exp);
+        setForgotModalOpen(true);
+      }
+    } catch {
+      /* ignore */
+    }
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -173,12 +191,16 @@ export default function RetailerLoginPage() {
                     Remember me
                   </label>
                 </div>
-                <a
-                  href="#"
+                <button
+                  type="button"
+                  onClick={() => {
+                    setForgotTokenExpired(false);
+                    setForgotModalOpen(true);
+                  }}
                   className="text-sm font-medium text-amber-400/90 hover:text-amber-300 transition shrink-0"
                 >
                   Forgot Password?
-                </a>
+                </button>
               </div>
               <Button
                 type="submit"
@@ -225,6 +247,20 @@ export default function RetailerLoginPage() {
             Return to storefront
           </Link>
         </p>
+
+        <ForgotPasswordModal
+          open={forgotModalOpen}
+          onOpenChange={(open) => {
+            setForgotModalOpen(open);
+            if (!open) setForgotTokenExpired(false);
+          }}
+          forgotPasswordApiPath="/api/retailer-auth/forgot-password"
+          onSwitchToLogin={() => {
+            setForgotModalOpen(false);
+            setForgotTokenExpired(false);
+          }}
+          tokenExpired={forgotTokenExpired}
+        />
       </div>
     </div>
   );
