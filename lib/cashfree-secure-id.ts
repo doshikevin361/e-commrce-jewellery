@@ -22,6 +22,18 @@ function assertCashfreeAuth(): void {
   }
 }
 
+/** Cashfree returns this when prod keys hit sandbox host (or the reverse). */
+function hintCashfreeEnvMismatch(apiMessage: string): string {
+  const m = String(apiMessage || '');
+  if (/belongs to prod environment/i.test(m)) {
+    return `${m} — Your keys are LIVE: set CASHFREE_ENVIRONMENT=PROD (or CASHFREE_BASE_URL=https://api.cashfree.com). Do not use sandbox.cashfree.com with production client credentials.`;
+  }
+  if (/belongs to (test|sandbox)|test environment keys/i.test(m)) {
+    return `${m} — Your keys are SANDBOX: set CASHFREE_ENVIRONMENT=TEST and use sandbox client id/secret from the test dashboard, or use CASHFREE_BASE_URL=https://sandbox.cashfree.com.`;
+  }
+  return m;
+}
+
 interface CashfreeApiResponse {
   reference_id: string;
   status: string;
@@ -114,7 +126,9 @@ export async function verifyBankAccount(request: BankVerificationRequest): Promi
     });
 
     if (!response.ok) {
-      let errorMessage = data.message || data.error || `Bank verification failed: ${response.status}`;
+      let errorMessage = hintCashfreeEnvMismatch(
+        data.message || data.error || `Bank verification failed: ${response.status}`
+      );
       const errorCode = data.code || data.type || 'unknown_error';
 
       if (
@@ -213,7 +227,9 @@ export async function verifyPAN(request: PANVerificationRequest): Promise<Cashfr
     });
     
     if (!response.ok) {
-      const errorMessage = data.message || data.error || `PAN verification failed: ${response.status}`;
+      const errorMessage = hintCashfreeEnvMismatch(
+        data.message || data.error || `PAN verification failed: ${response.status}`
+      );
       console.error('[Cashfree] PAN API Error:', {
         status: response.status,
         code: data.code || data.type,
@@ -282,7 +298,9 @@ export async function verifyGSTIN(request: GSTVerificationRequest): Promise<Cash
     
     if (!response.ok) {
       // Handle Cashfree API error responses
-      let errorMessage = data.message || data.error || `GST verification failed: ${response.status}`;
+      let errorMessage = hintCashfreeEnvMismatch(
+        data.message || data.error || `GST verification failed: ${response.status}`
+      );
       const errorCode = data.code || data.type || 'unknown_error';
 
       if (
@@ -372,7 +390,9 @@ export async function verifyPANGST(request: PANGSTVerificationRequest): Promise<
     });
     
     if (!response.ok) {
-      const errorMessage = data.message || data.error || `PAN-GST verification failed: ${response.status}`;
+      const errorMessage = hintCashfreeEnvMismatch(
+        data.message || data.error || `PAN-GST verification failed: ${response.status}`
+      );
       console.error('[Cashfree] PAN-GST API Error:', {
         status: response.status,
         code: data.code || data.type,
