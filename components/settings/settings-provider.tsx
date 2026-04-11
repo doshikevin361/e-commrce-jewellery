@@ -47,10 +47,12 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
         if (!managedFavicon) {
           managedFavicon = document.createElement('link');
           managedFavicon.rel = 'icon';
-          managedFavicon.type = 'image/png';
           managedFavicon.setAttribute('data-site-settings-favicon', 'true');
           head.appendChild(managedFavicon);
         }
+        const ext = favicon.split('?')[0].split('.').pop()?.toLowerCase();
+        managedFavicon.type =
+          ext === 'svg' ? 'image/svg+xml' : ext === 'ico' ? 'image/x-icon' : 'image/png';
         managedFavicon.href = favicon;
       } else if (managedFavicon?.parentNode) {
         managedFavicon.parentNode.removeChild(managedFavicon);
@@ -70,7 +72,12 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
       if (cached) {
         const parsed = JSON.parse(cached);
         if (parsed && typeof parsed === 'object') {
-          const normalized = { ...defaultSiteSettings, ...parsed };
+          const merged = { ...defaultSiteSettings, ...parsed };
+          const normalized: SiteSettings = {
+            ...merged,
+            logo: merged.logo?.trim() || defaultSiteSettings.logo,
+            favicon: merged.favicon?.trim() || defaultSiteSettings.favicon,
+          };
           setSettings(normalized);
           applyBrandTokens(normalized);
         }
@@ -95,7 +102,12 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
         throw new Error('Failed to load settings');
       }
       const payload = await response.json();
-      const normalized: SiteSettings = { ...defaultSiteSettings, ...payload };
+      const merged = { ...defaultSiteSettings, ...payload };
+      const normalized: SiteSettings = {
+        ...merged,
+        logo: merged.logo?.trim() || defaultSiteSettings.logo,
+        favicon: merged.favicon?.trim() || defaultSiteSettings.favicon,
+      };
       setSettings(normalized);
       applyBrandTokens(normalized);
 

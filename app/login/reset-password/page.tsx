@@ -4,7 +4,7 @@ import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { ResetPasswordModal } from '@/components/auth/reset-password-modal';
 
-function ResetPasswordPageContent() {
+function LoginResetPasswordContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [token, setToken] = useState<string | undefined>(undefined);
@@ -16,23 +16,22 @@ function ResetPasswordPageContent() {
       setToken(tokenParam);
       setModalOpen(true);
     } else {
-      // No token, redirect to home
-      router.push('/');
+      router.push('/login');
     }
   }, [searchParams, router]);
 
   const handleClose = () => {
     setModalOpen(false);
-    router.push('/');
+    router.push('/login');
   };
 
-  const openForgotPasswordOnHome = (options?: { tokenExpired?: boolean }) => {
+  const openForgotOnLogin = (options?: { tokenExpired?: boolean }) => {
     try {
-      sessionStorage.setItem('openForgotPassword', '1');
+      sessionStorage.setItem('openPortalForgotPassword', '1');
       if (options?.tokenExpired) {
-        sessionStorage.setItem('forgotPasswordExpired', '1');
+        sessionStorage.setItem('portalForgotExpired', '1');
       } else {
-        sessionStorage.removeItem('forgotPasswordExpired');
+        sessionStorage.removeItem('portalForgotExpired');
       }
     } catch {
       /* ignore */
@@ -49,22 +48,17 @@ function ResetPasswordPageContent() {
       open={modalOpen}
       onOpenChange={handleClose}
       token={token}
-      onSwitchToLogin={() => {
-        handleClose();
-        if (typeof window !== 'undefined') {
-          window.dispatchEvent(new Event('openLoginModal'));
-        }
-      }}
-      onSwitchToForgotPassword={openForgotPasswordOnHome}
+      resetPasswordApiPath="/api/auth/admin-vendor/reset-password"
+      onSwitchToLogin={handleClose}
+      onSwitchToForgotPassword={openForgotOnLogin}
     />
   );
 }
 
-export default function ResetPasswordPage() {
+export default function LoginResetPasswordPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
-      <ResetPasswordPageContent />
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900">Loading...</div>}>
+      <LoginResetPasswordContent />
     </Suspense>
   );
 }
-

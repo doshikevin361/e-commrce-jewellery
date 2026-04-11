@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { AuthModal } from '@/components/auth/auth-modal';
+import { ForgotPasswordModal } from '@/components/auth/forgot-password-modal';
 
 function VerifyEmailForm({ 
   onOpenLogin, 
@@ -220,6 +221,7 @@ function VerifyEmailForm({
 
 export default function VerifyEmailPage() {
   const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [forgotPasswordModalOpen, setForgotPasswordModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
 
   return (
@@ -252,6 +254,19 @@ export default function VerifyEmailPage() {
         mode={authMode}
         onSwitchMode={() => {
           setAuthMode(authMode === 'login' ? 'register' : 'login');
+        }}
+        onSwitchToForgotPassword={() => {
+          setAuthModalOpen(false);
+          setForgotPasswordModalOpen(true);
+        }}
+      />
+      <ForgotPasswordModal
+        open={forgotPasswordModalOpen}
+        onOpenChange={setForgotPasswordModalOpen}
+        onSwitchToLogin={() => {
+          setForgotPasswordModalOpen(false);
+          setAuthMode('login');
+          setAuthModalOpen(true);
         }}
       />
     </>

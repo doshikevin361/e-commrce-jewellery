@@ -4,7 +4,7 @@ import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { ResetPasswordModal } from '@/components/auth/reset-password-modal';
 
-function ResetPasswordPageContent() {
+function RetailerResetPasswordContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [token, setToken] = useState<string | undefined>(undefined);
@@ -16,23 +16,22 @@ function ResetPasswordPageContent() {
       setToken(tokenParam);
       setModalOpen(true);
     } else {
-      // No token, redirect to home
-      router.push('/');
+      router.push('/retailer/login');
     }
   }, [searchParams, router]);
 
   const handleClose = () => {
     setModalOpen(false);
-    router.push('/');
+    router.push('/retailer/login');
   };
 
-  const openForgotPasswordOnHome = (options?: { tokenExpired?: boolean }) => {
+  const openForgotOnRetailerLogin = (options?: { tokenExpired?: boolean }) => {
     try {
-      sessionStorage.setItem('openForgotPassword', '1');
+      sessionStorage.setItem('openRetailerForgotPassword', '1');
       if (options?.tokenExpired) {
-        sessionStorage.setItem('forgotPasswordExpired', '1');
+        sessionStorage.setItem('retailerForgotExpired', '1');
       } else {
-        sessionStorage.removeItem('forgotPasswordExpired');
+        sessionStorage.removeItem('retailerForgotExpired');
       }
     } catch {
       /* ignore */
@@ -49,22 +48,17 @@ function ResetPasswordPageContent() {
       open={modalOpen}
       onOpenChange={handleClose}
       token={token}
-      onSwitchToLogin={() => {
-        handleClose();
-        if (typeof window !== 'undefined') {
-          window.dispatchEvent(new Event('openLoginModal'));
-        }
-      }}
-      onSwitchToForgotPassword={openForgotPasswordOnHome}
+      resetPasswordApiPath="/api/retailer-auth/reset-password"
+      onSwitchToLogin={handleClose}
+      onSwitchToForgotPassword={openForgotOnRetailerLogin}
     />
   );
 }
 
-export default function ResetPasswordPage() {
+export default function RetailerResetPasswordPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
-      <ResetPasswordPageContent />
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-[#0b1220]">Loading...</div>}>
+      <RetailerResetPasswordContent />
     </Suspense>
   );
 }
-

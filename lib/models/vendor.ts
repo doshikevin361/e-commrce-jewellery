@@ -62,6 +62,8 @@ export interface Vendor {
   sendCredentialsEmail: boolean;
   createdAt?: Date;
   updatedAt?: Date;
+  passwordResetToken?: string;
+  passwordResetExpires?: Date;
 }
 
 export async function getAllVendors() {
@@ -127,4 +129,13 @@ export async function hashVendorPassword(password: string) {
     console.error('[v0] Error hashing vendor password:', error);
     throw error;
   }
+}
+
+export async function getVendorByResetToken(token: string): Promise<Vendor | null> {
+  const { db } = await connectToDatabase();
+  const vendor = await db.collection('vendors').findOne({
+    passwordResetToken: token,
+    passwordResetExpires: { $gt: new Date() },
+  });
+  return vendor as Vendor | null;
 }

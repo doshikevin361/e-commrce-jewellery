@@ -42,6 +42,8 @@ export interface Retailer {
   createdAt?: Date;
   updatedAt?: Date;
   approvedAt?: Date;
+  passwordResetToken?: string;
+  passwordResetExpires?: Date;
 }
 
 export async function getRetailerByEmail(email: string) {
@@ -82,4 +84,13 @@ export async function updateRetailer(id: string, data: Partial<Retailer>) {
     { _id: new ObjectId(id) },
     { $set: { ...data, updatedAt: new Date() } }
   );
+}
+
+export async function getRetailerByResetToken(token: string): Promise<Retailer | null> {
+  const { db } = await connectToDatabase();
+  const doc = await db.collection('retailers').findOne({
+    passwordResetToken: token,
+    passwordResetExpires: { $gt: new Date() },
+  });
+  return doc as Retailer | null;
 }

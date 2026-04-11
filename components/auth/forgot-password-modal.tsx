@@ -9,13 +9,16 @@ interface ForgotPasswordModalProps {
   onOpenChange: (open: boolean) => void;
   onSwitchToLogin?: () => void;
   tokenExpired?: boolean;
+  /** Defaults to customer store API */
+  forgotPasswordApiPath?: string;
 }
 
 export function ForgotPasswordModal({ 
   open, 
   onOpenChange, 
   onSwitchToLogin,
-  tokenExpired = false 
+  tokenExpired = false,
+  forgotPasswordApiPath = '/api/auth/customer/forgot-password',
 }: ForgotPasswordModalProps) {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
@@ -53,7 +56,7 @@ export function ForgotPasswordModal({
     setLoading(true);
 
     try {
-      const response = await fetch('/api/auth/customer/forgot-password', {
+      const response = await fetch(forgotPasswordApiPath, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),

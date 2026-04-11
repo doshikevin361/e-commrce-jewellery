@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { Search, Heart, ShoppingCart, ChevronDown, ChevronRight, Clock, Store, LogOut, User, TruckIcon, Package, Menu } from 'lucide-react';
 import { AuthModal } from '@/components/auth/auth-modal';
+import { ForgotPasswordModal } from '@/components/auth/forgot-password-modal';
 import toast from 'react-hot-toast';
 import { useCart } from '@/contexts/CartContext';
 import { useWishlist } from '@/contexts/WishlistContext';
@@ -15,6 +16,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { useSettings } from '@/components/settings/settings-provider';
+import { BRAND_LOGO_PATH } from '@/lib/site-settings';
 
 type CategoryOccasion = {
   name: string;
@@ -76,9 +79,13 @@ const getRecentlyViewedId = (item: RecentlyViewedItem) => {
 };
 
 const HomeHeader = () => {
+  const { settings } = useSettings();
+  const headerLogoSrc = settings.logo?.trim() || BRAND_LOGO_PATH;
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [isSticky, setIsSticky] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [forgotPasswordModalOpen, setForgotPasswordModalOpen] = useState(false);
+  const [forgotTokenExpired, setForgotTokenExpired] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [customerName, setCustomerName] = useState<string>('');
@@ -221,6 +228,43 @@ const HomeHeader = () => {
   const handleSwitchMode = () => {
     setAuthMode(prev => (prev === 'login' ? 'register' : 'login'));
   };
+
+  const handleSwitchToForgotPassword = () => {
+    setAuthModalOpen(false);
+    setForgotTokenExpired(false);
+    setForgotPasswordModalOpen(true);
+  };
+
+  const handleForgotPasswordModalOpenChange = (open: boolean) => {
+    setForgotPasswordModalOpen(open);
+    if (!open) {
+      setForgotTokenExpired(false);
+    }
+  };
+
+  const handleForgotSwitchToLogin = () => {
+    setForgotPasswordModalOpen(false);
+    setForgotTokenExpired(false);
+    setAuthMode('login');
+    setAuthModalOpen(true);
+  };
+
+  // Open forgot-password after email link expiry flow (set from /reset-password)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const open = sessionStorage.getItem('openForgotPassword');
+      if (open === '1') {
+        sessionStorage.removeItem('openForgotPassword');
+        const expired = sessionStorage.getItem('forgotPasswordExpired') === '1';
+        sessionStorage.removeItem('forgotPasswordExpired');
+        setForgotTokenExpired(expired);
+        setForgotPasswordModalOpen(true);
+      }
+    } catch {
+      /* ignore */
+    }
+  }, [pathname]);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -517,11 +561,8 @@ const HomeHeader = () => {
                 href='/'
                 className='flex min-w-0 flex-1 items-center justify-center gap-2 sm:justify-start lg:flex-none lg:shrink-0 lg:justify-start'>
                 <div className='flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white ring-1 ring-gray-100 sm:h-[52px] sm:w-[52px] lg:h-[70px] lg:w-[70px] lg:ring-0'>
-                  <img src='/logo.png' alt='Jewel Manas' className='h-full w-full object-contain' />
+                  <img src={headerLogoSrc} alt='Jewel Manas' className='h-full w-full object-contain' />
                 </div>
-                <span className='truncate font-serif text-base font-bold tracking-wide text-[#001e38] sm:text-lg lg:text-2xl'>
-                  Jewel Manas
-                </span>
               </Link>
 
               {/* Action icons — compact on phone, labels from sm on tablet */}
@@ -705,10 +746,9 @@ const HomeHeader = () => {
               }`}>
               <Link href='/'>
                 <div className='w-10 h-10 bg-white rounded-full flex items-center justify-center'>
-                  <img src='/light_logo.png' className='w-full h-full object-contain' />
+                  <img src={headerLogoSrc} alt='Jewel Manas' className='w-full h-full object-contain' />
                 </div>
               </Link>
-              <span className='text-lg font-bold text-white tracking-wide'>Jewel Manas</span>
             </div>
 
             {/* Menu Items */}
@@ -876,7 +916,19 @@ const HomeHeader = () => {
       </div>
 
       {/* Auth Modal */}
-      <AuthModal open={authModalOpen} onOpenChange={setAuthModalOpen} mode={authMode} onSwitchMode={handleSwitchMode} />
+      <AuthModal
+        open={authModalOpen}
+        onOpenChange={setAuthModalOpen}
+        mode={authMode}
+        onSwitchMode={handleSwitchMode}
+        onSwitchToForgotPassword={handleSwitchToForgotPassword}
+      />
+      <ForgotPasswordModal
+        open={forgotPasswordModalOpen}
+        onOpenChange={handleForgotPasswordModalOpenChange}
+        onSwitchToLogin={handleForgotSwitchToLogin}
+        tokenExpired={forgotTokenExpired}
+      />
     </div>
   );
 };
