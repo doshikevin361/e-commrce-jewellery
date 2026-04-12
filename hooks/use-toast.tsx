@@ -1,69 +1,78 @@
 'use client';
 
 import React, { useCallback } from 'react';
-import { Id, ToastContent, ToastOptions, TypeOptions, toast as toastify } from 'react-toastify';
+import toastHot from 'react-hot-toast';
 
 type ToastVariant = 'default' | 'success' | 'info' | 'warning' | 'destructive';
 
-export interface ToastMessage extends ToastOptions {
+/** Matches previous API; uses react-hot-toast (root `app/layout.tsx` mounts `<Toaster />`). */
+export interface ToastMessage {
   title?: React.ReactNode;
   description?: React.ReactNode;
   variant?: ToastVariant;
+  /** Duration in ms (default 3000) */
+  duration?: number;
+  id?: string;
 }
 
-const defaultToastOptions: ToastOptions = {
-  position: 'top-center',
-  autoClose: 3000, // <-- ALWAYS auto close after 3 sec
-  hideProgressBar: true,
-  closeOnClick: true,
-  pauseOnHover: false, // <-- keeps the 3 second timer running
-  pauseOnFocusLoss: false,
-  draggable: false,
-  theme: 'colored',
-};
-
-const variantToType: Record<ToastVariant, TypeOptions> = {
-  default: 'default',
-  success: 'success',
-  info: 'info',
-  warning: 'warning',
-  destructive: 'error',
-};
-
-const buildToastContent = (title?: React.ReactNode, description?: React.ReactNode): ToastContent => {
+const buildToastContent = (title?: React.ReactNode, description?: React.ReactNode) => {
   if (!title && !description) return null;
 
   return (
-    <div className='flex flex-col gap-1'>
-      {title ? <p className='text-sm font-semibold text-white dark:text-white'>{title}</p> : null}
-      {description ? <p className='text-sm text-white dark:text-slate-200'>{description}</p> : null}
+    <div className='flex flex-col gap-1 text-left'>
+      {title ? <p className='text-sm font-semibold text-[#1F3B29]'>{title}</p> : null}
+      {description ? <p className='text-sm font-normal text-slate-600'>{description}</p> : null}
     </div>
   );
 };
 
 const showToastInternal = (payload: ToastMessage = {}) => {
-  const { title, description, variant = 'default', type, ...options } = payload;
+  const { title, description, variant = 'default', duration = 3000, id } = payload;
 
   const content = buildToastContent(title, description) ?? title ?? description ?? '';
+  const opts = { duration, id };
 
-  return toastify(content, {
-    ...defaultToastOptions,
-    type: type ?? variantToType[variant],
-    ...options,
-  });
+  if (variant === 'success') {
+    return toastHot.success(content, opts);
+  }
+  if (variant === 'destructive') {
+    return toastHot.error(content, opts);
+  }
+  if (variant === 'warning') {
+    return toastHot(content, { ...opts, icon: '⚠️' });
+  }
+  if (variant === 'info') {
+    return toastHot(content, { ...opts, icon: 'ℹ️' });
+  }
+  return toastHot(content, opts);
 };
 
-const dismissToastInternal = (toastId?: Id) => toastify.dismiss(toastId);
+const dismissToastInternal = (toastId?: string) => {
+  if (toastId) toastHot.dismiss(toastId);
+  else toastHot.dismiss();
+};
 
 function useToastMessage() {
   const showToast = useCallback((payload?: ToastMessage) => showToastInternal(payload), []);
 
-  const showSuccess = useCallback((payload: Omit<ToastMessage, 'variant'>) => showToast({ ...payload, variant: 'success' }), [showToast]);
-  const showError = useCallback((payload: Omit<ToastMessage, 'variant'>) => showToast({ ...payload, variant: 'destructive' }), [showToast]);
-  const showInfo = useCallback((payload: Omit<ToastMessage, 'variant'>) => showToast({ ...payload, variant: 'info' }), [showToast]);
-  const showWarning = useCallback((payload: Omit<ToastMessage, 'variant'>) => showToast({ ...payload, variant: 'warning' }), [showToast]);
+  const showSuccess = useCallback(
+    (payload: Omit<ToastMessage, 'variant'>) => showToast({ ...payload, variant: 'success' }),
+    [showToast]
+  );
+  const showError = useCallback(
+    (payload: Omit<ToastMessage, 'variant'>) => showToast({ ...payload, variant: 'destructive' }),
+    [showToast]
+  );
+  const showInfo = useCallback(
+    (payload: Omit<ToastMessage, 'variant'>) => showToast({ ...payload, variant: 'info' }),
+    [showToast]
+  );
+  const showWarning = useCallback(
+    (payload: Omit<ToastMessage, 'variant'>) => showToast({ ...payload, variant: 'warning' }),
+    [showToast]
+  );
 
-  const dismiss = useCallback((toastId?: Id) => dismissToastInternal(toastId), []);
+  const dismiss = useCallback((toastId?: string) => dismissToastInternal(toastId), []);
 
   return {
     toast: showToast,

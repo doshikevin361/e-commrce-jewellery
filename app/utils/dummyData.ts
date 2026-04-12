@@ -71,56 +71,8 @@ export const images = [
 
 export const navLinks = ['Home', 'Shop', 'Collections', 'Stories', 'About', 'Contact'];
 
-export const blogCards = [
-  {
-    id: 1,
-    img: 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=1600&q=80',
-    category: 'Design',
-    date: 'Nov 12, 2025',
-    title: 'Match your mood with metal',
-    desc: 'Discover how to pair precious metals with your daily mood and wardrobe to elevate every look.',
-  },
-  {
-    id: 2,
-    img: 'https://images.unsplash.com/photo-1611591437281-460bfbe1220a?w=1600&q=80',
-    category: 'Stories',
-    date: 'Nov 06, 2025',
-    title: 'Behind the model stories',
-    desc: 'Step behind the scenes with our artisans and muses crafting each JewelManas collection.',
-  },
-  {
-    id: 3,
-    img: 'https://images.unsplash.com/photo-1601121141461-9d6647bca1ed?w=1600&q=80',
-    category: 'Craft',
-    date: 'Oct 29, 2025',
-    title: 'How metals are treated at JewelManas',
-    desc: 'An inside look at the finishing touches and time-honored techniques used in our studio.',
-  },
-  {
-    id: 4,
-    img: 'https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0?w=1600&q=80',
-    category: 'Trends',
-    date: 'Nov 18, 2025',
-    title: 'Timeless pieces for modern elegance',
-    desc: 'Explore the jewelry trends that seamlessly blend classic sophistication with contemporary style.',
-  },
-  {
-    id: 5,
-    img: 'https://images.unsplash.com/photo-1573408301185-9146fe634ad0?w=1600&q=80',
-    category: 'Guide',
-    date: 'Nov 15, 2025',
-    title: 'Caring for your precious gems',
-    desc: 'Expert tips on maintaining the brilliance and beauty of your fine jewelry for generations.',
-  },
-  {
-    id: 6,
-    img: 'https://images.unsplash.com/photo-1611085583191-a3b181a88401?w=1600&q=80',
-    category: 'Collection',
-    date: 'Nov 22, 2025',
-    title: 'The art of layering necklaces',
-    desc: 'Master the sophisticated art of stacking and layering delicate chains for effortless glamour.',
-  },
-];
+/** Full editorial posts — see `lib/blog-posts.ts` */
+export { blogCards } from '@/lib/blog-posts';
 export const categoriess = [
   {
     name: 'Earrings',

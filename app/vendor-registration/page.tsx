@@ -167,6 +167,8 @@ export default function VendorRegistrationPage() {
   const [pincodeLookupError, setPincodeLookupError] = useState<string | null>(null);
   /** Shown under GST field when Cashfree says invalid / API returns errors */
   const [gstVerificationError, setGstVerificationError] = useState<string | null>(null);
+  /** Shown under email when /api/verify/check-vendor-email reports already registered */
+  const [vendorEmailCheckError, setVendorEmailCheckError] = useState<string | null>(null);
   const [geoDetecting, setGeoDetecting] = useState(false);
 
   const [indianBanks, setIndianBanks] = useState<string[]>([]);
@@ -376,6 +378,7 @@ export default function VendorRegistrationPage() {
   };
 
   const handleSendOTP = async () => {
+    setVendorEmailCheckError(null);
     if (!formData.email.trim()) {
       toast({
         title: 'Error',
@@ -402,11 +405,29 @@ export default function VendorRegistrationPage() {
       const checkRes = await fetch(
         `/api/verify/check-vendor-email?email=${encodeURIComponent(formData.email)}`
       );
-      const { exists } = await checkRes.json();
-      if (exists) {
+      const checkJson = await checkRes.json();
+      if (!checkRes.ok) {
+        const msg =
+          typeof checkJson.error === 'string'
+            ? checkJson.error
+            : 'Could not verify this email. Please try again.';
+        setVendorEmailCheckError(msg);
         toast({
-          title: 'Email Already Registered',
-          description: 'A vendor with this email is already registered. Please use a different email or sign in.',
+          title: 'Error',
+          description: msg,
+          variant: 'destructive',
+        });
+        setLoading(false);
+        return;
+      }
+      const exists = Boolean(checkJson.exists);
+      if (exists) {
+        const msg =
+          'A vendor with this email is already registered. Use a different email or sign in.';
+        setVendorEmailCheckError(msg);
+        toast({
+          title: 'Email already registered',
+          description: msg,
           variant: 'destructive',
         });
         setLoading(false);
@@ -414,6 +435,13 @@ export default function VendorRegistrationPage() {
       }
     } catch (e) {
       console.error('Vendor email check error:', e);
+      const msg = 'Could not verify this email. Please try again.';
+      setVendorEmailCheckError(msg);
+      toast({
+        title: 'Error',
+        description: msg,
+        variant: 'destructive',
+      });
       setLoading(false);
       return;
     }
@@ -1732,6 +1760,7 @@ export default function VendorRegistrationPage() {
                   type='email'
                   value={formData.email}
                   onChange={e => {
+                    setVendorEmailCheckError(null);
                     setFormData(prev => ({ ...prev, email: e.target.value }));
                     // Reset OTP state when email changes
                     setOtpSent(false);
@@ -1742,6 +1771,11 @@ export default function VendorRegistrationPage() {
                   className='w-full'
                   disabled={loading || otpSent}
                 />
+                {vendorEmailCheckError ? (
+                  <p className='text-sm text-red-600 mt-2' role='alert'>
+                    {vendorEmailCheckError}
+                  </p>
+                ) : null}
               </div>
 
               {!otpSent ? (

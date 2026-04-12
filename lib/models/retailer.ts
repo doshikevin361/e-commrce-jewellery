@@ -38,6 +38,8 @@ export interface Retailer {
   website?: string;
   trustedVendorIds: string[];
   status: RetailerStatus;
+  /** Set when signup completed OTP (same idea as vendor `emailVerified`) */
+  emailVerified?: boolean;
   approvalNotes?: string;
   createdAt?: Date;
   updatedAt?: Date;

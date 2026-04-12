@@ -4,7 +4,7 @@ import { CategoriesSidebar } from '@/components/home/CategoriesSidebar';
 import { Diamond, Calendar, ArrowRight, BookOpen } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { blogCards } from '@/app/utils/dummyData';
+import { blogCards } from '@/lib/blog-posts';
 
 export default function BlogPage() {
   return (
@@ -67,9 +67,10 @@ export default function BlogPage() {
                     <span className='px-3 sm:px-4 py-1 sm:py-1.5 rounded-full bg-[#C8A15B]/10 text-[#C8A15B] text-xs sm:text-sm font-semibold uppercase tracking-wide'>
                       {post.category}
                     </span>
-                    <div className='flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-[#3F5C45]'>
+                    <div className='flex flex-wrap items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-[#3F5C45]'>
                       <Calendar size={14} className='sm:w-4 sm:h-4' />
                       <span>{post.date}</span>
+                      <span className='text-[#3F5C45]/80'>· {post.readTime}</span>
                     </div>
                   </div>
 
@@ -94,18 +95,11 @@ export default function BlogPage() {
             ))}
           </div>
 
-          {/* Load More Button */}
-          <div className='text-center'>
-            <button className='px-6 sm:px-8 md:px-10 py-3 sm:py-3.5 md:py-4 rounded-lg border-2 border-[#1F3B29] text-[#1F3B29] font-bold text-sm sm:text-base md:text-lg hover:bg-[#1F3B29] hover:text-white transition-all duration-300 hover:scale-105 active:scale-95 tracking-wide uppercase'>
-              Load More Posts
-            </button>
-          </div>
-
           {/* Categories Filter */}
           <div className='mt-12 mb-8'>
             <h2 className='text-2xl font-bold text-[#1F3B29] mb-6 text-center'>Browse by Category</h2>
             <div className='flex flex-wrap justify-center gap-3'>
-              {['Design', 'Stories', 'Craft', 'Trends', 'Guide', 'Collection'].map(category => (
+              {['Design', 'Stories', 'Craft', 'Trends', 'Guide'].map(category => (
                 <Link
                   key={category}
                   href={`/blog?category=${category}`}
