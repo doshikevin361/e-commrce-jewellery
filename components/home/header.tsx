@@ -560,7 +560,7 @@ const HomeHeader = () => {
               <Link
                 href='/'
                 className='flex min-w-0 flex-1 items-center justify-center gap-2 sm:justify-start lg:flex-none lg:shrink-0 lg:justify-start'>
-                <div className='flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white ring-1 ring-gray-100 sm:h-[52px] sm:w-[52px] lg:h-[70px] lg:w-[70px] lg:ring-0'>
+                <div className='flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white ring-1 ring-gray-100 sm:h-[52px] sm:w-[52px] lg:h-[90px] lg:w-[90px] lg:ring-0'>
                   <img src={headerLogoSrc} alt='Jewel Manas' className='h-full w-full object-contain' />
                 </div>
               </Link>
@@ -745,7 +745,7 @@ const HomeHeader = () => {
                 isSticky ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-10 pointer-events-none w-0 overflow-hidden'
               }`}>
               <Link href='/'>
-                <div className='w-10 h-10 bg-white rounded-full flex items-center justify-center'>
+                <div className='w-10 h-10 flex items-center justify-center'>
                   <img src={headerLogoSrc} alt='Jewel Manas' className='w-full h-full object-contain' />
                 </div>
               </Link>

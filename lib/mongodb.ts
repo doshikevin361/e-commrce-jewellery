@@ -11,7 +11,7 @@ const clientPromise = (async () => {
     throw new Error('MONGODB_URI environment variable is not defined. Please add it to .env.local');
   }
 
-  const client = new MongoClient(uri, {
+  const client = new MongoClient('mongodb://localhost:27017', {
     maxPoolSize: 10,
     minPoolSize: 2,
   });
