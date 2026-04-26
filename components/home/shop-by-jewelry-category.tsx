@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
+import { sectionHeadingTitleClassName } from '@/components/home/common/section-header';
 
 const JEWELRY_CATEGORIES = [
   {
@@ -41,9 +42,7 @@ export function ShopByJewelryCategory() {
     <section className='w-full py-12 sm:py-14 lg:py-16'>
       <div className='mx-auto max-w-[1440px] px-4 sm:px-6'>
         <header className='mb-10 text-center sm:mb-12'>
-          <h2 className='text-[0.7rem] font-semibold uppercase tracking-[0.15em] text-neutral-800 sm:text-xs md:text-2xl'>
-            Shop by Jewelry Category
-          </h2>
+          <h2 className={sectionHeadingTitleClassName}>Shop by Jewelry Category</h2>
           <p className='mt-3 font-serif text-base italic text-neutral-500 sm:text-lg'>Jewelry for Every Moment</p>
         </header>
 

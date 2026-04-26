@@ -2,9 +2,8 @@
 
 import Image from 'next/image';
 import { Star } from 'lucide-react';
-import { Great_Vibes } from 'next/font/google';
-
-const scriptFont = Great_Vibes({ weight: '400', subsets: ['latin'] });
+import { sectionHeadingTitleClassName } from '@/components/home/common/section-header';
+import { cn } from '@/lib/utils';
 
 const REVIEWS = [
   {
@@ -61,13 +60,9 @@ export function WhatPeopleAreSaying() {
 
         {/* Header */}
         <div className='mb-12 text-center'>
-          <p className='mb-3 text-[11px] font-bold uppercase tracking-[0.18em] text-[#a05a64]'>
-            Testimonials
-          </p>
-          <h2 className='font-serif text-3xl font-bold text-[#1a0a0e] sm:text-4xl'>
-            What Our Customers Say
-          </h2>
-          <p className='mx-auto mt-3 max-w-md text-sm leading-relaxed text-[#7a5a60]'>
+          <p className='mb-3 text-xs font-semibold uppercase tracking-[0.3em] text-[#6B6B6B]'>Testimonials</p>
+          <h2 className={cn(sectionHeadingTitleClassName, 'text-center')}>What Our Customers Say</h2>
+          <p className='mx-auto mt-3 max-w-md text-sm leading-relaxed text-[#4F3A2E]'>
             Real words from real people who found their perfect piece with us.
           </p>
         </div>

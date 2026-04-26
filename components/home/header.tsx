@@ -332,7 +332,7 @@ const HomeHeader = () => {
     return (
       <div className='space-y-1'>
         {rows.map((row, i) => (
-          <div key={i} className='flex items-center justify-between rounded-lg px-3 py-2 hover:bg-amber-50 transition-colors'>
+          <div key={i} className='flex items-center justify-between rounded-lg px-3 py-2 transition-colors'>
             <span className='text-sm font-medium text-stone-700'>{row.label}</span>
             <span className='text-sm font-semibold text-amber-800'>
               ₹ {row.value.toLocaleString('en-IN')}
