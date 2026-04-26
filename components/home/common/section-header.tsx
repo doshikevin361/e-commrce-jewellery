@@ -5,6 +5,9 @@ import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+/** Use on homepage section `<h2>` elements so titles match `SectionHeader`. */
+export const sectionHeadingTitleClassName = 'text-2xl sm:text-3xl font-semibold text-[#1F3B29]';
+
 type SectionHeaderProps = {
   title: string;
   description?: string;
@@ -30,7 +33,7 @@ export const SectionHeader = ({
     return (
       <div className={cn('flex flex-col items-center gap-2 text-center', className)}>
         {eyebrow && <p className='text-xs uppercase tracking-[0.3em] text-[#6B6B6B]'>{eyebrow}</p>}
-        <h2 className='text-2xl sm:text-3xl font-semibold text-[#1F3B29]'>{title}</h2>
+        <h2 className={sectionHeadingTitleClassName}>{title}</h2>
         {description && <p className='max-w-2xl text-sm text-[#4F3A2E]'>{description}</p>}
         {actionLabel && (
           onActionClick ? (
@@ -56,7 +59,7 @@ export const SectionHeader = ({
     <div className={cn('flex flex-wrap items-end justify-between gap-3 sm:gap-4', className)}>
       <div className='space-y-2 flex-1 min-w-0'>
         {eyebrow && <p className='text-xs uppercase tracking-[0.3em] text-[#6B6B6B]'>{eyebrow}</p>}
-        <h2 className='text-xl sm:text-2xl md:text-3xl font-semibold text-[#1F3B29]'>{title}</h2>
+        <h2 className={sectionHeadingTitleClassName}>{title}</h2>
         {description && <p className='text-sm text-[#4F3A2E]'>{description}</p>}
       </div>
       {rightSlot

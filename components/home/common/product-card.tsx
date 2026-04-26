@@ -1,6 +1,5 @@
 'use client';
 
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect, memo } from 'react';
 import { ShoppingCart, Star, Heart, Trash2 } from 'lucide-react';
@@ -16,7 +15,6 @@ export type ProductCardData = {
   category: string;
   price: string;
   rating?: number;
-  reviews?: number;
   image: string;
   badge?: string;
   originalPrice?: string;
@@ -26,7 +24,6 @@ export type ProductCardData = {
   color?: string;
   size?: string;
   urlSlug?: string;
-  /** Karat/purity to show on card (e.g. 22K, 18K, 92.5) */
   karat?: string;
 };
 
@@ -39,7 +36,6 @@ type ProductCardProps = {
   onDelete?: () => void;
   actionSlot?: React.ReactNode;
   hideDefaultAction?: boolean;
-  /** When set, Add to cart uses retailer product flow */
   retailerProductId?: string;
   retailerId?: string;
 };
@@ -60,21 +56,23 @@ export const ProductCard = memo(
     const router = useRouter();
     const { addToCart, cartItems } = useCart();
     const { isProductInWishlist } = useWishlist();
-    const rating = product.rating || 4.5;
-    const isListView = className?.includes('flex-row');
     const [wishlistLoading, setWishlistLoading] = useState(false);
     const [cartLoading, setCartLoading] = useState(false);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
 
     const productId = (product as any)._id || product.id.toString();
     const productSlug = (product as any).urlSlug || productId;
-
-    const isInCart = cartItems.some(item => item._id === productId || item.id === productId.toString());
+    const isInCart = cartItems.some(
+      item => item._id === productId || item.id === productId.toString(),
+    );
     const isInWishlist = isProductInWishlist(productId);
 
     useEffect(() => {
       const checkAuth = () => {
-        const token = typeof window !== 'undefined' ? localStorage.getItem('customerToken') : null;
+        const token =
+          typeof window !== 'undefined'
+            ? localStorage.getItem('customerToken')
+            : null;
         setIsLoggedIn(!!token);
       };
       checkAuth();
@@ -84,38 +82,32 @@ export const ProductCard = memo(
 
     const handleWishlistToggle = async (e: React.MouseEvent) => {
       e.stopPropagation();
-
       if (!isLoggedIn) {
         window.dispatchEvent(new Event('openLoginModal'));
         return;
       }
-
       try {
         setWishlistLoading(true);
-
         if (isInWishlist) {
-          const response = await fetch(`/api/customer/wishlist?productId=${productId}`, {
+          const res = await fetch(`/api/customer/wishlist?productId=${productId}`, {
             method: 'DELETE',
           });
-
-          if (response.ok) {
-            toast.success('Product removed from wishlist');
+          if (res.ok) {
+            toast.success('Removed from wishlist');
             window.dispatchEvent(new Event('wishlistChange'));
           }
         } else {
-          const response = await fetch('/api/customer/wishlist', {
+          const res = await fetch('/api/customer/wishlist', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ productId: productSlug }),
           });
-
-          if (response.ok) {
-            toast.success('Product added to wishlist');
+          if (res.ok) {
+            toast.success('Added to wishlist');
             window.dispatchEvent(new Event('wishlistChange'));
           }
         }
-      } catch (error) {
-        console.error('Wishlist error:', error);
+      } catch {
         toast.error('Failed to update wishlist');
       } finally {
         setWishlistLoading(false);
@@ -123,28 +115,16 @@ export const ProductCard = memo(
     };
 
     const handleProductClick = () => {
-      if (onClick) {
-        onClick();
-      } else {
-        router.push(`/products/${productSlug}`);
-      }
+      if (onClick) onClick();
+      else router.push(`/products/${productSlug}`);
     };
 
     const handleAddToCart = async (e: React.MouseEvent) => {
       e.stopPropagation();
-
       if (isInCart) {
-        toast('This item already exists in cart', {
-          icon: '⚠️',
-          style: {
-            background: '#FEF3C7',
-            color: '#92400E',
-            border: '1px solid #FCD34D',
-          },
-        });
+        toast('Already in cart', { icon: '⚠️' });
         return;
       }
-
       setCartLoading(true);
       try {
         if (retailerProductId && retailerId) {
@@ -152,130 +132,134 @@ export const ProductCard = memo(
         } else {
           await addToCart(productId, 1);
         }
-      } catch (error) {
-        console.error('Error adding to cart:', error);
+      } catch {
+        // handled in context
       } finally {
         setCartLoading(false);
       }
     };
 
     return (
-      <div className='group relative flex h-full flex-col rounded-[28px] bg-[#f5f6f8] p-5 transition-all duration-300'>
-        {/* Image Container */}
-        <div className='relative mb-5 overflow-hidden rounded-2xl bg-white'>
+      <div className={cn(
+        'group relative flex flex-col bg-white rounded-2xl overflow-hidden',
+        'transition-transform duration-300 hover:-translate-y-1',
+        className,
+      )}>
+
+        {/* ── Image ── */}
+        <div className='relative aspect-square overflow-hidden bg-[#f8f5f0]'>
           <img
             src={product.image}
             alt={product.title}
             onClick={handleProductClick}
-            className='h-56 w-full cursor-pointer object-cover transition-transform duration-500 group-hover:scale-105'
+            className='h-full w-full cursor-pointer object-cover transition-transform duration-500 group-hover:scale-105'
           />
 
-          {/* Karat - top left, small */}
-          {product.karat && (
-            <span className='absolute left-3 top-3 rounded-md bg-white/90 px-2 py-0.5 text-[10px] font-medium text-neutral-700 shadow-sm backdrop-blur-sm'>
-              {product.karat}
-            </span>
-          )}
-
-          {/* Badge */}
+          {/* Badge – top left */}
           {product.badge && (
-            <span className='absolute left-4 top-4 rounded-full bg-black px-3 py-1 text-[11px] font-medium text-white'>
+            <span className='absolute left-3 top-3 rounded-full bg-black px-2.5 py-0.5 text-[10px] font-semibold tracking-wide text-white'>
               {product.badge}
             </span>
           )}
 
-          {/* Wishlist / Delete */}
+          {/* Karat – top right */}
+          {product.karat && (
+            <span className='absolute right-3 top-3 rounded-md bg-white/90 px-2 py-0.5 text-[10px] font-bold text-amber-800 backdrop-blur-sm'>
+              {product.karat}
+            </span>
+          )}
+
+          {/* Wishlist / Delete – bottom right */}
           {showDeleteIcon && onDelete ? (
             <button
-              onClick={e => {
-                e.stopPropagation();
-                onDelete();
-              }}
-              className='absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-sm transition hover:bg-red-50'>
-              <Trash2 size={16} className='text-red-600' />
+              onClick={e => { e.stopPropagation(); onDelete(); }}
+              className='absolute bottom-3 right-3 flex h-8 w-8 items-center justify-center rounded-full bg-white shadow transition hover:bg-red-50'>
+              <Trash2 size={14} className='text-red-600' />
             </button>
           ) : (
             <button
               onClick={handleWishlistToggle}
-              className='absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-sm transition hover:scale-105'>
-              <Heart size={16} className={cn(isInWishlist ? 'fill-red-500 text-red-500' : 'text-neutral-600')} />
+              disabled={wishlistLoading}
+              className='absolute bottom-3 right-3 flex h-8 w-8 items-center justify-center rounded-full bg-white shadow transition hover:scale-110'>
+              <Heart
+                size={14}
+                className={cn(
+                  isInWishlist ? 'fill-red-500 text-red-500' : 'text-neutral-500',
+                )}
+              />
             </button>
           )}
         </div>
 
-        {/* Content */}
-        <div className='flex flex-1 flex-col gap-3'>
+        {/* ── Body ── */}
+        <div className='flex flex-1 flex-col px-4 pt-3 pb-4'>
+
           {/* Category */}
-          <span
-            onClick={handleProductClick}
-            className='inline-block w-fit rounded-full bg-neutral-200 px-3 py-1 text-[11px] font-medium text-neutral-600 cursor-pointer'>
+          <span className='mb-1 text-[10px] font-semibold uppercase tracking-widest text-amber-700'>
             {product.category}
           </span>
 
-          {/* Title (fixed height) */}
+          {/* Title */}
           <h3
             onClick={handleProductClick}
-            className='line-clamp-2 min-h-[40px] cursor-pointer text-[15px] font-semibold leading-snug text-web'>
+            className='mb-2 line-clamp-2 cursor-pointer text-[13px] font-semibold leading-snug text-neutral-900'>
             {product.title}
           </h3>
 
-          {/* Rating */}
-          <div className='flex items-center gap-2'>
-            <div className='flex gap-0.5'>
-              {[...Array(5)].map((_, i) => (
-                <Star
-                  key={i}
-                  size={14}
-                  className={i < Math.floor(product.rating ?? 0) ? 'fill-web text-web' : 'fill-neutral-300 text-neutral-300'}
-                />
-              ))}
-            </div>
-            <span className='text-xs text-neutral-500'>{product.reviews || 0} reviews</span>
-          </div>
-        </div>
+          {/* Stars only – no review count */}
+          {/* <div className='mb-3 flex gap-0.5'>
+            {[...Array(5)].map((_, i) => (
+              <Star
+                key={i}
+                size={12}
+                className={
+                  i < Math.floor(product.rating ?? 0)
+                    ? 'fill-amber-400 text-amber-400'
+                    : 'fill-neutral-200 text-neutral-200'
+                }
+              />
+            ))}
+          </div> */}
 
-        {/* Price + Action (always bottom aligned) */}
-        <div className='mt-auto flex items-center justify-between pt-2'>
-          <div className='flex items-baseline gap-2'>
-            <span className='text-xl font-semibold text-web'>{product.price}</span>
-            {/* Optional original price */}
-            {/* <span className='text-sm text-neutral-400 line-through'>{product.originalPrice}</span> */}
-          </div>
+          {/* Price + Cart */}
+          <div className='mt-auto flex items-center justify-between border-t border-neutral-100 pt-3'>
+            <span className='text-[17px] font-bold text-[#7a1a2e]'>
+              {product.price}
+            </span>
 
-          {actionSlot ? (
-            actionSlot
-          ) : !hideDefaultAction ? (
-            <button
-              onClick={handleAddToCart}
-              disabled={isInCart}
-              className={cn(
-                'flex h-11 w-11 items-center justify-center rounded-full transition-all',
-                isInCart ? 'bg-neutral-200 text-neutral-500' : 'bg-web text-white hover:scale-105',
-              )}>
-              {cartLoading ? (
-                <div className='h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent' />
-              ) : (
-                <ShoppingCart size={18} />
-              )}
-            </button>
-          ) : null}
+            {actionSlot ? (
+              actionSlot
+            ) : !hideDefaultAction ? (
+              <button
+                onClick={handleAddToCart}
+                disabled={isInCart || cartLoading}
+                className={cn(
+                  'flex h-9 w-9 items-center justify-center rounded-full transition-all',
+                  isInCart
+                    ? 'bg-neutral-200 text-neutral-400'
+                    : 'bg-[#7a1a2e] text-white hover:bg-[#9b2240] hover:scale-105',
+                )}>
+                {cartLoading ? (
+                  <div className='h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent' />
+                ) : (
+                  <ShoppingCart size={15} />
+                )}
+              </button>
+            ) : null}
+          </div>
         </div>
       </div>
     );
   },
-  (prevProps, nextProps) => {
-    return (
-      prevProps.product.id === nextProps.product.id &&
-      prevProps.product.price === nextProps.product.price &&
-      prevProps.product.image === nextProps.product.image &&
-      prevProps.product.title === nextProps.product.title &&
-      prevProps.product.karat === nextProps.product.karat &&
-      prevProps.className === nextProps.className &&
-      prevProps.actionLabel === nextProps.actionLabel &&
-      prevProps.showDeleteIcon === nextProps.showDeleteIcon &&
-      prevProps.hideDefaultAction === nextProps.hideDefaultAction &&
-      prevProps.actionSlot === nextProps.actionSlot
-    );
-  },
+  (prev, next) =>
+    prev.product.id === next.product.id &&
+    prev.product.price === next.product.price &&
+    prev.product.image === next.product.image &&
+    prev.product.title === next.product.title &&
+    prev.product.karat === next.product.karat &&
+    prev.className === next.className &&
+    prev.showDeleteIcon === next.showDeleteIcon &&
+    prev.hideDefaultAction === next.hideDefaultAction &&
+    prev.actionSlot === next.actionSlot,
 );
 ProductCard.displayName = 'ProductCard';

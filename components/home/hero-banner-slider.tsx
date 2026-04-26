@@ -1,126 +1,120 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, Navigation } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/navigation';
+import { useRouter } from 'next/navigation';
 
 // Hero Banner Component
-export const HeroBanner = () => {
-  return (
-    <div className='relative h-[52vh] w-full overflow-hidden bg-black sm:h-[62vh] lg:h-[80vh]'>
-      {/* VIDEO */}
-      <video src='/uploads/banner_vi.mov' autoPlay loop muted playsInline className='w-full h-full object-cover' />
 
-      {/* 🔥 BOTTOM FADE SHADOW (THIS FIXES IT) */}
+const slides = [
+  '/uploads/hero-image.png',
+  '/uploads/hero-image2.png',
+  '/uploads/hero-image3.png',
+];
+
+export const HeroBanner = () => {
+  const router = useRouter();
+  const [current, setCurrent] = useState(0);
+
+  const prevSlide = () => {
+    setCurrent((prev) => (prev === 0 ? slides.length - 1 : prev - 1));
+  };
+
+  const nextSlide = () => {
+    setCurrent((prev) => (prev === slides.length - 1 ? 0 : prev + 1));
+  };
+
+  return (
+    <div className="relative h-[52vh] sm:h-[62vh] lg:h-[80vh] w-full overflow-hidden">
+      
+      {/* SLIDES */}
       <div
-        className='
-          pointer-events-none 
-          absolute bottom-0 left-0 
-          w-full h-40 
-          bg-gradient-to-t 
-          from-white 
-          via-white/50 
-          to-transparent
-          z-20
-        '
-      />
+        className="flex h-full w-full transition-transform duration-500 ease-in-out"
+        style={{ transform: `translateX(-${current * 100}%)` }}
+      >
+        {slides.map((img, index) => (
+          <div
+            key={index}
+            className="min-w-full h-full cursor-pointer"
+            onClick={() => router.push('/products')}
+          >
+            <img
+              src={img}
+              className="w-full object-contain"
+              alt="hero"
+            />
+          </div>
+        ))}
+      </div>
+
+      {/* LEFT BUTTON */}
+      <button
+        onClick={prevSlide}
+        className="absolute cursor-pointer
+         left-4 top-1/2 -translate-y-1/2 bg-white/40 hover:bg-white text-black rounded-full p-2"
+      >
+        ‹
+      </button>
+
+      {/* RIGHT BUTTON */}
+      <button
+        onClick={nextSlide}
+        className="absolute  cursor-pointer right-4 top-1/2 -translate-y-1/2 bg-white/40 hover:bg-white text-black rounded-full p-2"
+      >
+        ›
+      </button>
+
+      {/* DOT INDICATORS */}
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+        {slides.map((_, index) => (
+          <div
+            key={index}
+            onClick={() => setCurrent(index)}
+            className={`h-2 w-2 rounded-full cursor-pointer ${
+              current === index ? 'bg-white' : 'bg-white/50'
+            }`}
+          />
+        ))}
+      </div>
     </div>
   );
 };
 
-// Categories Component
 const categories = [
-  { name: 'Solitaires', image: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=400' },
-  { name: 'Watch Jewellery', image: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400' },
-  { name: 'Mangalsutras', image: 'https://images.unsplash.com/photo-1617038220319-276d3cfab638?w=400' },
-  { name: 'Nose Pins', image: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=400' },
-  { name: 'Gold Coins', image: 'https://images.unsplash.com/photo-1610375461246-83df859d849d?w=400' },
-  { name: 'Anklets', image: 'https://images.unsplash.com/photo-1603561591411-07134e71a2a9?w=400' },
-  { name: 'Pendants', image: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=400' },
-  { name: 'Rings', image: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=400' },
-  { name: 'Necklaces', image: 'https://images.unsplash.com/photo-1599643477877-530eb83abc8e?w=400' },
-  { name: 'Earrings', image: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=400' },
-  { name: 'Bangles', image: 'https://images.unsplash.com/photo-1611591437281-460bfbe1220a?w=400' },
-  { name: 'Bracelets', image: 'https://images.unsplash.com/photo-1611085583191-a3b181a88401?w=400' },
-  { name: 'Gold Chains', image: 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=400' },
+  { label: "Wedding",   image: "/uploads/grid1.webp" },
+  { label: "Diamond",   image: "/uploads/grid2.webp" },
+  { label: "Gold",      image: "/uploads/grid3.webp" },
+  { label: "Dailywear", image: "/uploads/grid4.webp" },
 ];
 
-export default function Categories() {
+
+export const CategoryGrid = () => {
   return (
-    <div className='relative w-full bg-gradient-to-b from-white to-pink-50/30 py-8 sm:py-10 lg:py-12'>
-      <div className='relative z-20 mx-auto max-w-[1440px] px-4 sm:px-6'>
-        <div className='flex flex-row flex-wrap place-items-center justify-center gap-4 sm:gap-5 lg:gap-6'>
-          {categories.map((category, index) => (
-            <div key={index} className='group flex w-[46%] max-w-[140px] cursor-pointer flex-col items-center gap-2.5 sm:w-auto sm:gap-3'>
-              <div
-                className='
-              w-full aspect-square
-              bg-gradient-to-br from-pink-50 to-purple-50
-              rounded-3xl
-              border border-pink-100
-              overflow-hidden
-              transition-all duration-300
-              group-hover:shadow-xl
-              group-hover:border-pink-200
-              relative
-            '>
-                <div className='absolute inset-0 bg-gradient-to-t from-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300' />
-
-                <img
-                  src={category.image}
-                  alt={category.name}
-                  className='w-full h-full object-cover transition-transform duration-300 group-hover:scale-110'
-                />
-              </div>
-
-              <span className='text-center text-xs font-medium text-gray-500 transition-colors duration-300 group-hover:text-[#001e38] sm:text-sm'>
-                {category.name}
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-const banners = [
-  {
-    image: '/slider/banner1.jpg',
-  },
-
-  {
-    image: '/slider/banner3.png',
-  },
-    {
-    image: '/slider/banner4.webp',
-  },
-];
-
-export const Slider = () => {
-  return (
-    <div className='h-[42vh] w-full sm:h-[55vh] lg:h-[75vh]'>
-      <Swiper
-        modules={[Autoplay, Navigation]}
-        autoplay={{ delay: 4000, disableOnInteraction: false }}
-        navigation
-        loop
-        className='w-full h-full'>
-        {banners.map((banner, index) => (
-          <SwiperSlide key={index}>
-            <div className='w-full h-full relative flex'>
-              {/* LEFT IMAGE */}
-              <div className='w-full h-full relative'>
-                <img src={banner.image} alt={banner.title} className='h-[42vh] w-full object-cover sm:h-[55vh] lg:h-[70vh]' />
-                {/* subtle overlay */}{' '}
-              </div>
-            </div>
-          </SwiperSlide>
+    <section className="w-full px-4 py-6">
+      <div className="grid grid-cols-2 gap-4 max-w-4xl mx-auto">
+        {categories.map((cat) => (
+          <div
+            key={cat.label}
+            className="relative rounded-2xl overflow-hidden cursor-pointer group aspect-[4/3]"
+          >
+            <img
+              src={cat.image}
+              alt={cat.label}
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            />
+            {/* gradient overlay */}
+            <div className="absolute inset-0 bg-gradient-to-t from-[rgba(100,10,30,0.65)] via-transparent to-transparent group-hover:from-[rgba(100,10,30,0.8)] transition-all duration-300" />
+            {/* label */}
+            <p className="absolute bottom-4 left-0 right-0 text-center text-white text-xl font-semibold font-serif tracking-wide drop-shadow-md">
+              {cat.label}
+            </p>
+          </div>
         ))}
-      </Swiper>
-    </div>
+      </div>
+    </section>
   );
 };
 

@@ -29,9 +29,10 @@ import 'swiper/css/pagination';
 import { Pagination } from 'swiper/modules';
 import { useState, useEffect, useRef, useMemo, useCallback, memo } from 'react';
 import { useRouter } from 'next/navigation';
+import { cn } from '@/lib/utils';
 import { useCategories } from '@/contexts/CategoriesContext';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { SectionHeader } from '@/components/home/common/section-header';
+import { SectionHeader, sectionHeadingTitleClassName } from '@/components/home/common/section-header';
 import Link from 'next/link';
 import { getActiveHomepageFeatures } from '@/lib/constants/features';
 import { ProductCard, ProductCardData } from './common/product-card';
@@ -44,7 +45,8 @@ import {
   GallerySkeleton,
   WhyChooseUsSkeleton,
 } from './common/skeleton-loaders';
-import Categories, { HeroBanner, Slider } from './hero-banner-slider';
+import { CategoryGrid, HeroBanner, Slider } from './hero-banner-slider';
+import { ShopByJewelryCategory } from './shop-by-jewelry-category';
 import ProductShowcase from './ProductShowcase';
 import { TrustBadgesStrip } from './trust-badges-strip';
 import { WhatPeopleAreSaying } from './what-people-saying';
@@ -543,26 +545,26 @@ export const HomePage = () => {
         <div className={'mx-auto w-full'}>
           <HeroBanner />
         </div>
-        <div className={'mx-auto w-full'}>
-          <Categories />
-        </div>
-        <div>
-          <Slider />
-        </div>
         <div className='w-full'>
           <TrustBadgesStrip />
         </div>
+        <div className={'mx-auto w-full'}>
+          <ShopByJewelryCategory />
+        </div>
         <div>
           <JewelryProductsDemo products={sectionsData.newProducts} isLoading={isLoading} />
+        </div>
+        <div>
+          <CategoryGrid />
         </div>
         {scrollVideoPanels.length > 0 && (
           <div>
             <ScrollVideoPanels videoData={scrollVideoPanels} />
           </div>
         )}
-        <div>
+        {/* <div>
           <ProductShowcase />
-        </div>
+        </div> */}
                  <div>
           <VideoSlider
   videos={[
@@ -576,7 +578,7 @@ export const HomePage = () => {
 
         </div>
         <div>
-          <WhatPeopleAreSaying />
+          {/* <WhatPeopleAreSaying /> */}
         </div>
         <div>
           <HomeFaqSection />
@@ -1529,7 +1531,7 @@ const JewelryProductsDemo = ({ products, isLoading = false }: { products?: Produ
   return (
     <section className='w-full bg-white py-10 sm:py-12'>
       <div className='mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8'>
-        <h2 className='text-center text-3xl font-serif text-[#001e38]'>Elegant Jewelry Collection</h2>
+        <h2 className={cn(sectionHeadingTitleClassName, 'text-center')}>Elegant Jewelry Collection</h2>
         <p className='mt-3 text-center text-sm sm:text-base text-[#4F3A2E]'>Fresh picks curated from our latest additions</p>
         {showLoading ? (
           <div className='mt-10'>
@@ -1547,7 +1549,7 @@ const JewelryProductsDemo = ({ products, isLoading = false }: { products?: Produ
         <div className='mt-10 flex justify-center'>
           <Link
             href='/jewellery'
-            className='inline-flex items-center justify-center rounded-lg border border-[#001e38] px-8 py-3 text-xs sm:text-sm font-semibold uppercase tracking-wide text-[#001e38] transition-colors hover:bg-[#001e38] hover:text-white'>
+            className='inline-flex items-center justify-center rounded-lg border border-black px-8 py-3 text-xs sm:text-sm font-semibold uppercase tracking-wide text-black transition-colors hover:text-black'>
             Explore More
           </Link>
         </div>

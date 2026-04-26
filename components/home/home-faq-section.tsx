@@ -1,6 +1,8 @@
 'use client';
 
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { sectionHeadingTitleClassName } from '@/components/home/common/section-header';
+import { cn } from '@/lib/utils';
 
 const FAQ_ITEMS = [
   {
@@ -39,8 +41,8 @@ export function HomeFaqSection() {
   return (
     <section className='border-t border-neutral-200/80 bg-[#FAFAF8] py-12 sm:py-14 lg:py-20'>
       <div className='mx-auto max-w-3xl px-4 sm:px-6 lg:px-8'>
-        <h2 className='text-center text-2xl font-semibold tracking-tight text-[#1a1a1a] sm:text-3xl'>Frequently Asked Questions</h2>
-        <p className='mx-auto mt-3 max-w-xl text-center text-sm text-neutral-600 sm:text-base'>
+        <h2 className={cn(sectionHeadingTitleClassName, 'text-center')}>Frequently Asked Questions</h2>
+        <p className='mx-auto mt-3 max-w-xl text-center text-sm text-[#4F3A2E] sm:text-base'>
           Quick answers about orders, shipping, returns, and caring for your pieces.
         </p>
 
