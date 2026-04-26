@@ -717,20 +717,39 @@ const HomeHeader = () => {
                   }}>
                   <button
                     onClick={() => setLiveRateOpen(p => !p)}
-                    className='flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium text-amber-700 bg-amber-50 hover:bg-amber-100 transition-colors'>
-                    <span className='h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse' />
+                    className='flex items-center gap-1.5 px-3 py-2 cursor-pointer rounded-xl text-xs font-medium text-amber-700 bg-[#a05a64]/10 hover:bg-[#a05a64]/20 transition-colors'>
+                    <span className='h-1.5 w-1.5 rounded-full bg-[#a05a64]/80 animate-pulse' />
                     Gold Rate
                     <ChevronDown className={`h-3.5 w-3.5 transition-transform ${liveRateOpen ? 'rotate-180' : ''}`} />
                   </button>
-                  {liveRateOpen && (
-                    <div className='absolute right-0 top-full mt-2 w-72 rounded-2xl border border-amber-100 bg-white shadow-2xl shadow-amber-100/40 overflow-hidden z-50'>
-                      <div className='px-4 py-3 border-b border-amber-100 bg-gradient-to-r from-amber-50 to-white'>
-                        <p className='text-xs font-semibold text-amber-800 uppercase tracking-wider'>Live Metal Rates</p>
-                      </div>
-                      <div className='py-2'>{renderGoldRatesRows()}</div>
-                      {renderGoldRatesUpdatedFooter()}
-                    </div>
-                  )}
+                 {liveRateOpen && (
+  <div
+    className="absolute right-0 top-full mt-3 w-80 z-50 animate-dropdownFade"
+  >
+    <div className="rounded-2xl border border-[#a05a64]/20 bg-white/70 backdrop-blur-xl 
+    shadow-[0_10px_40px_rgba(160,90,100,0.25)] overflow-hidden">
+
+      {/* Header */}
+      <div className="px-5 py-4 bg-gradient-to-r 
+      from-[#a05a64]/10 via-white/40 to-[#a05a64]/5 
+      border-b border-[#a05a64]/20">
+        <p className="text-[11px] font-semibold text-[#a05a64] uppercase tracking-[0.15em]">
+          Live Metal Rates
+        </p>
+      </div>
+
+      {/* Content */}
+      <div className="py-3 px-4 space-y-2">
+        {renderGoldRatesRows()}
+      </div>
+
+      {/* Footer */}
+      <div className="px-4 py-1 border-t border-[#a05a64]/20 bg-white/40 backdrop-blur-sm">
+        {renderGoldRatesUpdatedFooter()}
+      </div>
+    </div>
+  </div>
+)}
                 </div>
               </div>
             </div>
