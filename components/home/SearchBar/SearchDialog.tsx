@@ -175,7 +175,7 @@ export function SearchDialog({ open, onOpenChange, query, inputRef, listboxId = 
         style={{ scrollbarWidth: 'thin', scrollbarColor: '#C8A15B30 transparent' }}
       >
         {/* Top gradient accent */}
-        <div className="h-0.5 w-full bg-gradient-to-r from-transparent via-[#C8A15B] to-transparent" />
+        <div className="h-0.5 w-full bg-gradient-to-r from-transparent via-[#a05a64] to-transparent" />
 
         <div className="p-5">
           {/* Loading state */}
@@ -214,8 +214,8 @@ export function SearchDialog({ open, onOpenChange, query, inputRef, listboxId = 
                       className={cn(
                         "group inline-flex items-center gap-1.5 px-3.5 py-1.5",
                         "text-sm text-[#4F3A2E] font-medium",
-                        "bg-[#F9F3EC] hover:bg-[#C8A15B] hover:text-white",
-                        "border border-[#E6D3C2] hover:border-[#C8A15B]",
+                        "bg-[#F9F3EC] hover:cursor-pointer",
+                        "border border-[#a05a64]/50",
                         "rounded-full transition-all duration-200",
                         "hover:shadow-[0_2px_12px_rgba(200,161,91,0.3)]",
                         "hover:scale-105 active:scale-100",
@@ -255,7 +255,7 @@ export function SearchDialog({ open, onOpenChange, query, inputRef, listboxId = 
                         className={cn(
                           "group flex items-center gap-3 p-2.5 text-left",
                           "rounded-xl border border-transparent",
-                          "hover:bg-[#F9F3EC] hover:border-[#E6D3C2]",
+                          "hover:bg-white hover:border-[#a05a64]/50",
                           "transition-all duration-200",
                         )}
                       >
@@ -268,7 +268,7 @@ export function SearchDialog({ open, onOpenChange, query, inputRef, listboxId = 
                           />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs font-semibold text-[#1F3B29] line-clamp-1 group-hover:text-[#C8A15B] transition-colors">{product.name}</p>
+                          <p className="text-xs font-semibold text-[#1F3B29] line-clamp-1 transition-colors">{product.name}</p>
                           <div className="flex items-baseline gap-1.5 mt-1">
                             <span className="text-sm font-bold text-[#1F3B29]">₹{product.displayPrice.toLocaleString()}</span>
                             {product.hasDiscount && (

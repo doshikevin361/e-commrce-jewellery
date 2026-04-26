@@ -162,6 +162,11 @@
     color: var(--foreground);
   }
 
+  * {
+    font-family: var(--font-serif);
+    letter-spacing: -0.015em;
+  }
+
   a {
     @apply underline-offset-4;
   }

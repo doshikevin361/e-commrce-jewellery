@@ -424,7 +424,8 @@ const HomeHeader = () => {
       <header
         className={`w-full bg-white transition-all duration-300 ${isSticky ? 'fixed top-0 left-0 right-0 z-50 shadow-[0_2px_20px_rgba(0,0,0,0.08)]' : 'relative'}`}>
         <div className='mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-8'>
-          <div className='flex items-center gap-4 lg:gap-8 py-3 lg:py-4'>
+          <div className='flex items-center gap-3 sm:gap-4 lg:gap-6 py-3 lg:py-4 min-w-0'>
+            <div className='flex items-center gap-3 sm:gap-4 shrink-0 min-w-0'>
             {/* Hamburger (mobile/tablet) */}
             <div className='shrink-0 lg:hidden'>
               <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
@@ -505,9 +506,11 @@ const HomeHeader = () => {
                 <img src={headerLogoSrc} alt='Jewel Manas' className='h-full w-full object-contain' />
               </div>
             </Link>
+            </div>
 
-            {/* Search */}
-            <div className='flex-1 min-w-0 order-last lg:order-none'>
+            {/* Search — centered, max 500px */}
+            <div className='flex-1 min-w-0 flex justify-center px-1 sm:px-2'>
+              <div className='w-full max-w-[700px] min-w-0'>
               <form
                 className='relative'
                 onSubmit={e => {
@@ -545,13 +548,13 @@ const HomeHeader = () => {
                   className={`w-full h-11 pl-10 pr-28 rounded-2xl border text-sm text-stone-800 placeholder:text-stone-400 transition-all outline-none [&::-webkit-search-cancel-button]:hidden [&::-webkit-search-decoration]:hidden
                     ${
                       searchFocused
-                        ? 'border-amber-400 bg-white ring-4 ring-amber-400/10 shadow-sm'
+                        ? 'border-[#a05a64]/80 bg-white'
                         : 'border-stone-200 bg-stone-50 hover:border-stone-300'
                     }`}
                 />
                 <button
                   type='submit'
-                  className='absolute right-1.5 top-1/2 -translate-y-1/2 flex items-center gap-1.5 px-4 h-8 rounded-xl bg-[var(--web-color,#a05a64)] text-white text-xs font-medium hover:bg-amber-700 transition-colors'>
+                  className='absolute right-1.5 top-1/2 -translate-y-1/2 flex items-center gap-1.5 px-4 h-8 rounded-xl bg-[var(--web-color,#a05a64)] text-white text-xs font-medium  cursor-pointer transition-colors'>
                   <Search className='h-3.5 w-3.5' /> Search
                 </button>
                 <SearchDialog
@@ -562,6 +565,7 @@ const HomeHeader = () => {
                   listboxId='header-search-suggestions'
                 />
               </form>
+              </div>
             </div>
 
             {/* Action Icons */}
