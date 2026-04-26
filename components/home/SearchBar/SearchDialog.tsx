@@ -214,7 +214,7 @@ export function SearchDialog({ open, onOpenChange, query, inputRef, listboxId = 
                       className={cn(
                         "group inline-flex items-center gap-1.5 px-3.5 py-1.5",
                         "text-sm text-[#4F3A2E] font-medium",
-                        "bg-[#F9F3EC] hover:cursor-pointer",
+                        "bg-[#a05a64]/10 hover:cursor-pointer",
                         "border border-[#a05a64]/50",
                         "rounded-full transition-all duration-200",
                         "hover:shadow-[0_2px_12px_rgba(200,161,91,0.3)]",
