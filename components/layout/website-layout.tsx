@@ -22,7 +22,7 @@ export function WebsiteLayout({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className='min-h-screen w-full bg-white'>
+    <div className='storefront-serif min-h-screen w-full bg-white'>
       {/* Removed overflow-x-hidden from wrapper - can break position: sticky on child elements */}
       <HomeHeader />
       <main className='w-full'>

@@ -151,20 +151,16 @@
     position: relative;
   }
 
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
+  /* Serif (Playfair) only on customer storefront — see `.storefront-serif` on WebsiteLayout. */
+  .storefront-serif :where(h1, h2, h3, h4, h5, h6) {
     font-family: var(--font-serif);
     letter-spacing: -0.015em;
     color: var(--foreground);
   }
 
-  * {
+  /* Home header: nav and top bar use spans/buttons, not headings — inherit serif here. */
+  .storefront-serif .site-header-root {
     font-family: var(--font-serif);
-    letter-spacing: -0.015em;
   }
 
   a {

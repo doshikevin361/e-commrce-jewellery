@@ -357,6 +357,7 @@ const HomeHeader = () => {
 
   return (
     <>
+      <div className='site-header-root'>
       {/* ─── Announcement Strip ──────────────────────────────────────────────── */}
       <div className='hidden md:flex items-center justify-between bg-[var(--web-color,#a05a64)] px-6 py-2 text-[11px] text-white/70'>
         <div className='flex items-center gap-5'>
@@ -380,7 +381,9 @@ const HomeHeader = () => {
                   <ChevronDown className='h-3 w-3' />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align='end' className='w-52 mt-2 rounded-xl border border-stone-100 bg-white shadow-xl p-1.5'>
+              <DropdownMenuContent
+                align='end'
+                className='w-52 mt-2 rounded-xl border border-stone-100 bg-white shadow-xl p-1.5 font-serif'>
                 <div className='px-3 py-2.5'>
                   <p className='text-[10px] text-stone-400 uppercase tracking-wider'>Signed in as</p>
                   <p className='text-sm font-semibold text-stone-800 truncate mt-0.5'>{customerName}</p>
@@ -437,7 +440,9 @@ const HomeHeader = () => {
                     <Menu className='h-5 w-5' />
                   </button>
                 </SheetTrigger>
-                <SheetContent side='left' className='w-[min(100vw,22rem)] p-0 border-r border-stone-100 bg-white flex flex-col'>
+                <SheetContent
+                  side='left'
+                  className='w-[min(100vw,22rem)] p-0 border-r border-stone-100 bg-white flex flex-col font-serif'>
                   <SheetHeader className='px-5 py-4 border-b border-stone-100 flex flex-row items-center justify-between'>
                     <div>
                       <SheetTitle className='text-base font-semibold text-stone-900'>Browse</SheetTitle>
@@ -698,11 +703,11 @@ const HomeHeader = () => {
 
               {/* Right side: Gold Rate + Custom */}
               <div className='flex items-center gap-2 shrink-0'>
-                <Link
+                {/* <Link
                   href='/custom-jewellery'
                   className='flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium text-stone-500 hover:text-stone-800 hover:bg-stone-100 transition-colors'>
                   <Store className='h-3.5 w-3.5' /> Custom Jewellery
-                </Link>
+                </Link> */}
 
                 {/* Gold Rate Dropdown */}
                 <div
@@ -866,6 +871,7 @@ const HomeHeader = () => {
             })()}
         </div>
       </header>
+      </div>
 
       {/* ─── Auth Modals ─────────────────────────────────────────────────────── */}
       <AuthModal
