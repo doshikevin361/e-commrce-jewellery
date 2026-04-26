@@ -41,7 +41,7 @@ export function ShopByJewelryCategory() {
     <section className='w-full py-12 sm:py-14 lg:py-16'>
       <div className='mx-auto max-w-[1440px] px-4 sm:px-6'>
         <header className='mb-10 text-center sm:mb-12'>
-          <h2 className='text-[0.7rem] font-semibold uppercase tracking-[0.20em] text-neutral-800 sm:text-xs md:text-sm'>
+          <h2 className='text-[0.7rem] font-semibold uppercase tracking-[0.15em] text-neutral-800 sm:text-xs md:text-2xl'>
             Shop by Jewelry Category
           </h2>
           <p className='mt-3 font-serif text-base italic text-neutral-500 sm:text-lg'>Jewelry for Every Moment</p>
@@ -53,7 +53,7 @@ export function ShopByJewelryCategory() {
               key={item.slug}
               href={`/products?category=${encodeURIComponent(item.slug)}`}
               className='group block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#FAF7F2]'>
-              <article className='flex h-full min-h-[220px] flex-col overflow-hidden bg-[#fbf3ec] shadow-sm transition-[border-radius,box-shadow,transform] duration-500 ease-in-out sm:min-h-[260px] lg:min-h-[300px] rounded-xl sm:rounded-2xl group-hover:rounded-[50%] group-hover:shadow-lg group-hover:-translate-y-0.5'>
+              <article className='flex h-full min-h-[220px] flex-col overflow-hidden bg-[#fbf3ec] shadow-sm transition-[border-radius,box-shadow,transform] duration-500 ease-in-out sm:min-h-[60px] lg:min-h-[300px] rounded-xl sm:rounded-2xl group-hover:rounded-[50%] group-hover:shadow-lg group-hover:-translate-y-0.5'>
                 <div className='relative min-h-0 flex-1'>
                   <Image
                     src={item.image}
