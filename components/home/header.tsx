@@ -1,6 +1,22 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { Search, Heart, ShoppingCart, ChevronDown, ChevronRight, Clock, Store, LogOut, User, TruckIcon, Package, Menu } from 'lucide-react';
+import {
+  Search,
+  Heart,
+  ShoppingCart,
+  ChevronDown,
+  ChevronRight,
+  Clock,
+  Store,
+  LogOut,
+  User,
+  TruckIcon,
+  Package,
+  Menu,
+  X,
+  Sparkles,
+  ArrowRight,
+} from 'lucide-react';
 import { AuthModal } from '@/components/auth/auth-modal';
 import { ForgotPasswordModal } from '@/components/auth/forgot-password-modal';
 import toast from 'react-hot-toast';
@@ -60,15 +76,12 @@ const RECENTLY_VIEWED_KEY = 'recentlyViewed';
 const RECENTLY_VIEWED_LIMIT = 8;
 
 const readRecentlyViewed = () => {
-  if (typeof window === 'undefined') {
-    return [] as RecentlyViewedItem[];
-  }
+  if (typeof window === 'undefined') return [] as RecentlyViewedItem[];
   try {
     const stored = localStorage.getItem(RECENTLY_VIEWED_KEY);
     const parsed = stored ? JSON.parse(stored) : [];
     return Array.isArray(parsed) ? parsed : [];
-  } catch (error) {
-    console.error('Failed to parse recently viewed products:', error);
+  } catch {
     return [];
   }
 };
@@ -113,6 +126,7 @@ const HomeHeader = () => {
   } | null>(null);
   const [loadingPrices, setLoadingPrices] = useState(true);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [searchFocused, setSearchFocused] = useState(false);
 
   const loadRecentlyViewed = () => {
     const items = readRecentlyViewed();
@@ -120,33 +134,22 @@ const HomeHeader = () => {
   };
 
   useEffect(() => {
-    const handleScroll = () => {
-      // When user scrolls past the main header (approximately 120px)
-      if (window.scrollY > 120) {
-        setIsSticky(true);
-      } else {
-        setIsSticky(false);
-      }
-    };
-
+    const handleScroll = () => setIsSticky(window.scrollY > 80);
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Check authentication status
   useEffect(() => {
     const checkAuth = () => {
       if (typeof window !== 'undefined') {
         const token = localStorage.getItem('customerToken');
         const customerData = localStorage.getItem('currentCustomer');
-
         if (token && customerData) {
           try {
             const customer = JSON.parse(customerData);
             setIsLoggedIn(true);
             setCustomerName(customer.name || customer.email || 'User');
-          } catch (error) {
-            console.error('Error parsing customer data:', error);
+          } catch {
             setIsLoggedIn(false);
             setCustomerName('');
           }
@@ -156,7 +159,6 @@ const HomeHeader = () => {
         }
       }
     };
-
     checkAuth();
     window.addEventListener('authChange', checkAuth);
     return () => window.removeEventListener('authChange', checkAuth);
@@ -167,7 +169,6 @@ const HomeHeader = () => {
       setAuthMode('login');
       setAuthModalOpen(true);
     };
-
     window.addEventListener('openLoginModal', handleOpenLoginModal);
     return () => window.removeEventListener('openLoginModal', handleOpenLoginModal);
   }, []);
@@ -179,9 +180,7 @@ const HomeHeader = () => {
   useEffect(() => {
     const handleRecentlyViewedChange = () => loadRecentlyViewed();
     const handleStorage = (event: StorageEvent) => {
-      if (event.key === RECENTLY_VIEWED_KEY) {
-        loadRecentlyViewed();
-      }
+      if (event.key === RECENTLY_VIEWED_KEY) loadRecentlyViewed();
     };
     window.addEventListener('recentlyViewedChange', handleRecentlyViewedChange);
     window.addEventListener('storage', handleStorage);
@@ -193,9 +192,7 @@ const HomeHeader = () => {
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (!recentlyViewedOpen) {
-        return;
-      }
+      if (!recentlyViewedOpen) return;
       if (recentlyViewedRef.current && !recentlyViewedRef.current.contains(event.target as Node)) {
         setRecentlyViewedOpen(false);
       }
@@ -208,12 +205,10 @@ const HomeHeader = () => {
     setAuthMode('login');
     setAuthModalOpen(true);
   };
-
   const handleSignupClick = () => {
     setAuthMode('register');
     setAuthModalOpen(true);
   };
-
   const handleLogout = () => {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('customerToken');
@@ -224,24 +219,16 @@ const HomeHeader = () => {
       toast.success('Logged out successfully');
     }
   };
-
-  const handleSwitchMode = () => {
-    setAuthMode(prev => (prev === 'login' ? 'register' : 'login'));
-  };
-
+  const handleSwitchMode = () => setAuthMode(prev => (prev === 'login' ? 'register' : 'login'));
   const handleSwitchToForgotPassword = () => {
     setAuthModalOpen(false);
     setForgotTokenExpired(false);
     setForgotPasswordModalOpen(true);
   };
-
   const handleForgotPasswordModalOpenChange = (open: boolean) => {
     setForgotPasswordModalOpen(open);
-    if (!open) {
-      setForgotTokenExpired(false);
-    }
+    if (!open) setForgotTokenExpired(false);
   };
-
   const handleForgotSwitchToLogin = () => {
     setForgotPasswordModalOpen(false);
     setForgotTokenExpired(false);
@@ -249,7 +236,6 @@ const HomeHeader = () => {
     setAuthModalOpen(true);
   };
 
-  // Open forgot-password after email link expiry flow (set from /reset-password)
   useEffect(() => {
     if (typeof window === 'undefined') return;
     try {
@@ -270,9 +256,7 @@ const HomeHeader = () => {
     const fetchCategories = async () => {
       try {
         const response = await fetch('/api/public/categories');
-        if (!response.ok) {
-          return;
-        }
+        if (!response.ok) return;
         const data = await response.json();
         setCategories(Array.isArray(data.categories) ? data.categories : []);
       } catch (error) {
@@ -281,7 +265,6 @@ const HomeHeader = () => {
         setCategoriesLoading(false);
       }
     };
-
     fetchCategories();
   }, []);
 
@@ -289,17 +272,10 @@ const HomeHeader = () => {
     const fetchLivePrices = async () => {
       try {
         setLoadingPrices(true);
-        const response = await fetch('/api/public/metal-prices', {
-          cache: 'no-store',
-        });
+        const response = await fetch('/api/public/metal-prices', { cache: 'no-store' });
         if (response.ok) {
           const data = await response.json();
-          setLivePrices({
-            gold: data.gold || 0,
-            silver: data.silver || 0,
-            platinum: data.platinum || 0,
-            timestamp: data.timestamp,
-          });
+          setLivePrices({ gold: data.gold || 0, silver: data.silver || 0, platinum: data.platinum || 0, timestamp: data.timestamp });
         }
       } catch (error) {
         console.error('Failed to fetch live prices:', error);
@@ -307,27 +283,22 @@ const HomeHeader = () => {
         setLoadingPrices(false);
       }
     };
-
     fetchLivePrices();
-    // Refresh prices every 30 seconds for real-time feel
     const interval = setInterval(fetchLivePrices, 30 * 1000);
     return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
-    const activeCategory = categories.find(category => category._id === openDropdown);
+    const activeCategory = categories.find(c => c._id === openDropdown);
     if (!activeCategory?.megaMenuProductId) {
       setMegaMenuProduct(null);
       return;
     }
-
     const controller = new AbortController();
     const fetchMegaMenuProduct = async () => {
       try {
         setMegaMenuLoading(true);
-        const response = await fetch(`/api/public/products/megamenu/${activeCategory.megaMenuProductId}`, {
-          signal: controller.signal,
-        });
+        const response = await fetch(`/api/public/products/megamenu/${activeCategory.megaMenuProductId}`, { signal: controller.signal });
         if (!response.ok) {
           setMegaMenuProduct(null);
           return;
@@ -335,389 +306,253 @@ const HomeHeader = () => {
         const data = await response.json();
         setMegaMenuProduct(data);
       } catch (error) {
-        if ((error as Error).name !== 'AbortError') {
-          console.error('Failed to fetch mega menu product:', error);
-        }
+        if ((error as Error).name !== 'AbortError') console.error('Failed to fetch mega menu product:', error);
       } finally {
         setMegaMenuLoading(false);
       }
     };
-
     fetchMegaMenuProduct();
     return () => controller.abort();
   }, [openDropdown, categories]);
 
   const renderGoldRatesRows = () => {
-    if (loadingPrices) {
-      return <p className='text-center text-[#4F3A2E]/70'>Loading rates...</p>;
-    }
-    if (!livePrices) {
-      return <p className='text-center text-[#4F3A2E]/70'>Rates unavailable.</p>;
-    }
+    if (loadingPrices) return <p className='text-center text-sm text-amber-700/60 py-2'>Loading rates…</p>;
+    if (!livePrices) return <p className='text-center text-sm text-amber-700/60 py-2'>Rates unavailable.</p>;
     const gold22 = Math.round((livePrices.gold * 22) / 24);
     const gold18 = Math.round((livePrices.gold * 18) / 24);
     const gold14 = Math.round((livePrices.gold * 14) / 24);
+    const rows = [
+      { label: '24 KT (999)', value: livePrices.gold },
+      { label: '22 KT (916)', value: gold22 },
+      { label: '18 KT (750)', value: gold18 },
+      { label: '14 KT (585)', value: gold14 },
+      { label: 'Silver', value: livePrices.silver },
+      { label: 'Platinum', value: livePrices.platinum },
+    ];
     return (
-      <>
-        <div className='flex items-center justify-between border-b border-[#D7C4B3] pb-2'>
-          <span className='font-semibold text-[#1F3B29]'>24 KT (999)</span>
-          <span className='text-[#1F3B29]'>₹ {livePrices.gold.toLocaleString('en-IN')}/g</span>
-        </div>
-        <div className='flex items-center justify-between border-b border-[#D7C4B3] pb-2'>
-          <span className='font-semibold text-[#1F3B29]'>22 KT (916)</span>
-          <span className='text-[#1F3B29]'>₹ {gold22.toLocaleString('en-IN')}/g</span>
-        </div>
-        <div className='flex items-center justify-between border-b border-[#D7C4B3] pb-2'>
-          <span className='font-semibold text-[#1F3B29]'>18 KT (750)</span>
-          <span className='text-[#1F3B29]'>₹ {gold18.toLocaleString('en-IN')}/g</span>
-        </div>
-        <div className='flex items-center justify-between border-b border-[#D7C4B3] pb-2'>
-          <span className='font-semibold text-[#1F3B29]'>14 KT (585)</span>
-          <span className='text-[#1F3B29]'>₹ {gold14.toLocaleString('en-IN')}/g</span>
-        </div>
-        <div className='flex items-center justify-between border-b border-[#D7C4B3] pb-2'>
-          <span className='font-semibold text-[#1F3B29]'>Silver</span>
-          <span className='text-[#1F3B29]'>₹ {livePrices.silver.toLocaleString('en-IN')}/g</span>
-        </div>
-        <div className='flex items-center justify-between'>
-          <span className='font-semibold text-[#1F3B29]'>Platinum</span>
-          <span className='text-[#1F3B29]'>₹ {livePrices.platinum.toLocaleString('en-IN')}/g</span>
-        </div>
-      </>
+      <div className='space-y-1'>
+        {rows.map((row, i) => (
+          <div key={i} className='flex items-center justify-between rounded-lg px-3 py-2 hover:bg-amber-50 transition-colors'>
+            <span className='text-sm font-medium text-stone-700'>{row.label}</span>
+            <span className='text-sm font-semibold text-amber-800'>
+              ₹ {row.value.toLocaleString('en-IN')}
+              <span className='text-xs font-normal text-stone-500'>/g</span>
+            </span>
+          </div>
+        ))}
+      </div>
     );
   };
 
   const renderGoldRatesUpdatedFooter = () => (
-    <div className='border-t border-[#D7C4B3] bg-[#F1E2D2] px-4 py-3 text-center text-[11px] text-[#4F3A2E]'>
-      Updated on -{' '}
+    <div className='border-t border-amber-100 px-4 py-2.5 text-center text-[11px] text-stone-400'>
+      Updated{' '}
       {livePrices?.timestamp
         ? new Date(livePrices.timestamp).toLocaleDateString('en-GB') +
-          ' ' +
-          new Date(livePrices.timestamp).toLocaleTimeString('en-GB', {
-            hour: '2-digit',
-            minute: '2-digit',
-          })
+          ' · ' +
+          new Date(livePrices.timestamp).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
         : '—'}
     </div>
   );
 
   return (
-    <div className='w-full'>
-      {/* Top Bar */}
-      <div className='bg-whit hidden px-4 py-2 md:block'>
-        <div className='mx-auto flex max-w-[1440px] items-center justify-end'>
-          <div className='flex items-center gap-4 text-[12px]'>
-            <div className='flex items-center text-[#3579b8] gap-1'>
-              <TruckIcon className='w-4 h-4' />
-              Free Delivery
+    <>
+      {/* ─── Announcement Strip ──────────────────────────────────────────────── */}
+      <div className='hidden md:flex items-center justify-between bg-[var(--web-color,#a05a64)] px-6 py-2 text-[11px] text-white/70'>
+        <div className='flex items-center gap-5'>
+          <span className='flex items-center gap-1.5'>
+            <TruckIcon className='h-3.5 w-3.5 text-white' /> Free delivery on all orders
+          </span>
+          <span className='h-3 w-px bg-white/20' />
+          <Link href='/become-member' className='flex items-center gap-1.5 hover:text-white transition-colors'>
+            <Sparkles className='h-3.5 w-3.5 text-white' /> Become a member
+          </Link>
+        </div>
+        <div className='flex items-center gap-4'>
+          {isLoggedIn ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className='flex items-center gap-1.5 hover:text-white transition-colors focus:outline-none'>
+                  <span className='h-5 w-5 rounded-full bg-amber-500/20 flex items-center justify-center text-[10px] font-bold text-amber-400 uppercase'>
+                    {customerName.charAt(0)}
+                  </span>
+                  <span>{customerName}</span>
+                  <ChevronDown className='h-3 w-3' />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align='end' className='w-52 mt-2 rounded-xl border border-stone-100 bg-white shadow-xl p-1.5'>
+                <div className='px-3 py-2.5'>
+                  <p className='text-[10px] text-stone-400 uppercase tracking-wider'>Signed in as</p>
+                  <p className='text-sm font-semibold text-stone-800 truncate mt-0.5'>{customerName}</p>
+                </div>
+                <DropdownMenuSeparator className='bg-stone-100' />
+                <DropdownMenuItem asChild className='rounded-lg text-stone-600 hover:text-stone-900 hover:bg-stone-50 cursor-pointer'>
+                  <Link href='/customer-profile' className='flex items-center gap-2 px-3 py-2 text-sm'>
+                    <User className='h-4 w-4' /> My Profile
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild className='rounded-lg text-stone-600 hover:text-stone-900 hover:bg-stone-50 cursor-pointer'>
+                  <Link href='/my-orders' className='flex items-center gap-2 px-3 py-2 text-sm'>
+                    <Package className='h-4 w-4' /> My Orders
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator className='bg-stone-100' />
+                <DropdownMenuItem
+                  onClick={handleLogout}
+                  className='rounded-lg text-red-500 hover:text-red-600 hover:bg-red-50 cursor-pointer px-3 py-2 text-sm flex items-center gap-2'>
+                  <LogOut className='h-4 w-4' /> Sign Out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <div className='flex items-center gap-3'>
+              <button onClick={handleLoginClick} className='hover:text-white transition-colors'>
+                Sign In
+              </button>
+              <span className='h-3 w-px bg-white/20' />
+              <button
+                onClick={handleSignupClick}
+                className='px-3 py-1 rounded-full border border-white/20 hover:border-amber-400 hover:text-amber-400 transition-all text-[11px]'>
+                Create Account
+              </button>
             </div>
-            <span className='h-3 w-px bg-gray-500'></span>
-            <Link href='/become-member' className='flex items-center gap-1 text-[#3579b8] hover:text-gray-900'>
-              <User className='w-4 h-4' />
-              <span>Become Member</span>
-            </Link>
-            <span className='h-3 w-px bg-gray-500'></span>
-            {isLoggedIn ? (
-              <>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button className='flex items-center gap-2 text-[#3579b8] hover:text-gray-900 focus:outline-none'>
-                      <User className='w-4 h-4' />
-                      <span className='font-medium'>{customerName}</span>
-                      <ChevronDown className='w-3 h-3' />
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align='end' className='w-56 rounded-xl border border-[#E6D3C2] bg-white p-2 shadow-lg'>
-                    <div className='px-3 py-2'>
-                      <p className='text-xs text-gray-500'>Signed in as</p>
-                      <p className='truncate text-sm font-semibold text-[#001e38]'>{customerName}</p>
-                    </div>
-                    <DropdownMenuSeparator className='bg-[#E6D3C2]' />
-                    <DropdownMenuItem
-                      asChild
-                      className='text-[#001e38] hover:bg-gray-100 hover:text-[#001e38] focus:bg-gray-100 focus:text-[#001e38]'>
-                      <Link
-                        href='/customer-profile'
-                        className='text-[#001e38] flex items-center gap-2 cursor-pointer rounded-lg px-2 py-2 text-sm'>
-                        <User className='w-4 h-4' />
-                        <span>My Profile</span>
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      asChild
-                      className='text-[#001e38] hover:bg-gray-100 hover:text-[#001e38] focus:bg-gray-100 focus:text-[#001e38]'>
-                      <Link
-                        href='/my-orders'
-                        className=' text-[#001e38] flex items-center gap-2 cursor-pointer rounded-lg px-2 py-2 text-sm'>
-                        <Package className='w-4 h-4' />
-                        <span>My Orders</span>
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      onClick={handleLogout}
-                      className='cursor-pointer text-[#001e38] rounded-lg px-2 py-2 text-sm hover:bg-gray-100 hover:text-[#001e38] focus:bg-gray-100 focus:text-[#001e38]'>
-                      <LogOut className='w-4 h-4' />
-                      <span>Logout</span>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </>
-            ) : (
-              <>
-                <button onClick={handleLoginClick} className='text-[#3579b8] hover:text-gray-900'>
-                  Login
-                </button>
-                <span className='h-3 w-px bg-gray-500'></span>
-                <button onClick={handleSignupClick} className='text-[#3579b8] hover:text-gray-900'>
-                  Signup
-                </button>
-              </>
-            )}
-          </div>
+          )}
         </div>
       </div>
 
-      {/* Main Header — mobile: menu + logo + icons, then search; tablet: same two rows; desktop: single row */}
-      <div className='border-b border-gray-200 bg-white shadow-sm'>
-        <div className='mx-auto max-w-[1440px] px-3 pb-3 pt-3 sm:px-4 lg:py-2'>
-          <div className='flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between lg:gap-8'>
-            {/* Mobile / tablet: toolbar row (becomes flex contents on lg so logo + icons + search order correctly) */}
-            <div className='flex w-full items-center justify-between gap-2 lg:contents'>
-              {/* Hamburger — mobile & tablet only */}
-              <div className='shrink-0 lg:hidden'>
-                <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
-                  <SheetTrigger asChild>
-                    <button
-                      type='button'
-                      className='inline-flex h-11 w-11 items-center justify-center rounded-xl border border-gray-200 bg-white text-[#001e38] shadow-sm transition-colors hover:border-[#001e38]/20 hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#001e38]/30'
-                      aria-label='Open menu'>
-                      <Menu className='h-5 w-5' strokeWidth={2} />
-                    </button>
-                  </SheetTrigger>
-                  <SheetContent
-                    side='left'
-                    className='flex w-[min(100vw,20rem)] flex-col border-r border-gray-200 bg-white p-0 sm:max-w-sm'>
-                    <SheetHeader className='border-b border-gray-100 px-4 py-4 text-left'>
-                      <SheetTitle className='font-serif text-lg text-[#001e38]'>Menu</SheetTitle>
-                      <p className='text-xs font-normal text-gray-500'>Shop categories &amp; more</p>
-                    </SheetHeader>
-                    <nav className='flex-1 overflow-y-auto px-2 py-3'>
-                      <p className='px-3 pb-2 text-[10px] font-semibold uppercase tracking-widest text-gray-400'>Categories</p>
+      {/* ─── Main Header ─────────────────────────────────────────────────────── */}
+      <header
+        className={`w-full bg-white transition-all duration-300 ${isSticky ? 'fixed top-0 left-0 right-0 z-50 shadow-[0_2px_20px_rgba(0,0,0,0.08)]' : 'relative'}`}>
+        <div className='mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-8'>
+          <div className='flex items-center gap-4 lg:gap-8 py-3 lg:py-4'>
+            {/* Hamburger (mobile/tablet) */}
+            <div className='shrink-0 lg:hidden'>
+              <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
+                <SheetTrigger asChild>
+                  <button
+                    type='button'
+                    className='h-10 w-10 flex items-center justify-center rounded-xl border border-stone-200 text-stone-600 hover:border-stone-300 hover:bg-stone-50 transition-all'
+                    aria-label='Open menu'>
+                    <Menu className='h-5 w-5' />
+                  </button>
+                </SheetTrigger>
+                <SheetContent side='left' className='w-[min(100vw,22rem)] p-0 border-r border-stone-100 bg-white flex flex-col'>
+                  <SheetHeader className='px-5 py-4 border-b border-stone-100 flex flex-row items-center justify-between'>
+                    <div>
+                      <SheetTitle className='text-base font-semibold text-stone-900'>Browse</SheetTitle>
+                      <p className='text-xs text-stone-400 mt-0.5'>Categories &amp; collections</p>
+                    </div>
+                  </SheetHeader>
+                  <nav className='flex-1 overflow-y-auto'>
+                    <div className='px-3 py-4'>
+                      <p className='px-3 mb-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-stone-400'>Categories</p>
                       <ul className='space-y-0.5'>
                         {categoriesLoading ? (
-                          <li className='px-3 py-3 text-sm text-gray-500'>Loading…</li>
+                          <li className='px-3 py-3 text-sm text-stone-400'>Loading…</li>
                         ) : (
                           categories.map(category => (
                             <li key={category._id}>
                               <Link
                                 href={`/jewellery?category=${encodeURIComponent(category.slug || category.name)}`}
                                 onClick={() => setMobileNavOpen(false)}
-                                className='flex items-center justify-between rounded-lg px-3 py-3 text-sm font-medium text-[#001e38] transition-colors hover:bg-[#f5f7fa]'>
+                                className='flex items-center justify-between rounded-xl px-3 py-3 text-sm font-medium text-stone-700 hover:bg-amber-50 hover:text-amber-800 transition-colors'>
                                 <span className='truncate'>{category.name}</span>
-                                <ChevronRight className='h-4 w-4 shrink-0 text-gray-400' />
+                                <ChevronRight className='h-4 w-4 text-stone-300' />
                               </Link>
                             </li>
                           ))
                         )}
                       </ul>
-                      <div className='mt-4 border-t border-gray-100 pt-4'>
-                        <p className='px-3 pb-2 text-[10px] font-semibold uppercase tracking-widest text-gray-400'>Quick links</p>
-                        <ul className='space-y-0.5'>
-                          <li>
-                            <Link
-                              href='/custom-jewellery'
-                              onClick={() => setMobileNavOpen(false)}
-                              className='flex items-center gap-2 rounded-lg px-3 py-3 text-sm text-[#001e38] hover:bg-[#f5f7fa]'>
-                              <Store className='h-4 w-4 text-gray-500' />
-                              Custom Jewellery
-                            </Link>
-                          </li>
-                          <li>
-                            <Link
-                              href='/become-member'
-                              onClick={() => setMobileNavOpen(false)}
-                              className='flex items-center gap-2 rounded-lg px-3 py-3 text-sm text-[#001e38] hover:bg-[#f5f7fa]'>
-                              <User className='h-4 w-4 text-gray-500' />
-                              Become Member
-                            </Link>
-                          </li>
-                        </ul>
-                      </div>
-                      <div className='mt-4 overflow-hidden rounded-xl border border-[#D7C4B3] bg-[#F6EBDD]'>
-                        <p className='border-b border-[#D7C4B3] bg-[#F1E2D2] px-3 py-2.5 text-center text-xs font-semibold text-[#1F3B29]'>
-                          Today&apos;s gold &amp; metal rates
-                        </p>
-                        <div className='max-h-[220px] space-y-3 overflow-y-auto p-4 text-sm'>{renderGoldRatesRows()}</div>
-                        {renderGoldRatesUpdatedFooter()}
-                      </div>
-                    </nav>
-                  </SheetContent>
-                </Sheet>
-              </div>
-
-              {/* Logo */}
-              <Link
-                href='/'
-                className='flex min-w-0 flex-1 items-center justify-center gap-2 sm:justify-start lg:flex-none lg:shrink-0 lg:justify-start'>
-                <div className='flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white ring-1 ring-gray-100 sm:h-[52px] sm:w-[52px] lg:h-[90px] lg:w-[90px] lg:ring-0'>
-                  <img src={headerLogoSrc} alt='Jewel Manas' className='h-full w-full object-contain' />
-                </div>
-              </Link>
-
-              {/* Action icons — compact on phone, labels from sm on tablet */}
-              <div className='flex shrink-0 items-center gap-1 sm:gap-2 lg:order-3 lg:gap-4'>
-                <div className='relative' ref={recentlyViewedRef}>
-                  <button
-                    type='button'
-                    onClick={() => setRecentlyViewedOpen(prev => !prev)}
-                    className='flex h-11 min-w-11 cursor-pointer items-center justify-center gap-1.5 rounded-xl text-gray-600 transition-colors hover:bg-gray-50 hover:text-[#001e38] sm:min-w-0 sm:px-2 lg:gap-2'
-                    aria-haspopup='menu'
-                    aria-expanded={recentlyViewedOpen}
-                    aria-label='Recently viewed'>
-                    <Clock className='h-5 w-5 shrink-0 lg:h-6 lg:w-6' />
-                    <span className='hidden max-w-18 truncate text-left text-[11px] font-medium sm:block lg:max-w-[60px] lg:text-xs'>
-                      Recent
-                    </span>
-                  </button>
-                  {recentlyViewedOpen && (
-                    <div className='absolute right-0 z-50 mt-2 w-[min(calc(100vw-1.5rem),20rem)] max-w-80 rounded-2xl border border-[#E6D3C2]/60 bg-white shadow-xl'>
-                      <div className='border-b border-[#E6D3C2]/40 px-4 py-3'>
-                        <p className='text-xs font-semibold uppercase tracking-widest text-black'>Recently Viewed</p>
-                      </div>
-                      {recentlyViewed.length === 0 ? (
-                        <div className='px-4 py-6 text-sm text-[#4F3A2E]/70'>No products viewed yet.</div>
-                      ) : (
-                        <div className='max-h-80 overflow-y-auto'>
-                          {recentlyViewed.map(item => {
-                            const itemId = getRecentlyViewedId(item);
-                            if (!itemId) {
-                              return null;
-                            }
-                            const itemName = item.name || item.title || 'Untitled product';
-                            const itemImage = item.image || '/placeholder.jpg';
-                            const itemSlug = item.urlSlug || itemId;
-                            return (
-                              <Link
-                                key={itemId}
-                                href={`/products/${itemSlug}`}
-                                onClick={() => setRecentlyViewedOpen(false)}
-                                className='flex items-center gap-3 px-4 py-3 transition-colors hover:bg-[#F5EEE5]'>
-                                <div className='flex h-12 w-12 items-center justify-center overflow-hidden rounded-lg bg-[#F5EEE5]'>
-                                  <img src={itemImage} alt={itemName} className='h-full w-full object-cover' />
-                                </div>
-                                <div className='min-w-0 flex-1'>
-                                  <p className='line-clamp-2 text-sm font-medium text-[#1F3B29]'>{itemName}</p>
-                                </div>
-                              </Link>
-                            );
-                          })}
-                        </div>
-                      )}
                     </div>
-                  )}
-                </div>
 
-                <span className='hidden h-6 w-px bg-gray-200 sm:block lg:bg-gray-500' />
+                    <div className='px-3 pt-2 pb-4 border-t border-stone-100'>
+                      <p className='px-3 mb-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-stone-400'>Quick Links</p>
+                      <ul className='space-y-0.5'>
+                        <li>
+                          <Link
+                            href='/custom-jewellery'
+                            onClick={() => setMobileNavOpen(false)}
+                            className='flex items-center gap-2.5 rounded-xl px-3 py-3 text-sm text-stone-700 hover:bg-amber-50 hover:text-amber-800 transition-colors'>
+                            <Store className='h-4 w-4 text-stone-400' /> Custom Jewellery
+                          </Link>
+                        </li>
+                        <li>
+                          <Link
+                            href='/become-member'
+                            onClick={() => setMobileNavOpen(false)}
+                            className='flex items-center gap-2.5 rounded-xl px-3 py-3 text-sm text-stone-700 hover:bg-amber-50 hover:text-amber-800 transition-colors'>
+                            <Sparkles className='h-4 w-4 text-stone-400' /> Become Member
+                          </Link>
+                        </li>
+                      </ul>
+                    </div>
 
-                <Link
-                  href='/custom-jewellery'
-                  className='flex h-11 min-w-11 items-center justify-center gap-1.5 rounded-xl text-gray-600 transition-colors hover:bg-gray-50 hover:text-[#001e38] sm:min-w-0 sm:px-2 lg:gap-2'
-                  aria-label='Custom jewellery'>
-                  <Store className='h-5 w-5 shrink-0 lg:h-6 lg:w-6' />
-                  <span className='hidden max-w-18 truncate text-left text-[11px] font-medium sm:block lg:max-w-[60px] lg:text-xs'>
-                    Custom
-                  </span>
-                </Link>
-
-                <span className='hidden h-6 w-px bg-gray-200 sm:block lg:bg-gray-500' />
-
-                <button
-                  type='button'
-                  onClick={() => {
-                    if (!isLoggedIn) {
-                      window.dispatchEvent(new Event('openLoginModal'));
-                      return;
-                    }
-                    router.push('/wishlist');
-                  }}
-                  className='relative flex h-11 w-11 items-center justify-center rounded-xl text-gray-600 transition-colors hover:bg-gray-50 hover:text-[#001e38]'
-                  aria-label='Wishlist'>
-                  <Heart className='h-5 w-5 lg:h-6 lg:w-6' />
-                  {wishlistCount > 0 && (
-                    <span className='absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-theme-secondary px-1 text-[10px] font-semibold text-white'>
-                      {wishlistCount}
-                    </span>
-                  )}
-                </button>
-
-                <button
-                  type='button'
-                  onClick={() => {
-                    if (!isLoggedIn) {
-                      window.dispatchEvent(new Event('openLoginModal'));
-                      return;
-                    }
-                    router.push('/cart');
-                  }}
-                  className='relative flex h-11 w-11 items-center justify-center rounded-xl text-gray-600 transition-colors hover:bg-gray-50 hover:text-[#001e38]'
-                  aria-label='Cart'>
-                  <ShoppingCart className='h-5 w-5 lg:h-6 lg:w-6' />
-                  {cartCount > 0 && (
-                    <span className='absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-theme-secondary px-1 text-[10px] font-semibold text-white'>
-                      {cartCount}
-                    </span>
-                  )}
-                </button>
-              </div>
+                    <div className='mx-3 mb-4 overflow-hidden rounded-2xl border border-amber-100 bg-gradient-to-b from-amber-50 to-white'>
+                      <div className='px-4 py-3 border-b border-amber-100'>
+                        <p className='text-xs font-semibold text-amber-800'>Today's Metal Rates</p>
+                      </div>
+                      <div className='py-2'>{renderGoldRatesRows()}</div>
+                      {renderGoldRatesUpdatedFooter()}
+                    </div>
+                  </nav>
+                </SheetContent>
+              </Sheet>
             </div>
 
-            {/* Search — full width below md–lg; sits between logo and icons on desktop via order */}
-            <div className='w-full min-w-0 lg:order-2 lg:max-w-xl lg:flex-1'>
+            {/* Logo */}
+            <Link href='/' className='shrink-0 flex items-center gap-3'>
+              <div className='flex items-center justify-center h-10 w-10 sm:h-12 sm:w-12 lg:h-16 lg:w-16 overflow-hidden'>
+                <img src={headerLogoSrc} alt='Jewel Manas' className='h-full w-full object-contain' />
+              </div>
+            </Link>
+
+            {/* Search */}
+            <div className='flex-1 min-w-0 order-last lg:order-none'>
               <form
                 className='relative'
-                onSubmit={event => {
-                  event.preventDefault();
-                  const trimmedQuery = searchQuery.trim();
-                  if (!trimmedQuery) {
-                    return;
-                  }
-                  router.push(`/jewellery?search=${encodeURIComponent(trimmedQuery)}`);
+                onSubmit={e => {
+                  e.preventDefault();
+                  const q = searchQuery.trim();
+                  if (!q) return;
+                  router.push(`/jewellery?search=${encodeURIComponent(q)}`);
                   setSearchOpen(false);
                 }}>
-                {/* Leading icon — always visible on light field (Lucide uses stroke = currentColor) */}
-                <span
-                  className='pointer-events-none absolute left-3 top-1/2 z-1 -translate-y-1/2 text-[#001e38]/50 lg:left-3.5'
-                  aria-hidden>
-                  <Search className='h-5 w-5 shrink-0' strokeWidth={2.25} />
+                <span className='pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-400'>
+                  <Search className='h-4 w-4' strokeWidth={2} />
                 </span>
                 <input
                   ref={searchInputRef}
                   type='search'
-                  placeholder='Search jewellery…'
+                  placeholder='Search rings, necklaces, earrings…'
                   value={searchQuery}
-                  onChange={event => {
-                    setSearchQuery(event.target.value);
+                  onChange={e => {
+                    setSearchQuery(e.target.value);
                     setSearchOpen(true);
                   }}
-                  onFocus={() => setSearchOpen(true)}
-                  onKeyDown={event => {
-                    if (event.key === 'Escape') {
-                      setSearchOpen(false);
-                    }
+                  onFocus={() => {
+                    setSearchFocused(true);
+                    setSearchOpen(true);
+                  }}
+                  onBlur={() => setSearchFocused(false)}
+                  onKeyDown={e => {
+                    if (e.key === 'Escape') setSearchOpen(false);
                   }}
                   role='combobox'
                   aria-autocomplete='list'
                   aria-expanded={searchOpen}
                   aria-controls='header-search-suggestions'
                   aria-haspopup='listbox'
-                  className='h-11 w-full rounded-xl border border-gray-200 bg-gray-50/80 py-2 pl-11 pr-15 text-sm text-[#001e38] scheme-light placeholder:text-gray-400 focus:border-[#001e38]/25 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#001e38]/15 lg:h-auto lg:rounded-none lg:border-3 lg:border-[#e4e4e4] lg:bg-white lg:py-[6px] lg:pl-11 lg:pr-18 lg:focus:ring-0 [&::-webkit-search-cancel-button]:hidden [&::-webkit-search-decoration]:hidden'
+                  className={`w-full h-11 pl-10 pr-28 rounded-2xl border text-sm text-stone-800 placeholder:text-stone-400 transition-all outline-none [&::-webkit-search-cancel-button]:hidden [&::-webkit-search-decoration]:hidden
+                    ${
+                      searchFocused
+                        ? 'border-amber-400 bg-white ring-4 ring-amber-400/10 shadow-sm'
+                        : 'border-stone-200 bg-stone-50 hover:border-stone-300'
+                    }`}
                 />
                 <button
                   type='submit'
-                  aria-label='Search'
-                  className='absolute right-1 top-1/2 z-2 flex h-9 w-10 -translate-y-1/2 items-center justify-center rounded-lg bg-theme-secondary text-white shadow-sm transition-colors hover:opacity-95 lg:right-0 lg:top-0 lg:h-full lg:w-auto lg:translate-y-0 lg:rounded-none lg:border-3 lg:border-[#e4e4e4] lg:border-l-0 lg:px-6'>
-                  <Search className='h-4 w-4 shrink-0 stroke-[2.25] text-white lg:h-5 lg:w-5' strokeWidth={2.25} />
+                  className='absolute right-1.5 top-1/2 -translate-y-1/2 flex items-center gap-1.5 px-4 h-8 rounded-xl bg-[var(--web-color,#a05a64)] text-white text-xs font-medium hover:bg-amber-700 transition-colors'>
+                  <Search className='h-3.5 w-3.5' /> Search
                 </button>
                 <SearchDialog
                   open={searchOpen}
@@ -728,121 +563,209 @@ const HomeHeader = () => {
                 />
               </form>
             </div>
+
+            {/* Action Icons */}
+            <div className='flex items-center gap-1 shrink-0'>
+              {/* Recently Viewed */}
+              <div className='relative hidden sm:block' ref={recentlyViewedRef}>
+                <button
+                  type='button'
+                  onClick={() => setRecentlyViewedOpen(p => !p)}
+                  className='flex h-10 w-10 items-center justify-center rounded-xl text-stone-500 hover:bg-stone-100 hover:text-stone-800 transition-colors'
+                  aria-label='Recently viewed'>
+                  <Clock className='h-5 w-5' />
+                </button>
+                {recentlyViewedOpen && (
+                  <div className='absolute right-0 z-50 mt-2 w-72 rounded-2xl border border-stone-100 bg-white shadow-2xl shadow-stone-200/60 overflow-hidden'>
+                    <div className='px-4 py-3 border-b border-stone-100 flex items-center justify-between'>
+                      <p className='text-xs font-semibold uppercase tracking-[0.1em] text-stone-500'>Recently Viewed</p>
+                      <button onClick={() => setRecentlyViewedOpen(false)} className='text-stone-400 hover:text-stone-600'>
+                        <X className='h-3.5 w-3.5' />
+                      </button>
+                    </div>
+                    {recentlyViewed.length === 0 ? (
+                      <div className='px-4 py-8 text-center text-sm text-stone-400'>Nothing viewed yet</div>
+                    ) : (
+                      <div className='max-h-80 overflow-y-auto divide-y divide-stone-50'>
+                        {recentlyViewed.map(item => {
+                          const itemId = getRecentlyViewedId(item);
+                          if (!itemId) return null;
+                          return (
+                            <Link
+                              key={itemId}
+                              href={`/products/${item.urlSlug || itemId}`}
+                              onClick={() => setRecentlyViewedOpen(false)}
+                              className='flex items-center gap-3 px-4 py-3 hover:bg-stone-50 transition-colors'>
+                              <div className='h-11 w-11 rounded-lg overflow-hidden bg-stone-100 shrink-0'>
+                                <img src={item.image || '/placeholder.jpg'} alt={item.name || ''} className='h-full w-full object-cover' />
+                              </div>
+                              <p className='text-sm font-medium text-stone-700 line-clamp-2'>{item.name || item.title || 'Product'}</p>
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Custom Jewellery */}
+              <Link
+                href='/custom-jewellery'
+                className='hidden sm:flex h-10 items-center gap-1.5 px-3 rounded-xl text-stone-500 hover:bg-stone-100 hover:text-stone-800 transition-colors text-sm font-medium'
+                aria-label='Custom jewellery'>
+                <Store className='h-4.5 w-4.5 h-5 w-5 shrink-0' />
+                <span className='hidden md:inline text-xs'>Custom</span>
+              </Link>
+
+              <div className='w-px h-6 bg-stone-200 mx-1 hidden sm:block' />
+
+              {/* Wishlist */}
+              <button
+                type='button'
+                onClick={() => {
+                  if (!isLoggedIn) {
+                    window.dispatchEvent(new Event('openLoginModal'));
+                    return;
+                  }
+                  router.push('/wishlist');
+                }}
+                className='relative flex h-10 w-10 items-center justify-center rounded-xl text-stone-500 hover:bg-rose-50 hover:text-rose-500 transition-colors'
+                aria-label='Wishlist'>
+                <Heart className='h-5 w-5' />
+                {wishlistCount > 0 && (
+                  <span className='absolute -top-0.5 -right-0.5 h-4.5 min-w-4.5 h-5 min-w-5 flex items-center justify-center rounded-full bg-rose-500 text-white text-[10px] font-bold px-1'>
+                    {wishlistCount}
+                  </span>
+                )}
+              </button>
+
+              {/* Cart */}
+              <button
+                type='button'
+                onClick={() => {
+                  if (!isLoggedIn) {
+                    window.dispatchEvent(new Event('openLoginModal'));
+                    return;
+                  }
+                  router.push('/cart');
+                }}
+                className='relative flex h-10 w-10 items-center justify-center rounded-xl text-stone-500 hover:bg-amber-50 hover:text-amber-600 transition-colors'
+                aria-label='Cart'>
+                <ShoppingCart className='h-5 w-5' />
+                {cartCount > 0 && (
+                  <span className='absolute -top-0.5 -right-0.5 h-5 min-w-5 flex items-center justify-center rounded-full bg-amber-500 text-white text-[10px] font-bold px-1'>
+                    {cartCount}
+                  </span>
+                )}
+              </button>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Navigation Menu - Sticky */}
-      <div
-        className={`bg-web
- text-white transition-all duration-300 ${isSticky ? 'fixed top-0 left-0 right-0 z-50 shadow-lg' : ''}`}
-        onMouseLeave={() => setOpenDropdown(null)}>
-        <div className='hidden lg:block relative mx-auto max-w-[1440px] px-1 sm:px-2 md:px-3 lg:px-0'>
-          <div className='flex min-h-[52px] items-center justify-between gap-1 sm:gap-2 md:min-h-14'>
-            {/* Logo in Navbar - Only shows when sticky */}
-            <div
-              className={`hidden items-center gap-2 pl-4 transition-all duration-300 lg:flex ${
-                isSticky ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-10 pointer-events-none w-0 overflow-hidden'
-              }`}>
-              <Link href='/'>
-                <div className='w-10 h-10 flex items-center justify-center'>
-                  <img src={headerLogoSrc} alt='Jewel Manas' className='w-full h-full object-contain' />
-                </div>
-              </Link>
-            </div>
+        {/* ─── Navigation Bar ─────────────────────────────────────────────────── */}
+        <div className='hidden lg:block border-t border-stone-100' onMouseLeave={() => setOpenDropdown(null)}>
+          <div className='mx-auto max-w-[1440px] px-8'>
+            <div className='flex items-center justify-between'>
+              {/* Category Nav */}
+              <div className='flex items-center overflow-x-auto scrollbar-hide'>
+                {categoriesLoading ? (
+                  <span className='px-4 py-3.5 text-sm text-stone-400'>Loading…</span>
+                ) : (
+                  categories.map(category => (
+                    <button
+                      key={category._id}
+                      onMouseEnter={() => setOpenDropdown(category._id)}
+                      onClick={() => setOpenDropdown(p => (p === category._id ? null : category._id))}
+                      className={`group relative flex items-center gap-1 px-4 py-3.5 text-sm font-medium whitespace-nowrap transition-colors
+                        ${openDropdown === category._id ? 'text-amber-700' : 'text-stone-600 hover:text-stone-900'}`}>
+                      {category.name}
+                      <ChevronDown
+                        className={`h-3.5 w-3.5 transition-transform duration-200 ${openDropdown === category._id ? 'rotate-180' : ''}`}
+                      />
+                      {/* Active underline */}
+                      <span
+                        className={`absolute bottom-0 left-4 right-4 h-0.5 rounded-full bg-amber-500 transition-all duration-200 ${openDropdown === category._id ? 'opacity-100' : 'opacity-0 group-hover:opacity-40'}`}
+                      />
+                    </button>
+                  ))
+                )}
+              </div>
 
-            {/* Menu Items */}
-            <div className='scrollbar-hide flex min-w-0 flex-1 items-center overflow-x-auto overscroll-x-contain whitespace-nowrap [-webkit-overflow-scrolling:touch]'>
-              {categoriesLoading ? (
-                <span className='px-3 py-3 text-sm text-white/70 md:px-4 md:py-4'>Loading...</span>
-              ) : (
-                categories.map(category => (
+              {/* Right side: Gold Rate + Custom */}
+              <div className='flex items-center gap-2 shrink-0'>
+                <Link
+                  href='/custom-jewellery'
+                  className='flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium text-stone-500 hover:text-stone-800 hover:bg-stone-100 transition-colors'>
+                  <Store className='h-3.5 w-3.5' /> Custom Jewellery
+                </Link>
+
+                {/* Gold Rate Dropdown */}
+                <div
+                  className='relative'
+                  onMouseEnter={() => {
+                    if (liveRateCloseTimeoutRef.current) {
+                      window.clearTimeout(liveRateCloseTimeoutRef.current);
+                      liveRateCloseTimeoutRef.current = null;
+                    }
+                    setLiveRateOpen(true);
+                    setOpenDropdown(null);
+                  }}
+                  onMouseLeave={() => {
+                    if (liveRateCloseTimeoutRef.current) window.clearTimeout(liveRateCloseTimeoutRef.current);
+                    liveRateCloseTimeoutRef.current = window.setTimeout(() => setLiveRateOpen(false), 200);
+                  }}>
                   <button
-                    key={category._id}
-                    onMouseEnter={() => setOpenDropdown(category._id)}
-                    onClick={() => setOpenDropdown(prev => (prev === category._id ? null : category._id))}
-                    className={`flex shrink-0 items-center gap-1 px-2.5 py-3 text-[12px] font-light leading-[18px] transition-colors hover:text-emerald-400 sm:px-3 md:px-4 md:py-3.5 md:text-[13px] lg:py-4 lg:text-[14px] lg:leading-[20px] ${
-                      openDropdown === category._id ? 'text-emerald-400' : ''
-                    }`}>
-                    <span className='max-w-30 truncate sm:max-w-40 md:max-w-none'>{category.name}</span>
-                    <ChevronDown className='h-3.5 w-3.5 shrink-0 md:h-4 md:w-4' />
+                    onClick={() => setLiveRateOpen(p => !p)}
+                    className='flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium text-amber-700 bg-amber-50 hover:bg-amber-100 transition-colors'>
+                    <span className='h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse' />
+                    Gold Rate
+                    <ChevronDown className={`h-3.5 w-3.5 transition-transform ${liveRateOpen ? 'rotate-180' : ''}`} />
                   </button>
-                ))
-              )}
-            </div>
-
-            {/* Live Rate — tablet + desktop */}
-            <div
-              className='relative hidden shrink-0 md:block'
-              onMouseEnter={() => {
-                if (liveRateCloseTimeoutRef.current) {
-                  window.clearTimeout(liveRateCloseTimeoutRef.current);
-                  liveRateCloseTimeoutRef.current = null;
-                }
-                setLiveRateOpen(true);
-                setOpenDropdown(null);
-              }}
-              onMouseLeave={() => {
-                if (liveRateCloseTimeoutRef.current) {
-                  window.clearTimeout(liveRateCloseTimeoutRef.current);
-                }
-                liveRateCloseTimeoutRef.current = window.setTimeout(() => {
-                  setLiveRateOpen(false);
-                }, 200);
-              }}>
-              <button
-                onClick={() => setLiveRateOpen(prev => !prev)}
-                className='flex items-center gap-1.5 px-3 py-3 text-xs font-medium sm:gap-2 sm:px-4 sm:text-sm md:px-5 lg:px-6 lg:py-4'>
-                <span className='hidden sm:inline'>Gold Rate</span>
-                <span className='sm:hidden'>Gold</span>
-                <ChevronDown className='h-3.5 w-3.5 sm:h-4 sm:w-4' />
-              </button>
-              {liveRateOpen && (
-                <div className='absolute right-0 top-full z-50 mt-2 w-72 rounded-xl border border-[#D7C4B3] bg-[#F6EBDD] shadow-lg'>
-                  <div className='border-b border-[#D7C4B3] bg-[#F1E2D2] px-4 py-3 text-center'>
-                    <p className='text-sm font-semibold text-[#1F3B29]'>Today&apos;s Gold Rate</p>
-                  </div>
-                  <div className='space-y-3 p-4 text-sm'>{renderGoldRatesRows()}</div>
-                  {renderGoldRatesUpdatedFooter()}
+                  {liveRateOpen && (
+                    <div className='absolute right-0 top-full mt-2 w-72 rounded-2xl border border-amber-100 bg-white shadow-2xl shadow-amber-100/40 overflow-hidden z-50'>
+                      <div className='px-4 py-3 border-b border-amber-100 bg-gradient-to-r from-amber-50 to-white'>
+                        <p className='text-xs font-semibold text-amber-800 uppercase tracking-wider'>Live Metal Rates</p>
+                      </div>
+                      <div className='py-2'>{renderGoldRatesRows()}</div>
+                      {renderGoldRatesUpdatedFooter()}
+                    </div>
+                  )}
                 </div>
-              )}
+              </div>
             </div>
           </div>
 
-          {openDropdown && (
-            <div className='absolute left-0 right-0 top-full z-40 hidden max-h-[70vh] overflow-y-auto border-t border-[#E6D3C2]/40 bg-white text-[#1F3B29] shadow-xl md:block'>
-              {(() => {
-                const activeCategory = categories.find(category => category._id === openDropdown);
-                if (!activeCategory) {
-                  return null;
-                }
-
-                const subcategories = Array.isArray(activeCategory.children) ? activeCategory.children : [];
-                const occasions = Array.isArray(activeCategory.occasions) ? activeCategory.occasions : [];
-
-                return (
-                  <div className='px-6 sm:px-8 lg:px-12 py-8 grid grid-cols-1 md:grid-cols-[1.2fr_1fr_1fr] gap-8'>
-                    <div className='space-y-4'>
-                      <div>
-                        <p className='text-xs uppercase tracking-[0.3em] text-emerald-400 font-semibold'>Shop by Category</p>
-                        <h3 className='mt-2 text-xl font-semibold text-[#001e38]'>{activeCategory.name}</h3>
-                        {activeCategory.shortDescription && (
-                          <p className='mt-2 text-sm text-[#4F3A2E]'>{activeCategory.shortDescription}</p>
-                        )}
-                        <Link
-                          href={`/jewellery?category=${encodeURIComponent(activeCategory.slug || activeCategory.name)}`}
-                          className='mt-4 inline-flex text-sm font-semibold text-[#001e38] hover:text-emerald-400 transition-colors'>
-                          View all
-                        </Link>
-                      </div>
-
+          {/* ─── Mega Menu ────────────────────────────────────────────────────── */}
+          {openDropdown &&
+            (() => {
+              const activeCategory = categories.find(c => c._id === openDropdown);
+              if (!activeCategory) return null;
+              const subcategories = Array.isArray(activeCategory.children) ? activeCategory.children : [];
+              const occasions = Array.isArray(activeCategory.occasions) ? activeCategory.occasions : [];
+              return (
+                <div className='absolute left-0 right-0 z-40 border-t border-stone-100 bg-white shadow-2xl shadow-stone-200/40'>
+                  <div className='mx-auto max-w-[1440px] px-8 py-8 grid grid-cols-[1.2fr_1fr_1fr] gap-10'>
+                    {/* Category Info */}
+                    <div>
+                      <p className='text-[10px] font-semibold uppercase tracking-[0.2em] text-amber-600'>Collection</p>
+                      <h3 className='mt-1.5 text-2xl font-semibold text-stone-900'>{activeCategory.name}</h3>
+                      {activeCategory.shortDescription && (
+                        <p className='mt-2 text-sm text-stone-500 leading-relaxed'>{activeCategory.shortDescription}</p>
+                      )}
+                      <Link
+                        href={`/jewellery?category=${encodeURIComponent(activeCategory.slug || activeCategory.name)}`}
+                        className='mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-amber-700 hover:text-amber-800 transition-colors group'>
+                        View all {activeCategory.name}
+                        <ArrowRight className='h-4 w-4 group-hover:translate-x-0.5 transition-transform' />
+                      </Link>
                       {subcategories.length > 0 && (
-                        <div className='grid grid-cols-2 gap-3'>
+                        <div className='mt-5 grid grid-cols-2 gap-x-4 gap-y-2'>
                           {subcategories.map(sub => (
                             <Link
                               key={sub._id}
                               href={`/jewellery?category=${encodeURIComponent(sub.slug || sub.name)}`}
-                              className='text-sm text-[#4F3A2E] hover:text-[#001e38] transition-colors'>
+                              className='text-sm text-stone-500 hover:text-stone-900 hover:translate-x-0.5 transition-all'>
                               {sub.name}
                             </Link>
                           ))}
@@ -850,72 +773,78 @@ const HomeHeader = () => {
                       )}
                     </div>
 
-                    <div className='space-y-4'>
-                      <h4 className='text-sm font-semibold text-[#001e38]'>Shop by Occasion</h4>
+                    {/* Occasions */}
+                    <div>
+                      <p className='text-[10px] font-semibold uppercase tracking-[0.2em] text-stone-400 mb-3'>By Occasion</p>
                       {occasions.length > 0 ? (
-                        <div className='grid grid-cols-2 gap-3'>
-                          {occasions.map((occasion, index) => (
+                        <div className='grid grid-cols-2 gap-2'>
+                          {occasions.map((occasion, i) => (
                             <Link
-                              key={`${occasion.name}-${index}`}
+                              key={`${occasion.name}-${i}`}
                               href={
                                 occasion.productId
                                   ? `/products/${occasion.productId}`
                                   : `/jewellery?search=${encodeURIComponent(occasion.name)}`
                               }
-                              className='flex items-center gap-3 rounded-lg border border-[#E6D3C2]/40 p-2 hover:border-emerald-400 hover:bg-[#F5EEE5] transition-colors'>
-                              <div className='h-12 w-12 rounded-md overflow-hidden bg-[#F5EEE5] flex items-center justify-center text-xs text-emerald-400'>
+                              className='flex items-center gap-2.5 rounded-xl p-2 border border-transparent hover:border-amber-100 hover:bg-amber-50 transition-all group'>
+                              <div className='h-10 w-10 rounded-lg overflow-hidden bg-stone-100 shrink-0 flex items-center justify-center text-xs font-semibold text-stone-400'>
                                 {occasion.image ? (
                                   <img src={occasion.image} alt={occasion.name} className='h-full w-full object-cover' />
                                 ) : (
                                   occasion.name.charAt(0)
                                 )}
                               </div>
-                              <span className='text-sm font-medium text-[#1F3B29]'>{occasion.name}</span>
+                              <span className='text-sm font-medium text-stone-700 group-hover:text-amber-800 transition-colors leading-tight'>
+                                {occasion.name}
+                              </span>
                             </Link>
                           ))}
                         </div>
                       ) : (
-                        <p className='text-sm text-[#4F3A2E]/70'>No occasions configured.</p>
+                        <p className='text-sm text-stone-400'>No occasions configured.</p>
                       )}
                     </div>
 
-                    <div className='space-y-4'>
-                      <h4 className='text-sm font-semibold text-[#001e38]'>Featured</h4>
+                    {/* Featured Product */}
+                    <div>
+                      <p className='text-[10px] font-semibold uppercase tracking-[0.2em] text-stone-400 mb-3'>Featured</p>
                       {megaMenuLoading ? (
-                        <p className='text-sm text-[#4F3A2E]/70'>Loading...</p>
+                        <div className='rounded-2xl bg-stone-50 border border-stone-100 h-56 animate-pulse' />
                       ) : megaMenuProduct ? (
                         <Link
                           href={`/products/${megaMenuProduct.urlSlug || megaMenuProduct._id}`}
-                          className='group block rounded-xl border border-[#E6D3C2]/40 overflow-hidden hover:border-emerald-400 hover:shadow-md transition-all'>
-                          <div className='aspect-4/3 overflow-hidden bg-[#F5EEE5]'>
+                          className='group block rounded-2xl border border-stone-100 overflow-hidden hover:border-amber-200 hover:shadow-lg hover:shadow-amber-100/40 transition-all'>
+                          <div className='aspect-[4/3] overflow-hidden bg-stone-50'>
                             <img
                               src={megaMenuProduct.mainImage || '/placeholder.jpg'}
                               alt={megaMenuProduct.name}
-                              className='h-full w-full object-cover transition-transform duration-300 group-hover:scale-105'
+                              className='h-full w-full object-cover transition-transform duration-500 group-hover:scale-105'
                             />
                           </div>
                           <div className='p-4'>
-                            <p className='text-sm font-semibold text-[#001e38]'>{megaMenuProduct.name}</p>
+                            <p className='text-sm font-semibold text-stone-900'>{megaMenuProduct.name}</p>
                             {megaMenuProduct.shortDescription && (
-                              <p className='mt-1 text-xs text-[#4F3A2E]/70 line-clamp-2'>{megaMenuProduct.shortDescription}</p>
+                              <p className='mt-1 text-xs text-stone-400 line-clamp-2'>{megaMenuProduct.shortDescription}</p>
                             )}
+                            <p className='mt-3 text-xs font-semibold text-amber-600 flex items-center gap-1 group-hover:gap-2 transition-all'>
+                              View product <ArrowRight className='h-3.5 w-3.5' />
+                            </p>
                           </div>
                         </Link>
                       ) : (
-                        <div className='rounded-xl border border-dashed border-[#E6D3C2]/50 p-4 text-sm text-[#4F3A2E]/70'>
+                        <div className='rounded-2xl border border-dashed border-stone-200 p-6 text-sm text-stone-400 text-center'>
                           No featured product selected.
                         </div>
                       )}
                     </div>
                   </div>
-                );
-              })()}
-            </div>
-          )}
+                </div>
+              );
+            })()}
         </div>
-      </div>
+      </header>
 
-      {/* Auth Modal */}
+      {/* ─── Auth Modals ─────────────────────────────────────────────────────── */}
       <AuthModal
         open={authModalOpen}
         onOpenChange={setAuthModalOpen}
@@ -929,7 +858,7 @@ const HomeHeader = () => {
         onSwitchToLogin={handleForgotSwitchToLogin}
         tokenExpired={forgotTokenExpired}
       />
-    </div>
+    </>
   );
 };
 

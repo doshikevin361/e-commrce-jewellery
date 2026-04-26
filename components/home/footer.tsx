@@ -171,16 +171,16 @@ export default function Footer() {
 
   const renderSearchLinks = (searches: FooterSearch[]) => {
     if (loadingSearches) {
-      return <p className='text-[#2c3e6f] text-sm'>Loading...</p>;
+      return <p className='text-muted-foreground text-sm'>Loading...</p>;
     }
     if (!searches || searches.length === 0) {
       return null;
     }
     return (
-      <p className='text-[#2c3e6f] text-sm leading-relaxed'>
+      <p className='text-web/80 text-sm leading-relaxed'>
         {searches.map((search, index) => (
           <React.Fragment key={index}>
-            <Link href={search.url} className='hover:underline'>
+            <Link href={search.url} className='hover:underline hover:text-theme-secondary transition-colors'>
               {search.name}
             </Link>
             {index < searches.length - 1 && ' | '}
@@ -299,7 +299,7 @@ export default function Footer() {
         </div>
 
         {/* Newsletter Section */}
-        <div className='mt-10 border-t border-gray-600 pt-6 sm:mt-12 sm:pt-8'>
+        <div className='mt-10 border-t border-white/15 pt-6 sm:mt-12 sm:pt-8'>
           <div className='flex flex-col gap-6 md:flex-row md:items-center md:justify-between'>
             <form onSubmit={handleSubscribe} className='flex flex-col gap-2'>
             <div className='flex flex-col items-stretch gap-3 sm:flex-row sm:items-center'>
@@ -308,13 +308,13 @@ export default function Footer() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 placeholder='Enter email for our newsletter'
-                className='w-full border border-gray-500 bg-transparent px-4 py-2.5 text-sm text-gray-300 placeholder-gray-400 focus:border-gray-400 focus:outline-none sm:w-64'
+                className='w-full rounded-lg border border-white/20 bg-white/5 px-4 py-2.5 text-sm text-white/85 placeholder:text-white/50 backdrop-blur focus:border-[color-mix(in_srgb,var(--theme-secondary)_55%,transparent)] focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-theme-primary sm:w-72'
                   disabled={subscribing}
                 />
                 <button 
                   type='submit'
                   disabled={subscribing}
-                  className='bg-theme-secondary px-6 py-2.5 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50'
+                  className='rounded-lg bg-theme-secondary px-6 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:brightness-[0.98] hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50'
                 >
                   {subscribing ? 'SUBSCRIBING...' : 'SUBSCRIBE'}
                 </button>
@@ -411,13 +411,13 @@ export default function Footer() {
         </div>
       </div>
 
-      <div className='bg-white'>
+      <div className='bg-background'>
         <div className='mx-auto max-w-[1440px] px-4 py-8 sm:px-6'>
           {/* Popular Searches */}
           {footerSearches.popularSearches.length > 0 && (
             <>
           <div className='mb-8'>
-            <h4 className='mb-3 text-base font-semibold text-[#2c3e6f]'>Popular Searches</h4>
+            <h4 className='mb-3 font-serif text-lg font-semibold text-web'>Popular Searches</h4>
                 {renderSearchLinks(footerSearches.popularSearches)}
           </div>
           <hr className='border-gray-300 my-6' />
@@ -428,7 +428,7 @@ export default function Footer() {
           {footerSearches.goldSearches.length > 0 && (
             <>
           <div className='mb-8'>
-            <h4 className='mb-3 text-base font-semibold text-[#2c3e6f]'>Top Searches in Gold Jewellery</h4>
+            <h4 className='mb-3 font-serif text-lg font-semibold text-web'>Top Searches in Gold Jewellery</h4>
                 {renderSearchLinks(footerSearches.goldSearches)}
           </div>
           <hr className='border-gray-300 my-6' />
@@ -439,7 +439,7 @@ export default function Footer() {
           {footerSearches.diamondSearches.length > 0 && (
             <>
           <div className='mb-8'>
-            <h4 className='mb-3 text-base font-semibold text-[#2c3e6f]'>Top Searches in Diamond Jewellery</h4>
+            <h4 className='mb-3 font-serif text-lg font-semibold text-web'>Top Searches in Diamond Jewellery</h4>
                 {renderSearchLinks(footerSearches.diamondSearches)}
           </div>
           <hr className='border-gray-300 my-6' />
@@ -450,7 +450,7 @@ export default function Footer() {
           {footerSearches.mensSearches.length > 0 && (
             <>
           <div className='mb-8'>
-            <h4 className='mb-3 text-base font-semibold text-[#2c3e6f]'>Men's Jewellery Collection</h4>
+            <h4 className='mb-3 font-serif text-lg font-semibold text-web'>Men&apos;s Jewellery Collection</h4>
                 {renderSearchLinks(footerSearches.mensSearches)}
           </div>
           <hr className='border-gray-300 my-6' />
@@ -461,7 +461,7 @@ export default function Footer() {
           {footerSearches.womensSearches.length > 0 && (
             <>
           <div className='mb-8'>
-            <h4 className='mb-3 text-base font-semibold text-[#2c3e6f]'>Women's Jewellery Collection</h4>
+            <h4 className='mb-3 font-serif text-lg font-semibold text-web'>Women&apos;s Jewellery Collection</h4>
                 {renderSearchLinks(footerSearches.womensSearches)}
           </div>
           <hr className='border-gray-300 my-6' />
@@ -471,7 +471,7 @@ export default function Footer() {
           {/* Jewellery by Occasion */}
           {footerSearches.occasionSearches.length > 0 && (
           <div>
-              <h4 className='mb-3 text-base font-semibold text-[#2c3e6f]'>Jewellery by Occasion</h4>
+              <h4 className='mb-3 font-serif text-lg font-semibold text-web'>Jewellery by Occasion</h4>
               {renderSearchLinks(footerSearches.occasionSearches)}
           </div>
           )}

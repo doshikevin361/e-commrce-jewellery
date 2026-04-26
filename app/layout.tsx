@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Geist, Geist_Mono } from 'next/font/google';
+import { Playfair_Display, Poppins } from 'next/font/google';
 import { Analytics } from '@vercel/analytics/next';
 import { ThemeProvider } from '@/components/theme-provider';
 import { SettingsProvider } from '@/components/settings/settings-provider';
@@ -14,17 +14,18 @@ import './globals.css';
 import { Toaster } from 'react-hot-toast';
 import { DEFAULT_KEYWORDS, SITE_CANONICAL_URL, SITE_NAME, organizationJsonLd } from '@/lib/site-seo';
 
-const geist = Geist({
+const poppins = Poppins({
   subsets: ['latin'],
   display: 'swap',
+  weight: ['300', '400', '500', '600'],
   fallback: ['system-ui', 'arial'],
 });
 
-
-const geistMono = Geist_Mono({
+const playfair = Playfair_Display({
   subsets: ['latin'],
   display: 'swap',
-  fallback: ['monospace'],
+  variable: '--font-serif',
+  weight: ['400', '500', '600', '700'],
 });
 
 export const metadata: Metadata = {
@@ -71,7 +72,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang='en' suppressHydrationWarning>
-      <body className={`${geist.className} ${geistMono.variable} antialiased`}>
+      <body className={`${poppins.className} ${playfair.variable} antialiased`}>
         <ThemeProvider attribute='class' defaultTheme='light' enableSystem>
           <PublicThemeLoader />
           <SettingsProvider>
