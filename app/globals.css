@@ -51,7 +51,7 @@
   /* Theme: overridden by PublicThemeLoader from DB. */
   --theme-primary: #1b252a; /* deep luxury ink */
   --theme-secondary: #c7a35a; /* soft gold */
-  --web: var(--theme-primary);
+  --web: #a05a64;
 }
 
 .dark {
@@ -87,7 +87,7 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(0.269 0 0);
   --sidebar-ring: oklch(0.55 0.2 142);
-  --web : #001e38;
+  --web : #a05a64;
 
 }
 

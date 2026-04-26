@@ -160,7 +160,7 @@ export default function Footer() {
       <ul className='space-y-2.5'>
         {items.map(item => (
           <li key={item._id}>
-            <Link href={`/footer/${item.slug}`} className='text-gray-300 hover:text-white text-sm transition-colors'>
+            <Link href={`/footer/${item.slug}`} className='text-white/70 hover:text-white/70 text-sm transition-colors'>
               {item.pageName}
             </Link>
           </li>
@@ -236,55 +236,55 @@ export default function Footer() {
   };
 
   return (
-    <footer className='bg-web text-white'>
+    <footer className='bg-[#a05a64] text-white/70'>
       {/* Main Footer Content */}
       <div className='mx-auto max-w-[1440px] px-4 py-10 sm:px-6 sm:py-12'>
         <div className='grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3 lg:gap-12'>
           {/* About Us + Customer Delight */}
           <div>
-            <h3 className='text-sm font-semibold mb-4 tracking-wide'>{SECTION_LABELS.about}</h3>
+            <h3 className='text-sm font-semibold mb-4 tracking-wide text-white/70'>{SECTION_LABELS.about}</h3>
             {renderSectionLinks('about')}
             <ul className='space-y-2.5 mt-2'>
               <li>
-                <Link href='/partner-stores' className='text-gray-300 hover:text-white text-sm transition-colors'>
+                <Link href='/partner-stores' className='text-white/70 hover:text-white/70 text-sm transition-colors'>
                   Partner Stores
                 </Link>
               </li>
             </ul>
 
-            <h3 className='text-sm font-semibold mt-8 mb-4 tracking-wide'>{SECTION_LABELS['customer-delight']}</h3>
+            <h3 className='text-sm font-semibold mt-8 mb-4 tracking-wide text-white/70'>{SECTION_LABELS['customer-delight']}</h3>
             {renderSectionLinks('customer-delight')}
           </div>
 
           {/* Policies Section */}
           <div>
-            <h3 className='text-sm font-semibold mb-4 tracking-wide'>{SECTION_LABELS.policies}</h3>
+            <h3 className='text-sm font-semibold mb-4 tracking-wide text-white/70'>{SECTION_LABELS.policies}</h3>
             {renderSectionLinks('policies')}
 
             {/* <h3 className='text-sm font-semibold mt-8 mb-4 tracking-wide'>SHOP WITH CONFIDENCE</h3>
             <ul className='space-y-2.5'>
               <li>
-                <a href='#' className='text-gray-300 hover:text-white text-sm transition-colors'>
+                <a href='#' className='text-white/70 hover:text-white/70 text-sm transition-colors'>
                   Why Buy From Us?
                 </a>
               </li>
               <li>
-                <a href='#' className='text-gray-300 hover:text-white text-sm transition-colors'>
+                <a href='#' className='text-white/70 hover:text-white/70 text-sm transition-colors'>
                   Our Certifications
                 </a>
               </li>
               <li>
-                <a href='#' className='text-gray-300 hover:text-white text-sm transition-colors'>
+                <a href='#' className='text-white/70 hover:text-white/70 text-sm transition-colors'>
                   Press Room
                 </a>
               </li>
               <li>
-                <a href='#' className='text-gray-300 hover:text-white text-sm transition-colors'>
+                <a href='#' className='text-white/70 hover:text-white/70 text-sm transition-colors'>
                   Testimonials
                 </a>
               </li>
               <li className='pt-2'>
-                <a href='#' className='text-gray-300 hover:text-white text-sm transition-colors'>
+                <a href='#' className='text-white/70 hover:text-white/70 text-sm transition-colors'>
                   Corporate Gifting
                 </a>
               </li>
@@ -293,7 +293,7 @@ export default function Footer() {
 
           {/* Jewellery Guide Section */}
           <div>
-            <h3 className='text-sm font-semibold mb-4 tracking-wide'>{SECTION_LABELS['jewellery-guide']}</h3>
+            <h3 className='text-sm font-semibold mb-4 tracking-wide text-white/70'>{SECTION_LABELS['jewellery-guide']}</h3>
             {renderSectionLinks('jewellery-guide')}
           </div>
         </div>
@@ -308,13 +308,13 @@ export default function Footer() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 placeholder='Enter email for our newsletter'
-                className='w-full rounded-lg border border-white/20 bg-white/5 px-4 py-2.5 text-sm text-white/85 placeholder:text-white/50 backdrop-blur focus:border-[color-mix(in_srgb,var(--theme-secondary)_55%,transparent)] focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-theme-primary sm:w-72'
+                className='w-full rounded-lg border border-white/20 bg-white px-4 py-2.5 text-sm text-white/70/85 placeholder:text-black/70 backdrop-blur focus:border-[color-mix(in_srgb,var(--theme-secondary)_55%,transparent)] focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-theme-primary sm:w-72'
                   disabled={subscribing}
                 />
                 <button 
                   type='submit'
                   disabled={subscribing}
-                  className='rounded-lg bg-theme-secondary px-6 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:brightness-[0.98] hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50'
+                  className='rounded-lg bg-white px-6 py-2.5 text-sm font-medium text-black/70 shadow-sm transition-all cursor-pointer border border-white hover:brightness-[0.98] hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50'
                 >
                   {subscribing ? 'SUBSCRIBING...' : 'SUBSCRIBE'}
                 </button>
@@ -329,14 +329,14 @@ export default function Footer() {
             <div className='flex flex-wrap items-center gap-4 sm:gap-6'>
               {hasAnySocial && (
                 <>
-                  <span className='text-sm text-gray-400'>Follow us on</span>
+                  <span className='text-sm text-white/70'>Follow us on</span>
                   <div className='flex items-center gap-3 sm:gap-4'>
                     {socialLinks.facebook.trim() && (
                       <a
                         href={socialLinks.facebook.trim()}
                         target='_blank'
                         rel='noopener noreferrer'
-                        className='text-gray-300 hover:text-white transition-colors'
+                        className='text-white/70 hover:text-white/70 transition-colors'
                         aria-label='Facebook'
                       >
                         <Facebook size={20} />
@@ -347,7 +347,7 @@ export default function Footer() {
                         href={socialLinks.twitter.trim()}
                         target='_blank'
                         rel='noopener noreferrer'
-                        className='text-gray-300 hover:text-white transition-colors'
+                        className='text-white/70 hover:text-white/70 transition-colors'
                         aria-label='X (Twitter)'
                       >
                         <Twitter size={20} />
@@ -358,7 +358,7 @@ export default function Footer() {
                         href={socialLinks.youtube.trim()}
                         target='_blank'
                         rel='noopener noreferrer'
-                        className='text-gray-300 hover:text-white transition-colors'
+                        className='text-white/70 hover:text-white/70 transition-colors'
                         aria-label='YouTube'
                       >
                         <Youtube size={20} />
@@ -369,7 +369,7 @@ export default function Footer() {
                         href={socialLinks.instagram.trim()}
                         target='_blank'
                         rel='noopener noreferrer'
-                        className='text-gray-300 hover:text-white transition-colors'
+                        className='text-white/70 hover:text-white/70 transition-colors'
                         aria-label='Instagram'
                       >
                         <Instagram size={20} />
@@ -380,7 +380,7 @@ export default function Footer() {
                         href={socialLinks.linkedin.trim()}
                         target='_blank'
                         rel='noopener noreferrer'
-                        className='text-gray-300 hover:text-white transition-colors'
+                        className='text-white/70 hover:text-white/70 transition-colors'
                         aria-label='LinkedIn'
                       >
                         <Linkedin size={20} />
@@ -390,7 +390,7 @@ export default function Footer() {
                 </>
               )}
 
-              <div className={`ml-0 flex items-center gap-2 ${hasAnySocial ? 'sm:ml-4' : ''}`}>
+              {/* <div className={`ml-0 flex items-center gap-2 ${hasAnySocial ? 'sm:ml-4' : ''}`}>
                 <div className='bg-white rounded px-2 py-1'>
                   <span className='text-[#2c3e6f] font-bold text-xs'>VISA</span>
                 </div>
@@ -400,7 +400,7 @@ export default function Footer() {
                 <div className='bg-white rounded px-2 py-1'>
                   <span className='text-[#2c3e6f] font-bold text-xs'>AMEX</span>
                 </div>
-              </div>
+              </div> */}
             </div>
           </div>
 
@@ -411,7 +411,7 @@ export default function Footer() {
         </div>
       </div>
 
-      <div className='bg-background'>
+      <div className='bg-white'>
         <div className='mx-auto max-w-[1440px] px-4 py-8 sm:px-6'>
           {/* Popular Searches */}
           {footerSearches.popularSearches.length > 0 && (

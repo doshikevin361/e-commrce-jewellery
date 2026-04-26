@@ -44,7 +44,7 @@ import {
   GallerySkeleton,
   WhyChooseUsSkeleton,
 } from './common/skeleton-loaders';
-import { HeroBanner, Slider } from './hero-banner-slider';
+import { CategoryGrid, HeroBanner, Slider } from './hero-banner-slider';
 import { ShopByJewelryCategory } from './shop-by-jewelry-category';
 import ProductShowcase from './ProductShowcase';
 import { TrustBadgesStrip } from './trust-badges-strip';
@@ -551,19 +551,19 @@ export const HomePage = () => {
           <ShopByJewelryCategory />
         </div>
         <div>
-          <Slider />
+          <JewelryProductsDemo products={sectionsData.newProducts} isLoading={isLoading} />
         </div>
         <div>
-          <JewelryProductsDemo products={sectionsData.newProducts} isLoading={isLoading} />
+          <CategoryGrid />
         </div>
         {scrollVideoPanels.length > 0 && (
           <div>
             <ScrollVideoPanels videoData={scrollVideoPanels} />
           </div>
         )}
-        <div>
+        {/* <div>
           <ProductShowcase />
-        </div>
+        </div> */}
                  <div>
           <VideoSlider
   videos={[
@@ -1548,7 +1548,7 @@ const JewelryProductsDemo = ({ products, isLoading = false }: { products?: Produ
         <div className='mt-10 flex justify-center'>
           <Link
             href='/jewellery'
-            className='inline-flex items-center justify-center rounded-lg border border-[#001e38] px-8 py-3 text-xs sm:text-sm font-semibold uppercase tracking-wide text-[#001e38] transition-colors hover:bg-[#001e38] hover:text-white'>
+            className='inline-flex items-center justify-center rounded-lg border border-black px-8 py-3 text-xs sm:text-sm font-semibold uppercase tracking-wide text-black transition-colors hover:text-black'>
             Explore More
           </Link>
         </div>

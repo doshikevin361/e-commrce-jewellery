@@ -85,7 +85,7 @@ const ScrollVideoPanels: React.FC<ScrollVideoPanelsProps> = ({ videoData }) => {
       </div>
 
       {/* Video Scroll */}
-      <div ref={scrollRef} className='flex overflow-x-auto gap-1 p-4 snap-x snap-mandatory scrollbar-hide'>
+      <div ref={scrollRef} className='flex overflow-x-auto gap-1 p-4 snap-x snap-mandatory scrollbar-hide '>
         {videoData &&
           videoData?.length > 0 &&
           videoData.map((item, index) => (

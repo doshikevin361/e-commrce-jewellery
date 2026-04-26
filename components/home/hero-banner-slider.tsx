@@ -83,41 +83,38 @@ export const HeroBanner = () => {
   );
 };
 
-const banners = [
-  {
-    image: '/slider/banner1.jpg',
-  },
-
-  {
-    image: '/slider/banner3.png',
-  },
-    {
-    image: '/slider/banner4.webp',
-  },
+const categories = [
+  { label: "Wedding",   image: "/uploads/grid1.webp" },
+  { label: "Diamond",   image: "/uploads/grid2.webp" },
+  { label: "Gold",      image: "/uploads/grid3.webp" },
+  { label: "Dailywear", image: "/uploads/grid4.webp" },
 ];
 
-export const Slider = () => {
+
+export const CategoryGrid = () => {
   return (
-    <div className='h-[42vh] w-full sm:h-[55vh] lg:h-[75vh]'>
-      <Swiper
-        modules={[Autoplay, Navigation]}
-        autoplay={{ delay: 4000, disableOnInteraction: false }}
-        navigation
-        loop
-        className='w-full h-full'>
-        {banners.map((banner, index) => (
-          <SwiperSlide key={index}>
-            <div className='w-full h-full relative flex'>
-              {/* LEFT IMAGE */}
-              <div className='w-full h-full relative'>
-                <img src={banner.image} alt={banner.title} className='h-[42vh] w-full object-cover sm:h-[55vh] lg:h-[70vh]' />
-                {/* subtle overlay */}{' '}
-              </div>
-            </div>
-          </SwiperSlide>
+    <section className="w-full px-4 py-6">
+      <div className="grid grid-cols-2 gap-4 max-w-4xl mx-auto">
+        {categories.map((cat) => (
+          <div
+            key={cat.label}
+            className="relative rounded-2xl overflow-hidden cursor-pointer group aspect-[4/3]"
+          >
+            <img
+              src={cat.image}
+              alt={cat.label}
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            />
+            {/* gradient overlay */}
+            <div className="absolute inset-0 bg-gradient-to-t from-[rgba(100,10,30,0.65)] via-transparent to-transparent group-hover:from-[rgba(100,10,30,0.8)] transition-all duration-300" />
+            {/* label */}
+            <p className="absolute bottom-4 left-0 right-0 text-center text-white text-xl font-semibold font-serif tracking-wide drop-shadow-md">
+              {cat.label}
+            </p>
+          </div>
         ))}
-      </Swiper>
-    </div>
+      </div>
+    </section>
   );
 };
 
