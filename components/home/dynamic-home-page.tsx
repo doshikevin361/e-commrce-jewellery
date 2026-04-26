@@ -44,7 +44,8 @@ import {
   GallerySkeleton,
   WhyChooseUsSkeleton,
 } from './common/skeleton-loaders';
-import Categories, { HeroBanner, Slider } from './hero-banner-slider';
+import { HeroBanner, Slider } from './hero-banner-slider';
+import { ShopByJewelryCategory } from './shop-by-jewelry-category';
 import ProductShowcase from './ProductShowcase';
 import { TrustBadgesStrip } from './trust-badges-strip';
 import { WhatPeopleAreSaying } from './what-people-saying';
@@ -547,7 +548,7 @@ export const HomePage = () => {
           <TrustBadgesStrip />
         </div>
         <div className={'mx-auto w-full'}>
-          <Categories />
+          <ShopByJewelryCategory />
         </div>
         <div>
           <Slider />
