@@ -543,14 +543,14 @@ export const HomePage = () => {
         <div className={'mx-auto w-full'}>
           <HeroBanner />
         </div>
+        <div className='w-full'>
+          <TrustBadgesStrip />
+        </div>
         <div className={'mx-auto w-full'}>
           <Categories />
         </div>
         <div>
           <Slider />
-        </div>
-        <div className='w-full'>
-          <TrustBadgesStrip />
         </div>
         <div>
           <JewelryProductsDemo products={sectionsData.newProducts} isLoading={isLoading} />

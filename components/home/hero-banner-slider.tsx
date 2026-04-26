@@ -5,27 +5,80 @@ import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, Navigation } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/navigation';
+import { useRouter } from 'next/navigation';
 
 // Hero Banner Component
-export const HeroBanner = () => {
-  return (
-    <div className='relative h-[52vh] w-full overflow-hidden bg-black sm:h-[62vh] lg:h-[80vh]'>
-      {/* VIDEO */}
-      <video src='/uploads/banner_vi.mov' autoPlay loop muted playsInline className='w-full h-full object-cover' />
 
-      {/* 🔥 BOTTOM FADE SHADOW (THIS FIXES IT) */}
+const slides = [
+  '/uploads/hero-image.png',
+  '/uploads/hero-image2.png',
+  '/uploads/hero-image3.png',
+];
+
+export const HeroBanner = () => {
+  const router = useRouter();
+  const [current, setCurrent] = useState(0);
+
+  const prevSlide = () => {
+    setCurrent((prev) => (prev === 0 ? slides.length - 1 : prev - 1));
+  };
+
+  const nextSlide = () => {
+    setCurrent((prev) => (prev === slides.length - 1 ? 0 : prev + 1));
+  };
+
+  return (
+    <div className="relative h-[52vh] sm:h-[62vh] lg:h-[80vh] w-full overflow-hidden">
+      
+      {/* SLIDES */}
       <div
-        className='
-          pointer-events-none 
-          absolute bottom-0 left-0 
-          w-full h-40 
-          bg-gradient-to-t 
-          from-white 
-          via-white/50 
-          to-transparent
-          z-20
-        '
-      />
+        className="flex h-full w-full transition-transform duration-500 ease-in-out"
+        style={{ transform: `translateX(-${current * 100}%)` }}
+      >
+        {slides.map((img, index) => (
+          <div
+            key={index}
+            className="min-w-full h-full cursor-pointer"
+            onClick={() => router.push('/products')}
+          >
+            <img
+              src={img}
+              className="w-full object-contain"
+              alt="hero"
+            />
+          </div>
+        ))}
+      </div>
+
+      {/* LEFT BUTTON */}
+      <button
+        onClick={prevSlide}
+        className="absolute cursor-pointer
+         left-4 top-1/2 -translate-y-1/2 bg-white/40 hover:bg-white text-black rounded-full p-2"
+      >
+        ‹
+      </button>
+
+      {/* RIGHT BUTTON */}
+      <button
+        onClick={nextSlide}
+        className="absolute  cursor-pointer right-4 top-1/2 -translate-y-1/2 bg-white/40 hover:bg-white text-black rounded-full p-2"
+      >
+        ›
+      </button>
+
+      {/* DOT INDICATORS */}
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+        {slides.map((_, index) => (
+          <div
+            key={index}
+            onClick={() => setCurrent(index)}
+            className={`h-2 w-2 rounded-full cursor-pointer ${
+              current === index ? 'bg-white' : 'bg-white/50'
+            }`}
+          />
+        ))}
+      </div>
     </div>
   );
 };
