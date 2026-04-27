@@ -566,7 +566,7 @@ export const HomePage = () => {
           <ProductShowcase />
         </div> */}
                  <div>
-          <VideoSlider
+          {/* <VideoSlider
   videos={[
     '/uploads/1769508544978-ficc90lkph.mp4',
     '/uploads/1769508518202-thc5l31ihr.mp4',
@@ -574,7 +574,7 @@ export const HomePage = () => {
     '/uploads/1769508468719-3277vkwpts4.mp4',
     '/uploads/1769508544978-ficc90lkph.mp4',
   ]}
-/>
+/> */}
 
         </div>
         <div>
