@@ -17,7 +17,7 @@ export default function Home() {
       <>
         <HomePage />
         <a
-          href="https://wa.me/910000000000"
+          href="https://wa.me/9183186825"
           target="_blank"
           rel="noopener noreferrer"
           aria-label="Chat on WhatsApp"
