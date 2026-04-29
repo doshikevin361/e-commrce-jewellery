@@ -4,7 +4,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { sectionHeadingTitleClassName } from '@/components/home/common/section-header';
 
-const JEWELRY_CATEGORIES = [
+/** Shared with homepage “products by category” section — keep slugs aligned with `/products?category=`. */
+export const JEWELRY_CATEGORIES = [
   {
     name: 'Rings',
     slug: 'rings',

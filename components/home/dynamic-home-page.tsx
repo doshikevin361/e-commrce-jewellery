@@ -47,6 +47,7 @@ import {
 } from './common/skeleton-loaders';
 import { CategoryGrid, HeroBanner, Slider } from './hero-banner-slider';
 import { ShopByJewelryCategory } from './shop-by-jewelry-category';
+import { ProductsByCategorySection } from './products-by-category-section';
 import ProductShowcase from './ProductShowcase';
 import { TrustBadgesStrip } from './trust-badges-strip';
 import { WhatPeopleAreSaying } from './what-people-saying';
@@ -553,6 +554,9 @@ export const HomePage = () => {
         </div>
         <div>
           <JewelryProductsDemo products={sectionsData.newProducts} isLoading={isLoading} />
+        </div>
+        <div className='w-full'>
+          <ProductsByCategorySection />
         </div>
         <div>
           <CategoryGrid />
