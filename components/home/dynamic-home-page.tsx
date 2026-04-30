@@ -48,6 +48,7 @@ import {
 } from './common/skeleton-loaders';
 import { CategoryGrid, HeroBanner, Slider } from './hero-banner-slider';
 import { ShopByJewelryCategory } from './shop-by-jewelry-category';
+import { HomeProductsMarquee } from './home-products-marquee';
 import { ProductsByCategorySection } from './products-by-category-section';
 import ProductShowcase from './ProductShowcase';
 import { TrustBadgesStrip } from './trust-badges-strip';
@@ -579,6 +580,12 @@ export const HomePage = () => {
         </MotionWrap>
 
         <MotionWrap className={'mx-auto w-full'} delay={0.08}>
+          <HomeProductsMarquee
+            featuredProducts={sectionsData.featuredProducts}
+            trendingProducts={sectionsData.trendingProducts}
+            newProducts={sectionsData.newProducts}
+            isLoading={isLoading}
+          />
           <ShopByJewelryCategory />
         </MotionWrap>
 
