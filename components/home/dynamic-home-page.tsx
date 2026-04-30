@@ -55,6 +55,7 @@ import { WhatPeopleAreSaying } from './what-people-saying';
 import { HomeFaqSection } from './home-faq-section';
 import ScrollVideoPanels, { VideoItem } from '../scrollvideopanel/ScrollVideoPanels';
 import VideoSlider from '../videoSlider/videoSlider';
+import JewelryGrid from './JewelryGrid';
 
 type HeroSlide = {
   id: string | number;
@@ -235,12 +236,11 @@ const MotionWrap = ({ children, className, delay = 0, y = 18, scale = 0.985 }: M
   return (
     <motion.div
       className={className}
-      initial="hidden"
-      whileInView="visible"
+      initial='hidden'
+      whileInView='visible'
       viewport={{ once: true, amount: 0.22 }}
       variants={{ hidden, visible }}
-      transition={{ duration: 0.85, ease: [0.22, 1, 0.36, 1], delay }}
-    >
+      transition={{ duration: 0.85, ease: [0.22, 1, 0.36, 1], delay }}>
       {children}
     </motion.div>
   );
@@ -582,6 +582,8 @@ export const HomePage = () => {
           <ShopByJewelryCategory />
         </MotionWrap>
 
+        <JewelryGrid />
+
         <MotionWrap delay={0.1}>
           <JewelryProductsDemo products={sectionsData.newProducts} isLoading={isLoading} />
         </MotionWrap>
@@ -602,7 +604,7 @@ export const HomePage = () => {
         {/* <div>
           <ProductShowcase />
         </div> */}
-                 <div>
+        <div>
           {/* <VideoSlider
   videos={[
     '/uploads/1769508544978-ficc90lkph.mp4',
@@ -612,15 +614,11 @@ export const HomePage = () => {
     '/uploads/1769508544978-ficc90lkph.mp4',
   ]}
 /> */}
-
         </div>
-        <div>
-          {/* <WhatPeopleAreSaying /> */}
-        </div>
+        <div>{/* <WhatPeopleAreSaying /> */}</div>
         <MotionWrap delay={0.18}>
           <HomeFaqSection />
         </MotionWrap>
-
       </div>
       {/* Updates section - Full width */}
       {/* <div className={SECTION_SPACING}>
