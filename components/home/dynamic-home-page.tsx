@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import { motion, useReducedMotion } from 'framer-motion';
 import {
   ChevronLeft,
   ChevronRight,
@@ -218,6 +219,32 @@ const testimonials = [
 
 const sanitizeFeatureIcon = (icon?: string): FeatureIconName =>
   FEATURE_ICON_COMPONENTS[icon as FeatureIconName] ? (icon as FeatureIconName) : 'Sparkles';
+
+type MotionWrapProps = React.PropsWithChildren<{
+  className?: string;
+  delay?: number;
+  y?: number;
+  scale?: number;
+}>;
+
+const MotionWrap = ({ children, className, delay = 0, y = 18, scale = 0.985 }: MotionWrapProps) => {
+  const shouldReduceMotion = useReducedMotion();
+  const hidden = shouldReduceMotion ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y, scale };
+  const visible = shouldReduceMotion ? { opacity: 1, y: 0, scale: 1 } : { opacity: 1, y: 0, scale: 1 };
+
+  return (
+    <motion.div
+      className={className}
+      initial="hidden"
+      whileInView="visible"
+      viewport={{ once: true, amount: 0.22 }}
+      variants={{ hidden, visible }}
+      transition={{ duration: 0.85, ease: [0.22, 1, 0.36, 1], delay }}
+    >
+      {children}
+    </motion.div>
+  );
+};
 
 const formatCurrency = (value?: number) => {
   if (typeof value !== 'number' || Number.isNaN(value)) {
@@ -543,28 +570,34 @@ export const HomePage = () => {
   return (
     <div className='home-page'>
       <div className='flex-col gap-0'>
-        <div className={'mx-auto w-full'}>
+        <MotionWrap className={'mx-auto w-full'} y={10}>
           <HeroBanner />
-        </div>
-        <div className='w-full'>
+        </MotionWrap>
+
+        <MotionWrap className='w-full' delay={0.05}>
           <TrustBadgesStrip />
-        </div>
-        <div className={'mx-auto w-full'}>
+        </MotionWrap>
+
+        <MotionWrap className={'mx-auto w-full'} delay={0.08}>
           <ShopByJewelryCategory />
-        </div>
-        <div>
+        </MotionWrap>
+
+        <MotionWrap delay={0.1}>
           <JewelryProductsDemo products={sectionsData.newProducts} isLoading={isLoading} />
-        </div>
-        <div className='w-full'>
+        </MotionWrap>
+
+        <MotionWrap className='w-full' delay={0.12}>
           <ProductsByCategorySection />
-        </div>
-        <div>
+        </MotionWrap>
+
+        <MotionWrap delay={0.14}>
           <CategoryGrid />
-        </div>
+        </MotionWrap>
+
         {scrollVideoPanels.length > 0 && (
-          <div>
+          <MotionWrap delay={0.16}>
             <ScrollVideoPanels videoData={scrollVideoPanels} />
-          </div>
+          </MotionWrap>
         )}
         {/* <div>
           <ProductShowcase />
@@ -584,9 +617,9 @@ export const HomePage = () => {
         <div>
           {/* <WhatPeopleAreSaying /> */}
         </div>
-        <div>
+        <MotionWrap delay={0.18}>
           <HomeFaqSection />
-        </div>
+        </MotionWrap>
 
       </div>
       {/* Updates section - Full width */}

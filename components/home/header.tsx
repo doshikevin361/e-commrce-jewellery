@@ -127,6 +127,8 @@ const HomeHeader = () => {
   const [loadingPrices, setLoadingPrices] = useState(true);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [searchFocused, setSearchFocused] = useState(false);
+  const stickyRafIdRef = useRef<number | null>(null);
+  const lastStickyValueRef = useRef<boolean>(false);
 
   const loadRecentlyViewed = () => {
     const items = readRecentlyViewed();
@@ -134,9 +136,29 @@ const HomeHeader = () => {
   };
 
   useEffect(() => {
-    const handleScroll = () => setIsSticky(window.scrollY > 80);
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    if (typeof window === 'undefined') return;
+
+    const updateSticky = () => {
+      stickyRafIdRef.current = null;
+      const nextIsSticky = window.scrollY > 80;
+      if (lastStickyValueRef.current === nextIsSticky) return;
+      lastStickyValueRef.current = nextIsSticky;
+      setIsSticky(nextIsSticky);
+    };
+
+    const onScroll = () => {
+      if (stickyRafIdRef.current != null) return;
+      stickyRafIdRef.current = window.requestAnimationFrame(updateSticky);
+    };
+
+    // Set initial state (e.g. refresh mid-page).
+    updateSticky();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      if (stickyRafIdRef.current != null) window.cancelAnimationFrame(stickyRafIdRef.current);
+      stickyRafIdRef.current = null;
+    };
   }, []);
 
   useEffect(() => {
